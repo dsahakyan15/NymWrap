@@ -84,9 +84,10 @@ async fn actual_installed_pt_listeners_stop_when_managed_handle_is_dropped() {
     } else {
         tempfile::tempdir().unwrap()
     };
-    nw_platform::encrypted_directory(directory.path()).unwrap();
+    let private = directory.path().join("private");
+    nw_platform::encrypted_directory(&private).unwrap();
     for protocol in ["obfs4", "snowflake", "webtunnel"] {
-        let state = directory.path().join(protocol);
+        let state = private.join(protocol);
         nw_platform::encrypted_directory(&state).unwrap();
         let common = PtCommonParametersBuilder::default()
             .state_location(state)

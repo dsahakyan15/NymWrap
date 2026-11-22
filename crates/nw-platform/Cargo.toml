@@ -12,6 +12,7 @@ zeroize.workspace = true
 libc.workspace = true
 
 [target.'cfg(windows)'.dependencies]
+quick-xml.workspace = true
 windows-sys = { version = "=0.61.2", features = [
     "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis",
     "Win32_NetworkManagement_NetManagement", "Win32_NetworkManagement_WiFi",
@@ -29,3 +30,4 @@ unsafe_code = "deny"
 
 [dev-dependencies]
 tempfile.workspace = true
+quick-xml.workspace = true

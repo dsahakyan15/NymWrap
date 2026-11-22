@@ -85,8 +85,7 @@ fn appcontainer_read_handle_probe() {
 fn actual_appcontainer_reads_only_explicit_read_handle() {
     let directory = tempfile::tempdir().unwrap();
     let root = directory.path().join("read-handle");
-    std::fs::create_dir(&root).unwrap();
-    nw_platform::private_directory(&root).unwrap();
+    nw_platform::create_private_directory_all(&root).unwrap();
     let path = root.join("synthetic-model");
     std::fs::write(&path, b"SYNTHETIC_READ_HANDLE").unwrap();
     let file = std::fs::File::open(&path).unwrap();
@@ -128,8 +127,7 @@ fn actual_probe_appcontainer_denies_network_host_files_and_children() {
 fn check_network_files_and_children(device: bool) {
     let directory = tempfile::tempdir().unwrap();
     let root = directory.path().join("sandbox");
-    std::fs::create_dir(&root).unwrap();
-    nw_platform::private_directory(&root).unwrap();
+    nw_platform::create_private_directory_all(&root).unwrap();
     let source = root.join("synthetic-source");
     let target = root.join("forbidden-write");
     std::fs::write(&source, b"SYNTHETIC_PARSER_SOURCE").unwrap();

@@ -71,14 +71,19 @@ fn prepare(root: &Path) -> Result<(PathBuf, File), VaultError> {
         return Err(VaultError::Io);
     }
     if !root.exists() {
-        let mut builder = fs::DirBuilder::new();
-        builder.recursive(true);
+        #[cfg(windows)]
+        nw_platform::create_private_directory_all(root).map_err(|_| VaultError::Io)?;
         #[cfg(unix)]
         {
-            use std::os::unix::fs::DirBuilderExt;
-            builder.mode(0o700);
+            let mut builder = fs::DirBuilder::new();
+            builder.recursive(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::DirBuilderExt;
+                builder.mode(0o700);
+            }
+            builder.create(root).map_err(|_| VaultError::Io)?;
         }
-        builder.create(root).map_err(|_| VaultError::Io)?;
     }
     let meta = fs::symlink_metadata(root).map_err(|_| VaultError::Io)?;
     if !meta.is_dir() || meta.file_type().is_symlink() {

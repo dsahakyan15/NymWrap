@@ -254,7 +254,7 @@ impl Stage {
         // All ancestors of the package path are traversable by its token;
         // no ACE is added to the user's real application-data directories.
         let directory = profile.directory.join("Code");
-        std::fs::create_dir(&directory)?;
+        super::create_private_directory(&directory)?;
         let stage = Self {
             binary: directory.join("worker.exe"),
             directory,

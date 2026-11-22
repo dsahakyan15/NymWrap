@@ -7,6 +7,8 @@ pub struct DeviceProbeStatus {
     pub protected_values: usize,
     pub unavailable: Vec<nw_probe::Source>,
     pub code: Option<String>,
+    #[serde(default)]
+    pub hygiene: Option<nw_probe::hygiene::Report>,
 }
 fn digest(value: &str) -> String {
     format!("{:x}", Sha256::digest(value.as_bytes()))
@@ -125,6 +127,7 @@ impl Workspace {
                 status.last_success = at;
                 status.code = None;
                 status.unavailable = report.unavailable.clone();
+                status.hygiene = Some(report.hygiene.clone());
                 status.protected_values = secrets
                     .iter()
                     .filter(|s| matches!(s.kind, SecretKind::Device))

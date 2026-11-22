@@ -8,6 +8,8 @@ use std::{
 use zeroize::Zeroize;
 #[allow(unsafe_code)]
 mod sys;
+#[cfg(any(windows, test))]
+mod wlan;
 #[cfg(unix)]
 pub use sys::current_group_id;
 #[cfg(target_os = "macos")]
@@ -18,8 +20,14 @@ pub use sys::{confine_import_worker, deny_remote_sockets};
 pub use sys::{current_user_id, harden_process, process_image};
 pub use sys::{
     device_host_names, device_ip_addresses, device_mac_addresses, device_machine_ids,
-    device_timezones, device_user_names, device_wifi_ssids,
+    device_policy_hints, device_timezones, device_user_names, device_wifi_inventory,
+    device_wifi_ssids,
 };
+#[derive(Default)]
+pub struct HygienePolicyHints {
+    pub location_disabled: Option<bool>,
+    pub llmnr_disabled: Option<bool>,
+}
 #[cfg(target_os = "linux")]
 pub use sys::{sandbox_data_files, sandbox_read_files};
 /// Only kernel-verified per-directory encryption is accepted for transport state.
@@ -47,12 +55,15 @@ pub fn encrypted_directory(path: &std::path::Path) -> io::Result<()> {
         }
         ancestor = p.parent();
     }
-    std::fs::create_dir_all(path)?;
     #[cfg(windows)]
-    private_directory(path)?;
+    {
+        create_private_directory_all(path)?;
+        private_directory(path)?;
+    }
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
+        std::fs::create_dir_all(path)?;
         std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))?;
     }
     sys::verify_directory_encryption(path)
@@ -65,8 +76,41 @@ pub use sys::{
 #[cfg(windows)]
 pub use sys::{kernel_object_owner, private_directory};
 
+/// Create missing directories with the current user as owner from the outset.
+/// Existing directories never have their owner changed.
+#[cfg(windows)]
+pub fn create_private_directory_all(path: &std::path::Path) -> io::Result<()> {
+    use std::os::windows::fs::MetadataExt;
+    if !path.is_absolute() {
+        return Err(io::Error::other("invalid_private_directory"));
+    }
+    let mut missing = vec![];
+    for ancestor in path.ancestors() {
+        match std::fs::symlink_metadata(ancestor) {
+            Ok(meta) if meta.is_dir() && meta.file_attributes() & 0x400 == 0 => {}
+            Ok(_) => return Err(io::Error::other("invalid_private_directory")),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => missing.push(ancestor),
+            Err(e) => return Err(e),
+        }
+    }
+    for directory in missing.into_iter().rev() {
+        sys::create_private_directory(directory)?;
+    }
+    private_directory(path)
+}
+
 static LOCKS: LazyLock<Mutex<BTreeMap<usize, usize>>> =
     LazyLock::new(|| Mutex::new(BTreeMap::new()));
+#[cfg(any(windows, target_os = "linux", test))]
+fn all_observed_true(values: &[Option<bool>]) -> Option<bool> {
+    if values.contains(&Some(false)) {
+        Some(false)
+    } else if !values.is_empty() && values.iter().all(|value| *value == Some(true)) {
+        Some(true)
+    } else {
+        None
+    }
+}
 struct Guard {
     pages: Vec<usize>,
 }
@@ -178,6 +222,29 @@ impl Drop for LockedString {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn partial_or_absent_profile_settings_do_not_confirm_mac_randomization() {
+        assert_eq!(all_observed_true(&[]), None);
+        assert_eq!(all_observed_true(&[Some(true), None]), None);
+        assert_eq!(all_observed_true(&[None, Some(false)]), Some(false));
+        assert_eq!(all_observed_true(&[Some(true), Some(true)]), Some(true));
+    }
+    #[cfg(windows)]
+    #[test]
+    fn explicit_owner_directory_creation_rejects_existing_files_and_relative_paths() {
+        let fixture = tempfile::tempdir().unwrap();
+        let root = fixture.path().join("private/deep");
+        create_private_directory_all(&root).unwrap();
+        private_directory(&root).unwrap();
+        private_directory(root.parent().unwrap()).unwrap();
+        // An existing directory is validated, not recreated or adopted.
+        create_private_directory_all(&root).unwrap();
+        let file = root.join("file");
+        std::fs::write(&file, b"SYNTHETIC_DIRECTORY_CANARY").unwrap();
+        assert!(create_private_directory_all(&file).is_err());
+        assert!(create_private_directory_all(&file.join("child")).is_err());
+        assert!(create_private_directory_all(std::path::Path::new("relative")).is_err());
+    }
     #[test]
     fn keys_are_locked_and_independent_drops_retain_other_locks() {
         let key = LockedKey::new(SecretBox::new(Box::new([73; 32]))).unwrap();

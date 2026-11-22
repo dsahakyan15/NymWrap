@@ -30,6 +30,9 @@ async function subdirectory(parent,name){
   try{await mkdir(path);}catch(error){if(error.code!=='EEXIST')throw error;}
   return plainDirectory(path);
 }
+export async function prepareFuzzReports(workspace){
+  return subdirectory(await subdirectory(await subdirectory(workspace,'target'),'fuzz'),'reports');
+}
 export async function prepareFuzzSeeds(fuzzDir){
   await plainDirectory(fuzzDir);
   const corpus=await subdirectory(fuzzDir,'corpus');
@@ -77,6 +80,8 @@ async function sources(){
 export async function runFuzz(options){
   options=parseFuzzOptions(['--target',options.target,'--seconds',String(options.seconds)]);
   const target=fuzzTargets[options.target];if(!target)throw Error('invalid_fuzz_target');
+  // cargo-fuzz may only create fuzz/target. A clean checkout has no root target/.
+  const reports=await prepareFuzzReports(root);
   const fuzzDir=resolve(root,'fuzz'),lockPath=resolve(fuzzDir,'Cargo.lock');
   const lockBefore=hash(await readFile(lockPath));
   const tool=(await run(['+'+nightly,'fuzz','--version'],{capture:true})).trim();
@@ -98,7 +103,6 @@ export async function runFuzz(options){
     if(hash(await readFile(lockPath))!==lockBefore||JSON.stringify(await sources())!==JSON.stringify(before))throw Error('fuzz_sources_changed');
   }catch(error){failure=error;}
   const finished=new Date();
-  const reports=await subdirectory(await subdirectory(resolve(root,'target'),'fuzz'),'reports');
   const report={version:1,target:options.target,status:failure?'failed':'passed',sanitizer:'address',tool,toolchain:nightly,requested_seconds:options.seconds,elapsed_seconds:(finished-started)/1000,started_at:started.toISOString(),finished_at:finished.toISOString(),lock_sha256:lockBefore,sources:before,corpus_sha256:await sourceDigest(corpus[options.target])};
   await writeFile(resolve(reports,options.target+'.json'),JSON.stringify(report,null,2)+'\n');
   if(failure)throw failure;

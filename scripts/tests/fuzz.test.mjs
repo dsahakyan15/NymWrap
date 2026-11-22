@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,cp,symlink,rm,writeFile} from 'node:fs/promises';
 import {resolve,sep} from 'node:path';
-import {parseFuzzOptions,prepareFuzzSeeds} from '../fuzz.mjs';
+import {parseFuzzOptions,prepareFuzzSeeds,prepareFuzzReports} from '../fuzz.mjs';
 test('fuzz runner accepts only bounded durations and known targets',()=>{
   assert.deepEqual(parseFuzzOptions(['--target','ipc_frames']),{target:'ipc_frames',seconds:60});
   for(const args of [[],['--target','../core'],['--target','ipc_frames','--seconds','0'],['--target','ipc_frames','--seconds','86401'],['--target','ipc_frames','--seconds','NaN'],['--target','ipc_frames','--target','audit_import']])assert.throws(()=>parseFuzzOptions(args));
@@ -26,5 +26,20 @@ test('synthetic corpus includes real frames and cannot follow a corpus junction'
     await symlink(outside,resolve(blocked,'corpus'),process.platform==='win32'?'junction':'dir');
     await assert.rejects(prepareFuzzSeeds(blocked),/unsafe_fuzz_directory/);
     assert.equal(await readFile(resolve(outside,'marker'),'utf8'),'SYNTHETIC_UNCHANGED');
+  }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('a clean checkout can persist a fuzz report and never follows a linked target',async()=>{
+  const target=resolve('target');await mkdir(target,{recursive:true});
+  const dir=await mkdtemp(resolve(target,'fuzz-report-test-'));assert.ok(dir.startsWith(target+sep));
+  try{
+    const workspace=resolve(dir,'workspace');await mkdir(workspace);
+    const reports=await prepareFuzzReports(workspace);
+    await writeFile(resolve(reports,'synthetic.json'),'{"status":"passed"}');
+    assert.equal(JSON.parse(await readFile(resolve(reports,'synthetic.json'))).status,'passed');
+    assert.equal(await prepareFuzzReports(workspace),reports);
+    const blocked=resolve(dir,'blocked'),outside=resolve(dir,'outside');await mkdir(blocked);await mkdir(outside);
+    await symlink(outside,resolve(blocked,'target'),process.platform==='win32'?'junction':'dir');
+    await assert.rejects(prepareFuzzReports(blocked),/unsafe_fuzz_directory/);
   }finally{await rm(dir,{recursive:true,force:true});}
 });

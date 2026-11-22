@@ -224,8 +224,9 @@ pub fn device_ip_addresses() -> io::Result<Vec<String>> {
     Ok(std::mem::take(&mut *values))
 }
 #[cfg(target_os = "linux")]
-pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
+pub fn device_wifi_inventory() -> io::Result<(Vec<String>, Option<bool>)> {
     let mut values = Zeroizing::new(vec![]);
+    let mut randomized = vec![];
     for (i, item) in std::fs::read_dir("/etc/NetworkManager/system-connections")?.enumerate() {
         if i >= 1024 {
             return Err(unavailable());
@@ -236,20 +237,50 @@ pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
         }
         let config = bounded_file(item.path(), 65536)?;
         let mut wifi = false;
+        let mut profile_ssid = None;
+        let mut profile_random = None;
         for line in config.lines() {
             let line = line.trim();
             if line.starts_with('[') {
                 wifi = matches!(line, "[wifi]" | "[802-11-wireless]");
-            } else if wifi && let Some(ssid) = line.strip_prefix("ssid=") {
-                values.push(ssid.to_owned());
+            } else if wifi && let Some((key, value)) = line.split_once('=') {
+                match key.trim() {
+                    "ssid" => {
+                        if profile_ssid.replace(value.to_owned()).is_some() {
+                            return Err(unavailable());
+                        }
+                    }
+                    "cloned-mac-address" => {
+                        profile_random = match value.trim() {
+                            "random" => Some(true),
+                            "permanent" => Some(false),
+                            _ => None,
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
+        if let Some(ssid) = profile_ssid {
+            values.push(ssid);
+            randomized.push(profile_random);
+        }
     }
-    Ok(std::mem::take(&mut *values))
+    Ok((
+        std::mem::take(&mut *values),
+        crate::all_observed_true(&randomized),
+    ))
 }
 #[cfg(target_os = "macos")]
-pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
+pub fn device_wifi_inventory() -> io::Result<(Vec<String>, Option<bool>)> {
     Err(unavailable())
+}
+pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
+    device_wifi_inventory().map(|(ssids, _)| ssids)
+}
+#[cfg(not(windows))]
+pub fn device_policy_hints() -> crate::HygienePolicyHints {
+    crate::HygienePolicyHints::default()
 }
 
 #[cfg(windows)]

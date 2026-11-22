@@ -4,6 +4,7 @@ use std::{collections::BTreeSet, io::Read};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 pub const MAX_FRAME: usize = 128 * 1024;
+pub mod hygiene;
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Source {
@@ -47,6 +48,9 @@ pub struct Report {
     /// Unavailable/partial sources are never presented as successful checks.
     #[zeroize(skip)]
     pub unavailable: Vec<Source>,
+    #[serde(default)]
+    #[zeroize(skip)]
+    pub hygiene: hygiene::Report,
 }
 #[derive(Serialize, Deserialize, Zeroize, ZeroizeOnDrop)]
 #[serde(deny_unknown_fields)]
@@ -114,6 +118,7 @@ impl Report {
             })
             && self.unavailable.len() <= Source::ALL.len()
             && self.unavailable.iter().collect::<BTreeSet<_>>().len() == self.unavailable.len()
+            && self.hygiene.valid()
     }
 }
 pub fn home_variants(home: &str) -> Vec<String> {
@@ -238,7 +243,6 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
         (Source::Timezone, nw_platform::device_timezones()),
         (Source::Mac, nw_platform::device_mac_addresses()),
         (Source::Ip, nw_platform::device_ip_addresses()),
-        (Source::Wifi, nw_platform::device_wifi_ssids()),
     ] {
         match result {
             Ok(items) => {
@@ -251,6 +255,18 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
             }
         }
     }
+    let wifi = match nw_platform::device_wifi_inventory() {
+        Ok((ssids, randomized)) => {
+            for ssid in ssids {
+                push(&mut values, Source::Wifi, ssid);
+            }
+            randomized
+        }
+        Err(_) => {
+            unavailable.insert(Source::Wifi);
+            None
+        }
+    };
     match git.map(git_identity).transpose() {
         Ok(Some(items)) => {
             for text in items {
@@ -275,11 +291,18 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
         }
     }
     values.sort_by(|a, b| (a.source, &a.value).cmp(&(b.source, &b.value)));
+    let hygiene = hygiene::collect(
+        &values,
+        &unavailable,
+        wifi,
+        nw_platform::device_policy_hints(),
+    );
     let report = Report {
         version: 1,
         lane: nw_proto::Lane::Shadow,
         values,
         unavailable: unavailable.into_iter().collect(),
+        hygiene,
     };
     if !report.valid() {
         return Err("probe_capacity_exceeded");

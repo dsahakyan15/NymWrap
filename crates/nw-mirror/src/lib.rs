@@ -66,6 +66,10 @@ pub struct Metrics {
     pub cover_ratio: Option<f64>,
     pub challenge_rate: Option<f64>,
     pub leak_blocks: u64,
+    #[serde(default)]
+    pub hygiene_score: Option<f64>,
+    #[serde(default)]
+    pub hygiene_coverage: Option<f64>,
 }
 impl Counters {
     pub fn record_delivery(&mut self, decoy: bool) {
@@ -118,6 +122,8 @@ impl Counters {
             cover_ratio: ratio(self.observed_decoys, self.observed_remote),
             challenge_rate: share(self.observed_stops, self.observed_actions),
             leak_blocks: self.leak_blocks,
+            hygiene_score: None,
+            hygiene_coverage: None,
         }
     }
 }

@@ -509,6 +509,39 @@ mod windows {
         let _memory = Local(descriptor);
         sid_string(owner)
     }
+    pub fn create_private_directory(path: &Path) -> io::Result<()> {
+        use windows_sys::Win32::Storage::FileSystem::CreateDirectoryW;
+        let sid = current_user_id()?;
+        let text: Vec<u16> = format!("O:{sid}D:P(A;OICI;FA;;;{sid})")
+            .encode_utf16()
+            .chain(Some(0))
+            .collect();
+        let mut descriptor = ptr::null_mut();
+        if unsafe {
+            ConvertStringSecurityDescriptorToSecurityDescriptorW(
+                text.as_ptr(),
+                1,
+                &mut descriptor,
+                ptr::null_mut(),
+            )
+        } == 0
+        {
+            return Err(failed());
+        }
+        let _memory = Local(descriptor);
+        let attributes = SECURITY_ATTRIBUTES {
+            nLength: std::mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
+            lpSecurityDescriptor: descriptor,
+            bInheritHandle: 0,
+        };
+        let name: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+        // The descriptor applies at creation, including an explicit owner even
+        // when an administrator token's default owner is Administrators.
+        if unsafe { CreateDirectoryW(name.as_ptr(), &attributes) } == 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
+    }
     pub fn private_directory(path: &Path) -> io::Result<()> {
         let sid = current_user_id()?;
         let descriptor_text: Vec<u16> = format!("O:{sid}D:P(A;OICI;FA;;;{sid})")

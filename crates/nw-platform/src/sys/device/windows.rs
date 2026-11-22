@@ -13,6 +13,46 @@ fn wide(text: &str) -> Vec<u16> {
 fn string(units: &[u16]) -> String {
     String::from_utf16_lossy(&units[..units.iter().position(|c| *c == 0).unwrap_or(units.len())])
 }
+pub fn device_policy_hints() -> crate::HygienePolicyHints {
+    fn dword(path: &str, name: &str) -> Option<u32> {
+        let mut value = 0u32;
+        let mut size = 4u32;
+        if unsafe {
+            RegGetValueW(
+                HKEY_LOCAL_MACHINE,
+                wide(path).as_ptr(),
+                wide(name).as_ptr(),
+                RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6464KEY,
+                ptr::null_mut(),
+                (&mut value as *mut u32).cast(),
+                &mut size,
+            )
+        } == ERROR_SUCCESS
+            && size == 4
+        {
+            Some(value)
+        } else {
+            None
+        }
+    }
+    crate::HygienePolicyHints {
+        // A missing force-off policy does not tell us the user's effective consent.
+        location_disabled: dword(
+            r"SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors",
+            "DisableLocation",
+        )
+        .and_then(|v| (v == 1).then_some(true)),
+        llmnr_disabled: dword(
+            r"SOFTWARE\Policies\Microsoft\Windows NT\DNSClient",
+            "EnableMulticast",
+        )
+        .and_then(|v| match v {
+            0 => Some(true),
+            1 => Some(false),
+            _ => None,
+        }),
+    }
+}
 unsafe fn os_string(pointer: *const u16, limit: usize) -> io::Result<String> {
     if pointer.is_null() {
         return Err(unavailable());
@@ -268,7 +308,7 @@ impl<T> Drop for WifiBuffer<T> {
         }
     }
 }
-pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
+pub fn device_wifi_inventory() -> io::Result<(Vec<String>, Option<bool>)> {
     let mut handle = ptr::null_mut();
     let mut version = 0;
     if unsafe { WlanOpenHandle(2, ptr::null(), &mut version, &mut handle) } != ERROR_SUCCESS {
@@ -288,6 +328,7 @@ pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
         return Err(unavailable());
     }
     let mut values = Zeroizing::new(vec![]);
+    let mut randomized = vec![];
     // SAFETY: the API allocates dwNumberOfItems variable-length interface entries;
     // both lists and XML remain Windows-owned until their guards free them.
     for i in 0..count {
@@ -328,41 +369,20 @@ pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
             }
             let xml = WifiBuffer(xml);
             let text = Zeroizing::new(unsafe { os_string(xml.0, 65536) }?);
-            let result = ssid_xml(&text);
+            let result = crate::wlan::parse(&text);
             // The copy may contain encrypted key material. Wipe both copies.
             let units = text.encode_utf16().count();
             unsafe { std::slice::from_raw_parts_mut(xml.0, units) }.zeroize();
-            values.push(result?);
+            let mut profile = result?;
+            randomized.push(profile.randomized);
+            values.push(std::mem::take(&mut profile.ssid));
             if values.len() > 256 {
                 return Err(unavailable());
             }
         }
     }
-    Ok(std::mem::take(&mut *values))
-}
-fn ssid_xml(text: &str) -> io::Result<String> {
-    let ssid = text
-        .split_once("<SSID>")
-        .and_then(|(_, s)| s.split_once("</SSID>"))
-        .map(|(s, _)| s)
-        .ok_or_else(unavailable)?;
-    let hex = ssid
-        .split_once("<hex>")
-        .and_then(|(_, s)| s.split_once("</hex>"))
-        .map(|(s, _)| s)
-        .ok_or_else(unavailable)?;
-    if hex.is_empty()
-        || hex.len() > 64
-        || hex.len() % 2 != 0
-        || !hex.bytes().all(|b| b.is_ascii_hexdigit())
-    {
-        return Err(unavailable());
-    }
-    let bytes = Zeroizing::new(
-        (0..hex.len())
-            .step_by(2)
-            .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).map_err(|_| unavailable()))
-            .collect::<io::Result<Vec<_>>>()?,
-    );
-    String::from_utf8(bytes.to_vec()).map_err(|_| unavailable())
+    Ok((
+        std::mem::take(&mut *values),
+        crate::all_observed_true(&randomized),
+    ))
 }

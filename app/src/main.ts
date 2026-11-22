@@ -1,5 +1,5 @@
 import { takeoutExample } from "./fixtures.js";
-import {createHygienePanel,renderDeviceProbe,deviceInventoryReady,type DeviceProbeStatus} from "./hygiene.js";
+import {createHygienePanel,renderDeviceProbe,renderHygiene,deviceInventoryReady,type DeviceProbeStatus} from "./hygiene.js";
 import {activityTransition,activityLabel,type ActivitySchedule} from "./activity.js";
 import {sessionTimingLabel,type SessionTiming} from "./session.js";
 import {bridgeInput,bridgeStatusLabel,type BridgeStatus} from "./bridges.js";
@@ -210,6 +210,7 @@ async function hydrate(){
   $<HTMLInputElement>("activity-target").value=String(windows?.at(-1)?.start_hour_utc??12);
   $<HTMLInputElement>("activity-width").value=String(windows?.[0]?.width_hours??6);
   deviceProbe=await invoke<DeviceProbeStatus>("load_device_probe");renderDeviceProbe($("device-probe-status"),deviceProbe);
+  renderHygiene($("hygiene-checks"),deviceProbe);
   driftMode.value=c.drift.mode;
   storedSecrets=s;
   $<HTMLInputElement>("model-socket").value=c.llm.endpoint;$<HTMLInputElement>("settings-socket").value=c.llm.endpoint;
@@ -408,6 +409,7 @@ function clearSensitiveUi(){
   $("bridge-status").textContent="Пространство заблокировано.";$<HTMLTextAreaElement>("bridge-lines").value="";
   $("session-timing").textContent=sessionTimingLabel({phase:"locked",first_send_in_s:0,tail_remaining_s:null});
   deviceProbe=undefined;renderDeviceProbe($("device-probe-status"),undefined);
+  renderHygiene($("hygiene-checks"),undefined);
   config=undefined;persona={traits:[]};storedSecrets=[];histories=[];historySelect.replaceChildren();dayHash=undefined;displayedHash=undefined;purgeItems=[];preparedPurge=undefined;resetChat(false);paused=false;unlocked=false;
   document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>("input,textarea").forEach(i=>{i.value="";});
   for(const id of ["audit-result","plan-stages","daily-tasks","persona-traits","purge-candidates","purge-batch","purge-results","observations","provider-keys","remote-jobs"])$(id).replaceChildren();
@@ -420,6 +422,7 @@ function clearSensitiveUi(){
 on("clear-session",async()=>{sessionEpoch++;await invoke("clear_session");clearSensitiveUi();await refreshOverview();show("overview");notify("Пространство заблокировано. Зашифрованные данные сохранены.");});
 on("run-device-probe",async()=>{
   deviceProbe=await invoke<DeviceProbeStatus>("run_device_probe");renderDeviceProbe($("device-probe-status"),deviceProbe);
+  renderHygiene($("hygiene-checks"),deviceProbe);
   storedSecrets=await invoke<Secret[]>("load_secrets");$<HTMLTextAreaElement>("secrets").value=storedSecrets.map(s=>s.value).join("\n");
   updateChatButtons();notify(deviceInventoryReady(deviceProbe)?"Источники устройства проверены; список секретов обновлён.":"Результат сохранён. Проверьте список недоступных источников.");
 });

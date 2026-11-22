@@ -1015,6 +1015,17 @@ impl Workspace {
         if observations.len() > 100 {
             observations.drain(..observations.len() - 100);
         }
+        let mut metrics = self.counters.metrics();
+        let device = self.device_probe_status()?;
+        let at = now();
+        if device.last_success > 0
+            && at >= device.last_success
+            && at - device.last_success < 86400
+            && let Some(hygiene) = device.hygiene.filter(|h| h.valid())
+        {
+            metrics.hygiene_score = hygiene.score();
+            metrics.hygiene_coverage = Some(hygiene.known() as f64 / 6.0);
+        }
         Ok(Overview {
             profile: self.config.profile,
             paused: self.flags.paused,
@@ -1034,7 +1045,7 @@ impl Workspace {
                 .workflow
                 .as_ref()
                 .map_or(0, |w| w.progress.completed_days()),
-            metrics: self.counters.metrics(),
+            metrics,
             observations,
         })
     }
@@ -1255,6 +1266,10 @@ pub async fn rewrite_day<M: LocalModel>(
 }
 
 #[cfg(test)]
+#[path = "../../../tests/leak/src/core_hygiene.rs"]
+mod hygiene_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
@@ -1268,6 +1283,7 @@ mod tests {
                     value: "SYNTHETIC_DEVICE_HOST_CANARY_6319".into(),
                 }],
                 unavailable: vec![],
+                hygiene: Default::default(),
             }
         }
         let directory = tempfile::tempdir().unwrap();
@@ -1323,7 +1339,7 @@ mod tests {
     use nw_vault::VaultError;
     use std::{collections::BTreeMap, sync::Mutex};
     #[derive(Default)]
-    struct MemoryKeys(Mutex<BTreeMap<String, LockedKey>>);
+    pub(super) struct MemoryKeys(Mutex<BTreeMap<String, LockedKey>>);
     impl SecretStore for MemoryKeys {
         fn put(&self, id: &str, key: &LockedKey) -> Result<(), VaultError> {
             self.0

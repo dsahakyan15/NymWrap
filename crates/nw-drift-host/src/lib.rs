@@ -43,7 +43,7 @@ mod tests {
         #[cfg(unix)]
         let value = directory
             .path()
-            .join("cover.sock")
+            .join("private/cover.sock")
             .to_string_lossy()
             .into_owned();
         let _keep = directory;
