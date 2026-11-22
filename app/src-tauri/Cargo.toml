@@ -1,0 +1,25 @@
+[package]
+name = "nymwrap-app"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[build-dependencies]
+tauri-build = { version = "=2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.4", features = [] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+nw-core = { path = "../../crates/nw-core", version = "=0.1.0" }
+nw-proto = { path = "../../crates/nw-proto", version = "=0.1.0" }
+nw-llm = { path = "../../crates/nw-llm", version = "=0.1.0" }
+nw-drift = { path = "../../crates/nw-drift", version = "=0.1.0" }
+nw-audit = { path = "../../crates/nw-audit", version = "=0.1.0" }
+nw-purge = { path = "../../crates/nw-purge", version = "=0.1.0" }
+nw-vault = { path = "../../crates/nw-vault", version = "=0.1.0" }
+nw-platform = { path = "../../crates/nw-platform", version = "=0.1.0" }
+nw-mirror = { path = "../../crates/nw-mirror", version = "=0.1.0" }
+tokio = {version="=1.54.1",features= ["sync", "time"] }
+
+[workspace]

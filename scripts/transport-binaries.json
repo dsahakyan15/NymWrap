@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "release": "16.0.1",
+  "base_url": "https://dist.torproject.org/torbrowser/16.0.1/",
+  "signing_primary": "EF6E286DDA85EA2A4BA7DE684E2C6E8793298290",
+  "signing_subkey": "022DA248432D2A0E0F54E65E316C1FACD62D07D9",
+  "signature_sha256": "d4e1f4b34231aba6f3a5ccd4cec41396807c53bdca009b17cf52d7ce2c1b201b",
+  "checksums_sha256": "38843ec35ba4838d9a9dbb748986d74388d90e7d6f9cd7ead78650f689b84159",
+  "artifacts": [
+    {"platform":"linux-aarch64","archive":"tor-expert-bundle-linux-aarch64-16.0.1.tar.gz","archive_sha256":"67040520d44c87ccaaf5aa7df0dc1ff122eb938dbb600ae7722e8b6b75282a4b","member":"tor/pluggable_transports/lyrebird","binary_sha256":"ae7e4f66955156fae57dfb00b3ff5e317bbb44dadad1d81d729cc23eb8b1d089","bytes":16384162},
+    {"platform":"linux-x86_64","archive":"tor-expert-bundle-linux-x86_64-16.0.1.tar.gz","archive_sha256":"7039cb16060ab22e669852e55774d894b55f25ea8bd0ab7194d3478429a58725","member":"tor/pluggable_transports/lyrebird","binary_sha256":"08c65297c4ac143979c3406215c29f17855e4f330f9a613843975c00bfaa24cf","bytes":18735369},
+    {"platform":"macos-aarch64","archive":"tor-expert-bundle-macos-aarch64-16.0.1.tar.gz","archive_sha256":"0b7d022017c31e3f972d06465bcd7ac50feb66ac825547419a934914fe4bb156","member":"tor/pluggable_transports/lyrebird","binary_sha256":"8d46760255201ce3baadea3b4f8969072043e3eb2c2828d4d0228679539cb271","bytes":15406674},
+    {"platform":"macos-x86_64","archive":"tor-expert-bundle-macos-x86_64-16.0.1.tar.gz","archive_sha256":"15464d99adc3bb4de1308260d79878336b04a1ac1aeff83e10f192de7d235946","member":"tor/pluggable_transports/lyrebird","binary_sha256":"a5085bcfaaeb03087bad6827e8965d71800f40d4f499a048e732a34e7cb3d059","bytes":17129344},
+    {"platform":"windows-x86_64","archive":"tor-expert-bundle-windows-x86_64-16.0.1.tar.gz","archive_sha256":"9eed3c3ff1fe43df034ce360196c9ec95472560d77ff55614d0cd5120edea27b","member":"tor/pluggable_transports/lyrebird.exe","binary_sha256":"9339fb4b7a41fab806e6a7961dc15afed29b8931291c4d2b756db74c471438ac","bytes":19086848}
+  ]
+}

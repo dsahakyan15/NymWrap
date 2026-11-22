@@ -1,0 +1,25 @@
+[package]
+name = "nw-net"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+experimental-nym = []
+
+[dependencies]
+nw-proto.workspace = true
+nw-shield.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+chacha20poly1305.workspace = true
+nw-platform.workspace = true
+nw-ipc.workspace = true
+tokio.workspace = true
+rand.workspace = true
+secrecy.workspace = true
+thiserror.workspace = true
+zeroize.workspace = true
+
+[lints]
+workspace = true

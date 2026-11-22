@@ -1,0 +1,368 @@
+use super::{offset_variants, unavailable};
+use std::{io, ptr};
+use windows_sys::Win32::{
+    Foundation::*,
+    NetworkManagement::{IpHelper::*, NetManagement::*, WiFi::*},
+    Networking::WinSock::*,
+    System::{Registry::*, SystemInformation::*, Time::*, WindowsProgramming::GetUserNameW},
+};
+use zeroize::{Zeroize, Zeroizing};
+fn wide(text: &str) -> Vec<u16> {
+    text.encode_utf16().chain(Some(0)).collect()
+}
+fn string(units: &[u16]) -> String {
+    String::from_utf16_lossy(&units[..units.iter().position(|c| *c == 0).unwrap_or(units.len())])
+}
+unsafe fn os_string(pointer: *const u16, limit: usize) -> io::Result<String> {
+    if pointer.is_null() {
+        return Err(unavailable());
+    }
+    let mut len = 0;
+    // SAFETY: only Windows-owned, documented NUL-terminated output strings enter
+    // here. They remain owned by the caller's guard until this copy finishes.
+    while len < limit && unsafe { *pointer.add(len) } != 0 {
+        len += 1;
+    }
+    if len == limit {
+        return Err(unavailable());
+    }
+    Ok(String::from_utf16_lossy(unsafe {
+        std::slice::from_raw_parts(pointer, len)
+    }))
+}
+pub fn device_host_names() -> io::Result<Vec<String>> {
+    let mut values = Zeroizing::new(vec![]);
+    for kind in [
+        ComputerNamePhysicalNetBIOS,
+        ComputerNamePhysicalDnsHostname,
+        ComputerNamePhysicalDnsDomain,
+    ] {
+        let mut data = Zeroizing::new(vec![0u16; 256]);
+        let mut size = data.len() as u32;
+        if unsafe { GetComputerNameExW(kind, data.as_mut_ptr(), &mut size) } == 0 {
+            return Err(unavailable());
+        }
+        let value = string(&data);
+        if !value.is_empty() {
+            values.push(value);
+        }
+    }
+    Ok(std::mem::take(&mut *values))
+}
+pub fn device_user_names() -> io::Result<Vec<String>> {
+    let mut name = Zeroizing::new(vec![0u16; 257]);
+    let mut size = name.len() as u32;
+    if unsafe { GetUserNameW(name.as_mut_ptr(), &mut size) } == 0 {
+        return Err(unavailable());
+    }
+    let mut raw = ptr::null_mut();
+    let mut values = Zeroizing::new(vec![string(&name)]);
+    if unsafe { NetUserGetInfo(ptr::null(), name.as_ptr(), 10, &mut raw) } != 0 {
+        return Err(unavailable());
+    }
+    struct Buffer(*mut u8);
+    impl Drop for Buffer {
+        fn drop(&mut self) {
+            unsafe {
+                NetApiBufferFree(self.0.cast());
+            }
+        }
+    }
+    let _buffer = Buffer(raw);
+    if raw.is_null() {
+        return Err(unavailable());
+    }
+    let user = unsafe { &*raw.cast::<USER_INFO_10>() };
+    let full = unsafe { os_string(user.usri10_full_name, 1024) }?;
+    if !full.is_empty() {
+        values.push(full);
+    }
+    Ok(std::mem::take(&mut *values))
+}
+pub fn device_machine_ids() -> io::Result<Vec<String>> {
+    let mut value = Zeroizing::new(vec![0u16; 128]);
+    let mut bytes = (value.len() * 2) as u32;
+    if unsafe {
+        RegGetValueW(
+            HKEY_LOCAL_MACHINE,
+            wide("SOFTWARE\\Microsoft\\Cryptography").as_ptr(),
+            wide("MachineGuid").as_ptr(),
+            RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY,
+            ptr::null_mut(),
+            value.as_mut_ptr().cast(),
+            &mut bytes,
+        )
+    } != ERROR_SUCCESS
+    {
+        return Err(unavailable());
+    }
+    Ok(vec![string(&value)])
+}
+pub fn device_timezones() -> io::Result<Vec<String>> {
+    let mut zone: DYNAMIC_TIME_ZONE_INFORMATION = unsafe { std::mem::zeroed() };
+    let kind = unsafe { GetDynamicTimeZoneInformation(&mut zone) };
+    if kind == TIME_ZONE_ID_INVALID {
+        return Err(unavailable());
+    }
+    // GetDynamicTimeZoneInformation: 0=unknown, 1=standard, 2=daylight.
+    let bias = zone.Bias
+        + if kind == 2 {
+            zone.DaylightBias
+        } else {
+            zone.StandardBias
+        };
+    let mut result = vec![
+        string(&zone.TimeZoneKeyName),
+        string(&zone.StandardName),
+        string(&zone.DaylightName),
+    ];
+    result.retain(|s| !s.is_empty());
+    result.extend(offset_variants(-i64::from(bias)));
+    zone.TimeZoneKeyName.zeroize();
+    zone.StandardName.zeroize();
+    zone.DaylightName.zeroize();
+    Ok(result)
+}
+fn adapters() -> io::Result<(Vec<String>, Vec<String>)> {
+    let mut size = 15360u32;
+    for _ in 0..3 {
+        if size as usize > 1024 * 1024 {
+            return Err(unavailable());
+        }
+        let mut memory = Zeroizing::new(vec![
+            0usize;
+            (size as usize).div_ceil(std::mem::size_of::<usize>())
+        ]);
+        let first = memory.as_mut_ptr().cast::<IP_ADAPTER_ADDRESSES_LH>();
+        let status = unsafe {
+            GetAdaptersAddresses(
+                AF_UNSPEC as u32,
+                GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER,
+                ptr::null(),
+                first,
+                &mut size,
+            )
+        };
+        if status == ERROR_BUFFER_OVERFLOW {
+            continue;
+        }
+        if status != ERROR_SUCCESS {
+            return Err(unavailable());
+        }
+        let valid = |pointer: usize, len: usize, alignment: usize| {
+            pointer >= first as usize
+                && pointer.checked_add(len).is_some_and(|end| {
+                    end <= first as usize + memory.len() * std::mem::size_of::<usize>()
+                })
+                && pointer.is_multiple_of(alignment)
+        };
+        let mut mac = Zeroizing::new(vec![]);
+        let mut ips = Zeroizing::new(vec![]);
+        let mut next = first;
+        let mut count = 0;
+        while !next.is_null() {
+            count += 1;
+            if count > 1024
+                || !valid(
+                    next as usize,
+                    std::mem::size_of::<IP_ADAPTER_ADDRESSES_LH>(),
+                    std::mem::align_of::<IP_ADAPTER_ADDRESSES_LH>(),
+                )
+            {
+                return Err(unavailable());
+            }
+            let item = unsafe { &*next };
+            if item.PhysicalAddressLength == 6 && item.PhysicalAddress[..6].iter().any(|b| *b != 0)
+            {
+                mac.push(
+                    item.PhysicalAddress[..6]
+                        .iter()
+                        .map(|b| format!("{b:02x}"))
+                        .collect::<Vec<_>>()
+                        .join(":"),
+                );
+            }
+            let mut addr = item.FirstUnicastAddress;
+            let mut addr_count = 0;
+            while !addr.is_null() {
+                addr_count += 1;
+                if addr_count > 1024
+                    || !valid(
+                        addr as usize,
+                        std::mem::size_of::<IP_ADAPTER_UNICAST_ADDRESS_LH>(),
+                        std::mem::align_of::<IP_ADAPTER_UNICAST_ADDRESS_LH>(),
+                    )
+                {
+                    return Err(unavailable());
+                }
+                let unicast = unsafe { &*addr };
+                let socket = unicast.Address.lpSockaddr;
+                if !socket.is_null()
+                    && valid(
+                        socket as usize,
+                        std::mem::size_of::<SOCKADDR>(),
+                        std::mem::align_of::<SOCKADDR>(),
+                    )
+                {
+                    let family = unsafe { (*socket).sa_family };
+                    let ip = if family == AF_INET
+                        && valid(
+                            socket as usize,
+                            std::mem::size_of::<SOCKADDR_IN>(),
+                            std::mem::align_of::<SOCKADDR_IN>(),
+                        ) {
+                        let address = unsafe { &*socket.cast::<SOCKADDR_IN>() };
+                        Some(std::net::IpAddr::from(
+                            unsafe { address.sin_addr.S_un.S_addr }.to_ne_bytes(),
+                        ))
+                    } else if family == AF_INET6
+                        && valid(
+                            socket as usize,
+                            std::mem::size_of::<SOCKADDR_IN6>(),
+                            std::mem::align_of::<SOCKADDR_IN6>(),
+                        )
+                    {
+                        let address = unsafe { &*socket.cast::<SOCKADDR_IN6>() };
+                        Some(std::net::IpAddr::from(unsafe { address.sin6_addr.u.Byte }))
+                    } else {
+                        None
+                    };
+                    if let Some(ip) = ip
+                        && !ip.is_loopback()
+                        && !ip.is_unspecified()
+                    {
+                        ips.push(ip.to_string());
+                    }
+                }
+                addr = unicast.Next;
+            }
+            next = item.Next;
+        }
+        return Ok((std::mem::take(&mut *mac), std::mem::take(&mut *ips)));
+    }
+    Err(unavailable())
+}
+pub fn device_mac_addresses() -> io::Result<Vec<String>> {
+    let (mac, ips) = adapters()?;
+    let _ips = Zeroizing::new(ips);
+    Ok(mac)
+}
+pub fn device_ip_addresses() -> io::Result<Vec<String>> {
+    let (mac, ips) = adapters()?;
+    let _mac = Zeroizing::new(mac);
+    Ok(ips)
+}
+struct Wifi(windows_sys::Win32::Foundation::HANDLE);
+impl Drop for Wifi {
+    fn drop(&mut self) {
+        unsafe {
+            WlanCloseHandle(self.0, ptr::null());
+        }
+    }
+}
+struct WifiBuffer<T>(*mut T);
+impl<T> Drop for WifiBuffer<T> {
+    fn drop(&mut self) {
+        unsafe {
+            WlanFreeMemory(self.0.cast());
+        }
+    }
+}
+pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
+    let mut handle = ptr::null_mut();
+    let mut version = 0;
+    if unsafe { WlanOpenHandle(2, ptr::null(), &mut version, &mut handle) } != ERROR_SUCCESS {
+        return Err(unavailable());
+    }
+    let wifi = Wifi(handle);
+    let mut interfaces = ptr::null_mut();
+    if unsafe { WlanEnumInterfaces(wifi.0, ptr::null(), &mut interfaces) } != ERROR_SUCCESS {
+        return Err(unavailable());
+    }
+    let interfaces = WifiBuffer(interfaces);
+    if interfaces.0.is_null() {
+        return Err(unavailable());
+    }
+    let count = unsafe { (*interfaces.0).dwNumberOfItems } as usize;
+    if count > 256 {
+        return Err(unavailable());
+    }
+    let mut values = Zeroizing::new(vec![]);
+    // SAFETY: the API allocates dwNumberOfItems variable-length interface entries;
+    // both lists and XML remain Windows-owned until their guards free them.
+    for i in 0..count {
+        let interface = unsafe { &*(*interfaces.0).InterfaceInfo.as_ptr().add(i) };
+        let mut profiles = ptr::null_mut();
+        if unsafe {
+            WlanGetProfileList(wifi.0, &interface.InterfaceGuid, ptr::null(), &mut profiles)
+        } != ERROR_SUCCESS
+        {
+            return Err(unavailable());
+        }
+        let profiles = WifiBuffer(profiles);
+        if profiles.0.is_null() {
+            return Err(unavailable());
+        }
+        let count = unsafe { (*profiles.0).dwNumberOfItems } as usize;
+        if count > 256 {
+            return Err(unavailable());
+        }
+        for j in 0..count {
+            let profile = unsafe { &*(*profiles.0).ProfileInfo.as_ptr().add(j) };
+            let mut xml = ptr::null_mut();
+            let (mut flags, mut access) = (0, 0);
+            // flags=0 never requests WLAN_PROFILE_GET_PLAINTEXT_KEY.
+            if unsafe {
+                WlanGetProfile(
+                    wifi.0,
+                    &interface.InterfaceGuid,
+                    profile.strProfileName.as_ptr(),
+                    ptr::null(),
+                    &mut xml,
+                    &mut flags,
+                    &mut access,
+                )
+            } != ERROR_SUCCESS
+            {
+                return Err(unavailable());
+            }
+            let xml = WifiBuffer(xml);
+            let text = Zeroizing::new(unsafe { os_string(xml.0, 65536) }?);
+            let result = ssid_xml(&text);
+            // The copy may contain encrypted key material. Wipe both copies.
+            let units = text.encode_utf16().count();
+            unsafe { std::slice::from_raw_parts_mut(xml.0, units) }.zeroize();
+            values.push(result?);
+            if values.len() > 256 {
+                return Err(unavailable());
+            }
+        }
+    }
+    Ok(std::mem::take(&mut *values))
+}
+fn ssid_xml(text: &str) -> io::Result<String> {
+    let ssid = text
+        .split_once("<SSID>")
+        .and_then(|(_, s)| s.split_once("</SSID>"))
+        .map(|(s, _)| s)
+        .ok_or_else(unavailable)?;
+    let hex = ssid
+        .split_once("<hex>")
+        .and_then(|(_, s)| s.split_once("</hex>"))
+        .map(|(s, _)| s)
+        .ok_or_else(unavailable)?;
+    if hex.is_empty()
+        || hex.len() > 64
+        || hex.len() % 2 != 0
+        || !hex.bytes().all(|b| b.is_ascii_hexdigit())
+    {
+        return Err(unavailable());
+    }
+    let bytes = Zeroizing::new(
+        (0..hex.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).map_err(|_| unavailable()))
+            .collect::<io::Result<Vec<_>>>()?,
+    );
+    String::from_utf8(bytes.to_vec()).map_err(|_| unavailable())
+}

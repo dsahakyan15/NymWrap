@@ -1,0 +1,169 @@
+name: checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  core:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: rustup show
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config libssl-dev libdbus-1-dev bubblewrap
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/bootstrap-perl.ps1
+          ./scripts/bootstrap-libclang.ps1
+          "OPENSSL_SRC_PERL=$PWD/target/tools/strawberry-perl-5.40.5.1/perl/bin/perl.exe" >> $env:GITHUB_ENV
+          "LIBCLANG_PATH=$PWD/target/tools/libclang-18.1.1" >> $env:GITHUB_ENV
+      - run: cargo fmt --all -- --check
+      - run: cargo test --workspace --locked
+      - run: cargo test -p nw-llm --example privacy_eval --locked
+      - run: cargo test -p nw-core --example privacy_pipeline --locked
+      - if: runner.os == 'Windows'
+        run: cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
+      - if: runner.os == 'Linux'
+        run: cargo test -p nw-sandbox --test agent actual_agent --locked -- --ignored
+      - if: runner.os == 'Windows' || runner.os == 'Linux'
+        run: cargo test -p nw-probe --test worker actual_device_probe --locked -- --ignored
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - run: cargo test -p nw-leak-tests --locked
+  linux-isolation-vm:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: node scripts/linux-isolation-probe.mjs --prepare
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: linux-isolation-from-windows
+          path: |
+            target/linux-isolation/report.json
+            target/linux-isolation/serial.log
+          if-no-files-found: error
+  frontends:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: npm ci && npm test
+        working-directory: extension
+      - run: npm ci && npm test
+        working-directory: app
+      - run: node --test scripts/tests/*.test.mjs
+  extension-browser:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: npm ci
+        working-directory: extension
+      - if: runner.os == 'Linux'
+        run: npx --no-install playwright install-deps chromium
+        working-directory: extension
+      - run: npm run browser:install
+        working-directory: extension
+      - if: runner.os == 'Windows'
+        run: npm run firefox:install
+        working-directory: extension
+      - run: npm run test:browser
+        working-directory: extension
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: rustup show
+      - run: cargo fetch --locked
+      - run: cargo fetch --manifest-path app/src-tauri/Cargo.toml --locked
+      - run: cargo fetch --manifest-path daemons/nw-netd/Cargo.toml --locked
+      - run: node scripts/sbom.mjs --target x86_64-unknown-linux-gnu --out target/sbom/nymwrap-linux.cdx.json
+      - run: node scripts/sbom.mjs --target x86_64-pc-windows-msvc --out target/sbom/nymwrap-windows.cdx.json
+      - run: node scripts/sbom.mjs --target aarch64-apple-darwin --out target/sbom/nymwrap-macos.cdx.json
+      - shell: pwsh
+        run: |
+          Get-ChildItem -LiteralPath target/sbom -Filter '*.cdx.json' | ForEach-Object { ./scripts/validate-sbom.ps1 -Path $_.FullName }
+          if (!$?) { throw 'SBOM schema validation failed' }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nymwrap-source-sbom
+          path: target/sbom/*.cdx.json
+          if-no-files-found: error
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: cargo install cargo-deny --version 0.22.0 --locked
+      - run: cargo deny check --hide-inclusion-graph
+      - run: cargo deny --manifest-path app/src-tauri/Cargo.toml check --hide-inclusion-graph
+      - run: cargo deny --manifest-path daemons/nw-netd/Cargo.toml check --hide-inclusion-graph
+      - run: cargo deny --manifest-path fuzz/Cargo.toml --all-features check --hide-inclusion-graph
+  network:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: rustup show
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config
+      - run: cargo fmt --manifest-path daemons/nw-netd/Cargo.toml -- --check
+      - run: cargo test --manifest-path daemons/nw-netd/Cargo.toml --locked
+      - run: node scripts/fetch-transports.mjs
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:NW_TEST_PT_BINARY="$PWD/daemons/nw-netd/target/debug/transports/lyrebird.exe"
+          cargo test --manifest-path daemons/nw-netd/Cargo.toml --lib actual_installed_pt --locked -- --ignored
+      - if: runner.os == 'Linux'
+        run: bash scripts/ci/transport-fscrypt.sh
+      - run: cargo clippy --manifest-path daemons/nw-netd/Cargo.toml --all-targets --locked -- -D warnings
+  desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: npm ci
+        working-directory: app
+      - shell: pwsh
+        run: |
+          ./scripts/bootstrap-perl.ps1
+          ./scripts/bootstrap-libclang.ps1
+      - run: npm run desktop:build
+        working-directory: app
+      - run: npm ci
+        working-directory: extension
+      - run: npm run firefox:install
+        working-directory: extension
+      - run: npm run test:native:firefox
+        working-directory: extension
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: firefox-native-core
+          path: target/browser-tests/reports/firefox-native.json
+          if-no-files-found: ignore

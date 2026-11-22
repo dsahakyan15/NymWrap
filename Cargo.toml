@@ -1,0 +1,61 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "tests/leak"]
+exclude = ["app/src-tauri", "vendor/llama-cpp-2", "fuzz"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+thiserror = "=2.0.21"
+zeroize = { version = "=1.9.2", features = ["derive"] }
+secrecy = "=0.10.3"
+chacha20poly1305 = "=0.10.1"
+argon2 = "=0.5.3"
+rand = "=0.8.8"
+sha2 = "=0.10.9"
+regex = "=1.12.2"
+unicode-normalization = "=0.1.24"
+base64 = "=0.22.1"
+tokio = { version = "=1.54.1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync", "process"] }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+hyper = { version = "=1.12.0", features = ["client", "http1"] }
+hyper-util = { version = "=0.1.21", features = ["tokio"] }
+http-body-util = "=0.1.5"
+tower = { version = "=0.5.3", features = ["util", "limit", "timeout"] }
+tempfile = "=3.23.0"
+rusqlite = { version = "=0.43.0", default-features = false, features = ["bundled-sqlcipher-vendored-openssl", "backup", "serialize", "limits"] }
+keyring = { version = "=3.6.3", default-features = false }
+interprocess = { version = "=2.4.9", features = ["tokio"] }
+toml = "=1.2.2"
+widestring = "=1.2.1"
+libc = "=0.2.191"
+nw-proto = { path = "crates/nw-proto", version = "=0.1.0" }
+nw-vault = { path = "crates/nw-vault", version = "=0.1.0" }
+nw-shield = { path = "crates/nw-shield", version = "=0.1.0" }
+nw-llm = { path = "crates/nw-llm", version = "=0.1.0" }
+nw-drift = { path = "crates/nw-drift", version = "=0.1.0" }
+nw-audit = { path = "crates/nw-audit", version = "=0.1.0" }
+nw-purge = { path = "crates/nw-purge", version = "=0.1.0" }
+nw-sandbox = { path = "crates/nw-sandbox", version = "=0.1.0" }
+nw-core = { path = "crates/nw-core", version = "=0.1.0" }
+nw-platform = { path = "crates/nw-platform", version = "=0.1.0" }
+nw-ipc = { path = "crates/nw-ipc", version = "=0.1.0" }
+nw-probe = { path = "crates/nw-probe", version = "=0.1.0" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[patch.crates-io]
+llama-cpp-2 = { path = "vendor/llama-cpp-2" }

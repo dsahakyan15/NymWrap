@@ -1,0 +1,22 @@
+[package]
+name = "nw-llm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nw-proto.workspace = true
+nw-shield.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+secrecy.workspace = true
+zeroize.workspace = true
+thiserror.workspace = true
+nw-ipc.workspace = true
+tokio.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+http-body-util.workspace = true
+
+[lints]
+workspace = true

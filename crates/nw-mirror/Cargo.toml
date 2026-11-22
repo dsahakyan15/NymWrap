@@ -1,0 +1,13 @@
+[package]
+name = "nw-mirror"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nw-drift.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

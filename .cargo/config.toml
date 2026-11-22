@@ -1,0 +1,4 @@
+[target.x86_64-pc-windows-msvc]
+# Vendored OpenSSL static archives reference an upstream debug PDB not installed
+# with the archives. This suppresses only missing native debug-symbol notices.
+rustflags = ["-C", "link-arg=/IGNORE:4099"]

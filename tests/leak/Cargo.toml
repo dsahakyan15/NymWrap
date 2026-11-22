@@ -1,0 +1,26 @@
+[package]
+name = "nw-leak-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dev-dependencies]
+nw-core.workspace = true
+nw-api = { path = "../../crates/nw-api", version = "=0.1.0" }
+axum.workspace = true
+tower.workspace = true
+http-body-util.workspace = true
+nw-llm.workspace = true
+tokio.workspace = true
+nw-proto.workspace = true
+nw-shield.workspace = true
+nw-vault.workspace = true
+base64.workspace = true
+secrecy.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+nw-net = { path = "../../crates/nw-net", version = "=0.1.0" }
+nw-bridge = {path="../../crates/nw-bridge",version="=0.1.0"}
+
+[lints]
+workspace = true

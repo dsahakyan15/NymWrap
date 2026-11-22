@@ -1,0 +1,48 @@
+[package]
+name = "nw-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "nymwrap"
+path = "src/main.rs"
+
+[[bin]]
+name = "nymwrapd"
+path = "src/daemon.rs"
+
+[dependencies]
+nw-proto.workspace = true
+nw-shield.workspace = true
+nw-vault.workspace = true
+nw-llm.workspace = true
+nw-drift.workspace = true
+nw-audit.workspace = true
+nw-purge.workspace = true
+nw-sandbox.workspace = true
+nw-cred = {path="../nw-cred",version="=0.1.0"}
+nw-net = {path="../nw-net",version="=0.1.0"}
+nw-cover = {path="../nw-cover",version="=0.1.0"}
+serde.workspace = true
+serde_json.workspace = true
+secrecy.workspace = true
+zeroize.workspace = true
+rand.workspace = true
+tokio = {workspace=true,features=["signal"]}
+thiserror.workspace = true
+toml.workspace = true
+sha2.workspace = true
+nw-platform.workspace = true
+nw-ipc.workspace = true
+nw-probe.workspace = true
+nw-bridge = {path="../nw-bridge",version="=0.1.0"}
+base64.workspace = true
+nw-mirror = {path="../nw-mirror",version="=0.1.0"}
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

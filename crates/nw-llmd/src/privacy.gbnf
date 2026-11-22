@@ -1,0 +1,6 @@
+root ::= "{\"local_only\":" boolean ",\"entities\":[" (entity ("," entity)*)? "]}"
+boolean ::= "true" | "false"
+entity ::= "{\"kind\":" kind ",\"text\":" string "}"
+kind ::= "\"PERSON\"" | "\"CITY\"" | "\"ORGANIZATION\"" | "\"ADDRESS\"" | "\"IDENTIFIER\""
+string ::= "\"" char* "\""
+char ::= [^"\\\x00-\x1F] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4})

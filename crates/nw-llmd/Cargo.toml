@@ -1,0 +1,33 @@
+[package]
+name = "nw-llmd"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = ["inference"]
+inference = ["dep:llama-cpp-2"]
+
+[dependencies]
+nw-proto.workspace = true
+nw-ipc.workspace = true
+nw-platform.workspace = true
+nw-llm.workspace = true
+tokio = { workspace = true, features = ["signal"] }
+axum.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+sha2.workspace = true
+zeroize.workspace = true
+llama-cpp-2 = {version="=0.1.161",default-features=false,optional=true}
+
+[dev-dependencies]
+tower.workspace = true
+http-body-util.workspace = true
+tempfile.workspace = true
+secrecy.workspace = true
+
+[lints]
+workspace = true

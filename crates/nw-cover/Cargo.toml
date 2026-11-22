@@ -1,0 +1,17 @@
+[package]
+name = "nw-cover"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nw-proto.workspace = true
+rand.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

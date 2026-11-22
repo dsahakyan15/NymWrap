@@ -1,0 +1,7 @@
+{
+  "text":"Я Синтетик Тестов из Синтеграда. Напиши на demo@example.test про садоводство.",
+  "secrets":[
+    {"kind":"PERSON","value":"Синтетик Тестов","local_only":false},
+    {"kind":"CITY","value":"Синтеграда","local_only":false}
+  ]
+}

@@ -1,0 +1,6 @@
+/** Synthetic data only. Titles deliberately contain markup to exercise text rendering. */
+export const takeoutExample = JSON.stringify([
+  {title:"Searched for pottery garden ideas",titleUrl:"https://www.google.com/search?q=pottery",time:"2026-01-01T12:00:00Z"},
+  {title:"Watched: how clouds form",titleUrl:"https://www.youtube.com/watch?v=SYNTHETIC",time:"2026-01-01T13:00:00Z"},
+  {title:"<script>synthetic_xss_canary</script>",titleUrl:"https://example.test/",time:"2026-01-01T13:00:00Z"},
+]);

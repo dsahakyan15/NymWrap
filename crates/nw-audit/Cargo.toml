@@ -1,0 +1,18 @@
+[package]
+name = "nw-audit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nw-platform.workspace = true
+zeroize.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+rusqlite = {workspace=true,features=["hooks"]}
+zip = {version="=9.8.1",default-features=false,features=["deflate-flate2-zlib-rs"]}
+scraper = {version="=0.29.0",default-features=false}
+
+[lints]
+workspace = true

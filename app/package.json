@@ -1,0 +1,11 @@
+{
+  "name": "nymwrap-app", "version": "0.1.0", "private": true, "type": "module",
+  "scripts": {
+    "build": "tsc && node scripts/build.mjs",
+    "check": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "desktop": "node scripts/desktop.mjs",
+    "desktop:build": "node scripts/desktop.mjs --build"
+  },
+  "devDependencies": { "typescript": "7.0.2", "@tauri-apps/cli": "2.12.6" }
+}

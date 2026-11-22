@@ -1,0 +1,59 @@
+[package]
+name = "nymwrap-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+rust-version = "1.100"
+license = "MIT OR Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[features]
+audit = ["dep:nw-audit"]
+ipc-core = ["dep:nw-core"]
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+nw-audit = { path = "../crates/nw-audit", version = "=0.1.0", optional = true }
+nw-bridge = { path = "../crates/nw-bridge", version = "=0.1.0" }
+nw-core = { path = "../crates/nw-core", version = "=0.1.0", optional = true }
+nw-ipc = { path = "../crates/nw-ipc", version = "=0.1.0" }
+nw-proto = { path = "../crates/nw-proto", version = "=0.1.0" }
+nw-shield = { path = "../crates/nw-shield", version = "=0.1.0" }
+serde_json = "=1.0.154"
+secrecy = "=0.10.3"
+tokio = { version = "=1.54.1", features = ["rt", "time", "io-util"] }
+
+[dev-dependencies]
+rusqlite = { version = "=0.43.0", default-features = false, features = ["bundled-sqlcipher-vendored-openssl", "serialize"] }
+zip = { version = "=9.8.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+[[bin]]
+name = "audit_import"
+path = "fuzz_targets/audit_import.rs"
+test = false
+doc = false
+bench = false
+required-features = ["audit"]
+
+[[bin]]
+name = "ipc_frames"
+path = "fuzz_targets/ipc_frames.rs"
+test = false
+doc = false
+bench = false
+required-features = ["ipc-core"]
+
+[[bin]]
+name = "shield_roundtrip"
+path = "fuzz_targets/shield_roundtrip.rs"
+test = false
+doc = false
+bench = false
+
+[[example]]
+name = "seed_formats"
+required-features = ["audit"]

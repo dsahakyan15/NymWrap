@@ -1,0 +1,19 @@
+[package]
+name = "nw-probe"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nw-platform.workspace = true
+nw-proto.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+zeroize.workspace = true
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+nw-sandbox.workspace = true

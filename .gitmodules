@@ -1,0 +1,3 @@
+[submodule "web3lesson"]
+	path = web3lesson
+	url = https://github.com/tonoyandev/web3lesson.git

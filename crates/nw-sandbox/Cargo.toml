@@ -1,0 +1,18 @@
+[package]
+name = "nw-sandbox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+nw-platform.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+zeroize.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

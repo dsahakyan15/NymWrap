@@ -1,0 +1,17 @@
+[package]
+name="rusqlite"
+version="0.40.99"
+edition="2024"
+license="MIT"
+description="NymWrap compatibility re-export of patched SQLite for Arti 0.48"
+[dependencies]
+rusqlite-new={package="rusqlite",version="=0.43.0",default-features=false}
+[features]
+default=[]
+bundled=["rusqlite-new/bundled"]
+time=["rusqlite-new/time"]
+modern_sqlite=["rusqlite-new/modern_sqlite"]
+backup=["rusqlite-new/backup"]
+functions=["rusqlite-new/functions"]
+hooks=["rusqlite-new/hooks"]
+trace=["rusqlite-new/trace"]

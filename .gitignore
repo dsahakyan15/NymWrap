@@ -1,0 +1,16 @@
+/target/
+**/node_modules/
+**/dist/
+**/dist-firefox/
+/app/src-tauri/target/
+/daemons/nw-netd/target/
+/fuzz/target/
+/fuzz/corpus/
+/fuzz/artifacts/
+/fuzz/coverage/
+/app/src-tauri/gen/
+*.nwenc
+*.keyring
+.env
+*.log
+.DS_Store

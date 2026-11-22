@@ -1,0 +1,25 @@
+[package]
+name = "nw-cred"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+experimental-zkapi = []
+
+[dependencies]
+secrecy.workspace = true
+thiserror.workspace = true
+nw-platform.workspace = true
+zeroize.workspace = true
+rand.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+keyring={workspace=true,features=["windows-native"]}
+[target.'cfg(target_os="macos")'.dependencies]
+keyring={workspace=true,features=["apple-native"]}
+[target.'cfg(target_os="linux")'.dependencies]
+keyring={workspace=true,features=["sync-secret-service","crypto-rust","vendored"]}
+
+[lints]
+workspace = true
