@@ -323,6 +323,29 @@ pub fn process_image(pid: u32) -> io::Result<std::path::PathBuf> {
     std::fs::read_link(format!("/proc/{pid}/exe"))
 }
 #[cfg(target_os = "macos")]
+pub fn local_peer_process(socket: std::os::fd::BorrowedFd<'_>) -> io::Result<u32> {
+    use std::os::fd::AsRawFd;
+    let mut pid: libc::pid_t = 0;
+    let mut size = std::mem::size_of_val(&pid) as libc::socklen_t;
+    // Darwin's xucred does not carry a PID. Query the connected socket itself;
+    // a missing, malformed or nonpositive kernel result never authenticates.
+    if unsafe {
+        libc::getsockopt(
+            socket.as_raw_fd(),
+            libc::SOL_LOCAL,
+            libc::LOCAL_PEERPID,
+            (&mut pid as *mut libc::pid_t).cast(),
+            &mut size,
+        )
+    } != 0
+        || size as usize != std::mem::size_of_val(&pid)
+        || pid <= 0
+    {
+        return Err(failed());
+    }
+    u32::try_from(pid).map_err(|_| failed())
+}
+#[cfg(target_os = "macos")]
 pub fn process_image(pid: u32) -> io::Result<std::path::PathBuf> {
     use std::os::unix::ffi::OsStringExt;
     let pid = i32::try_from(pid).map_err(|_| failed())?;

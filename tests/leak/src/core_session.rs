@@ -10,6 +10,61 @@ use nw_vault::{VaultError, os_secret::SecretStore};
 use std::time::Duration;
 const CANARY: &str = "SESSION_PRIVATE_CANARY_68124";
 
+#[tokio::test]
+#[ignore = "M6 open: production shadow RPC needs authorization against an unapproved same-user client"]
+async fn unapproved_same_user_shadow_client_cannot_read_unlocked_secrets() {
+    use nw_ipc::{Endpoint, Listener, Packet};
+    use nw_proto::Lane;
+    let (directory, source) = fixture(false);
+    let service = Service::runtime(None);
+    service.state.session.lock().unwrap().workspace =
+        source.session.lock().unwrap().workspace.take();
+    #[cfg(unix)]
+    let address = directory
+        .path()
+        .join("private/attack.sock")
+        .to_string_lossy()
+        .into_owned();
+    #[cfg(windows)]
+    let address = format!(
+        "nymwrap-unapproved-{}-{}",
+        std::process::id(),
+        directory.path().file_name().unwrap().to_string_lossy()
+    );
+    let endpoint = Endpoint::new(address, Lane::Shadow).unwrap();
+    let listener = Listener::bind(endpoint.clone()).unwrap();
+    let worker = service.clone();
+    let server = tokio::spawn(async move {
+        worker.serve_shadow(listener).await.unwrap();
+    });
+    let mut stream = endpoint.connect().await.unwrap();
+    let bytes = serde_json::to_vec(&Packet::new(Lane::Shadow, 1, Command::LoadSecrets {})).unwrap();
+    nw_ipc::write_frame(&mut stream, &bytes, 4096)
+        .await
+        .unwrap();
+    let reply = tokio::time::timeout(
+        Duration::from_secs(2),
+        nw_ipc::read_frame(&mut stream, 4096),
+    )
+    .await;
+    server.abort();
+    let _ = server.await;
+    match reply {
+        Ok(Err(_)) => {}
+        Ok(Ok(bytes)) => {
+            assert!(
+                !bytes
+                    .windows(CANARY.len())
+                    .any(|part| part == CANARY.as_bytes()),
+                "unapproved same-user IPC client received a vault canary"
+            );
+            let packet: Packet<Reply> = serde_json::from_slice(&bytes).unwrap();
+            assert!(matches!(packet.body, Reply::Error { .. }));
+        }
+        Err(_) => panic!("unapproved client must be rejected within the bounded handshake"),
+    }
+}
+
 #[test]
 fn private_bridges_are_encrypted_reopened_bound_to_approvals_and_guarded_by_shield() {
     use nw_net::bridges::{BridgeConfig, BridgeTransport};

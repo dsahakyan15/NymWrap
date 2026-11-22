@@ -348,7 +348,11 @@ mod tests {
         #[cfg(windows)]
         let address = format!("nymwrap-inference-test-{}", std::process::id());
         #[cfg(unix)]
-        let address = dir.path().join("model.sock").to_string_lossy().into_owned();
+        let address = dir
+            .path()
+            .join("private/model.sock")
+            .to_string_lossy()
+            .into_owned();
         let _keep = dir;
         let endpoint = nw_ipc::Endpoint::new(address.clone(), nw_proto::Lane::Shadow).unwrap();
         let listener = nw_ipc::Listener::bind(endpoint).unwrap();

@@ -56,7 +56,7 @@ async fn nymwrap_canary_parent() {
     #[cfg(unix)]
     let address = dir
         .path()
-        .join("cleanup.sock")
+        .join("private/cleanup.sock")
         .to_string_lossy()
         .into_owned();
     let endpoint = nw_ipc::Endpoint::new(address.clone(), nw_proto::Lane::Shadow).unwrap();

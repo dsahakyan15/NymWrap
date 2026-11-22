@@ -124,7 +124,11 @@ impl Listener {
             let parent = Path::new(&endpoint.value)
                 .parent()
                 .ok_or(IpcError::Endpoint)?;
-            match fs::DirBuilder::new().mode(0o700).create(parent) {
+            match fs::DirBuilder::new()
+                .recursive(true)
+                .mode(0o700)
+                .create(parent)
+            {
                 Ok(()) => {}
                 Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
                 Err(_) => return Err(IpcError::Io),
@@ -213,14 +217,26 @@ pub struct Packet<T> {
     pub body: T,
 }
 pub fn peer_process(stream: &LocalStream) -> Result<u32, IpcError> {
-    let pid = stream
-        .peer_creds()
-        .map_err(|_| IpcError::Peer)?
-        .pid()
-        .ok_or(IpcError::Peer)?;
-    #[cfg(unix)]
-    let pid = u32::try_from(pid).map_err(|_| IpcError::Peer)?;
-    Ok(pid)
+    #[cfg(target_os = "macos")]
+    {
+        use std::os::fd::AsFd;
+        let Stream::UdSocket(socket) = stream;
+        nw_platform::local_peer_process(socket.inner().as_fd()).map_err(|_| IpcError::Peer)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let pid = stream
+            .peer_creds()
+            .map_err(|_| IpcError::Peer)?
+            .pid()
+            .ok_or(IpcError::Peer)?;
+        #[cfg(unix)]
+        let pid = u32::try_from(pid).map_err(|_| IpcError::Peer)?;
+        if pid == 0 {
+            return Err(IpcError::Peer);
+        }
+        Ok(pid)
+    }
 }
 impl<T> Packet<T> {
     pub fn new(lane: Lane, request_id: u64, body: T) -> Self {
@@ -304,6 +320,9 @@ pub async fn write_packet<T: Serialize, W: AsyncWrite + Unpin>(
     write_frame(writer, &bytes, MAX_FRAME_BYTES).await
 }
 
+#[cfg(test)]
+#[path = "../../../tests/leak/src/ipc_identity.rs"]
+mod identity_tests;
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -318,7 +318,11 @@ mod tests {
         #[cfg(windows)]
         let address = format!("nymwrap-cover-test-{}", std::process::id());
         #[cfg(unix)]
-        let address = dir.path().join("cover.sock").to_string_lossy().into_owned();
+        let address = dir
+            .path()
+            .join("private/cover.sock")
+            .to_string_lossy()
+            .into_owned();
         let _keep = dir;
         let endpoint = Endpoint::new(address, Lane::Cover).unwrap();
         let listener = Listener::bind(endpoint.clone()).unwrap();

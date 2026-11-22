@@ -10,6 +10,8 @@ use zeroize::Zeroize;
 mod sys;
 #[cfg(unix)]
 pub use sys::current_group_id;
+#[cfg(target_os = "macos")]
+pub use sys::local_peer_process;
 pub use sys::open_device_config;
 #[cfg(target_os = "linux")]
 pub use sys::{confine_import_worker, deny_remote_sockets};

@@ -8,7 +8,7 @@ async fn authenticated_child_starts_offline_and_dies_with_parent_handle() {
     #[cfg(unix)]
     let address = directory
         .path()
-        .join("net.sock")
+        .join("private/net.sock")
         .to_string_lossy()
         .into_owned();
     let endpoint = nw_ipc::Endpoint::new(address, Lane::Shadow).unwrap();

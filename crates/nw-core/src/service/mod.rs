@@ -935,7 +935,11 @@ mod tests {
         #[cfg(windows)]
         let address = format!("nymwrap-core-test-{}", std::process::id());
         #[cfg(unix)]
-        let address = dir.path().join("core.sock").to_string_lossy().into_owned();
+        let address = dir
+            .path()
+            .join("private/core.sock")
+            .to_string_lossy()
+            .into_owned();
         let _keep = dir;
         let endpoint = Endpoint::new(address, Lane::Shadow).unwrap();
         let listener = Listener::bind(endpoint.clone()).unwrap();
