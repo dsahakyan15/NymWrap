@@ -63,6 +63,20 @@ payments либо необходимости увеличить spending limit. 
   equivalent больше не в failures. Все четыре проверки остаются красными.
   Прямой metadata API crates.io вернул HTTP 403; обход не выполнялся. Для этого
   ревью использованы только уже скачанные локальные архивы и индекс.
+- Продолжен просмотр исходников из кеша: полный diff proc-macro2
+  1.0.106 → 1.0.107, serde_spanned 1.1.1 → 1.1.3, toml_datetime
+  1.1.1+spec-1.1.0 → 1.1.3+spec-1.1.0 и полный cfg-if 1.0.5.
+  SHA архивов проверены по кешированному registry index; области и ограничения
+  каждого AI review записаны в audits.toml всех четырёх stores. Полные базы
+  дельтааудитов и optional dependency cfg-if этим не сертифицированы.
+  Cargo test --offline для cfg-if не разрешил некешированную optional dependency
+  и не запустил тесты. Прямые default-feature проверки тем же rustc/rustdoc:
+  2 unit, 1 cross-crate и 1 doctest прошли; временные каталоги удалены в finally.
+  После refresh и check --locked: root 268 / desktop 514 / netd 499 / fuzz 248,
+  **все четыре красные**. TOML delta покрыта в root/fuzz, но цепочки desktop/netd
+  ещё неполны. Логи target/vet-four-local-reviews.log и
+  target/audit-reviews/cfg-if-{default,direct-default}-tests.log. Это локальное
+  свидетельство source review, не зелёный CI и не закрытие M6.
 
 ## Подготовка длительного фаззинга M6 — проверки ещё не проведены
 

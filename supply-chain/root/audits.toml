@@ -1,6 +1,17 @@
 
 # cargo-vet audits file
 
+[[audits.cfg-if]]
+who = "NymWrap automated source review (Codex)"
+criteria = "safe-to-deploy"
+version = "1.0.5"
+notes = """
+AI full source review, not an independent human audit.
+Published archive SHA-256: 4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600.
+Read offline from the existing Cargo cache and verified against the cached registry index. Reviewed the full lib.rs (including tests), both Cargo manifests, package file inventory and cross-crate test. The no_std macro selects the first matching cfg branch, excludes previously matched predicates, and wraps each branch in a helper invocation so cfg covers all its items. Recursion consumes one branch at each step; hygienic $crate paths avoid caller-name capture. No unsafe, build script, procedural macro, native code, I/O or ambient authority. The optional rustc-dep-of-std dependency remains subject to its separate audit.
+Ordinary cargo test --offline did not resolve the uncached optional dependency and ran no tests. Direct default-feature tests with the pinned rustc/rustdoc passed: two unit tests, one cross-crate test and one doctest. This does not certify optional dependencies or platform CI.
+"""
+
 [[audits.equivalent]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -15,4 +26,37 @@ executable code, dependencies, targets and build=false are unchanged.
 Other changes are package versions and VCS metadata. No unsafe, I/O, native code
 or build script was added. This is a delta review, not an audit of the base or
 an independent human security review. Original 1.0.2 coverage is still required.
+"""
+
+[[audits.proc-macro2]]
+who = "NymWrap automated source review (Codex)"
+criteria = "safe-to-deploy"
+delta = "1.0.106 -> 1.0.107"
+notes = """
+AI delta source review, not an independent human audit. Both published archives were read offline from the existing Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: 8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934.
+Target SHA-256: 985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9.
+Reviewed the full package diff and surrounding float_digits and invalidate_current_thread_spans code. Replacing map_or(false, predicate) with is_some_and(predicate) preserves both None=false and Some predicate behavior. Removing the else after a diverging panic preserves the compiler-context rejection and calls the same fallback once otherwise. No new unsafe code, I/O, build script changes, dependency constraints or features. MSRV rises from 1.68 to 1.71, below NymWrap's pinned 1.100. Other changes are docs, a test lint, packaged development lockfile and upstream CI action versions; that upstream workflow is not run by NymWrap. Base and dependency coverage are separately required.
+"""
+
+[[audits.serde_spanned]]
+who = "NymWrap automated source review (Codex)"
+criteria = "safe-to-deploy"
+delta = "1.1.1 -> 1.1.3"
+notes = """
+AI delta source review, not an independent human audit. Both published archives were read offline from the existing Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: 6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26.
+Target SHA-256: 9c187e0a369471c550af028cba56d4f4fa2a489ad28151ae95a4d340a2a8b782.
+Reviewed all package differences and SpannedDeserializer field/key/value consumption. The only executable addition is a MapAccess::size_hint counting the three remaining Option fields. Each count is 0 or 1; their sum is bounded to 3 regardless of untrusted span values or T, and the method only borrows self. No new unsafe code, allocation, I/O or dependencies. Production features and build=false are unchanged. Remaining changes are packaging, lints, docs/license attribution, release/VCS metadata and the package's development lockfile. This delta does not certify dependencies or the base version.
+"""
+
+[[audits.toml_datetime]]
+who = "NymWrap automated source review (Codex)"
+criteria = "safe-to-deploy"
+delta = "1.1.1+spec-1.1.0 -> 1.1.3+spec-1.1.0"
+notes = """
+AI delta source review, not an independent human audit. Both published archives were read offline from the existing Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: 3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7.
+Target SHA-256: 173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49.
+Reviewed all package differences and the surrounding DatetimeDeserializer implementation. The only executable change adds MapAccess::size_hint as Some(usize::from(date.is_some())). The Option is consumed by next_value_seed, so the hint is bounded to 0 or 1 and has no new allocation, I/O, unsafe code or state mutation. Production dependency constraints, features and build=false are unchanged. Other differences are packaging include paths, lints, release/docs/license attribution, VCS metadata and the package's own development lockfile. Dependencies and the previously audited base require their own audit paths.
 """
