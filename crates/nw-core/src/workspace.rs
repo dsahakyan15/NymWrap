@@ -2051,6 +2051,7 @@ mod tests {
                 w.finish_remote_job(
                     &info.id,
                     Ok(RemoteJobReply {
+                        local_reason: reply.local_reason,
                         conversation: reply.conversation,
                         text: reply.text.expose_secret().into(),
                         trust: reply.trust,

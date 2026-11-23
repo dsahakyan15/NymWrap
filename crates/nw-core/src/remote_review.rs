@@ -221,12 +221,14 @@ pub(super) fn finish(
         .real
         .push(SecretString::from(text.expose_secret().to_owned()));
     conversation.turns += 1;
+    let local_reason = conversation.local_reason;
     let snapshot = conversation.snapshot();
     state.records.insert(key.clone(), conversation);
     Ok(ChatReply {
         conversation: key,
         text,
         trust,
+        local_reason,
         snapshot,
     })
 }
@@ -239,6 +241,7 @@ mod tests {
         let shield = Shield::new(vec![]).unwrap();
         let turn = Conversation {
             force_local: false,
+            local_reason: None,
             remote_context: None,
             vault: ConversationVault::default(),
             canonical: vec![],

@@ -549,6 +549,7 @@ async fn remote_action(
                     conversation: reply.conversation,
                     text: reply.text.expose_secret().into(),
                     trust: reply.trust,
+                    local_reason: reply.local_reason,
                 },
             })
         }
@@ -690,6 +691,7 @@ mod queue_tests {
             w.save_submission_reply(
                 &digest,
                 &ChatResponse {
+                    local_reason: None,
                     conversation: "a".repeat(32),
                     text: "synthetic saved answer".into(),
                     trust: TrustLevel::L0,

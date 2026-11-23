@@ -61,6 +61,7 @@ pub enum CoreError {
 }
 struct Conversation {
     force_local: bool,
+    local_reason: Option<linkcheck::LocalReason>,
     remote_context: Option<String>,
     vault: ConversationVault,
     canonical: Vec<Message>,
@@ -77,6 +78,8 @@ struct ConversationState {
 pub struct ConversationRecord {
     #[serde(default = "legacy_local_only")]
     force_local: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    local_reason: Option<linkcheck::LocalReason>,
     #[serde(default)]
     remote_context: Option<String>,
     version: u16,
@@ -121,6 +124,7 @@ impl Conversation {
     fn fork(&self) -> Result<Self, CoreError> {
         Ok(Self {
             force_local: self.force_local,
+            local_reason: self.local_reason,
             remote_context: self.remote_context.clone(),
             vault: ConversationVault::restore(self.vault.snapshot())
                 .map_err(|_| CoreError::Blocked)?,
@@ -137,6 +141,7 @@ impl Conversation {
         ConversationSnapshot {
             record: ConversationRecord {
                 force_local: self.force_local,
+                local_reason: self.local_reason,
                 remote_context: self.remote_context.clone(),
                 version: 1,
                 canonical: self.canonical.clone(),
@@ -167,6 +172,7 @@ pub struct ChatReply {
     pub conversation: String,
     pub text: SecretString,
     pub trust: TrustLevel,
+    pub local_reason: Option<linkcheck::LocalReason>,
     snapshot: ConversationSnapshot,
 }
 impl<M: LocalModel> Engine<M> {
@@ -234,6 +240,7 @@ impl<M: LocalModel> Engine<M> {
         let conversations = &mut state.records;
         let record = &mut snapshot.record;
         if record.version != 1
+            || record.local_reason.is_some() && !record.force_local
             || record
                 .remote_context
                 .as_ref()
@@ -267,6 +274,7 @@ impl<M: LocalModel> Engine<M> {
             id.into(),
             Conversation {
                 force_local: record.force_local,
+                local_reason: record.local_reason,
                 remote_context: record.remote_context.take(),
                 vault,
                 canonical: std::mem::take(&mut record.canonical),
@@ -365,6 +373,7 @@ impl<M: LocalModel> Engine<M> {
         let mut conversation = if new {
             Conversation {
                 force_local: false,
+                local_reason: None,
                 remote_context: None,
                 vault: ConversationVault::default(),
                 canonical: vec![],
@@ -449,16 +458,14 @@ impl<M: LocalModel> Engine<M> {
                 self.shield.classify(&m.content) == nw_shield::Sensitivity::LocalOnly
                     || self.shield.has_unresolved_name(&m.content)
             });
-        let local_reason = if remote.is_some() && !local_only {
-            let reason = self.protect_linkage(&mut conversation, new_start).await;
-            if reason.is_some() {
-                conversation.force_local = true;
-                local_only = true;
-            }
-            reason
-        } else {
-            None
-        };
+        if remote.is_some()
+            && !local_only
+            && let Some(reason) = self.protect_linkage(&mut conversation, new_start).await
+        {
+            conversation.force_local = true;
+            conversation.local_reason = Some(reason);
+            local_only = true;
+        }
         let remote_work = if let Some(remote) = remote.filter(|_| !local_only) {
             if conversation
                 .remote_context
@@ -534,14 +541,7 @@ impl<M: LocalModel> Engine<M> {
                 ))
             }
         };
-        let (mut answer, trust) = tokio::select! {biased;_=flight.cancelled()=>Err(CoreError::Session),result=work=>result}?;
-        if let Some(reason) = local_reason {
-            answer = SecretString::from(format!(
-                "{}\n\n{}",
-                reason.explanation(),
-                answer.expose_secret()
-            ));
-        }
+        let (answer, trust) = tokio::select! {biased;_=flight.cancelled()=>Err(CoreError::Session),result=work=>result}?;
         let mut state = self.conversations.lock().await;
         if !flight.valid() {
             return Err(CoreError::Session);

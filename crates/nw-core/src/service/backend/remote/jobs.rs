@@ -279,6 +279,7 @@ async fn start_job(
                         .and_then(|()| w.count_shadow(false))
                     {
                         Ok(()) => Ok(RemoteJobReply {
+                            local_reason: reply.local_reason,
                             conversation: reply.conversation,
                             text: reply.text.expose_secret().into(),
                             trust: reply.trust,

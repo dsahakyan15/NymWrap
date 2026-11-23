@@ -52,6 +52,17 @@ struct Profile {
     sid: PSID,
     directory: PathBuf,
 }
+#[cfg(test)]
+mod ownership_tests {
+    use super::*;
+    #[test]
+    #[ignore = "requires actual Windows AppContainer creation; CI runs it explicitly"]
+    fn fresh_profile_has_user_owned_storage_before_worker_execution() {
+        let profile = Profile::new().unwrap();
+        super::super::private_directory(profile.directory.parent().unwrap()).unwrap();
+        super::super::private_directory(&profile.directory).unwrap();
+    }
+}
 impl Drop for Profile {
     fn drop(&mut self) {
         unsafe {

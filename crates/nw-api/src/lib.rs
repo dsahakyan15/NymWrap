@@ -71,6 +71,7 @@ impl<M: LocalModel> Backend for Engine<M> {
             conversation: result.conversation,
             text: result.text.expose_secret().into(),
             trust: result.trust,
+            local_reason: result.local_reason,
         })
     }
     async fn embed(&self, texts: Vec<String>) -> Result<Vec<Vec<f64>>, String> {
@@ -402,17 +403,34 @@ fn chat_headers(headers: &HeaderMap) -> Result<(String, Option<TrustLevel>), Api
         });
     Ok((id.to_owned(), min_trust))
 }
-fn chat_value(conversation: &str, text: &str, trust: TrustLevel) -> serde_json::Value {
+fn chat_value(
+    conversation: &str,
+    text: &str,
+    trust: TrustLevel,
+    reason: Option<nw_core::linkcheck::LocalReason>,
+) -> serde_json::Value {
     let actual_model = if trust == TrustLevel::L0 {
         "nw/local/default"
     } else {
         "nw/remote/default"
     };
-    serde_json::json!({"id":format!("chatcmpl-{conversation}"),"object":"chat.completion","created":0,"model":actual_model,"choices":[{"index":0,"message":{"role":"assistant","content":text},"finish_reason":"stop"}],"nymwrap":{"trust":trust,"lane":"shadow"}})
+    let mut value = serde_json::json!({"id":format!("chatcmpl-{conversation}"),"object":"chat.completion","created":0,"model":actual_model,"choices":[{"index":0,"message":{"role":"assistant","content":text},"finish_reason":"stop"}],"nymwrap":{"trust":trust,"lane":"shadow"}});
+    if trust == TrustLevel::L0
+        && let Some(reason) = reason
+    {
+        value["nymwrap"]["local_reason"] = serde_json::json!(reason);
+        value["nymwrap"]["explanation"] = reason.explanation().into();
+    }
+    value
 }
 fn chat_response(reply: ChatResponse) -> Result<Response, ApiError> {
-    let mut response =
-        Json(chat_value(&reply.conversation, &reply.text, reply.trust)).into_response();
+    let mut response = Json(chat_value(
+        &reply.conversation,
+        &reply.text,
+        reply.trust,
+        reply.local_reason,
+    ))
+    .into_response();
     response.headers_mut().insert(
         "x-nymwrap-conversation",
         reply
@@ -478,7 +496,7 @@ fn job_response(job: RemoteJobView) -> Result<Response, ApiError> {
     let result = job
         .reply
         .as_ref()
-        .map(|r| chat_value(&r.conversation, &r.text, r.trust));
+        .map(|r| chat_value(&r.conversation, &r.text, r.trust, r.local_reason));
     let mut response = Json(serde_json::json!({
         "object":"nymwrap.job", "id":job.info.id, "conversation":job.info.conversation,
         "status":job.info.state, "code":job.info.code, "created_at":job.info.created_at,
@@ -575,6 +593,26 @@ pub fn bind_private(path: &std::path::Path) -> std::io::Result<nw_ipc::Listener>
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    async fn fallback_reason_is_metadata_and_does_not_modify_a_structured_answer() {
+        use http_body_util::BodyExt;
+        let response = chat_response(ChatResponse {
+            conversation: "a".repeat(32),
+            text: r#"{"answer":42}"#.into(),
+            trust: TrustLevel::L0,
+            local_reason: Some(nw_core::linkcheck::LocalReason::VerificationUnavailable),
+        })
+        .unwrap();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        let content = value["choices"][0]["message"]["content"].as_str().unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(content).unwrap(),
+            serde_json::json!({"answer":42})
+        );
+        assert_eq!(value["nymwrap"]["local_reason"], "verification_unavailable");
+        assert!(!value["nymwrap"]["explanation"].as_str().unwrap().is_empty());
+    }
     use axum::{body::Body, http::Request};
     use tower::ServiceExt;
     struct Model;

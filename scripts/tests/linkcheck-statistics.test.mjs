@@ -1,0 +1,34 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {binomialUpperTail,binomialInterval,chanceComparison,summarizeLinkcheck} from '../linkcheck-statistics.mjs';
+test('exact tails and interval inversion match published SciPy and NIST examples',()=>{
+  assert.ok(Math.abs(binomialUpperTail(3,15,0.1)-0.18406106910639114)<1e-13);
+  const [low,high]=binomialInterval(4,20,0.90);
+  assert.ok(Math.abs(low-0.071354)<1e-6);assert.ok(Math.abs(high-0.401029)<1e-6);
+  const zero=binomialInterval(0,192);assert.equal(zero[0],0);assert.ok(Math.abs(zero[1]-(1-Math.pow(0.025,1/192)))<1e-12);
+  assert.equal(binomialInterval(0,0),null);
+  assert.ok(Math.abs(binomialUpperTail(1,64,1/64)-(1-Math.pow(63/64,64)))<1e-12);
+  assert.ok(Math.abs(binomialUpperTail(4096,8192,0.5)-0.504407596690)<1e-10);
+  assert.equal(chanceComparison(0,0,64).no_significant_excess,null);
+  assert.equal(chanceComparison(10,192,64).no_significant_excess,false);
+  for(const args of [[-1,2],[3,2],[NaN,4],[0,8193]])assert.throws(()=>binomialInterval(...args));
+});
+const row=(id,extra={})=>({id,language:'en',group:'linkage',remote_turns:1,local_turns:0,blocked_turns:0,canary_leaks:0,error:false,utility:true,attack:{valid:true,top1_correct:false},raw_attack:{valid:true,top1_correct:true},...extra});
+test('local fallbacks, invalid attackers and unmeasured utility cannot wash out linkage results',()=>{
+  const local=row('local',{remote_turns:0,local_turns:1,attack:null,utility:null});
+  assert.equal(summarizeLinkcheck([local],{candidates:64}).all.chance_gate,'unmeasured');
+  const invalid=row('invalid',{attack:{valid:false,top1_correct:false}});
+  const result=summarizeLinkcheck([local,invalid],{candidates:64});
+  assert.equal(result.all.chance_gate,'invalid_attacker');assert.equal(result.all.top1.trials,0);
+  assert.equal(result.all.useful_fraction,0.5);assert.equal(result.all.utility_unmeasured,1);
+  const publicOnly=row('public',{group:'public_control'});
+  assert.equal(summarizeLinkcheck([publicOnly],{candidates:64}).all.chance_gate,'unmeasured');
+  assert.throws(()=>summarizeLinkcheck([row('same'),row('same')],{candidates:64}));
+  assert.throws(()=>summarizeLinkcheck([row('bad',{remote_turns:0})],{candidates:64}));
+  assert.equal(summarizeLinkcheck([row('canary',{canary_leaks:1})],{candidates:64}).all.canary_leaks,1);
+  const diluted=summarizeLinkcheck([row('identified',{attack:{valid:true,top1_correct:true}}),...Array.from({length:300},(_,i)=>row('public_'+i,{group:'public_control'}))],{candidates:64});
+  assert.equal(diluted.all.top1.no_significant_excess,true);
+  assert.equal(diluted.all.private_top1.no_significant_excess,false);
+  assert.equal(diluted.all.chance_gate,'failed');
+  assert.equal(summarizeLinkcheck([row('weak',{raw_attack:{valid:true,top1_correct:false}})],{candidates:64}).all.chance_gate,'uncalibrated_attacker');
+});

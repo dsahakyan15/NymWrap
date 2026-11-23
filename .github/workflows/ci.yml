@@ -3,6 +3,13 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
+  windows-object-owner:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: cargo test -p nw-platform --lib fresh_profile_has_user_owned_storage --locked -- --ignored
+      - run: cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
   core:
     strategy:
       matrix:
@@ -10,6 +17,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/debug/build
+            target/debug/deps
+            target/debug/.fingerprint
+            target/tools/strawberry-perl-5.40.5.1
+            target/tools/libclang-18.1.1
+          key: core-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'Cargo.toml', '.cargo/config.toml', 'crates/**/Cargo.toml', 'scripts/bootstrap-*.ps1') }}
       - run: rustup show
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config libssl-dev libdbus-1-dev bubblewrap
@@ -123,6 +141,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            daemons/nw-netd/target/debug/build
+            daemons/nw-netd/target/debug/deps
+            daemons/nw-netd/target/debug/.fingerprint
+          key: network-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'Cargo.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml', 'crates/**/Cargo.toml', 'vendor/**/Cargo.toml') }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
@@ -144,6 +171,23 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/release/build
+            target/release/deps
+            target/release/.fingerprint
+            daemons/nw-netd/target/release/build
+            daemons/nw-netd/target/release/deps
+            daemons/nw-netd/target/release/.fingerprint
+            app/src-tauri/target/release/build
+            app/src-tauri/target/release/deps
+            app/src-tauri/target/release/.fingerprint
+            target/tools/strawberry-perl-5.40.5.1
+            target/tools/libclang-18.1.1
+          key: desktop-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock', '**/Cargo.toml', '.cargo/config.toml', 'scripts/bootstrap-*.ps1') }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'

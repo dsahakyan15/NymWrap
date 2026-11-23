@@ -37,6 +37,9 @@ pub struct RemoteJobReply {
     pub text: String,
     #[zeroize(skip)]
     pub trust: TrustLevel,
+    #[zeroize(skip)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_reason: Option<crate::linkcheck::LocalReason>,
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -193,6 +196,7 @@ impl Workspace {
             Ok(reply) => {
                 if reply.conversation != info.conversation
                     || reply.trust != info.trust
+                    || reply.local_reason.is_some() && reply.trust != TrustLevel::L0
                     || reply.text.len() > nw_proto::MAX_TEXT_BYTES
                 {
                     return Err(WorkspaceError::Invalid);

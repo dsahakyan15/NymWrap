@@ -1,4 +1,5 @@
 import { takeoutExample } from "./fixtures.js";
+import {chatStatusLabel} from "./chat-status.js";
 import {createHygienePanel,renderDeviceProbe,renderHygiene,deviceInventoryReady,type DeviceProbeStatus} from "./hygiene.js";
 import {activityTransition,activityLabel,type ActivitySchedule} from "./activity.js";
 import {sessionTimingLabel,type SessionTiming} from "./session.js";
@@ -51,7 +52,7 @@ interface TrafficStatus {enabled:boolean;next_slot:number|null;jobs:{id:string;c
 interface PurgeCandidate {id:string;title:string;score:number}
 interface Batch {service:string;record_ids:string[]}
 interface Message {role:"user"|"assistant"|"system";content:string}
-interface ChatReply {conversation:string;text:string;trust:string}
+interface ChatReply {conversation:string;text:string;trust:string;local_reason?:string|null}
 interface RemoteJobInfo {id:string;conversation:string;created_at:number;updated_at:number;state:string;code:string|null;trust:string}
 interface RemoteJobView {info:RemoteJobInfo;reply:ChatReply|null}
 interface RemoteReview {approval_id:string;hash:string;conversation:string;transcript:string;max_tokens:number;trust:string;expires_in_s:number}
@@ -325,7 +326,7 @@ async function sendChat(remote:boolean){
   }else reply=await invoke<ChatReply>("chat",{conversation,messages:next});
   if(epoch!==chatEpoch)throw new Error("session_changed");
   conversation=reply.conversation;messages=[...next,{role:"assistant",content:reply.text}];renderChat();if(value("prompt").trim()===text)$<HTMLTextAreaElement>("prompt").value="";await refreshOverview();await refreshHistory();
-  $("chat-history-info").textContent=reply.trust==="L0"?"Ответ получен локально (L0).":"Ответ получен через Tor с ключом провайдера (L3).";
+  $("chat-history-info").textContent=chatStatusLabel(reply);
   document.querySelector<HTMLElement>(".offline-badge")!.textContent=reply.trust==="L0"?"● L0 · локальная модель":"● L3 · Tor / ключ";
   renderNetworkUsage(await invoke<NetworkUsage>("load_network_usage"));
   }finally{if(epoch===chatEpoch)chatSending=false;updateChatButtons();}

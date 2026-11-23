@@ -18,6 +18,7 @@ enum Mode {
     Retain,
     Inject,
     Unavailable,
+    JsonLocal,
     WrongModel,
 }
 struct Model {
@@ -32,6 +33,9 @@ impl LocalModel for Model {
         Ok(r#"{"local_only":false,"entities":[]}"#.into())
     }
     async fn complete(&self, messages: &[Message]) -> Result<SecretString, ModelError> {
+        if matches!(self.mode, Mode::JsonLocal) {
+            return Ok(r#"{"answer":42}"#.into());
+        }
         if messages
             .first()
             .is_some_and(|m| m.content.starts_with("Generalize the task"))
@@ -49,7 +53,7 @@ impl LocalModel for Model {
         panic!("unidentified embeddings cannot authorize egress")
     }
     async fn embed_identified(&self, texts: &[String]) -> Result<EmbeddingBatch, ModelError> {
-        if matches!(self.mode, Mode::Unavailable) {
+        if matches!(self.mode, Mode::Unavailable | Mode::JsonLocal) {
             return Err(ModelError::Unavailable);
         }
         Ok(EmbeddingBatch {
@@ -177,11 +181,10 @@ async fn persistent_linkage_or_a_canary_in_generalization_stays_local_without_a_
             .await
             .unwrap();
         assert_eq!(second.trust, TrustLevel::L0);
-        assert!(
-            second
-                .text
-                .expose_secret()
-                .starts_with("Ответ подготовлен локально (L0):")
+        assert!(second.local_reason.is_some());
+        assert_eq!(
+            second.text.expose_secret(),
+            "synthetic local pottery answer"
         );
         assert!(!second.text.expose_secret().contains(CANARY));
         assert_eq!(calls.load(Ordering::SeqCst), 1);
@@ -216,13 +219,35 @@ async fn missing_dossier_model_failure_and_another_embedding_model_never_skip_th
             .await
             .unwrap();
         assert_eq!(reply.trust, TrustLevel::L0);
-        assert!(
-            reply
-                .text
-                .expose_secret()
-                .starts_with("Ответ подготовлен локально (L0):")
-        );
+        assert!(reply.local_reason.is_some());
+        assert_eq!(reply.text.expose_secret(), "synthetic local pottery answer");
         assert_eq!(calls.load(Ordering::SeqCst), 0);
         assert!(remote.0.lock().unwrap().is_empty());
     }
+}
+
+#[tokio::test]
+async fn local_fallback_preserves_a_requested_json_answer_and_reports_its_reason_separately() {
+    let (engine, _) = engine(Mode::JsonLocal, true);
+    let remote = Capture::default();
+    let reply = engine
+        .chat_remote(
+            "new",
+            &[user("Reply with a JSON answer containing 42.")],
+            32,
+            &remote,
+            None,
+        )
+        .await
+        .unwrap();
+    assert_eq!(reply.trust, TrustLevel::L0);
+    assert!(matches!(
+        reply.local_reason,
+        Some(nw_core::linkcheck::LocalReason::VerificationUnavailable)
+    ));
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(reply.text.expose_secret()).unwrap(),
+        serde_json::json!({"answer":42})
+    );
+    assert!(remote.0.lock().unwrap().is_empty());
 }

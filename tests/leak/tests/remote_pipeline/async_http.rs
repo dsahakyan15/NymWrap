@@ -67,6 +67,7 @@ impl Backend for ReviewedBackend {
                     not_before: 0,
                 },
                 reply: Some(RemoteJobReply {
+                    local_reason: reply.local_reason,
                     conversation: reply.conversation,
                     text: reply.text.expose_secret().into(),
                     trust: reply.trust,

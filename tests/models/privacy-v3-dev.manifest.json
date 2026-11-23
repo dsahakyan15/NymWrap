@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "partition": "development",
+  "synthetic_only": true,
+  "cases": 384,
+  "candidates": 64,
+  "languages": {"en": 127, "ru": 124, "hy": 133},
+  "sha256": "58b89acf9215016e698e582b0053483dc480a1c27a8013f4ffc8ac6e9fa32721",
+  "generator_sha256": "cc70e06fc09ac3f08a74af80259c5b8cae0bb52a4a43af1cf1d39520ef3b157a"
+}

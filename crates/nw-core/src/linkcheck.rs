@@ -255,14 +255,16 @@ pub fn synthetic_decoys() -> Vec<String> {
         .collect()
 }
 
-pub(super) enum LocalFallback {
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LocalReason {
     MissingDossier,
     VerificationUnavailable,
     GeneralizationFailed,
     IndependentSplitUnavailable,
 }
-impl LocalFallback {
-    pub(super) fn explanation(&self) -> &'static str {
+impl LocalReason {
+    pub fn explanation(&self) -> &'static str {
         match self {
             Self::MissingDossier => {
                 "Ответ подготовлен локально (L0): досье пока недоступно для полной проверки связывания."
@@ -284,9 +286,9 @@ impl<M: LocalModel> crate::Engine<M> {
         &self,
         conversation: &mut crate::Conversation,
         new_start: usize,
-    ) -> Option<LocalFallback> {
+    ) -> Option<LocalReason> {
         let Some(references) = &self.linkcheck else {
-            return Some(LocalFallback::MissingDossier);
+            return Some(LocalReason::MissingDossier);
         };
         match references
             .inspect(
@@ -298,7 +300,7 @@ impl<M: LocalModel> crate::Engine<M> {
         {
             Ok(rank) if !rank.risky => return None,
             Ok(_) => {}
-            Err(_) => return Some(LocalFallback::VerificationUnavailable),
+            Err(_) => return Some(LocalReason::VerificationUnavailable),
         }
         let mut candidate = conversation.canonical.clone();
         for message in &mut candidate[new_start..] {
@@ -307,11 +309,11 @@ impl<M: LocalModel> crate::Engine<M> {
             }
             let result = self.model.generalize(&message.content).await;
             let Ok(text) = result else {
-                return Some(LocalFallback::GeneralizationFailed);
+                return Some(LocalReason::GeneralizationFailed);
             };
             if text.expose_secret().trim().is_empty() || text.expose_secret().len() > MAX_TEXT_BYTES
             {
-                return Some(LocalFallback::GeneralizationFailed);
+                return Some(LocalReason::GeneralizationFailed);
             }
             let old = std::mem::replace(&mut message.content, text.expose_secret().to_owned());
             drop(Zeroizing::new(old));
@@ -323,8 +325,8 @@ impl<M: LocalModel> crate::Engine<M> {
             .await
         {
             Ok(rank) if !rank.risky => {}
-            Ok(_) => return Some(LocalFallback::IndependentSplitUnavailable),
-            Err(_) => return Some(LocalFallback::VerificationUnavailable),
+            Ok(_) => return Some(LocalReason::IndependentSplitUnavailable),
+            Err(_) => return Some(LocalReason::VerificationUnavailable),
         }
         if candidate.iter().any(|m| {
             self.shield.classify(&m.content) == nw_shield::Sensitivity::LocalOnly
@@ -334,7 +336,7 @@ impl<M: LocalModel> crate::Engine<M> {
                     .leakcheck(&m.content, &conversation.vault)
                     .is_err()
         }) {
-            return Some(LocalFallback::GeneralizationFailed);
+            return Some(LocalReason::GeneralizationFailed);
         }
         conversation.canonical = candidate;
         None

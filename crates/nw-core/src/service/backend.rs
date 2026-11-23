@@ -606,6 +606,8 @@ pub struct ChatResponse {
     pub conversation: String,
     pub text: String,
     pub trust: nw_proto::TrustLevel,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_reason: Option<crate::linkcheck::LocalReason>,
 }
 impl Drop for ChatResponse {
     fn drop(&mut self) {
@@ -671,6 +673,7 @@ pub(super) async fn chat(
                 conversation: reply.conversation,
                 text: reply.text.expose_secret().into(),
                 trust: reply.trust,
+                local_reason: reply.local_reason,
             })
         }
         Err(e) => {
