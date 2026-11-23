@@ -96,7 +96,7 @@ export async function main(args=process.argv.slice(2)){
   const report={version:3,status:'running',partition:'development',case_count:corpus.cases.length,provenance,
     ...(opts.shard?{shard:range}:{}),evidence:{workflow_run:process.env.GITHUB_RUN_ID??null,commit:process.env.GITHUB_SHA??null},
     scope:{profile:config.profile,policy:config,external_requests:false,local_answers_stubbed:false,provider_answers:'real local model, simulated provider',
-      inventory:'synthetic Device records; no host collection',attacker:'real local forced-choice model plus literal matcher; 64 fictional dossiers, full cumulative provider view',
+      inventory:'synthetic Device records; no host collection',attacker:'real local fact extraction and deterministic 64-dossier ranking plus independent literal matcher; full cumulative provider view',
       utility:corpus.utility_scope,held_out:false},observations:[]};
   if(opts.resume){
     try{const old=JSON.parse(await readFile(path,'utf8'));if(JSON.stringify(old.provenance)!==JSON.stringify(provenance)||JSON.stringify(old.shard)!==JSON.stringify(report.shard)||JSON.stringify(old.evidence)!==JSON.stringify(report.evidence))throw Error('linkcheck_checkpoint_changed');report.observations=old.observations;}

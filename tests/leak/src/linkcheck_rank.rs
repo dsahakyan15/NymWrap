@@ -28,6 +28,28 @@ fn ties_and_candidate_permutations_cannot_hide_a_top_k_user() {
     assert_eq!((tied.rank_min, tied.rank_max), (1, 65));
 }
 #[test]
+fn the_margin_threshold_can_reject_a_concentrated_match_outside_top_k() {
+    let direction = |score: f64| {
+        let mut vector = vec![0.0; DIMENSION];
+        vector[0] = score;
+        vector[1] = (1.0 - score * score).sqrt();
+        vector
+    };
+    let mut dossiers = vec![direction(0.8)];
+    dossiers.extend([0.95, 0.9, 0.85].map(direction));
+    dossiers.extend((0..61).map(|_| direction(0.1)));
+    let mut policy = settings();
+    policy.max_margin = 0.9;
+    let permissive = rank(&basis(0), &dossiers, &policy).unwrap();
+    assert_eq!(permissive.rank_min, 4);
+    assert!(!permissive.risky);
+    policy.max_margin = 0.2;
+    assert!(
+        rank(&basis(0), &dossiers, &policy).unwrap().risky,
+        "the profile margin must be effective beyond the already-blocked top-k"
+    );
+}
+#[test]
 fn malformed_embeddings_and_policies_never_authorize_a_request() {
     let mut candidates = vec![basis(0); 65];
     for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
@@ -162,6 +184,7 @@ async fn accumulated_history_is_checked_and_cached_references_do_not_bypass_mode
         let calls = model.calls.lock().unwrap();
         let last = calls.last().unwrap();
         assert_eq!(last.len(), 1);
+        assert!(last[0].starts_with("user: old rare craft\nassistant: "));
         assert!(
             last[0].contains("old rare craft")
                 && last[0].contains("new rare schedule")
@@ -236,4 +259,30 @@ async fn a_rare_fact_at_the_end_of_a_large_dossier_remains_a_ranked_candidate() 
         calls.iter().all(|batch| batch.len() <= 64
             && batch.iter().map(String::len).sum::<usize>() <= MAX_TEXT_BYTES)
     );
+}
+
+#[tokio::test]
+async fn a_rank_observer_cannot_weaken_the_actual_linkage_decision() {
+    let observed = std::sync::Arc::new(std::sync::Mutex::new(None));
+    let output = observed.clone();
+    let references =
+        References::with_synthetic_decoys(SecretString::from("old rare craft; new rare schedule"))
+            .unwrap()
+            .observe(std::sync::Arc::new(move |mut rank| {
+                rank.risky = false;
+                *output.lock().unwrap() = Some(rank);
+            }));
+    let rank = references
+        .inspect(
+            &Model::new(),
+            &[Message {
+                role: Role::User,
+                content: "old rare craft and new rare schedule".into(),
+            }],
+            &settings(),
+        )
+        .await
+        .unwrap();
+    assert!(rank.risky);
+    assert!(!observed.lock().unwrap().as_ref().unwrap().risky);
 }

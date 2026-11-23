@@ -48,6 +48,7 @@ pub enum Role {
 pub enum OutputSchema {
     PrivacyV1,
     LinkageV1,
+    LinkageFactsV1,
 }
 #[derive(zeroize::Zeroize, zeroize::ZeroizeOnDrop)]
 pub struct EmbeddingBatch {

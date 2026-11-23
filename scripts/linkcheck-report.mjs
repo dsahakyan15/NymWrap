@@ -21,6 +21,10 @@ export function validateLinkcheckReport(report,corpus,corpusHash,{allowShard=fal
     const expected=corpus.cases[range.start+i];
     if(row.id!==expected.id||row.language!==expected.language||row.group!==expected.group||!counter(row.elapsed_ms)||
       !row.calls||['ner','canonicalize','generalize','embeddings','answers','errors'].some(k=>!counter(row.calls[k]))||
+      !Array.isArray(row.calls.linkage_ranks)||row.calls.linkage_ranks.length<row.remote_turns||row.calls.linkage_ranks.length>expected.turns.length*2||
+      row.calls.linkage_ranks.some(rank=>!counter(rank.candidates)||rank.candidates<51||rank.candidates>257||!counter(rank.rank_min)||rank.rank_min<1||!counter(rank.rank_max)||rank.rank_max<rank.rank_min||rank.rank_max>rank.candidates||
+        !Number.isInteger(rank.user_score)||Math.abs(rank.user_score)>1000000||!Number.isInteger(rank.best_decoy_score)||Math.abs(rank.best_decoy_score)>1000000||
+        !Number.isInteger(rank.background_score)||Math.abs(rank.background_score)>1000000||typeof rank.risky!=='boolean')||
       !Array.isArray(row.local_reasons)||row.local_reasons.some(r=>r!==null&&!['entity_verification_unavailable','missing_dossier','verification_unavailable','generalization_failed','independent_split_unavailable'].includes(r))||
       row.local_turns+row.remote_turns>expected.turns.length||row.local_reasons.length>expected.turns.length||
       row.utility!==null&&row.local_reasons.length!==expected.turns.length||

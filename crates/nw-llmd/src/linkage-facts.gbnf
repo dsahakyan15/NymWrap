@@ -1,0 +1,2 @@
+root ::= "{\"facts\":[" (letter ("," letter){0,25})? "]}"
+letter ::= "\"" [A-Z] "\""

@@ -202,12 +202,17 @@ async fn dossier_covers_confirmed_persona_all_secrets_device_and_import_without_
     )
     .unwrap();
     assert!(w.linkcheck_references().unwrap().is_none());
+    w.save_import(nw_audit::Summary::default()).unwrap();
+    assert!(w.linkcheck_references().unwrap().is_none());
     w.save_persona(Persona {
         traits: vec![
             Trait {
                 id: "a".repeat(64),
                 claim: "SYNTHETIC_CONFIRMED_TRAIT_78314".into(),
-                evidence: vec!["synthetic evidence".into()],
+                evidence: vec![
+                    "SYNTHETIC_CONFIRMED_EVIDENCE_78314".into(),
+                    MANUAL_CONFIRMATION_EVIDENCE.into(),
+                ],
                 confirmed: None,
             },
             Trait {
@@ -241,8 +246,13 @@ async fn dossier_covers_confirmed_persona_all_secrets_device_and_import_without_
     ])
     .unwrap();
     w.save_import(nw_audit::Summary {
+        records: 17,
+        skipped_files: 2,
+        domains: [("synthetic.example.test".into(), 9)].into(),
+        titles: vec!["SYNTHETIC_IMPORT_TITLE_78314".into()],
+        searches: vec!["SYNTHETIC_IMPORT_SEARCH_78314".into()],
         prompt_samples: vec!["SYNTHETIC_IMPORT_FACT_78314".into()],
-        ..Default::default()
+        activity_hours: [(7, 3)].into(),
     })
     .unwrap();
     drop(w);
@@ -265,13 +275,33 @@ async fn dossier_covers_confirmed_persona_all_secrets_device_and_import_without_
         let dossier = &inputs[0];
         for fact in [
             "CONFIRMED_TRAIT",
+            "CONFIRMED_EVIDENCE",
             "PRIVATE_FACT",
             "DEVICE_FACT",
             "IMPORT_FACT",
+            "IMPORT_TITLE",
+            "IMPORT_SEARCH",
+            "synthetic.example.test",
+            "Imported records: 17.",
+            "Skipped import files: 2.",
+            "Activity hour 7: 3 records.",
         ] {
             assert!(dossier.contains(fact));
         }
         assert!(!dossier.contains("UNCONFIRMED_TRAIT") && !dossier.contains("DENIED_TRAIT"));
+        for metadata in [
+            "confirmed_persona",
+            "personal_and_device_secrets",
+            "\"confirmed\":",
+            "\"local_only\":",
+            MANUAL_CONFIRMATION_EVIDENCE,
+            &"a".repeat(64),
+        ] {
+            assert!(
+                !dossier.contains(metadata),
+                "storage metadata must not distinguish the real dossier from decoys: {metadata}"
+            );
+        }
         assert!(inputs[1..].iter().all(|d| !d.contains("78314")));
     }
     w.save_import(nw_audit::Summary {

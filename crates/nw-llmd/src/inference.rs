@@ -194,7 +194,15 @@ impl Inference for Cpu {
         max_tokens: u32,
         schema: Option<nw_llm::OutputSchema>,
     ) -> Result<String, Error> {
-        let deadline = Instant::now() + Duration::from_secs(110);
+        let seconds = if matches!(
+            schema,
+            Some(nw_llm::OutputSchema::LinkageV1 | nw_llm::OutputSchema::LinkageFactsV1)
+        ) {
+            200
+        } else {
+            110
+        };
+        let deadline = Instant::now() + Duration::from_secs(seconds);
         let template = self.chat.chat_template(None).map_err(|_| Error::Load)?;
         let chat = messages
             .iter()
@@ -240,6 +248,7 @@ impl Inference for Cpu {
             let grammar = match schema {
                 nw_llm::OutputSchema::PrivacyV1 => include_str!("privacy.gbnf"),
                 nw_llm::OutputSchema::LinkageV1 => include_str!("linkage.gbnf"),
+                nw_llm::OutputSchema::LinkageFactsV1 => include_str!("linkage-facts.gbnf"),
             };
             LlamaSampler::chain_simple([
                 LlamaSampler::grammar(&self.chat, grammar, "root").map_err(|_| Error::Inference)?,

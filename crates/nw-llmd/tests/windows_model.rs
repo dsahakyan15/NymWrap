@@ -111,6 +111,22 @@ async fn actual_appcontainer_model_over_private_ipc() {
     let id = parsed["choice"].as_str().unwrap();
     assert_eq!(id.len(), 3);
     assert!(id.starts_with('P') && id[1..].parse::<u8>().unwrap() < 64);
+    let facts = model
+        .complete_structured(
+            &[Message {
+                role: Role::User,
+                content:
+                    "Only facts A and C are stated. Return a JSON facts array and no other field."
+                        .into(),
+            }],
+            128,
+            nw_llm::OutputSchema::LinkageFactsV1,
+        )
+        .await
+        .unwrap();
+    let parsed: serde_json::Value = serde_json::from_str(facts.expose_secret()).unwrap();
+    assert_eq!(parsed.as_object().unwrap().len(), 1);
+    assert!(parsed["facts"].as_array().unwrap().len() <= 26);
     let too_large = model
         .complete_with_limit(
             &[Message {

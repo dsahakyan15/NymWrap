@@ -6,7 +6,7 @@ function fixture(){
   const corpus={version:3,partition:'development',synthetic_only:true,candidates:64,utility_scope:'integer arithmetic, not general answer quality',cases:[{id:'dev_0000',language:'hy',group:'linkage_multiturn',turns:[{},{}]}]};
   const row={id:'dev_0000',language:'hy',group:'linkage_multiturn',remote_turns:2,local_turns:0,blocked_turns:0,canary_leaks:0,error:false,utility:true,
     attack:{valid:true,top1_correct:false},raw_attack:{valid:true,top1_correct:true},literal_attack:{valid:true,top1_correct:false},raw_literal_attack:{valid:true,top1_correct:true},
-    calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0},local_reasons:[null,null],elapsed_ms:12};
+    calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0,linkage_ranks:Array.from({length:2},()=>({candidates:65,rank_min:65,rank_max:65,user_score:0,best_decoy_score:1000000,background_score:1000000,risky:false}))},local_reasons:[null,null],elapsed_ms:12};
   const report={version:3,status:'complete',partition:'development',case_count:1,scope:{external_requests:false,local_answers_stubbed:false,provider_answers:'real local model, simulated provider'},
     provenance:Object.fromEntries(['corpus_sha256','client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256','shard_script_sha256'].map(k=>[k,sha])),observations:[row]};
   return {corpus,report,row};
@@ -29,7 +29,7 @@ test('partial progress, missing attacker pairs, stubbed answers and incompatible
     r=>r.status='partial',r=>r.case_count++,r=>r.partition='held_out',r=>r.scope.local_answers_stubbed=true,
     r=>r.scope.external_requests=true,r=>delete r.provenance.model_sha256,r=>r.observations[0].id='other',
     r=>r.observations[0].local_reasons=[],r=>r.observations[0].calls.errors='<script>',r=>r.observations[0].literal_attack=undefined,
-    r=>r.observations[0].remote_turns=3,
+    r=>r.observations[0].remote_turns=3,r=>r.observations[0].calls.linkage_ranks=[],
   ]){
     const {report,corpus}=fixture();change(report);assert.throws(()=>summarizeLinkcheckReport(report,corpus,sha));
   }

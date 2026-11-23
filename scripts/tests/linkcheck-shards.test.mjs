@@ -16,7 +16,7 @@ function fixture(){
     corpus.cases.push({id,language,group,turns:[{},{}]});
     observations.push({id,language,group,remote_turns:2,local_turns:0,blocked_turns:0,canary_leaks:0,error:false,utility:true,
       attack:{valid:true,top1_correct:false},raw_attack:{valid:true,top1_correct:true},literal_attack:{valid:true,top1_correct:false},raw_literal_attack:{valid:true,top1_correct:true},
-      calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0},local_reasons:[null,null],elapsed_ms:12});
+      calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0,linkage_ranks:Array.from({length:2},()=>({candidates:65,rank_min:65,rank_max:65,user_score:0,best_decoy_score:1000000,background_score:1000000,risky:false}))},local_reasons:[null,null],elapsed_ms:12});
   }
   const provenance=Object.fromEntries(['corpus_sha256','client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256','shard_script_sha256'].map(k=>[k,sha]));
   const sources=Array.from({length:3},(_,index)=>{

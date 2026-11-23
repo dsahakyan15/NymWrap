@@ -40,7 +40,10 @@ cleanup() {
     if test -n "$process_id"; then sudo kill -INT "$process_id" 2>/dev/null; wait "$process_id"; fi
   done
   if "$link_created" && ip link show "$client_if" >/dev/null 2>&1; then sudo ip link delete "$client_if" || failed=1; fi
-  for file in test.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json provider-receipt.json provider-ca.pem tls.keys tools.txt; do
+  for file in client.pcap provider.pcap; do
+    if test -f "$fixture_root/$file" && test ! -L "$fixture_root/$file"; then sudo chown --no-dereference "$runner_uid:$runner_gid" -- "$fixture_root/$file" || failed=1; fi
+  done
+  for file in test.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt; do
     if test -f "$fixture_root/$file"; then cp -- "$fixture_root/$file" "$output/$file" || failed=1; fi
   done
   for log in "$fixture_root/chutney/nodes"/*/notice.log; do
@@ -150,6 +153,7 @@ for attempt in $(seq 1 300); do
 done
 test -f "$fixture_root/ready-to-stop"
 relay "$chutney/chutney" stop "$chutney/networks/basic-min"
+relay "$node_binary" "$project_root/scripts/ci/tor-provider.mjs" --health "$fixture_root"
 printf stopped > "$fixture_root/transport-stopped"
 wait "$test_pid"
 test -f "$fixture_root/rust-result.json"

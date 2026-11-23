@@ -51,8 +51,9 @@ export function httpBodies(pdml){
   }
   return records;
 }
-export function auditCapture({pdml,client,provider,rust}){
+export function auditCapture({pdml,client,provider,rust,health}){
   if(!rust?.complete||rust.requests!==16||!rust.different_circuits||!rust.transport_stop_failed_closed||!rust.direct_provider_connection_denied)throw Error('incomplete_rust_transport_evidence');
+  if(health?.provider_alive_after_stop!==true)throw Error('missing_live_provider_control');
   const bodies=httpBodies(pdml);
   if(bodies.length!==16||provider?.requests?.length!==bodies.length)throw Error('incomplete_packet_capture');
   if(JSON.stringify([...new Set(bodies.map(body=>body.length))].sort((a,b)=>a-b))!==JSON.stringify(buckets))throw Error('missing_captured_bucket');
@@ -72,7 +73,7 @@ export function auditCapture({pdml,client,provider,rust}){
   }
   if(packets===0)throw Error('empty_netd_packet_capture');
   return {complete:true,synthetic_only:true,public_tor_used:false,requests:bodies.length,buckets,canary_leaks:0,
-    netd_outbound_packets:packets,direct_provider_packets:0,dns_packets:0,different_circuits:true,transport_stop_failed_closed:true,
+    netd_outbound_packets:packets,direct_provider_packets:0,dns_packets:0,different_circuits:true,transport_stop_failed_closed:true,provider_alive_after_stop:true,
     scope:'production nw-netd Tor::send, TLS and HTTP; test-only authorities and PKI; CI namespace configuration',
     production_daemon_namespace_integration:false,full_core_pipeline:false};
 }
@@ -92,9 +93,11 @@ export async function main(args=process.argv.slice(2)){
   if((await lstat(args[1])).isSymbolicLink()||!fixture.startsWith(temporary+sep)||!output.startsWith(root+sep))throw Error('unsafe_pcap_evidence_directory');
   const result=auditCapture({pdml:(await bounded(join(fixture,'provider.pdml'),32*1024*1024)).toString('utf8'),
     client:(await bounded(join(fixture,'client.tsv'),8*1024*1024)).toString('utf8'),
-    provider:JSON.parse(await bounded(join(fixture,'provider-receipt.json'),1024*1024)),rust:JSON.parse(await bounded(join(fixture,'rust-result.json'),65536))});
+    provider:JSON.parse(await bounded(join(fixture,'provider-receipt.json'),1024*1024)),rust:JSON.parse(await bounded(join(fixture,'rust-result.json'),65536)),
+    health:JSON.parse(await bounded(join(fixture,'health-after-stop.json'),65536))});
+  for(const file of ['client.pcap','provider.pcap'])if(hasCanary(await bounded(join(fixture,file),64*1024*1024)))throw Error('canary_in_raw_os_capture');
   await mkdir(output,{recursive:true});if((await lstat(output)).isSymbolicLink()||!(await realpath(output)).startsWith((await realpath(root))+sep))throw Error('unsafe_pcap_output_directory');
-  const files=['client.pcap','provider.pcap','provider.pdml','client.tsv','provider-receipt.json','rust-result.json','provider-ca.pem','tls.keys'];
+  const files=['client.pcap','provider.pcap','provider.pdml','client.tsv','provider-receipt.json','rust-result.json','health-after-stop.json','provider-ca.pem','tls.keys'];
   const hashes={};
   for(const file of files){await bounded(join(fixture,file),64*1024*1024);hashes[file]=await artifactHash(join(fixture,file));await copyFile(join(fixture,file),join(output,file));}
   const report={version:1,...result,hashes,workflow_run:process.env.GITHUB_RUN_ID,commit:process.env.GITHUB_SHA};

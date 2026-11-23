@@ -73,6 +73,7 @@ pub struct Rank {
     pub rank_max: usize,
     pub user_score: i32,
     pub best_decoy_score: i32,
+    pub background_score: i32,
     pub risky: bool,
 }
 
@@ -82,6 +83,7 @@ pub struct References {
     /// Exclusive segment end for each person, not an expanded candidate pool.
     candidate_ends: Vec<usize>,
     vectors: Mutex<Option<Zeroizing<Vec<Vec<f64>>>>>,
+    observer: Option<std::sync::Arc<dyn Fn(Rank) + Send + Sync>>,
 }
 impl References {
     pub fn new(user: SecretString, decoys: Vec<String>) -> Result<Self, Unavailable> {
@@ -133,10 +135,17 @@ impl References {
             documents: pieces,
             candidate_ends,
             vectors: Mutex::new(None),
+            observer: None,
         })
     }
     pub fn with_synthetic_decoys(user: SecretString) -> Result<Self, Unavailable> {
         Self::new(user, synthetic_decoys())
+    }
+    /// Optional aggregate-only observation for synthetic evaluation. It cannot
+    /// alter the rank or receive dossier text, vectors or a stable dossier hash.
+    pub fn observe(mut self, observer: std::sync::Arc<dyn Fn(Rank) + Send + Sync>) -> Self {
+        self.observer = Some(observer);
+        self
     }
     pub async fn inspect(
         &self,
@@ -155,7 +164,26 @@ impl References {
         }
         // Embed the entire immutable provider-visible history, including earlier
         // turns and provider replies. Never silently take just the last question.
-        let query = Zeroizing::new(serde_json::to_string(history).map_err(|_| Unavailable::Limit)?);
+        // Use the same plain-text representation as reference facts. Role
+        // labels preserve attribution without making a JSON envelope a feature.
+        let lines = Zeroizing::new(
+            history
+                .iter()
+                .map(|message| {
+                    format!(
+                        "{}: {}",
+                        match message.role {
+                            nw_llm::Role::User => "user",
+                            nw_llm::Role::Assistant => "assistant",
+                            nw_llm::Role::System => "system",
+                        },
+                        message.content
+                    )
+                })
+                .collect::<Vec<_>>(),
+        );
+        let query = Zeroizing::new(lines.join("\n"));
+        drop(lines);
         if query.len() > MAX_TEXT_BYTES {
             return Err(Unavailable::Limit);
         }
@@ -198,7 +226,12 @@ impl References {
             scores.push(score);
             start = *end;
         }
-        rank_scores(&scores, settings)
+        let result = rank_scores(&scores, settings)?;
+        drop(cached);
+        if let Some(observer) = &self.observer {
+            observer(result);
+        }
+        Ok(result)
     }
 }
 
@@ -254,17 +287,23 @@ fn rank_scores(scores: &[i32], settings: &Settings) -> Result<Rank, Unavailable>
     }
     let user_score = scores[0];
     let best_decoy_score = *scores[1..].iter().max().ok_or(Unavailable::Dossier)?;
+    let mut background = Zeroizing::new(scores[1..].to_vec());
+    background.sort_unstable();
+    // Lower median is deterministic and conservative for an even-sized cohort.
+    // A best-decoy baseline made margin redundant with rank_min == 1.
+    let background_score = background[(background.len() - 1) / 2];
     // A tie may put the user inside top-k regardless of the order of candidates.
     let rank_min = 1 + scores[1..].iter().filter(|v| **v > user_score).count();
     let rank_max = 1 + scores[1..].iter().filter(|v| **v >= user_score).count();
     let risky = rank_min <= settings.top_k
-        || f64::from(user_score - best_decoy_score) / SCORE_SCALE >= settings.max_margin;
+        || f64::from(user_score - background_score) / SCORE_SCALE >= settings.max_margin;
     Ok(Rank {
         candidates: scores.len(),
         rank_min,
         rank_max,
         user_score,
         best_decoy_score,
+        background_score,
         risky,
     })
 }
@@ -292,7 +331,7 @@ pub fn synthetic_decoys() -> Vec<String> {
     (0..64)
         .map(|i| {
             format!(
-                "A fictional person who {}, {}, and {}.",
+                "{}\n{}\n{}",
                 crafts[i % 4],
                 interests[(i / 4) % 4],
                 schedules[i / 16]

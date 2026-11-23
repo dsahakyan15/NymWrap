@@ -30,6 +30,9 @@ export async function serve(fixture){
     const path=join(actual,'provider-receipt.json');await writeFile(path+'.part',text);await rename(path+'.part',path);
   });return writes;};
   const server=https.createServer({key:await readFile(join(actual,'provider-key.pem')),cert:await readFile(join(actual,'provider-cert.pem')),minVersion:'TLSv1.2'},(request,response)=>{
+    if(request.method==='GET'&&request.url==='/health'&&request.headers.host==='api.example.test'){
+      response.writeHead(200,{'Content-Type':'text/plain','Connection':'close'});response.end('synthetic provider ready');return;
+    }
     const chunks=[];let size=0;
     request.on('data',chunk=>{size+=chunk.length;if(size>32768)request.destroy();else chunks.push(chunk);});
     request.on('error',()=>{});
@@ -56,6 +59,23 @@ export async function serve(fixture){
   await save();await writeFile(join(actual,'provider-ready'),'ready');
   process.once('SIGTERM',()=>{server.closeAllConnections();server.close();dns.close();void writes.finally(()=>process.exit(0));});
 }
+export async function health(fixture){
+  if(process.platform!=='linux'||process.env.GITHUB_ACTIONS!=='true')throw Error('isolated_ci_fixture_required');
+  const actual=await realpath(fixture),base=await realpath(process.env.RUNNER_TEMP);
+  if((await lstat(fixture)).isSymbolicLink()||!actual.startsWith(base+sep))throw Error('unsafe_tor_provider_fixture');
+  const ca=await readFile(join(actual,'provider-ca.pem'));
+  await new Promise((accept,reject)=>{
+    const probe=https.get({hostname:'192.0.2.2',servername:'api.example.test',path:'/health',headers:{Host:'api.example.test'},ca,timeout:5000},response=>{
+      let body='';response.setEncoding('utf8');response.on('data',part=>{body+=part;if(body.length>1024)probe.destroy();});
+      response.on('end',()=>{if(response.statusCode===200&&body==='synthetic provider ready')accept();else reject(Error('provider_health_failed'));});
+      response.on('error',()=>reject(Error('provider_health_failed')));
+    });
+    probe.on('timeout',()=>probe.destroy());probe.on('error',()=>reject(Error('provider_health_failed')));
+  });
+  await writeFile(join(actual,'health-after-stop.json'),JSON.stringify({provider_alive_after_stop:true})+'\n');
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  if(process.argv.length!==3)throw Error('usage_ci_tor_provider_fixture');await serve(resolve(process.argv[2]));
+  if(process.argv.length===4&&process.argv[2]==='--health')await health(resolve(process.argv[3]));
+  else if(process.argv.length===3)await serve(resolve(process.argv[2]));
+  else throw Error('usage_ci_tor_provider_fixture');
 }

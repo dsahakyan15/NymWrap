@@ -430,6 +430,19 @@ mod tests {
         let id = parsed["choice"].as_str().unwrap();
         assert_eq!(id.len(), 3);
         assert!(id.starts_with('P') && id[1..].parse::<u8>().unwrap() < 64);
+        let facts = model.complete_structured(
+            &[Message { role: nw_llm::Role::User, content: "Only facts A and C are stated. Return a JSON facts array. Do not add any other field.".into() }],
+            128,nw_llm::OutputSchema::LinkageFactsV1,
+        ).await.unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(facts.expose_secret()).unwrap();
+        assert_eq!(parsed.as_object().unwrap().len(), 1);
+        let letters = parsed["facts"].as_array().unwrap();
+        assert!(letters.len() <= 26);
+        assert!(letters.iter().all(|value| {
+            value.as_str().is_some_and(|letter| {
+                letter.len() == 1 && letter.as_bytes()[0].is_ascii_uppercase()
+            })
+        }));
         let batch = model
             .embed_identified(&[
                 "growing vegetables in a garden".into(),

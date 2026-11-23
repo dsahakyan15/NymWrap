@@ -81,6 +81,7 @@ pub struct Trait {
     pub evidence: Vec<String>,
     pub confirmed: Option<bool>,
 }
+const MANUAL_CONFIRMATION_EVIDENCE: &str = "Подтверждено пользователем вручную";
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Persona {
@@ -341,31 +342,53 @@ impl Workspace {
     pub fn linkcheck_references(
         &mut self,
     ) -> Result<Option<crate::linkcheck::References>, WorkspaceError> {
-        #[derive(Serialize)]
-        struct Dossier<'a> {
-            confirmed_persona: Vec<&'a Trait>,
-            personal_and_device_secrets: &'a [SecretRecord],
-            import_summary: Option<&'a nw_audit::Summary>,
-        }
         let secrets = self.secrets()?;
         let summary = self.summary()?;
-        let confirmed_persona: Vec<_> = self
+        // Embed facts, not the storage envelope: JSON keys, trait IDs and
+        // approval flags otherwise distinguish the user from fictional peers.
+        let mut facts = zeroize::Zeroizing::new(Vec::new());
+        for item in self
             .persona
             .traits
             .iter()
             .filter(|t| t.confirmed == Some(true))
-            .collect();
-        if secrets.is_empty() && summary.is_none() && confirmed_persona.is_empty() {
+        {
+            facts.push(item.claim.clone());
+            facts.extend(
+                item.evidence
+                    .iter()
+                    .filter(|evidence| evidence.as_str() != MANUAL_CONFIRMATION_EVIDENCE)
+                    .cloned(),
+            );
+        }
+        facts.extend(secrets.iter().map(|secret| secret.value.clone()));
+        if let Some(summary) = &summary {
+            facts.extend(summary.titles.iter().cloned());
+            facts.extend(summary.searches.iter().cloned());
+            facts.extend(summary.prompt_samples.iter().cloned());
+            facts.extend(
+                summary
+                    .domains
+                    .iter()
+                    .map(|(domain, count)| format!("Visited domain {domain}: {count} records.")),
+            );
+            facts.extend(
+                summary
+                    .activity_hours
+                    .iter()
+                    .map(|(hour, count)| format!("Activity hour {hour}: {count} records.")),
+            );
+            if summary.records != 0 {
+                facts.push(format!("Imported records: {}.", summary.records));
+            }
+            if summary.skipped_files != 0 {
+                facts.push(format!("Skipped import files: {}.", summary.skipped_files));
+            }
+        }
+        if facts.iter().all(|fact| fact.trim().is_empty()) {
             return Ok(None);
         }
-        let dossier = Dossier {
-            confirmed_persona,
-            personal_and_device_secrets: &secrets,
-            import_summary: summary.as_ref(),
-        };
-        let material = zeroize::Zeroizing::new(
-            serde_json::to_string(&dossier).map_err(|_| WorkspaceError::Invalid)?,
-        );
+        let material = zeroize::Zeroizing::new(facts.join("\n"));
         // A bound is never enforced by truncating away potentially identifying facts.
         Ok(
             crate::linkcheck::References::with_synthetic_decoys(SecretString::from(
@@ -410,7 +433,7 @@ impl Workspace {
             .map(|claim| Trait {
                 id: format!("{:x}", Sha256::digest(claim.as_bytes())),
                 claim,
-                evidence: vec!["Подтверждено пользователем вручную".into()],
+                evidence: vec![MANUAL_CONFIRMATION_EVIDENCE.into()],
                 confirmed: Some(true),
             })
             .collect();
