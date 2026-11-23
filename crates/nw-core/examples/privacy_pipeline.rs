@@ -53,6 +53,23 @@ struct ObservedModel {
     calls: Arc<Mutex<Calls>>,
 }
 impl LocalModel for ObservedModel {
+    async fn generalize(&self, text: &str) -> Result<SecretString, ModelError> {
+        let result = self.real.generalize(text).await;
+        if result.is_err() {
+            self.calls.lock().unwrap().model_errors += 1;
+        }
+        result
+    }
+    async fn embed_identified(
+        &self,
+        texts: &[String],
+    ) -> Result<nw_llm::EmbeddingBatch, ModelError> {
+        let result = self.real.embed_identified(texts).await;
+        if result.is_err() {
+            self.calls.lock().unwrap().model_errors += 1;
+        }
+        result
+    }
     async fn identify_entities(&self, text: &str) -> Result<SecretString, ModelError> {
         let result = self.real.identify_entities(text).await;
         let mut calls = self.calls.lock().unwrap();
@@ -288,6 +305,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .collect::<Vec<_>>(),
         );
         let capture = Capture::default();
+        let mut facts = zeroize::Zeroizing::new(case.secrets.clone());
+        if let Some(profile) = corpus
+            .profiles
+            .iter()
+            .find(|p| Some(&p.id) == case.profile_id.as_ref())
+        {
+            facts.extend(profile.facts.clone());
+        }
+        if facts.is_empty() {
+            facts.push("Fictional person interested in general education.".into());
+        }
+        let dossier = SecretString::from(serde_json::to_string(&*facts)?);
         let engine = Engine::new(
             ObservedModel {
                 real: real.clone(),
@@ -295,7 +324,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
             shield,
             Profile::Standard,
-        );
+        )
+        .with_linkcheck(Some(nw_core::linkcheck::References::with_synthetic_decoys(
+            dossier,
+        )?));
         let mut history = vec![];
         let mut conversation = String::from("new");
         let mut local_turns = 0;

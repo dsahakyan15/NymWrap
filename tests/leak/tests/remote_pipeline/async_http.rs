@@ -80,7 +80,7 @@ async fn async_http_preserves_final_gate_and_never_echoes_canary_in_job_metadata
     const CANARY: &str = "ASYNC_HTTP_SYNTHETIC_CANARY_ONLY_51357";
     for injection in [false, true] {
         let backend = Arc::new(ReviewedBackend {
-            engine: Engine::new(
+            engine: test_engine(
                 Model {
                     injection: injection.then(|| CANARY.into()),
                 },

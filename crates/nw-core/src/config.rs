@@ -35,6 +35,8 @@ impl Default for HardConfig {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ShieldConfig {
+    #[serde(default)]
+    pub linkcheck: crate::linkcheck::Settings,
     pub min_trust: TrustLevel,
     pub translate_to_english: bool,
     pub show_diff_before_send: bool,
@@ -112,6 +114,7 @@ impl Config {
                 ..Default::default()
             },
             shield: ShieldConfig {
+                linkcheck: crate::linkcheck::Settings::for_profile(profile),
                 min_trust: profile.min_trust(),
                 translate_to_english: profile != Profile::Standard,
                 show_diff_before_send: profile.requires_approval(),
@@ -158,6 +161,9 @@ impl Config {
         })
     }
     pub fn validate(&self) -> Result<(), CoreError> {
+        if !self.shield.linkcheck.valid(65) {
+            return Err(CoreError::Request);
+        }
         if self.hard.defer_max_hours > nw_cover::defer::MAX_HOURS {
             return Err(CoreError::Request);
         }
@@ -365,6 +371,26 @@ mod tests {
         let mut text = toml::to_string(&good).unwrap();
         text.push_str("\nunknown_secret = 'synthetic'\n");
         assert!(Config::load(text.as_bytes()).is_err());
+    }
+    #[test]
+    fn linkcheck_cannot_be_disabled_by_an_empty_rank_bad_threshold_or_another_model() {
+        for profile in [Profile::Standard, Profile::Strict, Profile::Paranoid] {
+            let base = Config::for_profile(profile).unwrap();
+            let mut cfg = base.clone();
+            cfg.shield.linkcheck.top_k = 0;
+            assert!(cfg.validate().is_err());
+            let mut cfg = base.clone();
+            cfg.shield.linkcheck.top_k = 65;
+            assert!(cfg.validate().is_err());
+            let mut cfg = base.clone();
+            cfg.shield.linkcheck.model_sha256 = "a".repeat(64);
+            assert!(cfg.validate().is_err());
+            for margin in [-0.1, f64::NAN, f64::INFINITY, 1.1] {
+                let mut cfg = base.clone();
+                cfg.shield.linkcheck.max_margin = margin;
+                assert!(cfg.validate().is_err());
+            }
+        }
     }
     #[test]
     fn background_work_needs_both_consents_and_cannot_bypass_profile_approval() {

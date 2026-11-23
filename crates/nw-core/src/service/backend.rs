@@ -133,12 +133,14 @@ fn require_background(session: &mut Session) -> Result<&mut Workspace, String> {
 }
 pub(super) fn refresh_engine(session: &mut Session) -> Result<(), String> {
     let w = require(session)?;
+    let references = w.linkcheck_references().map_err(code)?;
     let engine = Engine::configured(
         w.model().map_err(code)?,
         w.shield().map_err(code)?,
         &w.config,
     )
-    .map_err(code)?;
+    .map_err(code)?
+    .with_linkcheck(references);
     session.engine = Some(Arc::new(engine));
     Ok(())
 }
@@ -459,7 +461,10 @@ pub(super) async fn audit_import(
     if s.epoch != epoch {
         return Err("session_changed".into());
     }
-    require(&mut s)?.save_import(summary).map_err(code)
+    let summary = require(&mut s)?.save_import(summary).map_err(code)?;
+    state.invalidate(&mut s);
+    refresh_engine(&mut s)?;
+    Ok(summary)
 }
 pub(super) fn load_summary(state: &State) -> Result<Option<nw_audit::Summary>, String> {
     let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
@@ -488,6 +493,8 @@ pub(super) async fn research_persona(state: &State) -> Result<Persona, String> {
     require(&mut s)?
         .save_persona(persona.clone())
         .map_err(code)?;
+    state.invalidate(&mut s);
+    refresh_engine(&mut s)?;
     Ok(persona)
 }
 pub(super) fn confirm_traits(
@@ -495,7 +502,10 @@ pub(super) fn confirm_traits(
     state: &State,
 ) -> Result<Persona, String> {
     let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
-    require(&mut s)?.confirm_traits(&choices).map_err(code)
+    let persona = require(&mut s)?.confirm_traits(&choices).map_err(code)?;
+    state.invalidate(&mut s);
+    refresh_engine(&mut s)?;
+    Ok(persona)
 }
 pub(super) async fn generate_plan(
     input: crate::planning::PlanInput,

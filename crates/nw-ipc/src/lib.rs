@@ -216,6 +216,11 @@ pub struct Packet<T> {
     pub request_id: u64,
     pub body: T,
 }
+pub fn peer_image(stream: &LocalStream) -> Result<std::path::PathBuf, IpcError> {
+    nw_platform::process_image(peer_process(stream)?)
+        .and_then(std::fs::canonicalize)
+        .map_err(|_| IpcError::Peer)
+}
 pub fn peer_process(stream: &LocalStream) -> Result<u32, IpcError> {
     #[cfg(target_os = "macos")]
     {

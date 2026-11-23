@@ -138,6 +138,9 @@ impl Isolated {
     }
 }
 impl Inference for Isolated {
+    fn embedding_sha256(&self) -> Option<&str> {
+        Some(&self.hashes[1])
+    }
     fn complete(&mut self, messages: &[Message], max_tokens: u32) -> Result<String, Error> {
         self.complete_structured(messages, max_tokens, None)
     }

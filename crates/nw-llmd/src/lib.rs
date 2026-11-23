@@ -32,6 +32,9 @@ pub enum Error {
     Timeout,
 }
 pub trait Inference: Send + 'static {
+    fn embedding_sha256(&self) -> Option<&str> {
+        None
+    }
     fn complete(&mut self, messages: &[Message], max_tokens: u32) -> Result<String, Error>;
     fn complete_structured(
         &mut self,
@@ -193,17 +196,19 @@ async fn embed<B: Inference>(
     let result = tokio::task::spawn_blocking(move || {
         let _permit = permit;
         let input = zeroize::Zeroizing::new(request.input);
-        worker.backend.blocking_lock().embed(&input)
+        let mut backend = worker.backend.blocking_lock();
+        let vectors = backend.embed(&input)?;
+        Ok::<_, Error>((vectors, backend.embedding_sha256().map(str::to_owned)))
     })
     .await;
     match result {
-        Ok(Ok(vectors)) if valid_vectors(&vectors, count) => {
+        Ok(Ok((vectors, identity))) if valid_vectors(&vectors, count) => {
             let data: Vec<_> = vectors
                 .into_iter()
                 .enumerate()
                 .map(|(index, embedding)| serde_json::json!({"index":index,"embedding":embedding}))
                 .collect();
-            Json(serde_json::json!({"data":data})).into_response()
+            Json(serde_json::json!({"data":data,"nw_model_sha256":identity})).into_response()
         }
         _ => failure(StatusCode::SERVICE_UNAVAILABLE, "model_inference_failed"),
     }
@@ -225,6 +230,10 @@ pub fn router<B: Inference>(backend: B) -> Router {
         .layer(middleware::from_fn(guard))
         .with_state(worker)
 }
+
+#[cfg(test)]
+#[path = "../../../tests/leak/src/model_identity.rs"]
+mod identity_tests;
 
 #[cfg(test)]
 mod tests {
@@ -356,7 +365,8 @@ mod tests {
         let _keep = dir;
         let endpoint = nw_ipc::Endpoint::new(address.clone(), nw_proto::Lane::Shadow).unwrap();
         let listener = nw_ipc::Listener::bind(endpoint).unwrap();
-        let server = tokio::spawn(async move {
+        let mut servers = tokio::task::JoinSet::new();
+        servers.spawn(async move {
             axum::serve(listener, router(backend)).await.unwrap();
         });
         let model =
@@ -385,19 +395,23 @@ mod tests {
         assert!(parsed["entities"].is_array());
         assert_eq!(parsed["local_only"], false);
         assert!(parsed["entities"].as_array().unwrap().is_empty());
-        let vectors = model
-            .embed(&[
+        let batch = model
+            .embed_identified(&[
                 "growing vegetables in a garden".into(),
                 "gardening and plants".into(),
                 "compiling a software kernel".into(),
             ])
             .await
             .unwrap();
+        assert_eq!(
+            batch.model_sha256,
+            "d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac"
+        );
+        let vectors = &batch.vectors;
         assert_eq!(vectors.len(), 3);
         assert_eq!(vectors[0].len(), 768);
         let dot = |a: &[f64], b: &[f64]| a.iter().zip(b).map(|(x, y)| x * y).sum::<f64>();
         assert!(dot(&vectors[0], &vectors[1]) > dot(&vectors[0], &vectors[2]));
-        server.abort();
-        let _ = server.await;
+        servers.shutdown().await;
     }
 }

@@ -592,6 +592,12 @@ mod queue_tests {
     }
     struct Model;
     impl LocalModel for Model {
+        async fn embed_identified(
+            &self,
+            texts: &[String],
+        ) -> Result<nw_llm::EmbeddingBatch, nw_llm::ModelError> {
+            Ok(crate::link_fixture::identified(texts))
+        }
         async fn identify_entities(&self, _: &str) -> Result<SecretString, nw_llm::ModelError> {
             Ok(SecretString::from(r#"{"local_only":false,"entities":[]}"#))
         }
@@ -772,7 +778,8 @@ mod queue_tests {
             local_only: false,
         }])
         .unwrap();
-        let engine = Arc::new(Engine::configured(Model, w.shield().unwrap(), &config).unwrap());
+        let engine =
+            Arc::new(crate::link_fixture::configured(Model, w.shield().unwrap(), &config).unwrap());
         let at = 1_000_000;
         assert!(w.take_traffic_slot(at, false).unwrap().is_none());
         let state = State::default();

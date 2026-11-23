@@ -189,6 +189,12 @@ fn fixture(consent: bool) -> (tempfile::TempDir, State) {
 }
 struct Model;
 impl LocalModel for Model {
+    async fn embed_identified(
+        &self,
+        texts: &[String],
+    ) -> Result<nw_llm::EmbeddingBatch, nw_llm::ModelError> {
+        Ok(crate::link_fixture::identified(texts))
+    }
     async fn complete(&self, _: &[Message]) -> Result<SecretString, nw_llm::ModelError> {
         unreachable!("no answer generation in boundary tests")
     }
@@ -220,7 +226,7 @@ impl RemoteCompletion for NoNetwork {
     }
 }
 async fn job(w: &mut Workspace) -> workspace::RemoteJobInfo {
-    let engine = Engine::configured(Model, w.shield().unwrap(), &w.config).unwrap();
+    let engine = crate::link_fixture::configured(Model, w.shield().unwrap(), &w.config).unwrap();
     let RemoteStep::Review(review) = engine
         .review_remote(
             "new",

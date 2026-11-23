@@ -66,6 +66,7 @@
 | Ключи в swap, core dump | A6, A8 | `mlock`, `zeroize`, запрет core dump (`prctl`/`setrlimit`), `secrecy` | `nw-vault` |
 | Подмена зависимости или модели | A7 | закреплённые версии и хеши, `cargo-deny`, `cargo-vet`, SBOM, проверка хеша модели при загрузке | CI |
 | Жёсткие идентификаторы в тексте: имя ПК, пользователь, пути, SSID, MAC, machine-id, git-почта | A1 | секреты устройства из `nw-probe` в vault + leakcheck во всех кодировках | `nw-probe`, `nw-shield` |
+| Связывание по сочетанию редких фактов, в том числе разных ходов | A1 | cumulative linkcheck по досье и ≥50 синтетическим альтернативам, generalize/recheck, независимый split или L0; эффективность подтверждается held-out оценкой | `nw-core`, `nw-llmd` |
 | GPS-координаты, IMEI, GUID, часовой пояс и точные метки времени в тексте | A1 | детекторы GEO/MAC/IMEI/USER_PATH/TZ/DATETIME/GUID (SPEC §4.9.3) | `nw-shield` |
 | Агент пишет окружение в системный промпт (ОС, папка, дата, hostname) | A1 | нормализация окружения песочницы до общих значений (SPEC §4.9.5) + Shield | `nw-sandbox` |
 | Геолокация и список Wi-Fi через API ОС | A1, A5 | ни один процесс не вызывает геолокацию; AppContainer без `location`/`wiFiControl`; в песочнице нет D-Bus, GeoClue, NetworkManager, `/sys` | `nw-sandbox`, `nw-platform` |

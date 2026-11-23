@@ -77,11 +77,12 @@ pub(in crate::service) fn prefetch_decoy(state: &State) -> Result<(), String> {
     let config = w.config.clone();
     let model = w.model().map_err(code)?.background();
     let shield = w.shield().map_err(code)?;
+    let references = w.linkcheck_references().map_err(code)?;
     let worker_state = state.clone();
     let worker = tokio::spawn(async move {
         let prepared = tokio::time::timeout(
             Duration::from_secs(360),
-            prepare(model, shield, config, epoch),
+            prepare(model, shield, config, epoch, references),
         )
         .await;
         // Session -> decoys is the same lock order as invalidation and slot dispatch.
@@ -134,6 +135,7 @@ async fn prepare(
     shield: nw_shield::Shield,
     config: Config,
     epoch: u64,
+    references: Option<crate::linkcheck::References>,
 ) -> Result<Ready, CoreError> {
     config.validate()?;
     if !config.cover.enabled {
@@ -161,7 +163,7 @@ async fn prepare(
         .provider_model
         .clone()
         .ok_or(CoreError::Request)?;
-    let engine = Engine::configured(model, shield, &config)?;
+    let engine = Engine::configured(model, shield, &config)?.with_linkcheck(references);
     let crate::RemoteStep::Review(review) = engine
         .review_remote(
             "new",
@@ -195,6 +197,12 @@ mod tests {
         inputs: Arc<Mutex<Vec<String>>>,
     }
     impl LocalModel for Model {
+        async fn embed_identified(
+            &self,
+            texts: &[String],
+        ) -> Result<nw_llm::EmbeddingBatch, nw_llm::ModelError> {
+            Ok(crate::link_fixture::identified(texts))
+        }
         async fn complete(&self, messages: &[Message]) -> Result<SecretString, nw_llm::ModelError> {
             self.inputs
                 .lock()
@@ -243,6 +251,7 @@ mod tests {
                 shield,
                 config,
                 7,
+                Some(crate::link_fixture::references()),
             )
             .await;
             assert!(

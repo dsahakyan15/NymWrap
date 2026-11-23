@@ -2,6 +2,12 @@
 pub mod config;
 mod flight;
 mod import_worker;
+pub mod linkcheck;
+#[cfg(test)]
+pub(crate) mod link_fixture {
+    use crate as nw_core;
+    include!("../../../tests/leak/src/link_fixture.rs");
+}
 mod probe_worker;
 pub use import_worker::import as audit_offline;
 pub mod planning;
@@ -152,6 +158,8 @@ pub struct Engine<M: LocalModel> {
     translate_to_english: bool,
     min_trust: TrustLevel,
     approval_required: bool,
+    linkcheck: Option<linkcheck::References>,
+    linkcheck_settings: linkcheck::Settings,
     conversations: Mutex<ConversationState>,
     flights: flight::Flights,
 }
@@ -170,6 +178,8 @@ impl<M: LocalModel> Engine<M> {
             translate_to_english: false,
             min_trust: profile.min_trust(),
             approval_required: profile.requires_approval(),
+            linkcheck: None,
+            linkcheck_settings: linkcheck::Settings::for_profile(profile),
             conversations: Mutex::new(ConversationState::default()),
             flights: flight::Flights::default(),
         }
@@ -191,7 +201,13 @@ impl<M: LocalModel> Engine<M> {
         engine.translate_to_english = config.shield.translate_to_english;
         engine.min_trust = config.shield.min_trust;
         engine.approval_required = config.shield.show_diff_before_send;
+        engine.linkcheck_settings = config.shield.linkcheck.clone();
         Ok(engine)
+    }
+    /// Missing dossier material permits local answers only.
+    pub fn with_linkcheck(mut self, references: Option<linkcheck::References>) -> Self {
+        self.linkcheck = references;
+        self
     }
     pub async fn restore_if_missing(
         &self,
@@ -381,6 +397,7 @@ impl<M: LocalModel> Engine<M> {
         if messages.iter().filter(|m| m.role == Role::User).count() > self.max_turns {
             return Err(CoreError::Limit);
         }
+        let new_start = conversation.canonical.len();
         for message in &messages[conversation.real.len()..] {
             let minimized = self
                 .shield
@@ -424,7 +441,7 @@ impl<M: LocalModel> Engine<M> {
                 .real
                 .push(SecretString::from(message.content.clone()));
         }
-        let local_only = conversation.force_local
+        let mut local_only = conversation.force_local
             || messages
                 .iter()
                 .any(|m| self.shield.classify(&m.content) == nw_shield::Sensitivity::LocalOnly)
@@ -432,6 +449,16 @@ impl<M: LocalModel> Engine<M> {
                 self.shield.classify(&m.content) == nw_shield::Sensitivity::LocalOnly
                     || self.shield.has_unresolved_name(&m.content)
             });
+        let local_reason = if remote.is_some() && !local_only {
+            let reason = self.protect_linkage(&mut conversation, new_start).await;
+            if reason.is_some() {
+                conversation.force_local = true;
+                local_only = true;
+            }
+            reason
+        } else {
+            None
+        };
         let remote_work = if let Some(remote) = remote.filter(|_| !local_only) {
             if conversation
                 .remote_context
@@ -507,7 +534,14 @@ impl<M: LocalModel> Engine<M> {
                 ))
             }
         };
-        let (answer, trust) = tokio::select! {biased;_=flight.cancelled()=>Err(CoreError::Session),result=work=>result}?;
+        let (mut answer, trust) = tokio::select! {biased;_=flight.cancelled()=>Err(CoreError::Session),result=work=>result}?;
+        if let Some(reason) = local_reason {
+            answer = SecretString::from(format!(
+                "{}\n\n{}",
+                reason.explanation(),
+                answer.expose_secret()
+            ));
+        }
         let mut state = self.conversations.lock().await;
         if !flight.valid() {
             return Err(CoreError::Session);

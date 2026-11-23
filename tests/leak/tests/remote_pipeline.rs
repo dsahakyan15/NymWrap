@@ -4,6 +4,9 @@ use nw_proto::{Profile, TrustLevel};
 use nw_shield::{Prepared, Secret, SecretKind, Shield};
 use secrecy::{ExposeSecret, SecretString};
 use std::sync::{Arc, Mutex};
+#[path = "../src/link_fixture.rs"]
+mod link_fixture;
+use link_fixture::{configured as configured_engine, engine as test_engine};
 #[path = "remote_pipeline/async_http.rs"]
 mod async_http;
 #[cfg(windows)]
@@ -13,6 +16,12 @@ struct Model {
     injection: Option<String>,
 }
 impl LocalModel for Model {
+    async fn embed_identified(
+        &self,
+        texts: &[String],
+    ) -> Result<nw_llm::EmbeddingBatch, ModelError> {
+        Ok(link_fixture::identified(texts))
+    }
     async fn identify_entities(&self, _: &str) -> Result<SecretString, ModelError> {
         Ok(SecretString::from(r#"{"local_only":false,"entities":[]}"#))
     }
@@ -34,6 +43,12 @@ struct Capture {
 }
 struct NameAnalysis(&'static str);
 impl LocalModel for NameAnalysis {
+    async fn embed_identified(
+        &self,
+        texts: &[String],
+    ) -> Result<nw_llm::EmbeddingBatch, ModelError> {
+        Ok(link_fixture::identified(texts))
+    }
     async fn identify_entities(&self, _: &str) -> Result<SecretString, ModelError> {
         Ok(self.0.into())
     }
@@ -110,7 +125,7 @@ async fn known_canaries_in_route_labels_are_vetoed_before_send_and_after_review(
             CANARY.to_owned(),
             base64::engine::general_purpose::STANDARD.encode(CANARY),
         ] {
-            let engine = Engine::new(
+            let engine = test_engine(
                 Model { injection: None },
                 Shield::new(vec![
                     Secret::new(SecretKind::Secret, CANARY.into(), false).unwrap(),
@@ -200,7 +215,7 @@ impl RemoteCompletion for SlowRoute {
 }
 #[tokio::test]
 async fn a_slow_remote_request_does_not_block_an_independent_local_chat() {
-    let engine = Arc::new(Engine::new(
+    let engine = Arc::new(test_engine(
         Model { injection: None },
         Shield::new(vec![]).unwrap(),
         Profile::Standard,
@@ -241,7 +256,7 @@ async fn a_slow_remote_request_does_not_block_an_independent_local_chat() {
 #[tokio::test]
 async fn forgetting_or_aborting_a_remote_turn_releases_its_reservation() {
     for forget in [true, false] {
-        let engine = Arc::new(Engine::new(
+        let engine = Arc::new(test_engine(
             Model { injection: None },
             Shield::new(vec![]).unwrap(),
             Profile::Standard,
@@ -282,6 +297,12 @@ async fn forgetting_or_aborting_a_remote_turn_releases_its_reservation() {
 }
 struct CountingModel(Arc<std::sync::atomic::AtomicUsize>);
 impl LocalModel for CountingModel {
+    async fn embed_identified(
+        &self,
+        texts: &[String],
+    ) -> Result<nw_llm::EmbeddingBatch, ModelError> {
+        Ok(link_fixture::identified(texts))
+    }
     async fn identify_entities(&self, _: &str) -> Result<SecretString, ModelError> {
         Ok(SecretString::from(r#"{"local_only":false,"entities":[]}"#))
     }
@@ -302,7 +323,7 @@ async fn approval_sends_the_exact_review_once_without_rerunning_a_model() {
     let mut config = nw_core::config::Config::for_profile(Profile::Standard).unwrap();
     config.shield.show_diff_before_send = true;
     let rewrites = Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    let engine = Engine::configured(
+    let engine = configured_engine(
         CountingModel(rewrites.clone()),
         Shield::new(vec![
             Secret::new(SecretKind::Secret, "SYNTHETIC_REVIEW_CANARY".into(), false).unwrap(),
@@ -356,7 +377,7 @@ async fn cancellation_tampering_and_route_change_consume_review_without_egress()
         context: "b".repeat(64),
         bodies: Arc::default(),
     };
-    let engine = Engine::new(
+    let engine = test_engine(
         Model { injection: None },
         Shield::new(vec![]).unwrap(),
         Profile::Standard,
@@ -404,7 +425,7 @@ async fn real_core_pipeline_keeps_one_hundred_canaries_out_of_remote_body() {
             Secret::new(SecretKind::Secret, canary.clone(), false).unwrap(),
         ])
         .unwrap();
-        let engine = Engine::new(Model { injection: None }, shield, Profile::Standard);
+        let engine = test_engine(Model { injection: None }, shield, Profile::Standard);
         let reply = engine
             .chat_remote(
                 "new",
@@ -447,7 +468,7 @@ async fn personal_disclosures_stay_local_despite_an_empty_ner_or_an_erasing_rewr
         "Я работаю в",
     ] {
         for rewrite in [None, Some("Explain pottery".into())] {
-            let engine = Engine::new(
+            let engine = test_engine(
                 Model { injection: rewrite },
                 Shield::new(vec![]).unwrap(),
                 Profile::Standard,
@@ -463,7 +484,7 @@ async fn personal_disclosures_stay_local_despite_an_empty_ner_or_an_erasing_rewr
         }
     }
     // The final model operation cannot introduce a personal disclosure into egress either.
-    let engine = Engine::new(
+    let engine = test_engine(
         Model {
             injection: Some(format!("My name is {CANARY}.")),
         },
@@ -492,7 +513,7 @@ async fn sensitive_topics_cannot_be_downgraded_by_an_empty_scanner_or_a_rewrite(
         "Իմ անունը Վելքորա է",
     ] {
         for rewrite in [None, Some("Explain gardening".into())] {
-            let engine = Engine::new(
+            let engine = test_engine(
                 Model { injection: rewrite },
                 Shield::new(vec![]).unwrap(),
                 Profile::Standard,
@@ -501,7 +522,7 @@ async fn sensitive_topics_cannot_be_downgraded_by_an_empty_scanner_or_a_rewrite(
             assert_eq!(reply.trust, TrustLevel::L0);
         }
     }
-    let engine = Engine::new(
+    let engine = test_engine(
         Model {
             injection: Some("Help with diabetes".into()),
         },
@@ -551,7 +572,7 @@ async fn unresolved_names_stay_local_even_when_the_scanner_or_rewriter_misses_th
         "Ｖｅｌｑｏｒａ Ｘｅｍｖｉｎｉ",
     ] {
         for erase in [false, true] {
-            let engine = Engine::new(
+            let engine = test_engine(
                 Model {
                     injection: erase.then(|| "Explain pottery".into()),
                 },
@@ -570,7 +591,7 @@ async fn unresolved_names_stay_local_even_when_the_scanner_or_rewriter_misses_th
             );
         }
     }
-    let engine = Engine::new(
+    let engine = test_engine(
         Model {
             injection: Some("A course for Qel-Navira O'Zerquin".into()),
         },
@@ -588,7 +609,7 @@ async fn unresolved_names_stay_local_even_when_the_scanner_or_rewriter_misses_th
     assert!(remote.bodies.lock().unwrap().is_empty());
     // A declared, non-local secret is already masked before NER and remains useful remotely.
     let name = "Qel-Navira O'Zerquin";
-    let engine = Engine::new(
+    let engine = test_engine(
         Model { injection: None },
         Shield::new(vec![
             Secret::new(SecretKind::Person, name.into(), false).unwrap(),
@@ -625,7 +646,7 @@ async fn partial_name_masks_cannot_hide_the_unmasked_surname_from_the_local_guar
         r#"{"local_only":false,"entities":[{"kind":"PERSON","text":"O'Zerquin"}]}"#,
     ] {
         let remote = route();
-        let engine = Engine::new(
+        let engine = test_engine(
             NameAnalysis(analysis),
             Shield::new(vec![]).unwrap(),
             Profile::Standard,
@@ -646,7 +667,7 @@ async fn partial_name_masks_cannot_hide_the_unmasked_surname_from_the_local_guar
         assert!(remote.bodies.lock().unwrap().is_empty());
     }
     let remote = route();
-    let engine = Engine::new(
+    let engine = test_engine(
         NameAnalysis(
             r#"{"local_only":false,"entities":[{"kind":"PERSON","text":"Qel-Navira"},{"kind":"PERSON","text":"O'Zerquin"}]}"#,
         ),
@@ -684,7 +705,7 @@ async fn registered_rare_facts_are_masked_before_any_model_or_remote_request() {
             .collect(),
     )
     .unwrap();
-    let engine = Engine::new(Model { injection: None }, shield, Profile::Standard);
+    let engine = test_engine(Model { injection: None }, shield, Profile::Standard);
     let reply = engine
         .chat_remote(
             "new",
@@ -711,7 +732,7 @@ async fn registered_rare_facts_are_masked_before_any_model_or_remote_request() {
 #[tokio::test]
 async fn sensitivity_trust_and_final_model_gate_prevent_remote_calls() {
     let remote = route();
-    let sensitive = Engine::new(
+    let sensitive = test_engine(
         Model { injection: None },
         Shield::new(vec![]).unwrap(),
         Profile::Standard,
@@ -727,7 +748,7 @@ async fn sensitivity_trust_and_final_model_gate_prevent_remote_calls() {
         .await
         .unwrap();
     assert_eq!(reply.trust, TrustLevel::L0);
-    let strict = Engine::new(
+    let strict = test_engine(
         Model { injection: None },
         Shield::new(vec![]).unwrap(),
         Profile::Strict,
@@ -743,7 +764,7 @@ async fn sensitivity_trust_and_final_model_gate_prevent_remote_calls() {
         Secret::new(SecretKind::Secret, canary.into(), false).unwrap(),
     ])
     .unwrap();
-    let injected = Engine::new(
+    let injected = test_engine(
         Model {
             injection: Some(canary.into()),
         },
@@ -758,7 +779,7 @@ async fn sensitivity_trust_and_final_model_gate_prevent_remote_calls() {
     ));
     let mut config = nw_core::config::Config::for_profile(Profile::Standard).unwrap();
     config.shield.show_diff_before_send = true;
-    let approval = Engine::configured(
+    let approval = configured_engine(
         Model { injection: None },
         Shield::new(vec![]).unwrap(),
         &config,
@@ -779,7 +800,7 @@ async fn provider_context_cannot_change_inside_a_conversation() {
         context: "b".repeat(64),
         bodies: Arc::default(),
     };
-    let engine = Engine::new(
+    let engine = test_engine(
         Model { injection: None },
         Shield::new(vec![]).unwrap(),
         Profile::Standard,

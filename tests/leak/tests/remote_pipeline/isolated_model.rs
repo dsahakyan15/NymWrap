@@ -58,7 +58,7 @@ async fn actual_isolated_model_keeps_canary_out_of_shaped_egress() {
     const CANARY: &str = "SYNTHETIC_LPAC_CANARY_74dcbec1_SecretOnly";
     let model = nw_llm::UnixModel::new(address.into(), "default".into(), "nomic-embed-text".into())
         .unwrap();
-    let engine = Engine::new(
+    let engine = test_engine(
         model,
         Shield::new(vec![
             Secret::new(SecretKind::Secret, CANARY.into(), false).unwrap(),

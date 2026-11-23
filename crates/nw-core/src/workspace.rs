@@ -323,12 +323,54 @@ impl Workspace {
         Shield::new(secrets).map_err(|_| WorkspaceError::Invalid)
     }
     pub fn model(&self) -> Result<UnixModel, WorkspaceError> {
+        let image = std::env::current_exe().map_err(|_| WorkspaceError::Invalid)?;
+        let image = image
+            .parent()
+            .ok_or(WorkspaceError::Invalid)?
+            .join(format!("nw-llmd{}", std::env::consts::EXE_SUFFIX));
         UnixModel::new(
             self.config.llm.endpoint.clone().into(),
             self.config.llm.model.clone(),
             self.config.llm.embed_model.clone(),
         )
+        .and_then(|model| model.expect_peer_image(image))
         .map_err(|_| WorkspaceError::Invalid)
+    }
+    pub(crate) fn linkcheck_references(
+        &mut self,
+    ) -> Result<Option<crate::linkcheck::References>, WorkspaceError> {
+        #[derive(Serialize)]
+        struct Dossier<'a> {
+            confirmed_persona: Vec<&'a Trait>,
+            personal_and_device_secrets: &'a [SecretRecord],
+            import_summary: Option<&'a nw_audit::Summary>,
+        }
+        let secrets = self.secrets()?;
+        let summary = self.summary()?;
+        let confirmed_persona: Vec<_> = self
+            .persona
+            .traits
+            .iter()
+            .filter(|t| t.confirmed == Some(true))
+            .collect();
+        if secrets.is_empty() && summary.is_none() && confirmed_persona.is_empty() {
+            return Ok(None);
+        }
+        let dossier = Dossier {
+            confirmed_persona,
+            personal_and_device_secrets: &secrets,
+            import_summary: summary.as_ref(),
+        };
+        let material = zeroize::Zeroizing::new(
+            serde_json::to_string(&dossier).map_err(|_| WorkspaceError::Invalid)?,
+        );
+        // A bound is never enforced by truncating away potentially identifying facts.
+        Ok(
+            crate::linkcheck::References::with_synthetic_decoys(SecretString::from(
+                material.as_str(),
+            ))
+            .ok(),
+        )
     }
     pub fn import(
         &mut self,
@@ -1268,6 +1310,9 @@ pub async fn rewrite_day<M: LocalModel>(
 #[cfg(test)]
 #[path = "../../../tests/leak/src/core_hygiene.rs"]
 mod hygiene_tests;
+#[cfg(test)]
+#[path = "../../../tests/leak/src/core_link_dossier.rs"]
+mod link_dossier_tests;
 
 #[cfg(test)]
 mod tests {
@@ -1906,6 +1951,12 @@ mod tests {
     async fn remote_jobs_keep_inputs_encrypted_and_never_resume_uncertain_work() {
         struct Model;
         impl LocalModel for Model {
+            async fn embed_identified(
+                &self,
+                texts: &[String],
+            ) -> Result<nw_llm::EmbeddingBatch, nw_llm::ModelError> {
+                Ok(crate::link_fixture::identified(texts))
+            }
             async fn identify_entities(&self, _: &str) -> Result<SecretString, nw_llm::ModelError> {
                 Ok(SecretString::from(r#"{"local_only":false,"entities":[]}"#))
             }
@@ -1954,7 +2005,7 @@ mod tests {
             local_only: false,
         }])
         .unwrap();
-        let engine = crate::Engine::new(Model, w.shield().unwrap(), Profile::Standard);
+        let engine = crate::link_fixture::engine(Model, w.shield().unwrap(), Profile::Standard);
         let route = Route(0.into());
         let input = vec![Message {
             role: Role::User,

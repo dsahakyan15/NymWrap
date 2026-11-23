@@ -76,6 +76,7 @@ pub struct Cpu {
     backend: LlamaBackend,
     // Windows read-sharing handles exclude concurrent writes for the models' lifetime.
     _files: [File; 2],
+    embedding_sha256: String,
     threads: i32,
 }
 fn completion_context(trained: u32, input: usize, output: u32) -> Result<u32, Error> {
@@ -134,6 +135,7 @@ impl Cpu {
             embedding,
             backend,
             _files: [chat_file, embedding_file],
+            embedding_sha256: embedding_hash.to_ascii_lowercase(),
             threads,
         })
     }
@@ -166,6 +168,7 @@ impl Cpu {
             embedding,
             backend,
             _files: [chat_file, embedding_file],
+            embedding_sha256: embedding_hash.to_ascii_lowercase(),
             threads,
         })
     }
@@ -179,6 +182,9 @@ impl Cpu {
     }
 }
 impl Inference for Cpu {
+    fn embedding_sha256(&self) -> Option<&str> {
+        Some(&self.embedding_sha256)
+    }
     fn complete(&mut self, messages: &[Message], max_tokens: u32) -> Result<String, Error> {
         self.complete_structured(messages, max_tokens, None)
     }

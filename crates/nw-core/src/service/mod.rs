@@ -232,7 +232,7 @@ pub enum Reply {
         value: workspace::DeviceProbeStatus,
     },
     Config {
-        value: Config,
+        value: Box<Config>,
     },
     Bridges {
         value: nw_net::bridges::BridgeStatus,
@@ -606,9 +606,9 @@ impl Service {
             Command::SaveSecrets { secrets } => {
                 backend::save_secrets(secrets, state).map(|()| Reply::Ack {})
             }
-            Command::LoadConfig {} => {
-                backend::load_config(state).map(|value| Reply::Config { value })
-            }
+            Command::LoadConfig {} => backend::load_config(state).map(|value| Reply::Config {
+                value: Box::new(value),
+            }),
             Command::LoadBridgeStatus {} => {
                 backend::load_bridge_status(state).map(|value| Reply::Bridges { value })
             }

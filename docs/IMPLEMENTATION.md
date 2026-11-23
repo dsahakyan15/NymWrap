@@ -12,10 +12,45 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 для требуемого CI (ADR 0049). [Первый run](https://github.com/dsahakyan15/NymWrap/actions/runs/45082675972)
 выявил отказы IPC на macOS; полный CI пока не подтверждён.
 Локальные результаты не считаются зелёным CI и не закрывают
-этапы. M3H остаётся открыт; linkcheck и усиленный held-out критерий ещё не реализованы.
+этапы. M3H остаётся открыт; linkcheck подключён, но усиленная held-out приёмка,
+независимый split и полнота оценки ещё не выполнены.
+
+## Linkcheck — 2026-11-23, этап открыт
+
+- ADR 0053: между canonicalize и финальным leakcheck подключены ранжирование
+  закреплёнными embeddings (SHA-256 в ответе проверенного nw-llmd), 64 независимых
+  синтетических досье, профильные top_k/max_margin, generalize/recheck и L0 с
+  объяснением при оставшемся риске/ошибке. Проверяется вся provider-visible история;
+  отправленный префикс не переписывается. Досье включает только подтверждённую
+  персону, все личные/Device-секреты и сводку импорта, без скрытого усечения.
+- Досье/кеш в shadow памяти с zeroize. Изменения импорта/персоны инвалидируют
+  разрешения и Engine. Проверка образа peer до HTTP-тела запрещает отдать досье
+  постороннему same-user endpoint. Это не закрывает найденную ниже авторизацию
+  входящего shadow RPC в M6.
+- Новые регрессии: связка двух ходов, равенство рангов и перестановка альтернатив,
+  плохие векторы/идентичность модели, полнота досье после encrypted reopen,
+  generalize только нового хода, инъекция канарейки при generalize, L0 без сети
+  при ошибках. Настоящий CPU worker прошёл embed_identified через private IPC.
+- Локально после подключения прошли workspace, clippy со всеми targets/features,
+  leak, privacy_pipeline example (2), extension (24), app (11), scripts (16),
+  native Tauri check и suite nw-netd. Отдельно прошёл настоящий Windows LPAC
+  model → Engine → checked output → shape (85,56 с), с канарейкой и закреплёнными
+  файлами. Это проверяет путь отправки, но не качество ранжирования на held-out.
+  Логи: target/linkcheck-*.log; известная отрицательная RPC-регрессия M6 открыта.
+- Открыты: независимый split (при L3 отсутствует), сегментирование больших досье,
+  корпус 300+ EN/RU/HY, заморозка настроек и blind held-out с интервалами 95% и
+  честной полезностью. Nomic v1.5 обозначен upstream как English; качество RU/HY
+  не подтверждено. Старый privacy-v2 остаётся регрессией, не held-out приёмкой.
 
 ## Продолжение M3H — 2026-11-23
 
+- [CI 45085560190](https://github.com/dsahakyan15/NymWrap/actions/runs/45085560190)
+  подтвердил core macOS, network всех трёх ОС (включая настоящий Lyrebird Windows
+  и Linux fscrypt), frontends/browser, зависимости, SBOM и Linux VM. На момент
+  записи core Windows/Ubuntu и desktop ещё работали, полный run не засчитан.
+  [Fuzz smoke 45085560256](https://github.com/dsahakyan15/NymWrap/actions/runs/45085560256)
+  зелёный: audit_import / ipc_frames / shield_roundtrip, ASan, по 30 с,
+  отчёты соответственно 31,515 / 31,740 / 31,277 с. Это не 24h и не закрывает M6.
 - Текущий локальный пакет после наблюдений гигиены: workspace, clippy со всеми
   targets/features, leak, extension (24), app (11), scripts (16), native Tauri
   check и четыре cargo-deny прошли. Настоящий Windows probe и Lyrebird для
