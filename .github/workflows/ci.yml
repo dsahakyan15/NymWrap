@@ -43,6 +43,7 @@ jobs:
       - run: cargo test --workspace --locked
       - run: cargo test -p nw-llm --example privacy_eval --locked
       - run: cargo test -p nw-core --example privacy_pipeline --locked
+      - run: cargo test -p nw-core --example privacy_linkcheck --locked
       - if: runner.os == 'Windows'
         run: cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
       - if: runner.os == 'Linux'

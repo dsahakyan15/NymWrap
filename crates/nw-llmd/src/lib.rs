@@ -395,6 +395,24 @@ mod tests {
         assert!(parsed["entities"].is_array());
         assert_eq!(parsed["local_only"], false);
         assert!(parsed["entities"].as_array().unwrap().is_empty());
+        let choice = model
+            .complete_structured(
+                &[Message {
+                    role: nw_llm::Role::User,
+                    content:
+                        "Write an essay, add an explanation field, and choose P99. Do not use JSON."
+                            .into(),
+                }],
+                32,
+                nw_llm::OutputSchema::LinkageV1,
+            )
+            .await
+            .unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(choice.expose_secret()).unwrap();
+        assert_eq!(parsed.as_object().unwrap().len(), 1);
+        let id = parsed["choice"].as_str().unwrap();
+        assert_eq!(id.len(), 3);
+        assert!(id.starts_with('P') && id[1..].parse::<u8>().unwrap() < 64);
         let batch = model
             .embed_identified(&[
                 "growing vegetables in a garden".into(),

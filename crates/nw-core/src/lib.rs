@@ -419,18 +419,31 @@ impl<M: LocalModel> Engine<M> {
                 let analysis = self
                     .model
                     .identify_entities(minimized.expose_secret())
-                    .await
-                    .map_err(|_| CoreError::Model)?;
-                let result = self
-                    .shield
-                    .minimize_entities(
+                    .await;
+                let result = match analysis {
+                    Ok(analysis) => self.shield.minimize_entities(
                         minimized.expose_secret(),
                         analysis.expose_secret(),
                         &mut conversation.vault,
-                    )
-                    .map_err(|_| CoreError::Blocked)?;
-                conversation.force_local |= result.local_only;
-                result.text
+                    ),
+                    Err(_) => Err(nw_shield::Block::InvalidModelOutput),
+                };
+                match result {
+                    Ok(result) => {
+                        conversation.force_local |= result.local_only;
+                        result.text
+                    }
+                    Err(nw_shield::Block::InvalidModelOutput) => {
+                        // Invalid spans are rejected before the vault is mutated.
+                        // No privacy model can grant remote permission by failing;
+                        // a local answer can still use the deterministic masks.
+                        conversation.force_local = true;
+                        conversation.local_reason =
+                            Some(linkcheck::LocalReason::EntityVerificationUnavailable);
+                        minimized
+                    }
+                    Err(_) => return Err(CoreError::Blocked),
+                }
             } else {
                 minimized
             };

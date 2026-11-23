@@ -1,0 +1,48 @@
+name: privacy development (not held-out acceptance)
+on:
+  workflow_dispatch:
+    inputs:
+      cases:
+        description: '1 = diagnostic pilot only; 384 = complete development corpus'
+        required: true
+        type: choice
+        default: '1'
+        options: ['1', '384']
+      defender:
+        description: 'Pinned local model for the protection pipeline and useful answers'
+        required: true
+        type: choice
+        default: smoke
+        options: [smoke, qwen2.5-7b-q4_k_m]
+permissions:
+  contents: read
+jobs:
+  development:
+    name: '${{ inputs.cases }} development cases on Ubuntu'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      NYMWRAP_EVAL_CASES: ${{ inputs.cases }}
+      NYMWRAP_EVAL_DEFENDER: ${{ inputs.defender }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config libssl-dev libdbus-1-dev
+      - run: cargo build -p nw-core --example privacy_linkcheck --locked
+      - run: cargo build -p nw-llmd --features inference --release --locked
+      - shell: pwsh
+        run: ./scripts/fetch-test-models.ps1
+      - run: node scripts/fetch-privacy-model.mjs qwen2.5-7b-q4_k_m
+      - run: node scripts/merge-privacy-model.mjs qwen2.5-7b-q4_k_m
+      - run: cargo test -p nw-llmd --features inference --lib actual_cpu_model_over_private_ipc --locked -- --ignored
+      - run: node scripts/linkcheck-eval.mjs --limit "$NYMWRAP_EVAL_CASES" --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
+      - if: inputs.cases == '384'
+        run: node scripts/linkcheck-report.mjs target/linkcheck-eval/development-*.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: privacy-development-${{ inputs.defender }}-${{ inputs.cases }}
+          path: target/linkcheck-eval/development-*.json
+          if-no-files-found: error

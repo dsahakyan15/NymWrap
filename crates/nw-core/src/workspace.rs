@@ -336,7 +336,9 @@ impl Workspace {
         .and_then(|model| model.expect_peer_image(image))
         .map_err(|_| WorkspaceError::Invalid)
     }
-    pub(crate) fn linkcheck_references(
+    /// Builds the complete private dossier used by the outbound Engine. A missing
+    /// or oversized dossier yields no remote permission, never a truncated one.
+    pub fn linkcheck_references(
         &mut self,
     ) -> Result<Option<crate::linkcheck::References>, WorkspaceError> {
         #[derive(Serialize)]

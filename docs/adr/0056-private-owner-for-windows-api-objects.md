@@ -14,5 +14,10 @@ SID из уже имеющегося токена; группы, привиле�
 проверки остаются обязательными в CI; до их зелёного результата гипотеза не
 считается подтверждённым исправлением.
 
+Та же короткая проверка прошла на hosted Windows runner в
+[run 45091002400, job 137420285407](https://github.com/dsahakyan15/NymWrap/actions/runs/45091002400/job/137420285407):
+область токена, свежий профиль и три отрицательных AppContainer-теста. Это
+подтверждает исправление исходного отказа; остальные критерии M6 остаются открыты.
+
 Основания: [TOKEN_OWNER](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-token_owner),
 [SetTokenInformation](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-settokeninformation).

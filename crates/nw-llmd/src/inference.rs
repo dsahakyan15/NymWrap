@@ -236,8 +236,11 @@ impl Inference for Cpu {
             }
             ctx.decode(&mut batch).map_err(|_| Error::Inference)?;
         }
-        let mut sampler = if schema.is_some() {
-            let grammar = include_str!("privacy.gbnf");
+        let mut sampler = if let Some(schema) = schema {
+            let grammar = match schema {
+                nw_llm::OutputSchema::PrivacyV1 => include_str!("privacy.gbnf"),
+                nw_llm::OutputSchema::LinkageV1 => include_str!("linkage.gbnf"),
+            };
             LlamaSampler::chain_simple([
                 LlamaSampler::grammar(&self.chat, grammar, "root").map_err(|_| Error::Inference)?,
                 LlamaSampler::greedy(),

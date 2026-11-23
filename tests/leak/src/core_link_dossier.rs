@@ -1,5 +1,89 @@
 use super::*;
 #[tokio::test]
+async fn rejected_or_unavailable_ner_retains_a_local_answer_without_remote_retry() {
+    struct UnverifiedNer(usize);
+    impl LocalModel for UnverifiedNer {
+        async fn identify_entities(&self, _: &str) -> Result<SecretString, nw_llm::ModelError> {
+            match self.0 {
+                0 => Err(nw_llm::ModelError::Unavailable),
+                1 => Ok(r#"{"local_only":false,"entities":[{"kind":"PERSON","text":"invented absent person"}]}"#.into()),
+                _ => Ok(r#"{"local_only":false,"entities":[{"kind":"IDENTIFIER","text":"NW_DEVICE"}]}"#.into()),
+            }
+        }
+        async fn canonicalize(&self, text: &str) -> Result<SecretString, nw_llm::ModelError> {
+            Ok(text.to_owned().into())
+        }
+        async fn complete(&self, _: &[Message]) -> Result<SecretString, nw_llm::ModelError> {
+            Ok("42".into())
+        }
+        async fn embed(&self, _: &[String]) -> Result<Vec<Vec<f64>>, nw_llm::ModelError> {
+            panic!("unverified NER must not continue to linkage or egress")
+        }
+    }
+    struct NoSend;
+    impl crate::RemoteCompletion for NoSend {
+        fn trust(&self) -> nw_proto::TrustLevel {
+            nw_proto::TrustLevel::L3
+        }
+        fn context(&self) -> &str {
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+        async fn complete(
+            &self,
+            _: &str,
+            _: &nw_shield::Prepared,
+            _: u32,
+        ) -> Result<SecretString, CoreError> {
+            panic!("unverified NER must never send")
+        }
+    }
+    // privacy-v3 development dev_0000 stopped at invalid_model_output from NER.
+    // Exercise both rejected literal spans and an unavailable worker, including
+    // an attempted match inside the Device placeholder already created by code.
+    for mode in 0..3 {
+        let canary = "SYNTHETIC_DEVICE_NER_REGRESSION_62491";
+        let shield = Shield::new(vec![
+            Secret::new(SecretKind::Device, canary.into(), false).unwrap(),
+        ])
+        .unwrap();
+        let engine = crate::Engine::new(UnverifiedNer(mode), shield, Profile::Standard)
+            .with_linkcheck(Some(crate::link_fixture::references()));
+        let mut history = vec![Message {
+            role: Role::User,
+            content: format!(
+                "Для вымышленного человека: делает фарфоровые миниатюры. {canary}. Сколько будет 40 плюс 2? Ответь целым числом."
+            ),
+        }];
+        let reply = engine
+            .chat_remote("new", &history, 32, &NoSend, None)
+            .await
+            .unwrap();
+        assert_eq!(reply.trust, nw_proto::TrustLevel::L0);
+        assert_eq!(reply.text.expose_secret(), "42");
+        assert_eq!(
+            serde_json::to_value(reply.local_reason).unwrap(),
+            "entity_verification_unavailable"
+        );
+        history.push(Message {
+            role: Role::Assistant,
+            content: "42".into(),
+        });
+        history.push(Message {
+            role: Role::User,
+            content: "Снова ответь целым числом.".into(),
+        });
+        let next = engine
+            .chat_remote(&reply.conversation, &history, 32, &NoSend, None)
+            .await
+            .unwrap();
+        assert_eq!(next.trust, nw_proto::TrustLevel::L0);
+        assert_eq!(
+            serde_json::to_value(next.local_reason).unwrap(),
+            "entity_verification_unavailable"
+        );
+    }
+}
+#[tokio::test]
 async fn local_reason_and_json_answer_survive_encrypted_reopen_without_a_remote_retry() {
     struct JsonModel;
     impl LocalModel for JsonModel {

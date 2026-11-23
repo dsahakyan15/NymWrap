@@ -1,5 +1,6 @@
 export interface ChatStatus {trust:string;local_reason?:string|null}
 const reasons:Record<string,string>={
+  entity_verification_unavailable:"Проверка персональных данных недоступна или вернула неподтверждённые фрагменты. Удалённая отправка запрещена.",
   missing_dossier:"Досье пока недоступно для полной проверки связывания.",
   verification_unavailable:"Проверка связывания не смогла подтвердить безопасность удалённой отправки.",
   generalization_failed:"Безопасно обобщить редкие факты не удалось.",

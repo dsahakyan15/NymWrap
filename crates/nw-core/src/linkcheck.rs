@@ -258,6 +258,7 @@ pub fn synthetic_decoys() -> Vec<String> {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LocalReason {
+    EntityVerificationUnavailable,
     MissingDossier,
     VerificationUnavailable,
     GeneralizationFailed,
@@ -266,6 +267,9 @@ pub enum LocalReason {
 impl LocalReason {
     pub fn explanation(&self) -> &'static str {
         match self {
+            Self::EntityVerificationUnavailable => {
+                "Ответ подготовлен локально (L0): проверка персональных данных недоступна или вернула неподтверждённые фрагменты. Удалённая отправка запрещена."
+            }
             Self::MissingDossier => {
                 "Ответ подготовлен локально (L0): досье пока недоступно для полной проверки связывания."
             }

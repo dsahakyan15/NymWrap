@@ -41,6 +41,7 @@ pub enum Role {
 #[serde(rename_all = "snake_case")]
 pub enum OutputSchema {
     PrivacyV1,
+    LinkageV1,
 }
 #[derive(zeroize::Zeroize, zeroize::ZeroizeOnDrop)]
 pub struct EmbeddingBatch {
