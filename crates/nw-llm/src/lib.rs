@@ -264,7 +264,11 @@ impl UnixModel {
                     .await
                     .map_err(|_| ModelError::Unavailable)?;
                 if !response.status().is_success() {
-                    return Err(ModelError::Unavailable);
+                    return Err(match response.status() {
+                        hyper::StatusCode::GATEWAY_TIMEOUT => ModelError::Timeout,
+                        hyper::StatusCode::PAYLOAD_TOO_LARGE => ModelError::TooLarge,
+                        _ => ModelError::Unavailable,
+                    });
                 }
                 let body = Limited::new(response.into_body(), 4 * 1024 * 1024)
                     .collect()

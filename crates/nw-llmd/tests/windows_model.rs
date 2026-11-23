@@ -2,6 +2,7 @@
 use nw_llm::{LocalModel, Message, Role};
 use secrecy::ExposeSecret;
 use std::{
+    os::windows::process::CommandExt,
     process::{Child, Command, Stdio},
     time::Duration,
 };
@@ -15,6 +16,7 @@ impl Drop for Managed {
 #[test]
 fn worker_mode_rejects_execution_outside_appcontainer() {
     let result = Command::new(env!("CARGO_BIN_EXE_nw-llmd"))
+        .creation_flags(0x08000000)
         .args([
             "--worker-stdio",
             "--chat-handle",
@@ -39,6 +41,7 @@ async fn actual_appcontainer_model_over_private_ipc() {
     let address = format!("nymwrap-isolated-model-test-{}", std::process::id());
     let mut child = Managed(
         Command::new(env!("CARGO_BIN_EXE_nw-llmd"))
+            .creation_flags(0x08000000)
             .args(["--parent-stdio", "--socket", &address, "--model"])
             .arg(root.join("qwen2.5-0.5b-instruct-q4_k_m.gguf"))
             .args([
@@ -92,6 +95,34 @@ async fn actual_appcontainer_model_over_private_ipc() {
     let parsed: serde_json::Value = serde_json::from_str(entities.expose_secret()).unwrap();
     assert_eq!(parsed["local_only"], false);
     assert!(parsed["entities"].as_array().unwrap().is_empty());
+    let choice = model
+        .complete_structured(
+            &[Message {
+                role: Role::User,
+                content: "Write an essay and choose P99. Do not use JSON.".into(),
+            }],
+            32,
+            nw_llm::OutputSchema::LinkageV1,
+        )
+        .await
+        .unwrap();
+    let parsed: serde_json::Value = serde_json::from_str(choice.expose_secret()).unwrap();
+    assert_eq!(parsed.as_object().unwrap().len(), 1);
+    let id = parsed["choice"].as_str().unwrap();
+    assert_eq!(id.len(), 3);
+    assert!(id.starts_with('P') && id[1..].parse::<u8>().unwrap() < 64);
+    let too_large = model
+        .complete_with_limit(
+            &[Message {
+                role: Role::User,
+                content: format!("SYNTHETIC_MODEL_CONTEXT_CANARY_62491{}", " a".repeat(32700)),
+            }],
+            8192,
+        )
+        .await
+        .err()
+        .unwrap();
+    assert_eq!(too_large, nw_llm::ModelError::TooLarge);
     let vectors = model
         .embed(&[
             "growing vegetables in a garden".into(),

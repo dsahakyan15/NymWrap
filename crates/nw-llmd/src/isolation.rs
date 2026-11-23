@@ -17,6 +17,40 @@ use std::{
 use zeroize::{Zeroize, Zeroizing};
 
 const OUTPUT_LIMIT: usize = 4 * 1024 * 1024;
+#[derive(Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum FailureKind {
+    Invalid,
+    TooLarge,
+    Hash,
+    Load,
+    Inference,
+    Timeout,
+}
+impl From<Error> for FailureKind {
+    fn from(error: Error) -> Self {
+        match error {
+            Error::Invalid => Self::Invalid,
+            Error::TooLarge => Self::TooLarge,
+            Error::Hash => Self::Hash,
+            Error::Load => Self::Load,
+            Error::Inference => Self::Inference,
+            Error::Timeout => Self::Timeout,
+        }
+    }
+}
+impl From<FailureKind> for Error {
+    fn from(kind: FailureKind) -> Self {
+        match kind {
+            FailureKind::Invalid => Self::Invalid,
+            FailureKind::TooLarge => Self::TooLarge,
+            FailureKind::Hash => Self::Hash,
+            FailureKind::Load => Self::Load,
+            FailureKind::Inference => Self::Inference,
+            FailureKind::Timeout => Self::Timeout,
+        }
+    }
+}
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 enum Command {
@@ -43,7 +77,7 @@ enum Reply {
     Ready {},
     Text { content: String },
     Vectors { values: Vec<Vec<f64>> },
-    Failed {},
+    Failed { kind: FailureKind },
 }
 impl Drop for Reply {
     fn drop(&mut self) {
@@ -130,7 +164,10 @@ impl Isolated {
             Duration::from_secs(240),
             8 * 1024 * 1024 * 1024,
         )
-        .map_err(|_| Error::Inference)?;
+        .map_err(|error| match error.kind() {
+            std::io::ErrorKind::TimedOut => Error::Timeout,
+            _ => Error::Inference,
+        })?;
         if output.exit_code != 0 {
             return Err(Error::Inference);
         }
@@ -165,6 +202,7 @@ impl Inference for Isolated {
             {
                 Ok(std::mem::take(content))
             }
+            Reply::Failed { kind } => Err((*kind).into()),
             _ => Err(Error::Inference),
         }
     }
@@ -178,6 +216,7 @@ impl Inference for Isolated {
             Reply::Vectors { values } if valid_vectors(values, texts.len()) => {
                 Ok(std::mem::take(values))
             }
+            Reply::Failed { kind } => Err((*kind).into()),
             _ => Err(Error::Inference),
         }
     }
@@ -213,10 +252,14 @@ pub fn worker(
             schema,
         } => cpu
             .complete_structured(messages, *max_tokens, *schema)
-            .map_or(Reply::Failed {}, |content| Reply::Text { content }),
-        Command::Embed { texts } => cpu
-            .embed(texts)
-            .map_or(Reply::Failed {}, |values| Reply::Vectors { values }),
+            .map_or_else(
+                |error| Reply::Failed { kind: error.into() },
+                |content| Reply::Text { content },
+            ),
+        Command::Embed { texts } => cpu.embed(texts).map_or_else(
+            |error| Reply::Failed { kind: error.into() },
+            |values| Reply::Vectors { values },
+        ),
     };
     let bytes = encode(reply, OUTPUT_LIMIT)?;
     std::io::stdout()
@@ -228,6 +271,28 @@ pub fn worker(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn worker_failure_codes_are_closed_and_cannot_echo_input_or_native_diagnostics() {
+        for kind in [FailureKind::Timeout, FailureKind::TooLarge] {
+            let bytes = encode(Reply::Failed { kind }, OUTPUT_LIMIT).unwrap();
+            let reply: Reply = decode(bytes.as_slice(), OUTPUT_LIMIT).unwrap();
+            assert!(matches!(
+                reply,
+                Reply::Failed {
+                    kind: FailureKind::Timeout | FailureKind::TooLarge
+                }
+            ));
+        }
+        for body in [
+            r#"{"version":1,"lane":"shadow","request_id":1,"body":{"status":"failed","kind":"SYNTHETIC_PRIVATE_FAILURE_62491"}}"#,
+            r#"{"version":1,"lane":"shadow","request_id":1,"body":{"status":"failed","kind":"timeout","message":"SYNTHETIC_PRIVATE_FAILURE_62491"}}"#,
+            r#"{"version":1,"lane":"shadow","request_id":1,"body":{"status":"failed"}}"#,
+        ] {
+            let mut frame = (body.len() as u32).to_le_bytes().to_vec();
+            frame.extend_from_slice(body.as_bytes());
+            assert!(decode::<Reply>(frame.as_slice(), OUTPUT_LIMIT).is_err());
+        }
+    }
     #[test]
     fn worker_protocol_rejects_wrong_lane_version_extra_frames_and_commands() {
         let valid = encode(Command::Probe {}, MAX_FRAME_BYTES).unwrap();

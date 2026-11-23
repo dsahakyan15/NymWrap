@@ -57,6 +57,13 @@ struct Worker<B> {
 fn failure(status: StatusCode, code: &str) -> Response {
     (status, Json(serde_json::json!({"error":{"code":code}}))).into_response()
 }
+fn inference_failure(error: Error) -> Response {
+    match error {
+        Error::Timeout => failure(StatusCode::GATEWAY_TIMEOUT, "model_timeout"),
+        Error::TooLarge => failure(StatusCode::PAYLOAD_TOO_LARGE, "model_input_too_large"),
+        _ => failure(StatusCode::SERVICE_UNAVAILABLE, "model_inference_failed"),
+    }
+}
 async fn guard(request: axum::extract::Request, next: Next) -> Response {
     let h = request.headers();
     if h.contains_key("origin")
@@ -174,6 +181,7 @@ async fn chat<B: Inference>(
     .await;
     match result{
         Ok(Ok(text)) if !text.trim().is_empty()&&text.len()<=nw_proto::MAX_TEXT_BYTES=>Json(serde_json::json!({"choices":[{"index":0,"message":{"role":"assistant","content":text},"finish_reason":"stop"}]})).into_response(),
+        Ok(Err(error))=>inference_failure(error),
         _=>failure(StatusCode::SERVICE_UNAVAILABLE,"model_inference_failed")
     }
 }
@@ -210,6 +218,7 @@ async fn embed<B: Inference>(
                 .collect();
             Json(serde_json::json!({"data":data,"nw_model_sha256":identity})).into_response()
         }
+        Ok(Err(error)) => inference_failure(error),
         _ => failure(StatusCode::SERVICE_UNAVAILABLE, "model_inference_failed"),
     }
 }
@@ -234,6 +243,10 @@ pub fn router<B: Inference>(backend: B) -> Router {
 #[cfg(test)]
 #[path = "../../../tests/leak/src/model_identity.rs"]
 mod identity_tests;
+
+#[cfg(test)]
+#[path = "../../../tests/leak/src/model_failure.rs"]
+mod failure_tests;
 
 #[cfg(test)]
 mod tests {
