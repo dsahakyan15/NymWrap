@@ -1,5 +1,6 @@
 {
   "actionlint": {
+    "repository": "rhysd/actionlint",
     "version": "1.7.12",
     "platforms": {
       "linux-x64": {
@@ -11,6 +12,22 @@
         "archive": "actionlint_1.7.12_windows_amd64.zip",
         "sha256": "6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9",
         "member": "actionlint.exe"
+      }
+    }
+  },
+  "cargo-vet": {
+    "repository": "mozilla/cargo-vet",
+    "version": "0.10.4",
+    "platforms": {
+      "linux-x64": {
+        "archive": "cargo-vet-x86_64-unknown-linux-gnu.tar.xz",
+        "sha256": "e367f8ac156208711511274abab0c309e19ed0f11ef2bbe8a7b0294f824cb032",
+        "member": "cargo-vet-x86_64-unknown-linux-gnu/cargo-vet"
+      },
+      "win32-x64": {
+        "archive": "cargo-vet-x86_64-pc-windows-msvc.zip",
+        "sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "member": "cargo-vet.exe"
       }
     }
   }

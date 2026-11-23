@@ -28,6 +28,34 @@ payments либо необходимости увеличить spending limit. 
 аккаунта не восстановит Actions, последующие локальные изменения остаются без
 подтверждения CI. Перенос в публичный репозиторий или обход ограничения не выполняется.
 
+## Аудиты зависимостей M6 — критерий красный
+
+- ADR 0073: установлен закреплённый cargo-vet 0.10.4 с проверкой архивов и
+  исполняемого файла. Для root/desktop/netd/fuzz созданы отдельные stores и
+  imports.lock с опубликованными аудитами Mozilla/Google из immutable commits.
+  Собственные certify и exemptions не добавлялись; path forks требуют аудита
+  опубликованной базы, а проверка их локальных изменений остаётся открытой.
+- После явного refresh все четыре check --locked завершились неуспешно:
+  не покрыты root 273 / desktop 517 / netd 502 / fuzz 253 версий пакетов.
+  Графы пересекаются, числа не суммируются. Это реальные незакрытые пробелы
+  аудита, не сбой запуска инструмента. Логи target/vet-four-locked.log и
+  JSON/receipts в target/vet/. Их нельзя считать прохождением cargo-vet.
+- В checks добавлены четыре независимых Ubuntu job без continue-on-error;
+  JSON и receipts публикуются даже при провале. Receipt связан с хешами lock,
+  policy, audits, imports и инструмента; stale/missing/partial/exempted выдача
+  не зелёная. Основные check.ps1/check.sh тоже завершаются провалом на пробелах.
+  CI не запускался из-за прежнего внешнего блокера Actions.
+- Локально 40 scripts-тестов зелёные, закреплённый actionlint проверил новый
+  workflow (exit 0). Логи target/vet-tooling-tests-final.log и
+  target/vet-workflow-lint.log. Зелёные функциональные Rust/frontend проверки
+  предыдущего раздела не подменяют красный аудит или открытый M6.
+- ADR 0074: новый RUSTSEC-2026-0594 сначала сделал desktop deny красным.
+  Транзитивный cookie обновлён 0.18.2 → 0.18.3 с закреплённым checksum;
+  исключение для advisory не добавлялось. После обновления deny всех четырёх
+  workspace зелёный, native desktop check зелёный, app 12 / extension 24.
+  Логи target/cookie-*.log, target/vet-deny-{root,netd,fuzz}.log. Desktop vet
+  повторён на новом lock: всё ещё 517 непокрытых версий, результат красный.
+
 ## Подготовка длительного фаззинга M6 — проверки ещё не проведены
 
 - ADR 0070: добавлены ручной fuzz-campaign и reusable segment workflow на Ubuntu
@@ -64,9 +92,16 @@ payments либо необходимости увеличить spending limit. 
   targets/features, leak, privacy_linkcheck example (5), native Tauri check,
   app (12), extension (24), scripts (37). После миграции: логи
   target/local-context-final-*.log; frontend/scripts — target/local-context-*.log.
-  Это не CI и не измерение качества генеративной модели. Продолжающийся первый
-  development-shard использует прежний сохранённый d435c6e и не смешивается с
-  новыми исходниками; частичный checkpoint не считается приёмкой.
+  Это не CI и не измерение качества генеративной модели. Первый development-
+  shard на d435c6e остановлен как устаревший после 35/48 случаев (35/384 всего):
+  status failed, не полный прогон и не приёмка. Его данные не смешиваются с новыми.
+- На release client f9b50c96cc928d8022bf357ccad0d425f536c5b50a688a3e205b36a1cbe21693
+  выполнены два отдельных diagnostic, receipt f7fc3be040560582141e, Qwen/Qwen.
+  HY dev_0003: L0, полезность false, канареек 0, raw model/literal top-1 true.
+  Public dev_0006: rank 1/65 до и после generalize, L0, полезность true,
+  канареек 0. Новые приманки не устранили этот ложный отказ. Оба случая остаются
+  в корпусе; отдельные diagnostic не принимаются merger и не дают held-out
+  статистику. Полный development, freeze и слепая приёмка по-прежнему открыты.
 
 - ADR 0068/0069: явно подключён многоязычный Qwen3-Embedding-0.6B Q8_0 с
   официальным immutable SHA, pooling last/1024; default остаётся Nomic. SHA,

@@ -11,6 +11,8 @@ try {
     if ($LASTEXITCODE) { throw 'privacy evaluation scorer checks failed' }
     cargo test -p nw-core --example privacy_pipeline --locked
     if ($LASTEXITCODE) { throw 'privacy pipeline scorer checks failed' }
+    cargo test -p nw-core --example privacy_linkcheck --locked
+    if ($LASTEXITCODE) { throw 'linkcheck evaluator checks failed' }
     if ($IsWindows) {
         cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
         if ($LASTEXITCODE) { throw 'AppContainer isolation failed' }
@@ -54,4 +56,6 @@ try {
     node scripts/sbom.mjs --target $sbomTarget --out target/sbom/nymwrap.cdx.json
     if ($LASTEXITCODE) { throw 'SBOM generation failed' }
     ./scripts/validate-sbom.ps1 -Path target/sbom/nymwrap.cdx.json
+    node scripts/vet-dependencies.mjs
+    if ($LASTEXITCODE) { throw 'dependency audit coverage failed' }
 } finally { Pop-Location }

@@ -181,6 +181,38 @@ jobs:
       - run: cargo deny --manifest-path app/src-tauri/Cargo.toml check --hide-inclusion-graph
       - run: cargo deny --manifest-path daemons/nw-netd/Cargo.toml check --hide-inclusion-graph
       - run: cargo deny --manifest-path fuzz/Cargo.toml --all-features check --hide-inclusion-graph
+  dependency-audits:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scope: root
+            manifest: Cargo.toml
+          - scope: desktop
+            manifest: app/src-tauri/Cargo.toml
+          - scope: netd
+            manifest: daemons/nw-netd/Cargo.toml
+          - scope: fuzz
+            manifest: fuzz/Cargo.toml
+    env:
+      NW_VET_SCOPE: ${{ matrix.scope }}
+      NW_VET_MANIFEST: ${{ matrix.manifest }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: rustup show
+      - run: cargo fetch --manifest-path "$NW_VET_MANIFEST" --locked
+      - run: node scripts/vet-dependencies.mjs "$NW_VET_SCOPE"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: dependency-audits-${{ matrix.scope }}-${{ github.run_attempt }}
+          path: target/vet/
+          if-no-files-found: error
   network:
     strategy:
       matrix:

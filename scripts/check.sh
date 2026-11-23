@@ -5,6 +5,7 @@ cargo fmt --all -- --check
 cargo test --workspace --locked
 cargo test -p nw-llm --example privacy_eval --locked
 cargo test -p nw-core --example privacy_pipeline --locked
+cargo test -p nw-core --example privacy_linkcheck --locked
 if [ "$(uname -s)" = Linux ]; then
   cargo test -p nw-sandbox --test agent actual_agent --locked -- --ignored
 fi
@@ -22,3 +23,4 @@ cargo deny --manifest-path fuzz/Cargo.toml --all-features check --hide-inclusion
 (cd extension && npm ci && npm test)
 (cd app && npm ci && npm test)
 node --test scripts/tests/*.test.mjs
+node scripts/vet-dependencies.mjs

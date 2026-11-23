@@ -1,0 +1,27 @@
+
+# cargo-vet config file
+
+[cargo-vet]
+version = "0.10"
+
+[imports.google]
+url = "https://raw.githubusercontent.com/google/supply-chain/640a51eb32e2f47d7ee8017a128485f7e1ce6780/audits.toml"
+
+[imports.mozilla]
+url = "https://raw.githubusercontent.com/mozilla/supply-chain/0ecbc0c0e1ffa71c171eca7e5f065adf35a46d08/audits.toml"
+
+[policy.rustls]
+audit-as-crates-io = true
+notes = "Published base only; the local TLS fingerprint delta needs its own review."
+
+[policy.tor-key-forge]
+audit-as-crates-io = true
+notes = "Published base only; local compatibility changes need their own review."
+
+[policy.tor-llcrypto]
+audit-as-crates-io = true
+notes = "Published base only; local compatibility changes need their own review."
+
+[policy.tor-ptmgr]
+audit-as-crates-io = true
+notes = "Published base only; the local PT isolation delta needs its own review."
