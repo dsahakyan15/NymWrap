@@ -36,7 +36,9 @@ export function checkDevelopmentReport(report,corpus,corpusHash){
     if(result.all.canary_leaks||result.all.chance_gate!=='passes_test'||
       Object.values(result.by_language).some(language=>language.chance_gate!=='passes_test')||
       Object.entries(result.by_group).some(([group,subset])=>group!=='public_control'&&
-        (subset.raw_private.invalid||subset.raw_private.no_significant_excess!==false)))throw Error('development_linkcheck_quality_gate_failed');
+        (subset.raw_private.invalid||subset.raw_private.no_significant_excess!==false))||
+      Object.values(result.by_language_group).some(subsets=>Object.entries(subsets).some(([group,subset])=>group!=='public_control'&&
+        (subset.raw_private.invalid||subset.raw_private.no_significant_excess!==false))))throw Error('development_linkcheck_quality_gate_failed');
   }
   return summary;
 }

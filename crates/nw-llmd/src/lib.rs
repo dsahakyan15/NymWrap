@@ -249,6 +249,10 @@ mod identity_tests;
 mod failure_tests;
 
 #[cfg(test)]
+#[path = "../../../tests/leak/src/model_child_peer.rs"]
+mod child_peer_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use axum::{body::Body, http::Request};

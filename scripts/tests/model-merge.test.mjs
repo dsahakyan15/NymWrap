@@ -1,9 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdir,mkdtemp,writeFile,readFile,realpath,rm} from 'node:fs/promises';
+import {mkdir,mkdtemp,writeFile,readFile,realpath,rm,stat} from 'node:fs/promises';
 import {resolve,join,sep} from 'node:path';
 import {createHash} from 'node:crypto';
-import {ggufPrefix,mergeModel} from '../merge-privacy-model.mjs';
+import {ggufPrefix,mergeModel,discardVerifiedShards} from '../merge-privacy-model.mjs';
 const u16=n=>{const b=Buffer.alloc(2);b.writeUInt16LE(n);return b;},u32=n=>{const b=Buffer.alloc(4);b.writeUInt32LE(n);return b;},u64=n=>{const b=Buffer.alloc(8);b.writeBigUInt64LE(BigInt(n));return b;};
 const str=s=>Buffer.concat([u64(Buffer.byteLength(s)),Buffer.from(s)]);
 function shard(index,name){
@@ -27,5 +27,13 @@ test('model merge preserves both payloads, checks all source hashes and rejects 
     const receipt=await mergeModel(dir,model),output=await readFile(join(dir,'merged.gguf')),parsed=ggufPrefix(output,output.length);
     assert.equal(parsed.count,2);assert.equal(parsed.kv.get('split.count').value,0);assert.equal(receipt.tensors,2);
     assert.deepEqual(output.subarray(parsed.dataOffset,parsed.dataOffset+32),Buffer.alloc(32,1));assert.deepEqual(output.subarray(parsed.dataOffset+32),Buffer.alloc(32,2));
+    await assert.rejects(discardVerifiedShards(dir,{...model,files:[model.files[0],{...model.files[1],sha256:'0'.repeat(64)}]},receipt),/unverified_model_cleanup_source/);
+    assert.equal((await stat(join(dir,model.files[0].name))).size,data[0].length);
+    await assert.rejects(discardVerifiedShards(dir,{...model,files:[model.files[0],{...model.files[1],name:'../outside.gguf'}]},receipt),/unsafe_model_cleanup_source/);
+    await assert.rejects(discardVerifiedShards(dir,model,{...receipt,sha256:'0'.repeat(64)}),/unverified_model_cleanup_output/);
+    await discardVerifiedShards(dir,model,receipt);
+    await assert.rejects(stat(join(dir,model.files[0].name)),{code:'ENOENT'});
+    await assert.rejects(stat(join(dir,model.files[1].name)),{code:'ENOENT'});
+    assert.deepEqual(await readFile(join(dir,model.output)),output);
   }finally{const actual=await realpath(dir),parent=await realpath(base);if(!actual.toLowerCase().startsWith((parent+sep).toLowerCase()))throw Error('unsafe_test_cleanup');await rm(dir,{recursive:true,force:true});}
 });

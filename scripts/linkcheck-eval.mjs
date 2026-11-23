@@ -6,13 +6,11 @@ import {randomBytes,createHash} from 'node:crypto';
 import {resolve,join,sep,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {StringDecoder} from 'node:string_decoder';
-import net from 'node:net';
 import {artifactHash,pinnedBinary} from './evaluation-artifacts.mjs';
 import {summarizeLinkcheckReport} from './linkcheck-report.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),execute=promisify(execFile);
 const digest=value=>createHash('sha256').update(value).digest('hex');
-const delay=ms=>new Promise(r=>setTimeout(r,ms));
 function options(args){
   const result={model:'smoke',attacker:'qwen2.5-7b-q4_k_m',limit:Infinity,resume:false,failInvalidAttacker:false};
   const seen=new Set();
@@ -33,38 +31,33 @@ async function modelIdentity(id){
   if(id==='smoke')return {file:'qwen2.5-0.5b-instruct-q4_k_m.gguf',sha256:'74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db'};
   const catalog=JSON.parse(await readFile(join(root,'scripts/privacy-models.json'),'utf8'));
   const receipt=JSON.parse(await readFile(join(root,'target/test-models',id+'.merged.json'),'utf8'));
-  if(receipt.file!==catalog[id].output||!/^[a-f0-9]{64}$/.test(receipt.sha256))throw Error('invalid_linkcheck_model_receipt');
+  if(receipt.file!==catalog[id].output||receipt.sha256!==catalog[id].merged_sha256||!/^[a-f0-9]{64}$/.test(receipt.sha256))throw Error('invalid_linkcheck_model_receipt');
   return {file:receipt.file,sha256:receipt.sha256};
 }
 async function verifyFile(path,sha256){
   const info=await lstat(path);if(info.isSymbolicLink()||!info.isFile()||await artifactHash(path)!==sha256)throw Error('linkcheck_artifact_hash_mismatch');
 }
-function ready(endpoint){return new Promise(r=>{
-  const s=net.createConnection(process.platform==='win32'?`\\\\.\\pipe\\${endpoint}`:endpoint);
-  s.once('connect',()=>{s.destroy();r(true);});s.once('error',()=>r(false));
-});}
-async function startWorker(worker,model,embed,endpoint){
-  const child=spawn(worker,['--socket',endpoint,'--model',join(root,'target/test-models',model.file),'--sha256',model.sha256,
-    '--embed-model',embed.path,'--embed-sha256',embed.sha256,'--parent-stdio'],{cwd:root,windowsHide:true,stdio:['pipe','ignore','ignore']});
-  let failed=false;child.on('error',()=>{failed=true;});child.stdin.on('error',()=>{});
-  const deadline=Date.now()+180000;
-  while(!await ready(endpoint)){
-    if(failed||child.exitCode!==null||Date.now()>deadline){await stop(child);throw Error('linkcheck_worker_start_failed');}
-    await delay(100);
-  }
-  return child;
-}
-async function stop(child){
-  if(!child||child.exitCode!==null)return;
-  child.stdin?.end();
-  for(let i=0;i<50&&child.exitCode===null&&!child.killed;i++)await delay(100);
-  if(child.exitCode===null&&!child.killed)child.kill();
-  if(child.exitCode===null)await new Promise(r=>{child.once('exit',r);setTimeout(r,5000).unref();});
-}
 async function cleanup(fixture,reports){
   const [actual,base,info]=await Promise.all([realpath(fixture),realpath(reports),lstat(fixture)]),normal=v=>process.platform==='win32'?v.toLowerCase():v;
   if(info.isSymbolicLink()||!normal(actual).startsWith(normal(base+sep)))throw Error('unsafe_linkcheck_fixture_cleanup');
   await rm(fixture,{recursive:true,force:true});
+}
+export async function finishEvaluation(child){
+  if(!child?.pid||child.exitCode!==null||child.signalCode!==null)return;
+  // Allow Rust's normal teardown after a failed record; then stop a stalled
+  // child and observe its exit before removing any of its encrypted files.
+  const exited=()=>child.exitCode!==null||child.signalCode!==null;
+  await new Promise(resolve=>{
+    let timer;const done=()=>{clearTimeout(timer);child.off('exit',done);resolve();};
+    child.once('exit',done);timer=setTimeout(done,1000);if(exited())done();
+  });
+  if(exited())return;
+  const stopped=new Promise((resolve,reject)=>{
+    let timer;const done=()=>{clearTimeout(timer);child.off('exit',done);resolve();};
+    child.once('exit',done);timer=setTimeout(()=>{child.off('exit',done);reject(Error('evaluation_child_did_not_stop'));},5000);
+    if(exited())done();
+  });
+  if(!child.killed)child.kill();await stopped;
 }
 export async function main(args=process.argv.slice(2)){
   const opts=options(args),reports=join(root,'target/linkcheck-eval');await mkdir(reports,{recursive:true});
@@ -77,7 +70,7 @@ export async function main(args=process.argv.slice(2)){
   const corpus=JSON.parse(await readFile(corpusPath,'utf8'));
   if(corpus.partition!=='development'||corpus.version!==3||corpus.cases.length!==384)throw Error('invalid_development_corpus');
   const suffix=process.platform==='win32'?'.exe':'',worker=await pinnedBinary(reports,join(root,'target/release','nw-llmd'+suffix),'nw-llmd');
-  const client=await pinnedBinary(reports,join(root,'target/debug/examples','privacy_linkcheck'+suffix),'privacy_linkcheck');
+  const client=await pinnedBinary(reports,join(root,'target/release/examples','privacy_linkcheck'+suffix),'privacy_linkcheck');
   const model=await modelIdentity(opts.model),attackerModel=await modelIdentity(opts.attacker);
   const embed={path:join(root,'target/test-models/nomic-embed-text-v1.5.Q4_K_M.gguf'),sha256:'d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac'};
   await verifyFile(join(root,'target/test-models',model.file),model.sha256);
@@ -106,14 +99,14 @@ export async function main(args=process.argv.slice(2)){
   const start=report.observations.length,end=Math.min(corpus.cases.length,start+opts.limit),fixture=await mkdtemp(join(reports,'run-'));
   const endpoint=role=>process.platform==='win32'?`nymwrap-linkcheck-${role}-${process.pid}-${randomBytes(8).toString('hex')}`:join(fixture,role+'.sock');
   const defenderEndpoint=endpoint('defender'),attackerEndpoint=model.sha256===attackerModel.sha256?defenderEndpoint:endpoint('attacker');
-  let defender,attacker,evaluation;
+  let evaluation;
   try{
     await save();await writeFile(join(fixture,'policy.json'),policy);
     if(start<end){
-      defender=await startWorker(worker,model,embed,defenderEndpoint);
-      if(attackerEndpoint!==defenderEndpoint)attacker=await startWorker(worker,attackerModel,embed,attackerEndpoint);
       await new Promise((accept,reject)=>{
-        evaluation=spawn(client,[defenderEndpoint,worker,attackerEndpoint,worker,corpusPath,corpusHash,join(fixture,'policy.json'),String(start),String(end-start)],{cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe']});
+        evaluation=spawn(client,[defenderEndpoint,worker,attackerEndpoint,worker,corpusPath,corpusHash,join(fixture,'policy.json'),String(start),String(end-start)],{cwd:root,windowsHide:true,stdio:['pipe','pipe','pipe']});
+        const plan=identity=>({model_path:join(root,'target/test-models',identity.file),model_sha256:identity.sha256,embed_path:embed.path,embed_sha256:embed.sha256});
+        evaluation.stdin.on('error',()=>{});evaluation.stdin.end(JSON.stringify({defender:plan(model),attacker:plan(attackerModel),stop_after_invalid_attacker:opts.failInvalidAttacker}));
         let pending='';const decoder=new StringDecoder('utf8');
         let diagnostic='';evaluation.stderr.setEncoding('utf8');evaluation.stderr.on('data',text=>{
           diagnostic=(diagnostic+text).slice(-4096);let newline;
@@ -131,7 +124,7 @@ export async function main(args=process.argv.slice(2)){
               report.observations.push(row);void save().catch(reject);
               console.log(JSON.stringify({completed:report.observations.length,total:corpus.cases.length,id:row.id,remote:row.remote_turns,local:row.local_turns,blocked:row.blocked_turns,useful:row.utility,leaks:row.canary_leaks,ms:row.elapsed_ms}));
               if(opts.failInvalidAttacker&&(!row.raw_attack?.valid||row.remote_turns>0&&!row.attack?.valid)){
-                evaluation.kill();reject(Error('linkcheck_attacker_failed_measurement_incomplete'));return;
+                reject(Error('linkcheck_attacker_failed_measurement_incomplete'));return;
               }
             }
           }catch(e){evaluation.kill();reject(e);}
@@ -144,6 +137,6 @@ export async function main(args=process.argv.slice(2)){
     if(report.status==='complete')report.analysis=summarizeLinkcheckReport(report,corpus,corpusHash);
     await save();console.log(JSON.stringify({report:path,status:report.status,cases:report.observations.length,total:corpus.cases.length,held_out:false}));
   }catch(e){report.status='failed';await save();throw e;}
-  finally{if(evaluation?.exitCode===null&&!evaluation.killed)evaluation.kill();await stop(attacker);await stop(defender);try{await writes;}finally{await cleanup(fixture,reports);}}
+  finally{await finishEvaluation(evaluation);try{await writes;}finally{await cleanup(fixture,reports);}}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();

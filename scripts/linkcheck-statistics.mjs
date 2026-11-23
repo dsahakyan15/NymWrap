@@ -61,5 +61,6 @@ export function summarizeLinkcheck(observations,{candidates}={}){
       top1,private_top1:privateTop1,chance_gate,raw_private:{...rawTop1,invalid:raw.length-rawMeasured.length}};
   };
   return {all:subset(observations),by_language:Object.fromEntries(['en','ru','hy'].map(language=>[language,subset(observations.filter(r=>r.language===language))])),
-    by_group:Object.fromEntries([...groups].map(group=>[group,subset(observations.filter(r=>r.group===group))]))};
+    by_group:Object.fromEntries([...groups].map(group=>[group,subset(observations.filter(r=>r.group===group))])),
+    by_language_group:Object.fromEntries(['en','ru','hy'].map(language=>[language,Object.fromEntries([...groups].map(group=>[group,subset(observations.filter(r=>r.language===language&&r.group===group))]))]))};
 }

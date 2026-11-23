@@ -75,9 +75,9 @@ pub(in crate::service) fn prefetch_decoy(state: &State) -> Result<(), String> {
         return Ok(());
     }
     let config = w.config.clone();
-    let model = w.model().map_err(code)?.background();
     let shield = w.shield().map_err(code)?;
     let references = w.linkcheck_references().map_err(code)?;
+    let model = local_model(&mut session)?.background();
     let worker_state = state.clone();
     let worker = tokio::spawn(async move {
         let prepared = tokio::time::timeout(

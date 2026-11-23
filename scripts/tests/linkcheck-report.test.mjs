@@ -56,6 +56,7 @@ test('development gate needs calibrated attacks in every private group and langu
   for(const change of [
     rows=>rows[0].canary_leaks++,
     rows=>{for(const r of rows)if(r.group==='linkage')r.raw_attack.top1_correct=false;},
+    rows=>{for(const r of rows)if(r.language==='hy'&&r.group==='linkage')r.raw_attack.top1_correct=false;},
     rows=>{for(const r of rows)if(r.language==='hy'){r.remote_turns=0;r.local_turns=1;r.attack=null;r.literal_attack=null;}},
   ]){
     const {report,corpus}=complete();change(report.observations);assert.throws(()=>checkDevelopmentReport(report,corpus,sha));

@@ -30,13 +30,13 @@ jobs:
         with:
           node-version: '24'
       - run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config libssl-dev libdbus-1-dev
-      - run: cargo build -p nw-core --example privacy_linkcheck --locked
+      - run: cargo build -p nw-core --example privacy_linkcheck --release --locked
       - run: cargo build -p nw-llmd --features inference --release --locked
       - shell: pwsh
         run: ./scripts/fetch-test-models.ps1
       - run: node scripts/fetch-privacy-model.mjs qwen2.5-7b-q4_k_m
-      - run: node scripts/merge-privacy-model.mjs qwen2.5-7b-q4_k_m
-      - run: cargo test -p nw-llmd --features inference --lib actual_cpu_model_over_private_ipc --locked -- --ignored
+      - run: node scripts/merge-privacy-model.mjs qwen2.5-7b-q4_k_m --discard-verified-shards
+      - run: cargo test -p nw-llmd --features inference --release --lib actual_cpu_model_over_private_ipc --locked -- --ignored
       - run: node scripts/linkcheck-eval.mjs --limit "$NYMWRAP_EVAL_CASES" --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
       - if: inputs.cases == '384'
         run: node scripts/linkcheck-report.mjs target/linkcheck-eval/development-*.json

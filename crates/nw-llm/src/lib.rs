@@ -3,7 +3,11 @@
 use nw_proto::MAX_TEXT_BYTES;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
-use std::{future::Future, path::PathBuf};
+use std::{
+    future::Future,
+    path::PathBuf,
+    sync::{Arc, Mutex, Weak},
+};
 use thiserror::Error;
 
 #[derive(Debug, Error, Eq, PartialEq)]
@@ -16,6 +20,8 @@ pub enum ModelError {
     Timeout,
     #[error("model_input_too_large")]
     TooLarge,
+    #[error("local_model_peer_unverified")]
+    Peer,
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -157,6 +163,7 @@ pub struct UnixModel {
     pub model: String,
     pub embedding_model: String,
     expected_peer_image: Option<PathBuf>,
+    expected_peer_child: Option<Weak<Mutex<tokio::process::Child>>>,
     background: bool,
 }
 impl UnixModel {
@@ -182,6 +189,7 @@ impl UnixModel {
             model,
             embedding_model,
             expected_peer_image: None,
+            expected_peer_child: None,
             background: false,
         })
     }
@@ -195,7 +203,16 @@ impl UnixModel {
             return Err(ModelError::Invalid);
         }
         self.expected_peer_image = Some(image);
+        self.expected_peer_child = None;
         Ok(self)
+    }
+    /// Bind every connection to a child launched and retained by the trusted
+    /// supervisor. A PID supplied by an IPC caller is never a launch receipt.
+    /// The weak reference cannot keep a stopped session's worker alive.
+    pub fn expect_spawned_peer(mut self, child: &Arc<Mutex<tokio::process::Child>>) -> Self {
+        self.expected_peer_child = Some(Arc::downgrade(child));
+        self.expected_peer_image = None;
+        self
     }
     async fn post(
         &self,
@@ -217,11 +234,21 @@ impl UnixModel {
                     .connect()
                     .await
                     .map_err(|_| ModelError::Unavailable)?;
-                if let Some(expected) = &self.expected_peer_image {
-                    let image = nw_ipc::peer_image(&stream).map_err(|_| ModelError::Invalid)?;
-                    let expected = expected.canonicalize().map_err(|_| ModelError::Invalid)?;
+                if let Some(receipt) = &self.expected_peer_child {
+                    let owner = receipt.upgrade().ok_or(ModelError::Peer)?;
+                    let mut child = owner.lock().map_err(|_| ModelError::Peer)?;
+                    if child.try_wait().map_err(|_| ModelError::Peer)?.is_some()
+                        || nw_ipc::peer_process(&stream).map_err(|_| ModelError::Peer)?
+                            != child.id().ok_or(ModelError::Peer)?
+                        || child.try_wait().map_err(|_| ModelError::Peer)?.is_some()
+                    {
+                        return Err(ModelError::Peer);
+                    }
+                } else if let Some(expected) = &self.expected_peer_image {
+                    let image = nw_ipc::peer_image(&stream).map_err(|_| ModelError::Peer)?;
+                    let expected = expected.canonicalize().map_err(|_| ModelError::Peer)?;
                     if image != expected {
-                        return Err(ModelError::Invalid);
+                        return Err(ModelError::Peer);
                     }
                 }
                 let (mut sender, connection) =

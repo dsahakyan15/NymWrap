@@ -1,6 +1,6 @@
 // Bounded GGUF-v3 metadata rewrite and byte-preserving shard concatenation.
 // No native model parser executes outside nw-llmd's sandbox.
-import {open,lstat,mkdir,readFile,writeFile,rename,mkdtemp,realpath,rm} from 'node:fs/promises';
+import {open,lstat,mkdir,readFile,writeFile,rename,mkdtemp,realpath,rm,unlink} from 'node:fs/promises';
 import {createReadStream} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve,join,dirname,sep} from 'node:path';
@@ -68,12 +68,33 @@ export async function mergeModel(base,model){
     }finally{await handle.close();}
     for(const block of blocks){if(await hashRange(output,block.start,block.start+block.bytes-1)!==block.sha256)throw Error('merged_tensor_bytes_changed');}
     const sha256=await hashRange(output),receipt={file:model.output,sha256,bytes:(await lstat(output)).size,tensors:total,source:model,method:'bounded GGUF-v3 metadata; split.count=0; unchanged shard data and padding; no native parser',merger_sha256:await hashRange(fileURLToPath(import.meta.url))};
+    if(model.merged_sha256&&sha256!==model.merged_sha256)throw Error('merged_model_pin_mismatch');
     const destination=join(base,model.output);try{await lstat(destination);throw Error('merged_model_already_exists');}catch(e){if(e.code!=='ENOENT')throw e;}
     await rename(output,destination);return receipt;
   }finally{const actual=await realpath(fixture),parent=await realpath(base),normal=v=>process.platform==='win32'?v.toLowerCase():v;if(!normal(actual).startsWith(normal(parent+sep))||(await lstat(fixture)).isSymbolicLink())throw Error('unsafe_merge_cleanup');await rm(fixture,{recursive:true,force:true});}
 }
+export async function discardVerifiedShards(base,model,receipt){
+  if(!/^[a-zA-Z0-9_.-]+\.gguf$/.test(model.output)||receipt.file!==model.output||!/^[a-f0-9]{64}$/.test(receipt.sha256)||
+    model.merged_sha256&&receipt.sha256!==model.merged_sha256||!Array.isArray(model.files)||model.files.length<2||model.files.length>32)throw Error('unsafe_model_cleanup');
+  const parent=await realpath(base),info=await lstat(base),normal=v=>process.platform==='win32'?v.toLowerCase():v;
+  if(info.isSymbolicLink()||!info.isDirectory())throw Error('unsafe_model_cleanup_directory');
+  const inside=name=>{const path=resolve(parent,name);if(normal(dirname(path))!==normal(parent))throw Error('unsafe_model_cleanup_path');return path;};
+  const output=inside(model.output),merged=await lstat(output);
+  if(merged.isSymbolicLink()||!merged.isFile()||await hashRange(output)!==receipt.sha256)throw Error('unverified_model_cleanup_output');
+  const paths=[],seen=new Set([normal(model.output)]);
+  // Validate every source before unlinking any; the final merged model remains.
+  for(const file of model.files){
+    if(!/^[a-zA-Z0-9_.-]+\.gguf$/.test(file.name)||seen.has(normal(file.name))||!/^[a-f0-9]{64}$/.test(file.sha256))throw Error('unsafe_model_cleanup_source');seen.add(normal(file.name));
+    const path=inside(file.name),stat=await lstat(path);
+    if(stat.isSymbolicLink()||!stat.isFile()||stat.size!==file.bytes||await hashRange(path)!==file.sha256)throw Error('unverified_model_cleanup_source');paths.push(path);
+  }
+  for(const path of paths)await unlink(path);
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),catalog=JSON.parse(await readFile(new URL('./privacy-models.json',import.meta.url),'utf8')),id=process.argv[2];
-  if(process.argv.length!==3||!Object.hasOwn(catalog,id))throw Error('invalid_model_id');const base=join(root,'target/test-models');await mkdir(base,{recursive:true});
-  const receipt=await mergeModel(base,catalog[id]);await writeFile(join(base,id+'.merged.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify({file:receipt.file,sha256:receipt.sha256,tensors:receipt.tensors}));
+  const discard=process.argv.length===4&&process.argv[3]==='--discard-verified-shards';
+  if(process.argv.length!==3&&!discard||!Object.hasOwn(catalog,id))throw Error('invalid_model_id');const base=join(root,'target/test-models');await mkdir(base,{recursive:true});
+  const receipt=await mergeModel(base,catalog[id]);await writeFile(join(base,id+'.merged.json'),JSON.stringify(receipt,null,2)+'\n');
+  if(discard)await discardVerifiedShards(base,catalog[id],receipt);
+  console.log(JSON.stringify({file:receipt.file,sha256:receipt.sha256,tensors:receipt.tensors,source_shards_discarded:discard}));
 }

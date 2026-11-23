@@ -53,7 +53,7 @@ impl Session {
     }
 }
 struct OwnedModel {
-    child: tokio::process::Child,
+    child: Arc<Mutex<tokio::process::Child>>,
     _lifetime: tokio::process::ChildStdin,
 }
 #[derive(Clone)]
@@ -132,17 +132,21 @@ fn require_background(session: &mut Session) -> Result<&mut Workspace, String> {
         .ok_or_else(|| "workspace_locked".into())
 }
 pub(super) fn refresh_engine(session: &mut Session) -> Result<(), String> {
+    let model = local_model(session)?;
     let w = require(session)?;
     let references = w.linkcheck_references().map_err(code)?;
-    let engine = Engine::configured(
-        w.model().map_err(code)?,
-        w.shield().map_err(code)?,
-        &w.config,
-    )
-    .map_err(code)?
-    .with_linkcheck(references);
+    let engine = Engine::configured(model, w.shield().map_err(code)?, &w.config)
+        .map_err(code)?
+        .with_linkcheck(references);
     session.engine = Some(Arc::new(engine));
     Ok(())
+}
+fn local_model(session: &mut Session) -> Result<UnixModel, String> {
+    let model = require_background(session)?.model().map_err(code)?;
+    Ok(match &session.model {
+        Some(owned) => model.expect_spawned_peer(&owned.child),
+        None => model,
+    })
 }
 #[derive(Serialize, Deserialize)]
 pub struct StorageStatus {
@@ -323,6 +327,8 @@ pub(super) async fn start_model(state: &State) -> Result<StorageStatus, String> 
         if let Some(model) = s.model.as_mut() {
             if model
                 .child
+                .lock()
+                .map_err(|_| "model_start_failed")?
                 .try_wait()
                 .map_err(|_| "model_start_failed")?
                 .is_none()
@@ -414,9 +420,11 @@ pub(super) async fn start_model(state: &State) -> Result<StorageStatus, String> 
         return Err("session_changed".into());
     }
     s.model = Some(OwnedModel {
-        child,
+        child: Arc::new(Mutex::new(child)),
         _lifetime: lifetime,
     });
+    state.invalidate(&mut s);
+    refresh_engine(&mut s)?;
     storage_status(&mut s, state.egress.is_some())
 }
 pub(super) async fn audit_import(
@@ -478,10 +486,11 @@ pub(super) async fn research_persona(state: &State) -> Result<Persona, String> {
     let (epoch, model, summary) = {
         let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
         let epoch = s.epoch;
+        let model = local_model(&mut s)?;
         let w = require(&mut s)?;
         (
             epoch,
-            w.model().map_err(code)?,
+            model,
             w.summary().map_err(code)?.ok_or("import_required")?,
         )
     };
@@ -518,6 +527,7 @@ pub(super) async fn generate_plan(
         state.invalidate(&mut s);
         let epoch = s.epoch;
         let w = require(&mut s)?;
+        let changed_endpoint = !socket.trim().is_empty() && w.config.llm.endpoint != socket;
         if !socket.trim().is_empty() {
             let mut c = w.config.clone();
             c.llm.endpoint = socket;
@@ -532,12 +542,11 @@ pub(super) async fn generate_plan(
             .plan_input(input.cover, input.sensitive_consent)
             .map_err(code)?;
         plan_input.activity = input.activity;
-        let prepared = (
-            epoch,
-            w.model().map_err(code)?,
-            w.shield().map_err(code)?,
-            plan_input,
-        );
+        let shield = w.shield().map_err(code)?;
+        if changed_endpoint {
+            s.model = None;
+        }
+        let prepared = (epoch, local_model(&mut s)?, shield, plan_input);
         refresh_engine(&mut s)?;
         prepared
     };
@@ -570,10 +579,11 @@ pub(super) async fn generate_day(state: &State) -> Result<workspace::DayReview, 
     let (epoch, model, shield, template) = {
         let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
         let epoch = s.epoch;
+        let model = local_model(&mut s)?;
         let w = require(&mut s)?;
         (
             epoch,
-            w.model().map_err(code)?,
+            model,
             w.shield().map_err(code)?,
             w.day_template().map_err(code)?,
         )
@@ -619,7 +629,8 @@ pub(super) async fn embeddings(texts: Vec<String>, state: &State) -> Result<Vec<
     let (epoch, model) = {
         let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
         let epoch = s.epoch;
-        (epoch, require(&mut s)?.model().map_err(code)?)
+        require(&mut s)?;
+        (epoch, local_model(&mut s)?)
     };
     let vectors = model.embed(&texts).await.map_err(code)?;
     let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
@@ -708,7 +719,8 @@ pub(super) async fn save_snapshot(
     let (epoch, model) = {
         let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
         let epoch = s.epoch;
-        (epoch, require(&mut s)?.model().map_err(code)?)
+        require(&mut s)?;
+        (epoch, local_model(&mut s)?)
     };
     let vectors = model.embed(&snapshot.items).await.map_err(code)?;
     let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
@@ -723,6 +735,7 @@ pub(super) async fn purge_candidates(
     let (epoch, model, titles) = {
         let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
         let epoch = s.epoch;
+        let model = local_model(&mut s)?;
         let w = require(&mut s)?;
         let summary = w.summary().map_err(code)?.ok_or("import_required")?;
         let titles = summary
@@ -731,7 +744,7 @@ pub(super) async fn purge_candidates(
             .chain(summary.searches)
             .take(300)
             .collect::<Vec<_>>();
-        (epoch, w.model().map_err(code)?, titles)
+        (epoch, model, titles)
     };
     let mut vectors = vec![];
     for chunk in titles.chunks(16) {
