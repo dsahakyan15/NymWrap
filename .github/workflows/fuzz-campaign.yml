@@ -1,0 +1,147 @@
+name: Fuzz campaign preflight or segmented 24h
+run-name: 'Fuzz ${{ inputs.mode }}'
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'preflight = native binary checks only; 24h = all 18 four-hour executions'
+        required: true
+        type: choice
+        default: preflight
+        options: [preflight, 24h]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config libssl-dev libdbus-1-dev
+      - run: rustup toolchain install nightly-2026-11-20 --profile minimal
+      - run: cargo install cargo-fuzz --version 0.13.2 --locked
+      - run: cargo fetch --manifest-path fuzz/Cargo.toml --locked
+      - name: Build and execute the pinned native target for ten seconds
+        env:
+          NYMWRAP_FUZZ_TARGET: ${{ matrix.target }}
+        run: |
+          ulimit -c 0
+          node scripts/fuzz-campaign.mjs build "$NYMWRAP_FUZZ_TARGET"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fuzz24-build-a${{ github.run_attempt }}-${{ matrix.target }}
+          path: target/fuzz/campaign/${{ matrix.target }}/bundle
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fuzz24-manifest-a${{ github.run_attempt }}-${{ matrix.target }}
+          path: target/fuzz/campaign/manifests/${{ matrix.target }}.json
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: fuzz24-build-diagnostics-a${{ github.run_attempt }}-${{ matrix.target }}
+          path: |
+            target/fuzz/campaign/${{ matrix.target }}/preflight-tail.log
+            target/fuzz/campaign/${{ matrix.target }}/crashes
+          if-no-files-found: ignore
+          retention-days: 7
+  segment0:
+    if: inputs.mode == '24h'
+    needs: build
+    strategy:
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    uses: ./.github/workflows/fuzz-campaign-segment.yml
+    with:
+      target: ${{ matrix.target }}
+      index: '0'
+  segment1:
+    needs: segment0
+    strategy:
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    uses: ./.github/workflows/fuzz-campaign-segment.yml
+    with:
+      target: ${{ matrix.target }}
+      index: '1'
+      previous: '0'
+  segment2:
+    needs: segment1
+    strategy:
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    uses: ./.github/workflows/fuzz-campaign-segment.yml
+    with:
+      target: ${{ matrix.target }}
+      index: '2'
+      previous: '1'
+  segment3:
+    needs: segment2
+    strategy:
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    uses: ./.github/workflows/fuzz-campaign-segment.yml
+    with:
+      target: ${{ matrix.target }}
+      index: '3'
+      previous: '2'
+  segment4:
+    needs: segment3
+    strategy:
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    uses: ./.github/workflows/fuzz-campaign-segment.yml
+    with:
+      target: ${{ matrix.target }}
+      index: '4'
+      previous: '3'
+  segment5:
+    needs: segment4
+    strategy:
+      matrix:
+        target: [audit_import, ipc_frames, shield_roundtrip]
+    uses: ./.github/workflows/fuzz-campaign-segment.yml
+    with:
+      target: ${{ matrix.target }}
+      index: '5'
+      previous: '4'
+  complete:
+    needs: segment5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: fuzz24-manifest-a${{ github.run_attempt }}-*
+          path: target/fuzz/campaign/manifests
+          merge-multiple: true
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: fuzz24-receipt-a${{ github.run_attempt }}-*
+          path: target/fuzz/campaign/receipts
+          merge-multiple: true
+      - run: node scripts/fuzz-campaign.mjs merge
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fuzz24-complete-a${{ github.run_attempt }}
+          path: target/fuzz/campaign/report.json
+          if-no-files-found: error
+          retention-days: 7
