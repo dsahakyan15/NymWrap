@@ -1338,6 +1338,9 @@ mod hygiene_tests;
 #[cfg(test)]
 #[path = "../../../tests/leak/src/core_link_dossier.rs"]
 mod link_dossier_tests;
+#[cfg(test)]
+#[path = "../../../tests/leak/src/core_local_context.rs"]
+mod local_context_tests;
 
 #[cfg(test)]
 mod tests {

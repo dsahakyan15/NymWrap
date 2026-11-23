@@ -143,7 +143,7 @@ impl Conversation {
                 force_local: self.force_local,
                 local_reason: self.local_reason,
                 remote_context: self.remote_context.clone(),
-                version: 1,
+                version: 2,
                 canonical: self.canonical.clone(),
                 real: self
                     .real
@@ -239,7 +239,7 @@ impl<M: LocalModel> Engine<M> {
         }
         let conversations = &mut state.records;
         let record = &mut snapshot.record;
-        if record.version != 1
+        if !matches!(record.version, 1 | 2)
             || record.local_reason.is_some() && !record.force_local
             || record
                 .remote_context
@@ -273,7 +273,9 @@ impl<M: LocalModel> Engine<M> {
         conversations.insert(
             id.into(),
             Conversation {
-                force_local: record.force_local,
+                // Version 1 did not reliably mark a remote -> local turn.
+                // Its old local answers cannot be certified for remote reuse.
+                force_local: record.force_local || record.version == 1,
                 local_reason: record.local_reason,
                 remote_context: record.remote_context.take(),
                 vault,
@@ -545,9 +547,14 @@ impl<M: LocalModel> Engine<M> {
                 conversation.remote_context = Some(context);
                 Ok((answer, trust))
             } else {
+                // A local answer may reproduce private facts from the original
+                // task. Its history must never be upgraded to remote later.
+                conversation.force_local = true;
                 Ok((
                     self.model
-                        .complete_with_limit(&conversation.canonical, max_tokens)
+                        // The checked original transcript is needed to solve the
+                        // local task; rewrite stages still see only masked text.
+                        .complete_with_limit(messages, max_tokens)
                         .await
                         .map_err(|_| CoreError::Model)?,
                     TrustLevel::L0,
