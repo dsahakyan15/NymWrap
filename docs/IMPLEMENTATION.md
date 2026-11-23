@@ -93,7 +93,7 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
   защита памяти сохраняется. Core использует receipt для Engine и остальных
   model-вызовов. Локально прошли два настоящих helper-процесса, проверка чужого
   peer с тем же образом и отсутствующего владельца, Core suite и teardown.
-  Linux/macOS подтверждение этого изменения ещё требуется в CI.
+  Linux/macOS подтверждены полным run 45098535892 для 089aafa ниже.
   Повторный локальный 7B pilot завершил dev_0000 за 96,78 с: NER был отвергнут,
   ответ сохранился в L0 и прошёл точную проверку полезности; raw-атакующий дал
   валидный правильный top-1. Канареек 0. Отчёт partial (1/384), приёмки нет.
@@ -125,6 +125,35 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
   не закрыты; новый workflow и версия ранжирования требуют CI.
 
 ## Продолжение M3H — 2026-11-23
+
+- ADR 0063: матрица 9 Device-источников × 6 кодировок и 7 детекторов × 6
+  воспроизвела обход Base64 полного пути при сохранённом в vault имени.
+  Добавлена ограниченная проверка декодированного содержимого, включая два
+  слоя, переносы и бинарную обёртку. Регрессии полного пути, Device в route
+  label и GEO прошли; вся матрица теперь зелёная локально. PCAP пока не снят.
+- Полный [run 45098535892](https://github.com/dsahakyan15/NymWrap/actions/runs/45098535892)
+  для 089aafa прошёл все 14 заданий, включая owned-child peer на Linux/macOS.
+  Поздние ADR 0061–0063 требуют своего CI. Ubuntu privacy pilot
+  [45098545114](https://github.com/dsahakyan15/NymWrap/actions/runs/45098545114)
+  теперь дошёл до случая: ответ L0 полезен, raw-атака получила local_model_timeout.
+  Run failed (1/384), метрика top-1 не засчитана. ENOSPC устранён в этом прогоне.
+- ADR 0064: добавлен CI-сценарий настоящего локального Tor, двух netns, fscrypt
+  и tcpdump/tshark. Синтетические provider/DNS работают без выхода в интернет;
+  test-only PKI/key log позволяет проверить HTTP в pcap. Oracle требует все
+  запросы/корзины и совпадение тел с provider receipt, отвергает пустую запись,
+  утечки и прямые пакеты. Локально проверен только код/матрица/oracle; сценарий
+  Linux ещё не выполнен. Production launcher и полный Core путь остаются открыты.
+- После ADR 0063/0064 локально зелёные workspace, clippy всех targets/features,
+  leak, nw-netd и его clippy, app (12), extension (24), scripts (31), native
+  Tauri check; bash -n подтвердил синтаксис coordinator. Логи: target/base64-*.log,
+  target/pcap-*.log. Настоящий Linux pcap пока требует CI.
+- Локальный development pilot завершил 8/384 случаев: удалённых ходов 0,
+  полезных ответов 6/8, канареек 0. Raw model valid 8/8, top-1 correct 2/8
+  (оба — nonce-инъекции). EN/RU/HY связывание редких фактов этим атакующим не
+  откалибровано. Полного отчёта/приёмки нет; все-L0 не считается защитой remote.
+- Полный [run 45099848732](https://github.com/dsahakyan15/NymWrap/actions/runs/45099848732)
+  для d806acb прошёл все 14 заданий. Он покрывает ADR 0061/0062 code/unit,
+  но не исполняет manual development workflow и поздний pcap/B64 код.
 
 - Run 45085560190 завершился красным: Windows AppContainer отклонён до запуска
   worker с appcontainer_profile_acl:foreign_directory_owner. Desktop release и

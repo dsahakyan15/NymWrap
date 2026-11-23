@@ -46,6 +46,8 @@ pub struct Tor {
     conversations: Mutex<BTreeMap<String, Arc<TorClient<PreferredRuntime>>>>,
     provider: Provider,
     _transport_binary: Option<bridges::VerifiedBinary>,
+    #[cfg(test)]
+    test_tls: Option<Arc<rustls::ClientConfig>>,
 }
 impl Tor {
     pub async fn bootstrap(directory: &Path, provider: Provider) -> Result<Self, &'static str> {
@@ -79,6 +81,8 @@ impl Tor {
             conversations: Mutex::new(BTreeMap::new()),
             provider,
             _transport_binary: binary,
+            #[cfg(test)]
+            test_tls: None,
         })
     }
     pub async fn send(&self, request: &Request) -> Result<String, &'static str> {
@@ -126,7 +130,10 @@ impl Tor {
             .map_err(|_| "tor_connect_failed")?;
         let name = rustls::pki_types::ServerName::try_from(self.provider.host.clone())
             .map_err(|_| "invalid_provider")?;
-        let stream = tokio_rustls::TlsConnector::from(Arc::new(provider_tls()?))
+        let tls = Arc::new(provider_tls()?);
+        #[cfg(test)]
+        let tls = self.test_tls.clone().unwrap_or(tls);
+        let stream = tokio_rustls::TlsConnector::from(tls)
             .connect(name, stream.compat())
             .await
             .map_err(|_| "provider_tls_failed")?;
@@ -134,6 +141,13 @@ impl Tor {
     }
 }
 fn provider_tls() -> Result<rustls::ClientConfig, &'static str> {
+    provider_tls_with_roots(rustls::RootCertStore::from_iter(
+        webpki_roots::TLS_SERVER_ROOTS.iter().cloned(),
+    ))
+}
+fn provider_tls_with_roots(
+    roots: rustls::RootCertStore,
+) -> Result<rustls::ClientConfig, &'static str> {
     use rustls::crypto::ring::{cipher_suite::*, kx_group};
     let mut crypto = rustls::crypto::ring::default_provider();
     crypto.cipher_suites = vec![
@@ -151,9 +165,7 @@ fn provider_tls() -> Result<rustls::ClientConfig, &'static str> {
     let mut tls = rustls::ClientConfig::builder_with_provider(Arc::new(crypto))
         .with_protocol_versions(&[&rustls::version::TLS13, &rustls::version::TLS12])
         .map_err(|_| "tls_configuration_failed")?
-        .with_root_certificates(rustls::RootCertStore::from_iter(
-            webpki_roots::TLS_SERVER_ROOTS.iter().cloned(),
-        ))
+        .with_root_certificates(roots)
         .with_no_client_auth();
     tls.extension_order_seed = Some(0);
     tls.resumption = rustls::client::Resumption::disabled();
@@ -245,6 +257,9 @@ where
 #[cfg(test)]
 #[path = "../../../tests/leak/src/netd_http.rs"]
 mod http_wire_canaries;
+#[cfg(test)]
+#[path = "../../../tests/leak/src/netd_local_tor.rs"]
+mod local_tor_tests;
 #[cfg(test)]
 #[path = "../../../tests/leak/src/netd_tls.rs"]
 mod tls_wire_golden;

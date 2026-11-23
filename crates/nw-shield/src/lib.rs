@@ -1,4 +1,5 @@
 //! Pure, offline Shield stages. Model output has no authority over policy.
+mod encoded;
 mod hard;
 mod ner;
 use base64::{
@@ -421,16 +422,22 @@ impl Shield {
             }
         }
         // Placeholder indices must not look like phone numbers to the PII detector.
-        let without_placeholders = RESERVED.replace_all(text, " ");
-        if EMAIL.is_match(&without_placeholders)
-            || PHONE.is_match(&without_placeholders)
-            || IP.is_match(&without_placeholders)
-            || ipv6(&without_placeholders).next().is_some()
-            || !hard::spans(&without_placeholders).is_empty()
+        let without_placeholders = Zeroizing::new(RESERVED.replace_all(text, " ").into_owned());
+        let decoded = encoded::base64_views(&without_placeholders)?;
+        for view in
+            std::iter::once(without_placeholders.as_ref()).chain(decoded.iter().map(String::as_str))
         {
-            return Err(Block::PiiDetected);
+            if EMAIL.is_match(view)
+                || PHONE.is_match(view)
+                || IP.is_match(view)
+                || ipv6(view).next().is_some()
+                || !hard::spans(view).is_empty()
+            {
+                return Err(Block::PiiDetected);
+            }
+            self.check_plain_known_secrets(view, vault)?;
         }
-        self.check_known_secrets(&without_placeholders, vault)
+        Ok(())
     }
     /// Veto known values in fixed route labels; model IDs can contain date/version digits.
     /// Untrusted message content must use the complete leakcheck above.
@@ -438,23 +445,35 @@ impl Shield {
         if text.len() > MAX_TEXT_BYTES {
             return Err(Block::TooLarge);
         }
-        let compact = normalize(text);
-        let normalized_words: Vec<char> = compact.chars().collect();
+        self.check_plain_known_secrets(text, vault)?;
+        for view in encoded::base64_views(text)?.iter() {
+            self.check_plain_known_secrets(view, vault)?;
+        }
+        Ok(())
+    }
+    fn check_plain_known_secrets(
+        &self,
+        text: &str,
+        vault: &ConversationVault,
+    ) -> Result<(), Block> {
+        let compact = Zeroizing::new(normalize(text));
+        let normalized_words = Zeroizing::new(compact.chars().collect::<Vec<_>>());
         for value in self
             .secrets
             .iter()
             .map(|s| s.value.expose_secret())
             .chain(vault.entries.iter().map(|e| e.value.expose_secret()))
         {
-            let variants = encoded_variants(value);
-            for variant in variants {
-                let needle = normalize(&variant);
-                if !needle.is_empty() && compact.contains(&needle) {
+            let variants = Zeroizing::new(encoded_variants(value));
+            for variant in variants.iter() {
+                let needle = Zeroizing::new(normalize(variant));
+                if !needle.is_empty() && compact.contains(needle.as_str()) {
                     return Err(Block::SecretDetected);
                 }
             }
             // Conservative one-edit check; short secrets use exact matching to avoid matching everything.
-            let needle: Vec<char> = normalize(value).chars().collect();
+            let normalized = Zeroizing::new(normalize(value));
+            let needle = Zeroizing::new(normalized.chars().collect::<Vec<_>>());
             if needle.len() >= 8 && near_match(&normalized_words, &needle) {
                 return Err(Block::SecretDetected);
             }

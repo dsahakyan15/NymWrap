@@ -1,0 +1,22 @@
+{
+  "device": {
+    "user": "SYNTHETIC_PCAP_USER_62491",
+    "host": "SYNTHETIC_PCAP_HOST_62491",
+    "home": "C:\\Users\\synthetic-pcap-user",
+    "mac": "02:00:00:62:49:10",
+    "wifi": "SYNTHETIC_PCAP_SSID_62491",
+    "ip": "198.51.100.249",
+    "machine": "b2491000-1234-4567-8abc-000000062491",
+    "timezone": "Asia/Yerevan",
+    "git": "synthetic-pcap-62491@example.test"
+  },
+  "detectors": {
+    "GEO": "40.1772, 44.5035",
+    "MAC": "02:00:00:12:34:56",
+    "IMEI": "490154203237518",
+    "USER_PATH": "/home/synthetic-pcap-path/project",
+    "TZ": "UTC+05:45",
+    "DATETIME": "2026-06-17T12:34:56+05:45",
+    "GUID": "c2491000-1234-4567-8abc-000000062491"
+  }
+}

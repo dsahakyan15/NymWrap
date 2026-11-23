@@ -3,6 +3,37 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
+  tor-pcap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: torproject/chutney
+          ref: 62b54a55215c94eb14adc22c5acd17b2ada04b76
+          path: target/tools/chutney
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            daemons/nw-netd/target/debug/build
+            daemons/nw-netd/target/debug/deps
+            daemons/nw-netd/target/debug/.fingerprint
+          key: tor-pcap-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml') }}
+      - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config tor tcpdump tshark nftables
+      - run: bash scripts/ci/tor-pcap.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: local-tor-os-pcap
+          path: target/pcap
+          if-no-files-found: error
   windows-object-owner:
     runs-on: windows-latest
     timeout-minutes: 10

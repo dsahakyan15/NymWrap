@@ -3,6 +3,64 @@ use nw_shield::{ConversationVault, Secret, SecretKind, Shield};
 use secrecy::ExposeSecret;
 
 #[test]
+fn base64_wrappers_and_line_breaks_cannot_hide_a_path_component_or_device_secret() {
+    let source = "/home/synthetic-pcap-path/project";
+    let shield = Shield::new(vec![]).unwrap();
+    for prefix in [b"".as_slice(), b"x", b"xy", b"\xff\x00prefix:"] {
+        let mut payload = prefix.to_vec();
+        payload.extend_from_slice(source.as_bytes());
+        payload.extend_from_slice(b"/suffix\xff");
+        let encoded = STANDARD.encode(payload);
+        for output in [
+            encoded.clone(),
+            STANDARD.encode(&encoded),
+            encoded
+                .as_bytes()
+                .chunks(4)
+                .map(|s| std::str::from_utf8(s).unwrap())
+                .collect::<Vec<_>>()
+                .join(" \n"),
+        ] {
+            assert!(
+                shield
+                    .prepare(source, &mut ConversationVault::default(), |_| Ok(output))
+                    .is_err()
+            );
+        }
+    }
+    let secret = "SYNTHETIC_WRAPPED_DEVICE_62491";
+    let shield = Shield::new(vec![
+        Secret::new(SecretKind::Device, secret.into(), false).unwrap(),
+    ])
+    .unwrap();
+    for prefix in ["", "x", "xy"] {
+        let encoded = STANDARD.encode(format!("{prefix}:{secret}:suffix"));
+        assert!(
+            shield
+                .check_known_secrets(&encoded, &ConversationVault::default())
+                .is_err()
+        );
+    }
+    let public = Shield::new(vec![]).unwrap();
+    assert!(
+        public
+            .leakcheck(
+                &STANDARD.encode("pottery advice"),
+                &ConversationVault::default()
+            )
+            .is_ok()
+    );
+    assert!(
+        public
+            .leakcheck(
+                &STANDARD.encode("geo:40.1772,44.5035"),
+                &ConversationVault::default()
+            )
+            .is_err()
+    );
+}
+
+#[test]
 fn native_host_rejects_shadow_canary_without_echo() {
     for i in 0..100 {
         let canary = format!("NW_SYNTHETIC_SHADOW_CANARY_{i:04}_xQzV");
