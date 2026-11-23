@@ -9,21 +9,18 @@ on:
         default: '1'
         options: ['1', '384']
       defender:
-        description: 'Pinned local model for the protection pipeline and useful answers'
+        description: 'Pinned local model for protection and useful answers'
         required: true
         type: choice
-        default: smoke
+        default: qwen2.5-7b-q4_k_m
         options: [smoke, qwen2.5-7b-q4_k_m]
 permissions:
   contents: read
 jobs:
-  development:
-    name: '${{ inputs.cases }} development cases on Ubuntu'
+  binaries:
+    name: Shared pinned binaries and native CPU smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 350
-    env:
-      NYMWRAP_EVAL_CASES: ${{ inputs.cases }}
-      NYMWRAP_EVAL_DEFENDER: ${{ inputs.defender }}
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -34,15 +31,80 @@ jobs:
       - run: cargo build -p nw-llmd --features inference --release --locked
       - shell: pwsh
         run: ./scripts/fetch-test-models.ps1
+      - run: cargo test -p nw-llmd --features inference --release --lib actual_cpu_model_over_private_ipc --locked -- --ignored
+      - run: sha256sum nw-llmd examples/privacy_linkcheck > checksums.sha256
+        working-directory: target/release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: privacy-development-binaries
+          path: |
+            target/release/nw-llmd
+            target/release/examples/privacy_linkcheck
+            target/release/checksums.sha256
+          if-no-files-found: error
+  development:
+    name: 'Development shard ${{ matrix.shard }} on Ubuntu'
+    needs: binaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(inputs.cases == '384' && '[0,1,2,3,4,5,6,7]' || '[0]') }}
+    env:
+      NYMWRAP_EVAL_CASES: ${{ inputs.cases }}
+      NYMWRAP_EVAL_DEFENDER: ${{ inputs.defender }}
+      NYMWRAP_EVAL_SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: privacy-development-binaries
+          path: target/release
+      - run: |
+          sha256sum --check checksums.sha256
+          chmod 755 nw-llmd examples/privacy_linkcheck
+        working-directory: target/release
+      - shell: pwsh
+        run: ./scripts/fetch-test-models.ps1
       - run: node scripts/fetch-privacy-model.mjs qwen2.5-7b-q4_k_m
       - run: node scripts/merge-privacy-model.mjs qwen2.5-7b-q4_k_m --discard-verified-shards
-      - run: cargo test -p nw-llmd --features inference --release --lib actual_cpu_model_over_private_ipc --locked -- --ignored
-      - run: node scripts/linkcheck-eval.mjs --limit "$NYMWRAP_EVAL_CASES" --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
-      - if: inputs.cases == '384'
-        run: node scripts/linkcheck-report.mjs target/linkcheck-eval/development-*.json
+      - run: |
+          if [ "$NYMWRAP_EVAL_CASES" = 384 ]; then
+            node scripts/linkcheck-eval.mjs --shard "$NYMWRAP_EVAL_SHARD/8" --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
+          else
+            node scripts/linkcheck-eval.mjs --limit 1 --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: privacy-development-${{ inputs.defender }}-${{ inputs.cases }}
+          name: privacy-development-shard-${{ matrix.shard }}
           path: target/linkcheck-eval/development-*.json
+          if-no-files-found: error
+  complete-report:
+    name: All 384 cases and development quality gate
+    if: inputs.cases == '384'
+    needs: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: privacy-development-shard-*
+          path: target/linkcheck-shards
+          merge-multiple: true
+      - run: node scripts/linkcheck-merge.mjs --input target/linkcheck-shards --out target/linkcheck-eval/development-combined.json
+      - run: node scripts/linkcheck-report.mjs target/linkcheck-eval/development-combined.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: privacy-development-complete
+          path: target/linkcheck-eval/development-combined.json
           if-no-files-found: error

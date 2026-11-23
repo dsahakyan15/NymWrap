@@ -3,18 +3,22 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {artifactHash} from './evaluation-artifacts.mjs';
+import {shardRange} from './linkcheck-shards.mjs';
 const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const counter=value=>Number.isSafeInteger(value)&&value>=0&&value<=1000000000;
 // Complete measurement is a prerequisite for statistics, not a declaration that
 // privacy, held-out blinding or an implementation milestone has passed.
-export function summarizeLinkcheckReport(report,corpus,corpusHash){
-  if(report?.version!==3||report.status!=='complete'||!hash(corpusHash)||report.provenance?.corpus_sha256!==corpusHash||
+export function validateLinkcheckReport(report,corpus,corpusHash,{allowShard=false}={}){
+  const shard=report?.shard;
+  const range=shard?shardRange(corpus?.cases?.length,shard.index,shard.count):{start:0,end:corpus?.cases?.length};
+  if(shard&&(!allowShard||JSON.stringify(shard)!==JSON.stringify(range)))throw Error('invalid_linkcheck_shard_scope');
+  if(report?.version!==3||report.status!==(shard?'complete_shard':'complete')||!hash(corpusHash)||report.provenance?.corpus_sha256!==corpusHash||
     corpus?.version!==3||!corpus.synthetic_only||corpus.candidates!==64||report.partition!==corpus.partition||
-    !Array.isArray(report.observations)||report.case_count!==corpus.cases?.length||report.observations.length!==report.case_count||
+    !Array.isArray(report.observations)||report.case_count!==corpus.cases?.length||report.observations.length!==range.end-range.start||
     report.scope?.external_requests!==false||report.scope?.local_answers_stubbed!==false||report.scope?.provider_answers!=='real local model, simulated provider')throw Error('incomplete_or_incompatible_linkcheck_report');
-  for(const key of ['client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256'])if(!hash(report.provenance[key]))throw Error('missing_linkcheck_provenance');
+  for(const key of ['client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256','shard_script_sha256'])if(!hash(report.provenance[key]))throw Error('missing_linkcheck_provenance');
   for(const [i,row]of report.observations.entries()){
-    const expected=corpus.cases[i];
+    const expected=corpus.cases[range.start+i];
     if(row.id!==expected.id||row.language!==expected.language||row.group!==expected.group||!counter(row.elapsed_ms)||
       !row.calls||['ner','canonicalize','generalize','embeddings','answers','errors'].some(k=>!counter(row.calls[k]))||
       !Array.isArray(row.local_reasons)||row.local_reasons.some(r=>r!==null&&!['entity_verification_unavailable','missing_dossier','verification_unavailable','generalization_failed','independent_split_unavailable'].includes(r))||
@@ -22,6 +26,10 @@ export function summarizeLinkcheckReport(report,corpus,corpusHash){
       row.utility!==null&&row.local_reasons.length!==expected.turns.length||
       row.remote_turns===0&&row.literal_attack!==null)throw Error('invalid_linkcheck_measurement');
   }
+  return range;
+}
+export function summarizeLinkcheckReport(report,corpus,corpusHash){
+  validateLinkcheckReport(report,corpus,corpusHash);
   const model=summarizeLinkcheck(report.observations,{candidates:corpus.candidates});
   const literal=summarizeLinkcheck(report.observations.map(row=>({...row,attack:row.literal_attack,raw_attack:row.raw_literal_attack})),{candidates:corpus.candidates});
   return {partition:report.partition,acceptance:'not_evaluated_requires_frozen_held_out_provenance',

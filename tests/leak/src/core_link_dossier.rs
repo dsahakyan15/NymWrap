@@ -279,5 +279,25 @@ async fn dossier_covers_confirmed_persona_all_secrets_device_and_import_without_
         ..Default::default()
     })
     .unwrap();
-    assert!(w.linkcheck_references().unwrap().is_none());
+    let large = w.linkcheck_references().unwrap().unwrap();
+    let model = Model(Default::default());
+    large
+        .inspect(
+            &model,
+            &[Message {
+                role: Role::User,
+                content: "Explain pottery".into(),
+            }],
+            &w.config.shield.linkcheck,
+        )
+        .await
+        .unwrap();
+    assert!(
+        model
+            .0
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|piece| piece.contains(&"x".repeat(1024)))
+    );
 }

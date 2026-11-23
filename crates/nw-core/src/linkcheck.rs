@@ -9,7 +9,10 @@ use zeroize::Zeroizing;
 pub const MODEL_SHA256: &str = "d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac";
 pub const DIMENSION: usize = 768;
 pub const MIN_DECOYS: usize = 50;
-const MAX_DOSSIER_BYTES: usize = 8192;
+const MAX_DOSSIER_BYTES: usize = 1024 * 1024;
+const MAX_REFERENCES_BYTES: usize = 2 * MAX_DOSSIER_BYTES;
+const SEGMENT_BYTES: usize = 6144;
+const SEGMENT_OVERLAP: usize = 1024;
 const SCORE_SCALE: f64 = 1_000_000.0;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -76,6 +79,8 @@ pub struct Rank {
 /// User is index zero internally. Tie handling never uses this index as a tiebreaker.
 pub struct References {
     documents: Zeroizing<Vec<String>>,
+    /// Exclusive segment end for each person, not an expanded candidate pool.
+    candidate_ends: Vec<usize>,
     vectors: Mutex<Option<Zeroizing<Vec<Vec<f64>>>>>,
 }
 impl References {
@@ -86,6 +91,9 @@ impl References {
             return Err(Unavailable::Dossier);
         }
         documents.append(&mut decoys);
+        if documents.iter().map(String::len).sum::<usize>() > MAX_REFERENCES_BYTES {
+            return Err(Unavailable::Dossier);
+        }
         let mut unique = Zeroizing::new(Vec::new());
         for document in documents.iter() {
             if document.trim().is_empty()
@@ -101,8 +109,29 @@ impl References {
             }
             unique.push(std::mem::take(&mut *normalized));
         }
+        let mut pieces = Zeroizing::new(Vec::new());
+        let mut candidate_ends = Vec::with_capacity(documents.len());
+        for document in documents.iter() {
+            let mut start = 0;
+            loop {
+                let mut end = (start + SEGMENT_BYTES).min(document.len());
+                while !document.is_char_boundary(end) {
+                    end -= 1;
+                }
+                pieces.push(document[start..end].to_owned());
+                if end == document.len() {
+                    break;
+                }
+                start = end - SEGMENT_OVERLAP;
+                while !document.is_char_boundary(start) {
+                    start -= 1;
+                }
+            }
+            candidate_ends.push(pieces.len());
+        }
         Ok(Self {
-            documents,
+            documents: pieces,
+            candidate_ends,
             vectors: Mutex::new(None),
         })
     }
@@ -115,7 +144,7 @@ impl References {
         history: &[Message],
         settings: &Settings,
     ) -> Result<Rank, Unavailable> {
-        if !settings.valid(self.documents.len()) {
+        if !settings.valid(self.candidate_ends.len()) {
             return Err(Unavailable::Policy);
         }
         if history.is_empty()
@@ -155,11 +184,21 @@ impl References {
         }
         let query_texts = Zeroizing::new(vec![query.to_string()]);
         let queries = identified(model, &query_texts).await?;
-        rank(
-            &queries[0],
-            cached.as_ref().ok_or(Unavailable::Embedding)?,
-            settings,
-        )
+        let vectors = cached.as_ref().ok_or(Unavailable::Embedding)?;
+        let mut scores = Zeroizing::new(Vec::with_capacity(self.candidate_ends.len()));
+        let mut start = 0;
+        for end in &self.candidate_ends {
+            // A rare matching fact must not disappear in the average of unrelated
+            // biography. More segments may increase risk, never the anonymity set.
+            let score = vectors[start..*end]
+                .iter()
+                .try_fold(i32::MIN, |best, vector| {
+                    similarity(&queries[0], vector).map(|value| best.max(value))
+                })?;
+            scores.push(score);
+            start = *end;
+        }
+        rank_scores(&scores, settings)
     }
 }
 
@@ -193,19 +232,26 @@ pub fn rank(
     if dossiers.len() < MIN_DECOYS + 1 || dossiers.len() > 257 || !settings.valid(dossiers.len()) {
         return Err(Unavailable::Policy);
     }
-    if query.len() != DIMENSION || dossiers.iter().any(|v| v.len() != DIMENSION) {
-        return Err(Unavailable::Embedding);
-    }
     let scores = Zeroizing::new(
         dossiers
             .iter()
-            .map(|d| {
-                nw_drift::math::cos(query, d)
-                    .map(|v| (v * SCORE_SCALE).round() as i32)
-                    .map_err(|_| Unavailable::Embedding)
-            })
+            .map(|d| similarity(query, d))
             .collect::<Result<Vec<_>, _>>()?,
     );
+    rank_scores(&scores, settings)
+}
+fn similarity(query: &[f64], dossier: &[f64]) -> Result<i32, Unavailable> {
+    if query.len() != DIMENSION || dossier.len() != DIMENSION {
+        return Err(Unavailable::Embedding);
+    }
+    nw_drift::math::cos(query, dossier)
+        .map(|v| (v * SCORE_SCALE).round() as i32)
+        .map_err(|_| Unavailable::Embedding)
+}
+fn rank_scores(scores: &[i32], settings: &Settings) -> Result<Rank, Unavailable> {
+    if scores.len() < MIN_DECOYS + 1 || scores.len() > 257 || !settings.valid(scores.len()) {
+        return Err(Unavailable::Policy);
+    }
     let user_score = scores[0];
     let best_decoy_score = *scores[1..].iter().max().ok_or(Unavailable::Dossier)?;
     // A tie may put the user inside top-k regardless of the order of candidates.
@@ -214,7 +260,7 @@ pub fn rank(
     let risky = rank_min <= settings.top_k
         || f64::from(user_score - best_decoy_score) / SCORE_SCALE >= settings.max_margin;
     Ok(Rank {
-        candidates: dossiers.len(),
+        candidates: scores.len(),
         rank_min,
         rank_max,
         user_score,

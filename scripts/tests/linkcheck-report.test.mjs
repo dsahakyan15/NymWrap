@@ -8,7 +8,7 @@ function fixture(){
     attack:{valid:true,top1_correct:false},raw_attack:{valid:true,top1_correct:true},literal_attack:{valid:true,top1_correct:false},raw_literal_attack:{valid:true,top1_correct:true},
     calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0},local_reasons:[null,null],elapsed_ms:12};
   const report={version:3,status:'complete',partition:'development',case_count:1,scope:{external_requests:false,local_answers_stubbed:false,provider_answers:'real local model, simulated provider'},
-    provenance:Object.fromEntries(['corpus_sha256','client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256'].map(k=>[k,sha])),observations:[row]};
+    provenance:Object.fromEntries(['corpus_sha256','client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256','shard_script_sha256'].map(k=>[k,sha])),observations:[row]};
   return {corpus,report,row};
 }
 test('real-answer measurement reports both attackers and never labels development held-out acceptance',()=>{

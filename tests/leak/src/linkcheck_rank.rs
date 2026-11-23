@@ -71,6 +71,15 @@ fn references_require_fifty_distinct_decoys_and_bounded_user_data() {
             .is_err()
     );
     assert!(References::with_synthetic_decoys(SecretString::from("")).is_err());
+    let mut total_limit = synthetic_decoys();
+    total_limit[0] = "y".repeat(MAX_DOSSIER_BYTES);
+    assert!(
+        References::new(
+            SecretString::from("x".repeat(MAX_DOSSIER_BYTES)),
+            total_limit
+        )
+        .is_err()
+    );
     let references = References::with_synthetic_decoys(user()).unwrap();
     assert_eq!(references.documents.len(), 65);
     assert!(
@@ -173,5 +182,58 @@ async fn accumulated_history_is_checked_and_cached_references_do_not_bypass_mode
             .await
             .unwrap_err(),
         Unavailable::Identity
+    );
+}
+
+#[tokio::test]
+async fn a_rare_fact_at_the_end_of_a_large_dossier_remains_a_ranked_candidate() {
+    let mut dossier = (0..700)
+        .map(|i| format!("Սինթետիկ գրառում {i}. Синтетический факт {i}. Synthetic fact {i}.\n"))
+        .collect::<String>();
+    dossier.push_str("old rare craft; new rare schedule; SYNTHETIC_LARGE_DOSSIER_TAIL_62491");
+    let boundary_fact = format!("SYNTHETIC_BOUNDARY_FACT_{}", "r".repeat(800));
+    dossier = format!("{}{boundary_fact}\n{dossier}", " ".repeat(6000));
+    let references = References::with_synthetic_decoys(SecretString::from(dossier.as_str()))
+        .expect("a complete large dossier must be segmented, never truncated");
+    let model = Model::new();
+    let history = [Message {
+        role: Role::User,
+        content: "old rare craft and new rare schedule".into(),
+    }];
+    let result = references
+        .inspect(&model, &history, &settings())
+        .await
+        .unwrap();
+    assert!(result.risky);
+    assert_eq!(
+        result.candidates, 65,
+        "segments are not independent decoy people"
+    );
+    let calls = model.calls.lock().unwrap();
+    let pieces = calls[..calls.len() - 1]
+        .iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    assert!(pieces.iter().any(|piece| piece.contains(&boundary_fact)));
+    for index in 0..700 {
+        for fact in [
+            format!("գրառում {index}."),
+            format!("факт {index}."),
+            format!("fact {index}."),
+        ] {
+            assert!(
+                pieces.iter().any(|piece| piece.contains(&fact)),
+                "missing synthetic fact {index}"
+            );
+        }
+    }
+    assert!(
+        pieces
+            .iter()
+            .any(|piece| piece.contains("SYNTHETIC_LARGE_DOSSIER_TAIL_62491"))
+    );
+    assert!(
+        calls.iter().all(|batch| batch.len() <= 64
+            && batch.iter().map(String::len).sum::<usize>() <= MAX_TEXT_BYTES)
     );
 }
