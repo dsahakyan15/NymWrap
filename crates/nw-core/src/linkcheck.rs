@@ -349,13 +349,35 @@ pub fn synthetic_decoys() -> Vec<String> {
         "studies during weekends",
         "teaches afternoon workshops",
     ];
+    let education = [
+        "attends an evening school workshop",
+        "attends a weekend school club",
+        "helps at a neighborhood school",
+        "teaches art at a community school",
+    ];
+    let tools = [
+        "uses a hand-cranked pottery wheel",
+        "uses a foot-powered loom",
+        "uses a wooden frame press",
+        "uses antique bellows",
+    ];
+    let projects = [
+        "builds a miniature orchard model",
+        "draws diagrams of birdsong",
+        "builds a network of toy canals",
+        "draws a folding star atlas",
+    ];
     (0..64)
         .map(|i| {
+            let (a, b, c) = (i % 4, (i / 4) % 4, i / 16);
             format!(
-                "{}\n{}\n{}",
-                crafts[i % 4],
-                interests[(i / 4) % 4],
-                schedules[i / 16]
+                "{}\n{}\n{}\n{}\n{}\n{}",
+                crafts[a],
+                interests[b],
+                schedules[c],
+                education[(a + b) % 4],
+                tools[(a + c) % 4],
+                projects[(b + c) % 4],
             )
         })
         .collect()

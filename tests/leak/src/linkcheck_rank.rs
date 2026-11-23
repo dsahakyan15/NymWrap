@@ -110,6 +110,40 @@ fn references_require_fifty_distinct_decoys_and_bounded_user_data() {
             .all(|d| !d.contains("62491"))
     );
 }
+#[test]
+fn synthetic_references_cover_school_and_six_fact_combinations_without_user_seeding() {
+    use std::collections::BTreeMap;
+    let peers = synthetic_decoys();
+    let facts = peers
+        .iter()
+        .map(|peer| peer.lines().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    assert_eq!(facts.len(), 64);
+    assert!(
+        facts.iter().all(|facts| facts.len() == 6),
+        "a three-fact peer cohort must not make a six-fact school dossier the only broad match"
+    );
+    assert!(peers.iter().all(|peer| peer.contains("school")));
+    for axis in 0..6 {
+        let mut counts = BTreeMap::new();
+        for peer in &facts {
+            *counts.entry(peer[axis]).or_insert(0) += 1;
+        }
+        assert_eq!(counts.len(), 4);
+        assert!(counts.values().all(|count| *count == 16));
+        for other in axis + 1..6 {
+            let mut pairs = BTreeMap::new();
+            for peer in &facts {
+                *pairs.entry((peer[axis], peer[other])).or_insert(0) += 1;
+            }
+            assert_eq!(pairs.len(), 16);
+            assert!(pairs.values().all(|count| *count == 4));
+        }
+    }
+    let first = References::with_synthetic_decoys("SYNTHETIC_COHORT_USER_A_73926".into()).unwrap();
+    let second = References::with_synthetic_decoys("SYNTHETIC_COHORT_USER_B_73926".into()).unwrap();
+    assert_eq!(first.documents[1..], second.documents[1..]);
+}
 struct Model {
     calls: std::sync::Mutex<Zeroizing<Vec<Vec<String>>>>,
     identity: String,
