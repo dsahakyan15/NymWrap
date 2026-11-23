@@ -1,4 +1,18 @@
 
 # cargo-vet audits file
 
-[audits]
+[[audits.equivalent]]
+who = "NymWrap automated source review (Codex)"
+criteria = "safe-to-deploy"
+delta = "1.0.2 -> 1.0.3"
+notes = """
+AI source review of both published archives from the existing local Cargo cache.
+SHA-256 1.0.2: 877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f.
+SHA-256 1.0.3: 00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826.
+Reviewed the complete package diff, src/lib.rs and both Cargo manifests.
+The Rust change only clarifies Equivalent/Comparable documentation contracts;
+executable code, dependencies, targets and build=false are unchanged.
+Other changes are package versions and VCS metadata. No unsafe, I/O, native code
+or build script was added. This is a delta review, not an audit of the base or
+an independent human security review. Original 1.0.2 coverage is still required.
+"""

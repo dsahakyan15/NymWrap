@@ -323,7 +323,19 @@ struct Attack {
     valid: bool,
     top1_correct: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    evidence: Option<AttackEvidence>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     error_code: Option<String>,
+}
+#[derive(Serialize, Clone, Debug, Eq, PartialEq)]
+struct AttackEvidence {
+    matched_facts: usize,
+    nonce_matched: bool,
+    tied_candidates: usize,
+}
+struct FactRank {
+    id: String,
+    evidence: AttackEvidence,
 }
 fn literal_attack(text: &str, case: &Case) -> Attack {
     let lower = text.to_lowercase();
@@ -331,20 +343,32 @@ fn literal_attack(text: &str, case: &Case) -> Attack {
     // choose an ID. This is a forced top-1 attack, including no-evidence queries.
     let mut order = (0..case.profiles.len()).collect::<Vec<_>>();
     order.sort_by_key(|&i| Sha256::digest(format!("literal:{}:{}", case.id, case.profiles[i].id)));
-    let best = order
-        .into_iter()
-        .max_by_key(|&i| {
-            let p = &case.profiles[i];
-            p.facts
-                .iter()
-                .chain([&p.personal_secret, &p.device_secret])
-                .filter(|fact| lower.contains(&fact.to_lowercase()))
-                .count()
+    let scores = case
+        .profiles
+        .iter()
+        .map(|p| {
+            let matched = |fact: &&String| lower.contains(&fact.to_lowercase());
+            (
+                p.facts.iter().filter(matched).count(),
+                [&p.personal_secret, &p.device_secret]
+                    .into_iter()
+                    .filter(matched)
+                    .count(),
+            )
         })
-        .unwrap();
+        .collect::<Vec<_>>();
+    let score = |i: usize| scores[i].0 + scores[i].1;
+    let best = order.into_iter().max_by_key(|&i| score(i)).unwrap();
     Attack {
         valid: true,
         top1_correct: best == case.subject,
+        evidence: Some(AttackEvidence {
+            matched_facts: scores[best].0,
+            nonce_matched: scores[best].1 > 0,
+            tied_candidates: (0..scores.len())
+                .filter(|&i| score(i) == score(best))
+                .count(),
+        }),
         error_code: None,
     }
 }
@@ -405,6 +429,7 @@ async fn model_attack(model: &UnixModel, text: &str, case: &Case) -> Attack {
             return Attack {
                 valid: false,
                 top1_correct: false,
+                evidence: None,
                 error_code: Some("attack_input_too_large".into()),
             };
         }
@@ -419,6 +444,7 @@ async fn model_attack(model: &UnixModel, text: &str, case: &Case) -> Attack {
             return Attack {
                 valid: false,
                 top1_correct: false,
+                evidence: None,
                 error_code: Some(error.to_string()),
             };
         }
@@ -427,10 +453,13 @@ async fn model_attack(model: &UnixModel, text: &str, case: &Case) -> Attack {
     Attack {
         valid: guess.is_ok(),
         error_code: guess.as_ref().err().map(|code| (*code).into()),
-        top1_correct: guess.is_ok_and(|id| id == case.profiles[case.subject].id),
+        top1_correct: guess
+            .as_ref()
+            .is_ok_and(|rank| rank.id == case.profiles[case.subject].id),
+        evidence: guess.ok().map(|rank| rank.evidence),
     }
 }
-fn rank_fact_evidence(data: &serde_json::Value, answer: &str) -> Result<String, &'static str> {
+fn rank_fact_evidence(data: &serde_json::Value, answer: &str) -> Result<FactRank, &'static str> {
     let guess: FactGuess = serde_json::from_str(answer).map_err(|_| "attack_invalid_fact_json")?;
     let dictionary = data["fact_dictionary"]
         .as_array()
@@ -453,6 +482,7 @@ fn rank_fact_evidence(data: &serde_json::Value, answer: &str) -> Result<String, 
         .as_array()
         .ok_or("attack_invalid_dictionary")?;
     let mut best = None;
+    let mut tied_candidates = 0;
     for row in data["candidates"]
         .as_array()
         .ok_or("attack_invalid_dictionary")?
@@ -468,12 +498,35 @@ fn rank_fact_evidence(data: &serde_json::Value, answer: &str) -> Result<String, 
         // Stable public candidate order breaks ties, including a no-evidence guess.
         if best.as_ref().is_none_or(|(_, old)| score > *old) {
             best = Some((id.to_owned(), score));
+            tied_candidates = 1;
+        } else if best.as_ref().is_some_and(|(_, old)| score == *old) {
+            tied_candidates += 1;
         }
     }
-    best.map(|(id, _)| id).ok_or("attack_invalid_dictionary")
+    best.map(|(id, score)| FactRank {
+        id,
+        evidence: AttackEvidence {
+            matched_facts: score.1,
+            nonce_matched: score.0,
+            tied_candidates,
+        },
+    })
+    .ok_or("attack_invalid_dictionary")
 }
-fn useful(answer: &str, expected: i64) -> bool {
-    answer.trim().parse::<i64>() == Ok(expected)
+#[derive(Serialize, Debug, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+enum UtilityOutcome {
+    CorrectInteger,
+    WrongInteger,
+    NotInteger,
+    Unavailable,
+}
+fn utility_outcome(answer: &str, expected: i64) -> UtilityOutcome {
+    match answer.trim().parse::<i64>() {
+        Ok(actual) if actual == expected => UtilityOutcome::CorrectInteger,
+        Ok(_) => UtilityOutcome::WrongInteger,
+        Err(_) => UtilityOutcome::NotInteger,
+    }
 }
 fn evaluation_config() -> Result<nw_core::config::Config, CoreError> {
     let mut config = nw_core::config::Config::for_profile(Profile::Standard)?;
@@ -498,6 +551,7 @@ struct Observation {
     canary_leaks: usize,
     error: bool,
     utility: Option<bool>,
+    utility_outcomes: Vec<UtilityOutcome>,
     attack: Option<Attack>,
     raw_attack: Attack,
     literal_attack: Option<Attack>,
@@ -614,6 +668,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (mut local_turns, mut blocked_turns, mut utility, mut error) =
             (0, 0, Some(true), false);
         let mut local_reasons = vec![];
+        let mut utility_outcomes = vec![];
         for turn in &case.turns {
             history.push(Message {
                 role: Role::User,
@@ -625,8 +680,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             {
                 Ok(reply) => {
                     local_turns += usize::from(reply.trust == TrustLevel::L0);
-                    utility = utility
-                        .map(|ok| ok && useful(reply.text.expose_secret(), turn.expected_answer));
+                    let outcome = utility_outcome(reply.text.expose_secret(), turn.expected_answer);
+                    utility = utility.map(|ok| ok && outcome == UtilityOutcome::CorrectInteger);
+                    utility_outcomes.push(outcome);
                     local_reasons.push(reply.local_reason);
                     conversation = reply.conversation;
                     history.push(Message {
@@ -636,6 +692,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Err(_) => {
                     blocked_turns += 1;
+                    utility_outcomes.push(UtilityOutcome::Unavailable);
                     utility = None;
                     error = true;
                     break;
@@ -680,6 +737,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             canary_leaks: *capture.canary_leaks.lock().unwrap(),
             error: error || calls.errors > 0 || !calls.ner_rejections.is_empty(),
             utility,
+            utility_outcomes,
             attack,
             raw_attack,
             literal_attack: literal,
@@ -714,10 +772,35 @@ mod tests {
             "registered_nonce_matches":[],"observable_conversation":"quoted synthetic facts"
         });
         assert_eq!(
-            rank_fact_evidence(&data, r#"{"facts":["A","B"]}"#).unwrap(),
+            rank_fact_evidence(&data, r#"{"facts":["A","B"]}"#)
+                .unwrap()
+                .id,
             "P01"
         );
-        assert_eq!(rank_fact_evidence(&data, r#"{"facts":[]}"#).unwrap(), "P03");
+        assert_eq!(
+            rank_fact_evidence(&data, r#"{"facts":[]}"#).unwrap().id,
+            "P03"
+        );
+        assert_eq!(
+            rank_fact_evidence(&data, r#"{"facts":[]}"#)
+                .unwrap()
+                .evidence,
+            AttackEvidence {
+                matched_facts: 0,
+                nonce_matched: false,
+                tied_candidates: 3
+            }
+        );
+        assert_eq!(
+            rank_fact_evidence(&data, r#"{"facts":["A","B"]}"#)
+                .unwrap()
+                .evidence,
+            AttackEvidence {
+                matched_facts: 2,
+                nonce_matched: false,
+                tied_candidates: 1
+            }
+        );
         for invalid in [
             r#"{"facts":["A","A"]}"#,
             r#"{"facts":["Z"]}"#,
@@ -729,22 +812,37 @@ mod tests {
         }
         data["registered_nonce_matches"] = serde_json::json!(["P20"]);
         assert_eq!(
-            rank_fact_evidence(&data, r#"{"facts":["A","B"]}"#).unwrap(),
+            rank_fact_evidence(&data, r#"{"facts":["A","B"]}"#)
+                .unwrap()
+                .id,
             "P20"
         );
     }
     #[test]
+    fn public_control_chance_hit_is_retained_and_literal_tie_order_does_not_change() {
+        let corpus: Corpus =
+            serde_json::from_str(include_str!("../../../tests/models/privacy-v3-dev.json"))
+                .unwrap();
+        let case = &corpus.cases[23];
+        assert_eq!(case.id, "dev_0023");
+        assert_eq!(case.group, "public_control");
+        let attack = literal_attack("generic arithmetic question", case);
+        assert!(attack.valid && attack.top1_correct);
+        assert_eq!(
+            attack.evidence.unwrap(),
+            AttackEvidence {
+                matched_facts: 0,
+                nonce_matched: false,
+                tied_candidates: 64,
+            }
+        );
+    }
+    #[test]
     fn utility_requires_the_actual_integer_answer() {
-        assert!(useful(" 42\n", 42));
-        for answer in [
-            "42 pots",
-            "{\"answer\":42}",
-            "Calculate 42",
-            "43",
-            "42.0",
-            "",
-        ] {
-            assert!(!useful(answer, 42));
+        assert_eq!(utility_outcome(" 42\n", 42), UtilityOutcome::CorrectInteger);
+        assert_eq!(utility_outcome("43", 42), UtilityOutcome::WrongInteger);
+        for answer in ["42 pots", "{\"answer\":42}", "Calculate 42", "42.0", ""] {
+            assert_eq!(utility_outcome(answer, 42), UtilityOutcome::NotInteger);
         }
     }
     #[test]

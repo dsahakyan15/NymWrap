@@ -32,14 +32,18 @@ export function chanceComparison(k,n,candidates){
 }
 const groups=new Set(['public_control','linkage','linkage_multiturn','hard_data','injection']);
 function attack(value){return value===null||!!value&&typeof value.valid==='boolean'&&typeof value.top1_correct==='boolean'&&(!value.top1_correct||value.valid);}
+export function validateLinkcheckObservation(row){
+  if(!row||typeof row.id!=='string'||!/^[a-z0-9_]{1,64}$/.test(row.id)||!['en','ru','hy'].includes(row.language)||!groups.has(row.group))throw Error('invalid_linkcheck_observation');
+  for(const key of ['remote_turns','local_turns','blocked_turns','canary_leaks'])if(!integer(row[key],10000))throw Error('invalid_linkcheck_counter');
+  if(typeof row.error!=='boolean'||![null,true,false].includes(row.utility)||!attack(row.attack)||!attack(row.raw_attack))throw Error('invalid_linkcheck_outcome');
+  if(row.remote_turns===0&&(row.attack!==null||row.canary_leaks!==0))throw Error('inconsistent_linkcheck_egress');
+}
 export function summarizeLinkcheck(observations,{candidates}={}){
   if(!Array.isArray(observations)||observations.length>8192)throw Error('invalid_linkcheck_observations');
   chanceComparison(0,0,candidates);const ids=new Set();
   for(const row of observations){
-    if(!row||typeof row.id!=='string'||!/^[a-z0-9_]{1,64}$/.test(row.id)||ids.has(row.id)||!['en','ru','hy'].includes(row.language)||!groups.has(row.group))throw Error('invalid_linkcheck_observation');ids.add(row.id);
-    for(const key of ['remote_turns','local_turns','blocked_turns','canary_leaks'])if(!integer(row[key],10000))throw Error('invalid_linkcheck_counter');
-    if(typeof row.error!=='boolean'||![null,true,false].includes(row.utility)||!attack(row.attack)||!attack(row.raw_attack))throw Error('invalid_linkcheck_outcome');
-    if(row.remote_turns===0&&(row.attack!==null||row.canary_leaks!==0))throw Error('inconsistent_linkcheck_egress');
+    validateLinkcheckObservation(row);
+    if(ids.has(row.id))throw Error('invalid_linkcheck_observation');ids.add(row.id);
   }
   const subset=rows=>{
     const remote=rows.filter(r=>r.remote_turns>0),measured=remote.filter(r=>r.attack?.valid),privateRemote=remote.filter(r=>r.group!=='public_control');

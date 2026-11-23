@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {summarizeLinkcheckReport,checkDevelopmentReport} from '../linkcheck-report.mjs';
+import {summarizeLinkcheckReport,checkDevelopmentReport,validateLinkcheckMeasurement} from '../linkcheck-report.mjs';
 import {embeddingModel} from '../linkcheck-embeddings.mjs';
 const sha='a'.repeat(64);
 function fixture(){
@@ -42,6 +42,46 @@ test('partial progress, missing attacker pairs, stubbed answers and incompatible
   assert.equal(summarizeLinkcheckReport(report,corpus,sha).attackers.model.all.chance_gate,'invalid_attacker');
   row.remote_turns=0;row.local_turns=2;row.attack=null;row.literal_attack=null;
   assert.equal(summarizeLinkcheckReport(report,corpus,sha).attackers.model.all.chance_gate,'unmeasured');
+});
+
+test('content-free diagnostics cannot hide a forced correct top-1 or relax exact answer utility',()=>{
+  const {corpus,report,row}=fixture();
+  row.attack.top1_correct=true;
+  row.attack.evidence={matched_facts:0,nonce_matched:false,tied_candidates:64};
+  row.utility_outcomes=['correct_integer','correct_integer'];
+  let summary=summarizeLinkcheckReport(report,corpus,sha);
+  assert.equal(summary.attackers.model.all.top1.correct,1);
+  assert.equal(summary.attackers.model.all.chance_gate,'failed');
+  assert.equal(summary.diagnostics.attackers.attack.correct_in_ties,1);
+  assert.equal(summary.diagnostics.utility.turn_outcomes.correct_integer,2);
+  row.utility=false;row.utility_outcomes[1]='not_integer';
+  summary=summarizeLinkcheckReport(report,corpus,sha);
+  assert.equal(summary.attackers.model.all.useful_fraction,0);
+  assert.equal(summary.diagnostics.utility.turn_outcomes.not_integer,1);
+});
+test('streamed records validate both attackers and diagnostics before a completed report exists',()=>{
+  const {corpus,row}=fixture();
+  assert.doesNotThrow(()=>validateLinkcheckMeasurement(row,corpus.cases[0],64));
+  row.literal_attack.top1_correct='synthetic invalid boolean';
+  assert.throws(()=>validateLinkcheckMeasurement(row,corpus.cases[0],64));
+  row.literal_attack.top1_correct=false;row.calls.errors=-1;
+  assert.throws(()=>validateLinkcheckMeasurement(row,corpus.cases[0],64));
+});
+test('diagnostics reject content, impossible counts, false utility and fabricated evidence after invalid attacks',()=>{
+  for(const change of [
+    row=>row.attack.evidence.matched_facts=-1,row=>row.attack.evidence.matched_facts=7,
+    row=>row.attack.evidence.nonce_matched=1,row=>row.attack.evidence.tied_candidates=0,
+    row=>row.attack.evidence.tied_candidates=65,row=>row.attack.evidence.text='synthetic content must not appear',
+    row=>row.attack.evidence.matched_facts=0,
+    row=>row.attack.evidence=null,row=>row.attack.valid=false,
+    row=>row.utility_outcomes=['correct_integer'],row=>row.utility_outcomes[0]='42',
+    row=>row.utility_outcomes[0]='wrong_integer',row=>row.utility=false,row=>row.utility=null,
+  ]){
+    const {corpus,report,row}=fixture();
+    row.attack.evidence={matched_facts:1,nonce_matched:false,tied_candidates:2};
+    row.utility_outcomes=['correct_integer','correct_integer'];
+    change(row);assert.throws(()=>summarizeLinkcheckReport(report,corpus,sha));
+  }
 });
 test('development gate needs calibrated attacks in every private group and language, with zero canaries',()=>{
   function complete(){

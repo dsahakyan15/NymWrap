@@ -50,6 +50,27 @@ fn the_margin_threshold_can_reject_a_concentrated_match_outside_top_k() {
     );
 }
 #[test]
+fn measured_dev_0011_margin_requires_generalization_even_at_rank_seventeen() {
+    // Reconstruct the observed rank/median/maxima, without storing model vectors.
+    let mut before = vec![519_418];
+    before.extend([483_906; 48]);
+    before.extend([550_000; 15]);
+    before.push(596_526);
+    let first = rank_scores(&before, &settings()).unwrap();
+    assert_eq!((first.rank_min, first.background_score), (17, 483_906));
+    assert!(
+        first.risky,
+        "the old outgoing RU injection must need generalization"
+    );
+    let mut after = vec![517_970];
+    after.extend([497_595; 41]);
+    after.extend([600_000; 22]);
+    after.push(613_808);
+    let second = rank_scores(&after, &settings()).unwrap();
+    assert_eq!((second.rank_min, second.background_score), (24, 497_595));
+    assert!(!second.risky);
+}
+#[test]
 fn malformed_embeddings_and_policies_never_authorize_a_request() {
     let mut candidates = vec![basis(0); 65];
     for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {

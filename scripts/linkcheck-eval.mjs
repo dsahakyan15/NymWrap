@@ -7,7 +7,7 @@ import {resolve,join,sep,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {StringDecoder} from 'node:string_decoder';
 import {artifactHash,pinnedBinary} from './evaluation-artifacts.mjs';
-import {summarizeLinkcheckReport} from './linkcheck-report.mjs';
+import {summarizeLinkcheckReport,validateLinkcheckMeasurement} from './linkcheck-report.mjs';
 import {shardRange} from './linkcheck-shards.mjs';
 import {embeddingModel} from './linkcheck-embeddings.mjs';
 
@@ -121,6 +121,7 @@ export async function main(args=process.argv.slice(2)){
     catch(e){if(e.code!=='ENOENT')throw e;}
   }else{try{await lstat(path);throw Error('linkcheck_report_exists_use_resume');}catch(e){if(e.code!=='ENOENT')throw e;}}
   if(!Array.isArray(report.observations)||report.observations.length>range.end-range.start||report.observations.some((r,i)=>r.id!==corpus.cases[range.start+i].id))throw Error('invalid_linkcheck_checkpoint');
+  for(const [index,row]of report.observations.entries())validateLinkcheckMeasurement(row,corpus.cases[range.start+index],corpus.candidates);
   let writes=Promise.resolve();
   const save=()=>{const text=JSON.stringify(report,null,2)+'\n';writes=writes.then(async()=>{await writeFile(path+'.part',text);await rename(path+'.part',path);});return writes;};
   const start=range.start+report.observations.length,end=Math.min(range.end,start+opts.limit),fixture=await mkdtemp(join(reports,'run-'));
@@ -148,6 +149,7 @@ export async function main(args=process.argv.slice(2)){
             let newline;while((newline=pending.indexOf('\n'))>=0){
               const line=pending.slice(0,newline);pending=pending.slice(newline+1);if(!line.trim())continue;
               const row=JSON.parse(line);if(range.start+report.observations.length>=end||row.id!==corpus.cases[range.start+report.observations.length].id)throw Error('unexpected_linkcheck_record');
+              validateLinkcheckMeasurement(row,corpus.cases[range.start+report.observations.length],corpus.candidates);
               report.observations.push(row);void save().catch(reject);
               console.log(JSON.stringify({completed:report.observations.length,total:corpus.cases.length,id:row.id,remote:row.remote_turns,local:row.local_turns,blocked:row.blocked_turns,useful:row.utility,leaks:row.canary_leaks,ms:row.elapsed_ms}));
               if(opts.failInvalidAttacker&&(!row.raw_attack?.valid||row.remote_turns>0&&!row.attack?.valid)){

@@ -33,7 +33,7 @@ payments либо необходимости увеличить spending limit. 
 - ADR 0073: установлен закреплённый cargo-vet 0.10.4 с проверкой архивов и
   исполняемого файла. Для root/desktop/netd/fuzz созданы отдельные stores и
   imports.lock с опубликованными аудитами Mozilla/Google из immutable commits.
-  Собственные certify и exemptions не добавлялись; path forks требуют аудита
+  Exemptions не добавлялись; path forks требуют аудита
   опубликованной базы, а проверка их локальных изменений остаётся открытой.
 - После явного refresh все четыре check --locked завершились неуспешно:
   не покрыты root 273 / desktop 517 / netd 502 / fuzz 253 версий пакетов.
@@ -55,6 +55,14 @@ payments либо необходимости увеличить spending limit. 
   workspace зелёный, native desktop check зелёный, app 12 / extension 24.
   Логи target/cookie-*.log, target/vet-deny-{root,netd,fuzz}.log. Desktop vet
   повторён на новом lock: всё ещё 517 непокрытых версий, результат красный.
+- Затем Codex просмотрел полный diff equivalent 1.0.2 → 1.0.3 и исходный
+  модуль: изменились только документация и метаданные. Оба архива из локального
+  Cargo cache проверены по SHA-256; записан именно AI delta review, не
+  независимый человеческий аудит и не аудит исходной базы. Google base/delta
+  достроили цепочку. После refresh: root 272 / desktop 516 / netd 501 / fuzz 252,
+  equivalent больше не в failures. Все четыре проверки остаются красными.
+  Прямой metadata API crates.io вернул HTTP 403; обход не выполнялся. Для этого
+  ревью использованы только уже скачанные локальные архивы и индекс.
 
 ## Подготовка длительного фаззинга M6 — проверки ещё не проведены
 
@@ -72,6 +80,26 @@ payments либо необходимости увеличить spending limit. 
   workflow-lint задание; новый checks и новый fuzz workflow требуют реального CI.
 
 ## Linkcheck — 2026-11-24, этап открыт
+
+- ADR 0075: отчёт получил счётчики совпавших фактов/nonce/ничьих и категорию
+  каждого ответа correct_integer/wrong_integer/not_integer/unavailable, без
+  содержания. Каждый top-1, включая ничью без фактов, остаётся в статистике.
+  Строки и resume-checkpoint проверяются до продолжения; итоговый валидатор
+  использует ту же схему. Регрессия фиксирует dev_0023: literal top-1 true при
+  0 совпадений и ничьей 64, без исключения этого успеха из числителя.
+- На client 8e812ac0c1917440df42ac0ae8cba82c0d94255296a1be52f55c74b6f0ef3682,
+  diagnostic receipt 4199cf5f6f770cabd1e0: dev_0011 прошёл generalize,
+  rank 17/risky → 24/safe. Оба outbound-атакующих: top-1 false, 0 фактов,
+  nonce false, ничья 64; raw model: 6 фактов, nonce true, один максимум,
+  top-1 true. Канареек 0, useful false/not_integer. Эти два состояния rank и
+  медианы закреплены отдельной реконструированной геометрией в tests/leak,
+  без записи векторов. HY dev_0003: L0, useful false/not_integer, канареек 0;
+  raw model: 5 фактов, уникальный максимум, top-1 true. Семантическая правильность
+  нецелого ответа не оценивалась. Это два diagnostic, не полный результат.
+- Диагностика прошла example tests (6), scripts (43), clippy всех
+  targets/features, полный workspace/leak; новая rank-регрессия прошла отдельно.
+  Логи target/linkcheck-diagnostics-*.log и target/linkcheck-dev-0011-regression.log.
+  Полный development текущей конфигурации ещё не завершён; held-out не создан.
 
 - ADR 0071: прежние трёхфактные приманки заменены 64 шестифактными. Покрытие
   отдельных признаков/пар, уникальность и независимость от пользовательского
