@@ -30,6 +30,26 @@ payments либо необходимости увеличить spending limit. 
 
 ## Linkcheck — 2026-11-23, этап открыт
 
+- ADR 0068/0069: явно подключён многоязычный Qwen3-Embedding-0.6B Q8_0 с
+  официальным immutable SHA, pooling last/1024; default остаётся Nomic. SHA,
+  recipe и размерность проверяются вместе, кеш связан с ними. Старый identified
+  ответ без recipe сохраняет L0; Windows stdio broker проверяет метаданные worker.
+  После нового протокола оба native CPU/private-IPC теста прошли за 17,02 с,
+  оба настоящих Windows LPAC — за 23,14 с, включая независимость вектора от
+  предыдущего текста и размера партии/контекста. Логи target/recipe-native-*.log.
+- На том же dev_0002 проведены две отдельные diagnostic оценки. Nomic:
+  rank 4 → generalize → rank 13/65, один синтетический provider-ход, utility false.
+  Qwen: rank 43/65, generalize не понадобился, один provider-ход, utility true.
+  В обоих: canaries 0, model/literal top-1 false. Это один public_control,
+  без внешних запросов; качество приватных фактов этим не измерено. Потеря
+  полезности Nomic остаётся открытым наблюдением на существующем dev_0002 с
+  точным expected_answer. Нельзя выводить её причину из одного агрегата.
+- `--sample` не становится complete/held-out даже при успехе; отчёт отвергается
+  общим валидатором и merger. Полный workflow получил явный выбор embedding,
+  а core CI трёх ОС — настоящие native CPU тесты, Windows также LPAC. Эти CI
+  изменения не выполнены из-за внешнего блокера. Локально зелёные полный workspace,
+  clippy всех targets/features, leak, evaluator (5), Tauri check; app 12,
+  extension 24, scripts 33. Логи target/recipe-checkpoint-*.log и recipe-final-*.log.
 - ADR 0065/0066: новый model fact extractor с детерминированным ранжированием
   и действующий отрыв от медианы прошли локальные регрессии. Native CPU/private
   IPC проверка грамматики прошла за 20,69 с, Windows LPAC/private IPC — 97,28 с.

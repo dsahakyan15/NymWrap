@@ -16,7 +16,16 @@ use std::{
     path::Path,
     time::{Duration, Instant},
 };
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
+
+struct EmbeddingTokens(Vec<llama_cpp_2::token::LlamaToken>);
+impl Drop for EmbeddingTokens {
+    fn drop(&mut self) {
+        for token in &mut self.0 {
+            token.0.zeroize();
+        }
+    }
+}
 
 pub(crate) fn verified_file(
     path: &Path,
@@ -185,6 +194,9 @@ impl Inference for Cpu {
     fn embedding_sha256(&self) -> Option<&str> {
         Some(&self.embedding_sha256)
     }
+    fn embedding_recipe(&self) -> Option<&str> {
+        nw_llm::embedding::for_model(&self.embedding_sha256).map(|recipe| recipe.id)
+    }
     fn complete(&mut self, messages: &[Message], max_tokens: u32) -> Result<String, Error> {
         self.complete_structured(messages, max_tokens, None)
     }
@@ -291,39 +303,61 @@ impl Inference for Cpu {
     }
     fn embed(&mut self, texts: &[String]) -> Result<Vec<Vec<f64>>, Error> {
         let deadline = Instant::now() + Duration::from_secs(110);
-        let context = self.embedding.n_ctx_train().min(8192);
+        let recipe = nw_llm::embedding::for_model(&self.embedding_sha256).ok_or(Error::Invalid)?;
+        let limit = self.embedding.n_ctx_train().min(recipe.max_tokens);
+        let mut sequences = Vec::with_capacity(texts.len());
+        for text in texts {
+            let input = Zeroizing::new(format!("{}{text}", recipe.prefix));
+            let tokens = EmbeddingTokens(self.embedding.vocab().tokenize(
+                input.as_bytes(),
+                true,
+                true,
+            ));
+            if tokens.0.is_empty() || tokens.0.len() > limit as usize {
+                return Err(Error::TooLarge);
+            }
+            sequences.push(tokens);
+        }
+        let longest = sequences
+            .iter()
+            .map(|tokens| tokens.0.len())
+            .max()
+            .ok_or(Error::Invalid)?;
+        let context = match recipe.pooling {
+            // Preserve the existing Nomic representation, including its fixed
+            // context/rotary parameters. Qwen's cache can fit the actual input.
+            nw_llm::embedding::Pooling::Mean => limit,
+            nw_llm::embedding::Pooling::Last => completion_context(limit, longest, 0)?,
+        };
         let params = self
             .params(context)
             .with_n_batch(context)
             .with_n_ubatch(context)
             .with_embeddings(true)
-            .with_pooling_type(LlamaPoolingType::Mean);
+            .with_pooling_type(match recipe.pooling {
+                nw_llm::embedding::Pooling::Mean => LlamaPoolingType::Mean,
+                nw_llm::embedding::Pooling::Last => LlamaPoolingType::Last,
+            });
         let mut ctx = self
             .embedding
             .new_context(&self.backend, params)
             .map_err(|_| Error::Inference)?;
         let mut batch = LlamaBatch::new(context as usize, 1);
         let mut output = vec![];
-        for text in texts {
+        for tokens in sequences {
             if Instant::now() > deadline {
                 return Err(Error::Timeout);
-            }
-            // Equal task prefix for every vector keeps all measurements in one embedding space.
-            let input = Zeroizing::new(format!("search_document: {text}"));
-            let tokens = self
-                .embedding
-                .vocab()
-                .tokenize(input.as_bytes(), true, true);
-            if tokens.is_empty() || tokens.len() > context as usize {
-                return Err(Error::TooLarge);
             }
             ctx.clear_kv_cache();
             batch.clear();
             batch
-                .add_sequence(&tokens, 0, false)
+                .add_sequence(&tokens.0, 0, false)
                 .map_err(|_| Error::Inference)?;
             ctx.decode(&mut batch).map_err(|_| Error::Inference)?;
             let vector = ctx.embeddings_seq_ith(0).map_err(|_| Error::Inference)?;
+            if vector.len() != recipe.dimension {
+                return Err(Error::Inference);
+            }
             let norm = vector
                 .iter()
                 .map(|v| f64::from(*v).powi(2))
@@ -348,6 +382,8 @@ mod tests {
         assert!(completion_context(1400, 401, 1000).is_err());
         assert!(completion_context(32768, usize::MAX, 1).is_err());
         assert!(completion_context(32768, 0, 1).is_err());
+        assert_eq!(completion_context(32768, 9001, 0).unwrap(), 9216);
+        assert!(completion_context(8192, 8193, 0).is_err());
     }
     #[test]
     fn model_hash_is_checked_before_native_parser() {

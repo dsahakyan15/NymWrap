@@ -1,4 +1,5 @@
 import {test} from 'node:test';
+import {embeddingModel} from '../linkcheck-embeddings.mjs';
 import assert from 'node:assert/strict';
 import {shardRange} from '../linkcheck-shards.mjs';
 import {mergeShardReports,main} from '../linkcheck-merge.mjs';
@@ -19,6 +20,8 @@ function fixture(){
       calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0,linkage_ranks:Array.from({length:2},()=>({candidates:65,rank_min:65,rank_max:65,user_score:0,best_decoy_score:1000000,background_score:1000000,risky:false}))},local_reasons:[null,null],elapsed_ms:12});
   }
   const provenance=Object.fromEntries(['corpus_sha256','client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256','shard_script_sha256'].map(k=>[k,sha]));
+  const embedding=embeddingModel('nomic');
+  Object.assign(provenance,{embedding_sha256:embedding.sha256,embedding_recipe_id:embedding.recipe_id,embedding_dimension:embedding.dimension,embedding_catalog_sha256:sha});
   const sources=Array.from({length:3},(_,index)=>{
     const shard=shardRange(7,index,3);
     return {sha256:sha,report:{version:3,status:'complete_shard',partition:'development',case_count:7,shard,provenance:structuredClone(provenance),

@@ -75,15 +75,23 @@ impl Drop for Command {
 #[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
 enum Reply {
     Ready {},
-    Text { content: String },
-    Vectors { values: Vec<Vec<f64>> },
-    Failed { kind: FailureKind },
+    Text {
+        content: String,
+    },
+    Vectors {
+        values: Vec<Vec<f64>>,
+        model_sha256: String,
+        recipe_id: String,
+    },
+    Failed {
+        kind: FailureKind,
+    },
 }
 impl Drop for Reply {
     fn drop(&mut self) {
         match self {
             Self::Text { content } => content.zeroize(),
-            Self::Vectors { values } => values.zeroize(),
+            Self::Vectors { values, .. } => values.zeroize(),
             _ => {}
         }
     }
@@ -178,6 +186,9 @@ impl Inference for Isolated {
     fn embedding_sha256(&self) -> Option<&str> {
         Some(&self.hashes[1])
     }
+    fn embedding_recipe(&self) -> Option<&str> {
+        nw_llm::embedding::for_model(&self.hashes[1]).map(|recipe| recipe.id)
+    }
     fn complete(&mut self, messages: &[Message], max_tokens: u32) -> Result<String, Error> {
         self.complete_structured(messages, max_tokens, None)
     }
@@ -213,7 +224,14 @@ impl Inference for Isolated {
         match &mut self.exchange(Command::Embed {
             texts: texts.to_vec(),
         })? {
-            Reply::Vectors { values } if valid_vectors(values, texts.len()) => {
+            Reply::Vectors {
+                values,
+                model_sha256,
+                recipe_id,
+            } if valid_vectors(values, texts.len())
+                && *model_sha256 == self.hashes[1]
+                && self.embedding_recipe() == Some(recipe_id.as_str()) =>
+            {
                 Ok(std::mem::take(values))
             }
             Reply::Failed { kind } => Err((*kind).into()),
@@ -258,7 +276,11 @@ pub fn worker(
             ),
         Command::Embed { texts } => cpu.embed(texts).map_or_else(
             |error| Reply::Failed { kind: error.into() },
-            |values| Reply::Vectors { values },
+            |values| Reply::Vectors {
+                values,
+                model_sha256: cpu.embedding_sha256().unwrap_or("").into(),
+                recipe_id: cpu.embedding_recipe().unwrap_or("").into(),
+            },
         ),
     };
     let bytes = encode(reply, OUTPUT_LIMIT)?;

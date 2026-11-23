@@ -57,6 +57,10 @@ impl LocalModel for Model {
             return Err(ModelError::Unavailable);
         }
         Ok(EmbeddingBatch {
+            recipe_id: nw_llm::embedding::for_model(MODEL_SHA256)
+                .unwrap()
+                .id
+                .into(),
             model_sha256: if matches!(self.mode, Mode::WrongModel) {
                 "a".repeat(64)
             } else {

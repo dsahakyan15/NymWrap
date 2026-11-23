@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use zeroize::Zeroizing;
 
-pub const MODEL_SHA256: &str = "d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac";
+pub const MODEL_SHA256: &str = nw_llm::embedding::NOMIC_SHA256;
 pub const DIMENSION: usize = 768;
 pub const MIN_DECOYS: usize = 50;
 const MAX_DOSSIER_BYTES: usize = 1024 * 1024;
@@ -41,7 +41,7 @@ impl Settings {
         }
     }
     pub fn valid(&self, candidates: usize) -> bool {
-        self.model_sha256 == MODEL_SHA256
+        nw_llm::embedding::for_model(&self.model_sha256).is_some()
             && self.top_k > 0
             && self.top_k < candidates
             && self.max_margin.is_finite()
@@ -82,8 +82,13 @@ pub struct References {
     documents: Zeroizing<Vec<String>>,
     /// Exclusive segment end for each person, not an expanded candidate pool.
     candidate_ends: Vec<usize>,
-    vectors: Mutex<Option<Zeroizing<Vec<Vec<f64>>>>>,
+    vectors: Mutex<Option<Cached>>,
     observer: Option<std::sync::Arc<dyn Fn(Rank) + Send + Sync>>,
+}
+struct Cached {
+    model_sha256: String,
+    recipe_id: &'static str,
+    vectors: Zeroizing<Vec<Vec<f64>>>,
 }
 impl References {
     pub fn new(user: SecretString, decoys: Vec<String>) -> Result<Self, Unavailable> {
@@ -156,6 +161,8 @@ impl References {
         if !settings.valid(self.candidate_ends.len()) {
             return Err(Unavailable::Policy);
         }
+        let recipe =
+            nw_llm::embedding::for_model(&settings.model_sha256).ok_or(Unavailable::Policy)?;
         if history.is_empty()
             || history.len() > 64
             || history.iter().map(|m| m.content.len()).sum::<usize>() > MAX_TEXT_BYTES
@@ -188,6 +195,11 @@ impl References {
             return Err(Unavailable::Limit);
         }
         let mut cached = self.vectors.lock().await;
+        if cached.as_ref().is_some_and(|cache| {
+            cache.model_sha256 != settings.model_sha256 || cache.recipe_id != recipe.id
+        }) {
+            return Err(Unavailable::Identity);
+        }
         if cached.is_none() {
             let mut vectors = Zeroizing::new(vec![]);
             let mut offset = 0;
@@ -204,15 +216,19 @@ impl References {
                 if end == offset {
                     return Err(Unavailable::Limit);
                 }
-                let mut batch = identified(model, &self.documents[offset..end]).await?;
+                let mut batch = identified(model, &self.documents[offset..end], settings).await?;
                 vectors.append(&mut batch);
                 offset = end;
             }
-            *cached = Some(vectors);
+            *cached = Some(Cached {
+                model_sha256: settings.model_sha256.clone(),
+                recipe_id: recipe.id,
+                vectors,
+            });
         }
         let query_texts = Zeroizing::new(vec![query.to_string()]);
-        let queries = identified(model, &query_texts).await?;
-        let vectors = cached.as_ref().ok_or(Unavailable::Embedding)?;
+        let queries = identified(model, &query_texts, settings).await?;
+        let vectors = &cached.as_ref().ok_or(Unavailable::Embedding)?.vectors;
         let mut scores = Zeroizing::new(Vec::with_capacity(self.candidate_ends.len()));
         let mut start = 0;
         for end in &self.candidate_ends {
@@ -221,7 +237,7 @@ impl References {
             let score = vectors[start..*end]
                 .iter()
                 .try_fold(i32::MIN, |best, vector| {
-                    similarity(&queries[0], vector).map(|value| best.max(value))
+                    similarity(&queries[0], vector, recipe.dimension).map(|value| best.max(value))
                 })?;
             scores.push(score);
             start = *end;
@@ -238,19 +254,21 @@ impl References {
 async fn identified(
     model: &impl LocalModel,
     texts: &[String],
+    settings: &Settings,
 ) -> Result<Zeroizing<Vec<Vec<f64>>>, Unavailable> {
+    let recipe = nw_llm::embedding::for_model(&settings.model_sha256).ok_or(Unavailable::Policy)?;
     let mut batch = model
         .embed_identified(texts)
         .await
         .map_err(|_| Unavailable::Model)?;
-    if batch.model_sha256 != MODEL_SHA256 {
+    if batch.model_sha256 != settings.model_sha256 || batch.recipe_id != recipe.id {
         return Err(Unavailable::Identity);
     }
     if batch.vectors.len() != texts.len()
         || batch
             .vectors
             .iter()
-            .any(|v| v.len() != DIMENSION || nw_drift::math::cos(v, v).is_err())
+            .any(|v| v.len() != recipe.dimension || nw_drift::math::cos(v, v).is_err())
     {
         return Err(Unavailable::Embedding);
     }
@@ -265,16 +283,19 @@ pub fn rank(
     if dossiers.len() < MIN_DECOYS + 1 || dossiers.len() > 257 || !settings.valid(dossiers.len()) {
         return Err(Unavailable::Policy);
     }
+    let dimension = nw_llm::embedding::for_model(&settings.model_sha256)
+        .ok_or(Unavailable::Policy)?
+        .dimension;
     let scores = Zeroizing::new(
         dossiers
             .iter()
-            .map(|d| similarity(query, d))
+            .map(|d| similarity(query, d, dimension))
             .collect::<Result<Vec<_>, _>>()?,
     );
     rank_scores(&scores, settings)
 }
-fn similarity(query: &[f64], dossier: &[f64]) -> Result<i32, Unavailable> {
-    if query.len() != DIMENSION || dossier.len() != DIMENSION {
+fn similarity(query: &[f64], dossier: &[f64], dimension: usize) -> Result<i32, Unavailable> {
+    if query.len() != dimension || dossier.len() != dimension {
         return Err(Unavailable::Embedding);
     }
     nw_drift::math::cos(query, dossier)

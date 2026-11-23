@@ -14,6 +14,12 @@ on:
         type: choice
         default: qwen2.5-7b-q4_k_m
         options: [smoke, qwen2.5-7b-q4_k_m]
+      embedding:
+        description: 'Pinned embedding candidate; every choice needs its own calibration'
+        required: true
+        type: choice
+        default: nomic
+        options: [nomic, qwen3-0.6b-q8_0]
 permissions:
   contents: read
 jobs:
@@ -30,8 +36,8 @@ jobs:
       - run: cargo build -p nw-core --example privacy_linkcheck --release --locked
       - run: cargo build -p nw-llmd --features inference --release --locked
       - shell: pwsh
-        run: ./scripts/fetch-test-models.ps1
-      - run: cargo test -p nw-llmd --features inference --release --lib actual_cpu_model_over_private_ipc --locked -- --ignored
+        run: ./scripts/fetch-test-models.ps1 -IncludeMultilingualEmbedding
+      - run: cargo test -p nw-llmd --features inference --release --lib actual_ --locked -- --ignored
       - run: sha256sum nw-llmd examples/privacy_linkcheck > checksums.sha256
         working-directory: target/release
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -55,6 +61,7 @@ jobs:
       NYMWRAP_EVAL_CASES: ${{ inputs.cases }}
       NYMWRAP_EVAL_DEFENDER: ${{ inputs.defender }}
       NYMWRAP_EVAL_SHARD: ${{ matrix.shard }}
+      NYMWRAP_EVAL_EMBEDDING: ${{ inputs.embedding }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -69,14 +76,14 @@ jobs:
           chmod 755 nw-llmd examples/privacy_linkcheck
         working-directory: target/release
       - shell: pwsh
-        run: ./scripts/fetch-test-models.ps1
+        run: ./scripts/fetch-test-models.ps1 -IncludeMultilingualEmbedding
       - run: node scripts/fetch-privacy-model.mjs qwen2.5-7b-q4_k_m
       - run: node scripts/merge-privacy-model.mjs qwen2.5-7b-q4_k_m --discard-verified-shards
       - run: |
           if [ "$NYMWRAP_EVAL_CASES" = 384 ]; then
-            node scripts/linkcheck-eval.mjs --shard "$NYMWRAP_EVAL_SHARD/8" --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
+            node scripts/linkcheck-eval.mjs --shard "$NYMWRAP_EVAL_SHARD/8" --model "$NYMWRAP_EVAL_DEFENDER" --embedding "$NYMWRAP_EVAL_EMBEDDING" --fail-invalid-attacker
           else
-            node scripts/linkcheck-eval.mjs --limit 1 --model "$NYMWRAP_EVAL_DEFENDER" --fail-invalid-attacker
+            node scripts/linkcheck-eval.mjs --limit 1 --model "$NYMWRAP_EVAL_DEFENDER" --embedding "$NYMWRAP_EVAL_EMBEDDING" --fail-invalid-attacker
           fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

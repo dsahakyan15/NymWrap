@@ -1,7 +1,10 @@
 use super::*;
 use nw_llm::LocalModel;
-struct Model(Option<String>);
+struct Model(Option<String>, bool);
 impl Inference for Model {
+    fn embedding_recipe(&self) -> Option<&str> {
+        self.1.then_some("synthetic_identity_test_v1")
+    }
     fn embedding_sha256(&self) -> Option<&str> {
         self.0.as_deref()
     }
@@ -22,9 +25,14 @@ impl Inference for Model {
 #[tokio::test]
 async fn embedding_identity_comes_from_the_backend_and_legacy_responses_cannot_authorize_linkcheck()
 {
-    for (index, hash) in [None, Some("a".repeat(64)), Some("malformed".into())]
-        .into_iter()
-        .enumerate()
+    for (index, (hash, recipe)) in [
+        (None, true),
+        (Some("a".repeat(64)), true),
+        (Some("malformed".into()), true),
+        (Some(nw_llm::embedding::NOMIC_SHA256.into()), false),
+    ]
+    .into_iter()
+    .enumerate()
     {
         let fixture = tempfile::tempdir().unwrap();
         #[cfg(windows)]
@@ -39,7 +47,7 @@ async fn embedding_identity_comes_from_the_backend_and_legacy_responses_cannot_a
         let endpoint = nw_ipc::Endpoint::new(address.clone(), nw_proto::Lane::Shadow).unwrap();
         let listener = nw_ipc::Listener::bind(endpoint).unwrap();
         let mut servers = tokio::task::JoinSet::new();
-        servers.spawn(axum::serve(listener, router(Model(hash.clone()))).into_future());
+        servers.spawn(axum::serve(listener, router(Model(hash.clone(), recipe))).into_future());
         let model =
             nw_llm::UnixModel::new(address.into(), "default".into(), "nomic-embed-text".into())
                 .unwrap();
@@ -67,6 +75,9 @@ async fn a_same_user_endpoint_with_the_wrong_process_image_receives_no_dossier_b
     };
     struct Observed(Arc<AtomicUsize>);
     impl Inference for Observed {
+        fn embedding_recipe(&self) -> Option<&str> {
+            Some("synthetic_identity_test_v1")
+        }
         fn embedding_sha256(&self) -> Option<&str> {
             Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         }
@@ -75,7 +86,7 @@ async fn a_same_user_endpoint_with_the_wrong_process_image_receives_no_dossier_b
         }
         fn embed(&mut self, texts: &[String]) -> Result<Vec<Vec<f64>>, Error> {
             self.0.fetch_add(1, Ordering::SeqCst);
-            Model(None).embed(texts)
+            Model(None, false).embed(texts)
         }
     }
     let fixture = tempfile::tempdir().unwrap();

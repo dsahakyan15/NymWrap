@@ -3,6 +3,13 @@
 pub mod inference;
 #[cfg(all(windows, feature = "inference"))]
 pub mod isolation;
+#[cfg(all(test, feature = "inference"))]
+#[path = "../../../tests/leak/src/model_multilingual.rs"]
+mod multilingual_tests;
+// llama.cpp owns a process-wide backend. Native test fixtures must not race
+// separate initializations; production runs one Cpu per worker process.
+#[cfg(all(test, feature = "inference"))]
+static CPU_TEST_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 use axum::{
     Json, Router,
     extract::{DefaultBodyLimit, State},
@@ -33,6 +40,9 @@ pub enum Error {
 }
 pub trait Inference: Send + 'static {
     fn embedding_sha256(&self) -> Option<&str> {
+        None
+    }
+    fn embedding_recipe(&self) -> Option<&str> {
         None
     }
     fn complete(&mut self, messages: &[Message], max_tokens: u32) -> Result<String, Error>;
@@ -193,7 +203,11 @@ async fn embed<B: Inference>(
     let Ok(Json(request)) = payload else {
         return failure(StatusCode::BAD_REQUEST, "invalid_model_request");
     };
-    if request.model != "nomic-embed-text" || !valid_texts(&request.input) {
+    if !matches!(
+        request.model.as_str(),
+        "nomic-embed-text" | "local-embedding"
+    ) || !valid_texts(&request.input)
+    {
         return failure(StatusCode::BAD_REQUEST, "invalid_model_request");
     }
     let count = request.input.len();
@@ -206,17 +220,21 @@ async fn embed<B: Inference>(
         let input = zeroize::Zeroizing::new(request.input);
         let mut backend = worker.backend.blocking_lock();
         let vectors = backend.embed(&input)?;
-        Ok::<_, Error>((vectors, backend.embedding_sha256().map(str::to_owned)))
+        Ok::<_, Error>((
+            vectors,
+            backend.embedding_sha256().map(str::to_owned),
+            backend.embedding_recipe().map(str::to_owned),
+        ))
     })
     .await;
     match result {
-        Ok(Ok((vectors, identity))) if valid_vectors(&vectors, count) => {
+        Ok(Ok((vectors, identity, recipe))) if valid_vectors(&vectors, count) => {
             let data: Vec<_> = vectors
                 .into_iter()
                 .enumerate()
                 .map(|(index, embedding)| serde_json::json!({"index":index,"embedding":embedding}))
                 .collect();
-            Json(serde_json::json!({"data":data,"nw_model_sha256":identity})).into_response()
+            Json(serde_json::json!({"data":data,"nw_model_sha256":identity,"nw_embedding_recipe":recipe})).into_response()
         }
         Ok(Err(error)) => inference_failure(error),
         _ => failure(StatusCode::SERVICE_UNAVAILABLE, "model_inference_failed"),
@@ -359,6 +377,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the verified GGUF files from scripts/fetch-test-models.ps1"]
     async fn actual_cpu_model_over_private_ipc() {
+        let _serial = crate::CPU_TEST_LOCK.lock().await;
         use nw_llm::LocalModel;
         use secrecy::ExposeSecret;
         let dir = tempfile::tempdir().unwrap();

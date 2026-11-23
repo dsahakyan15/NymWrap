@@ -1,5 +1,6 @@
 //! Local model connection has no TCP connector, resolver, URL input or redirects.
 //! Windows uses authenticated named pipes; Unix uses private filesystem sockets.
+pub mod embedding;
 use nw_proto::MAX_TEXT_BYTES;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
@@ -53,6 +54,7 @@ pub enum OutputSchema {
 #[derive(zeroize::Zeroize, zeroize::ZeroizeOnDrop)]
 pub struct EmbeddingBatch {
     pub model_sha256: String,
+    pub recipe_id: String,
     pub vectors: Vec<Vec<f64>>,
 }
 pub trait LocalModel: Send + Sync {
@@ -335,10 +337,11 @@ impl LocalModel for UnixModel {
         self.embed_bounded(texts).await
     }
     async fn embed_identified(&self, texts: &[String]) -> Result<EmbeddingBatch, ModelError> {
-        let (vectors, identity) = self.embed_response(texts).await?;
+        let (vectors, identity, recipe) = self.embed_response(texts).await?;
         let mut vectors = zeroize::Zeroizing::new(vectors);
         Ok(EmbeddingBatch {
             model_sha256: identity.ok_or(ModelError::Invalid)?,
+            recipe_id: recipe.ok_or(ModelError::Invalid)?,
             vectors: std::mem::take(&mut *vectors),
         })
     }
@@ -375,12 +378,14 @@ impl UnixModel {
         Ok(SecretString::from(text.to_owned()))
     }
     async fn embed_bounded(&self, texts: &[String]) -> Result<Vec<Vec<f64>>, ModelError> {
-        self.embed_response(texts).await.map(|(vectors, _)| vectors)
+        self.embed_response(texts)
+            .await
+            .map(|(vectors, _, _)| vectors)
     }
     async fn embed_response(
         &self,
         texts: &[String],
-    ) -> Result<(Vec<Vec<f64>>, Option<String>), ModelError> {
+    ) -> Result<(Vec<Vec<f64>>, Option<String>, Option<String>), ModelError> {
         if texts.is_empty()
             || texts.len() > 64
             || texts.iter().map(String::len).sum::<usize>() > MAX_TEXT_BYTES
@@ -437,6 +442,19 @@ impl UnixModel {
             }
             _ => return Err(ModelError::Invalid),
         };
-        Ok((vectors, identity))
+        let recipe = match value.get("nw_embedding_recipe") {
+            None | Some(serde_json::Value::Null) => None,
+            Some(serde_json::Value::String(id))
+                if !id.is_empty()
+                    && id.len() <= 64
+                    && id.bytes().all(|byte| {
+                        byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_'
+                    }) =>
+            {
+                Some(id.clone())
+            }
+            _ => return Err(ModelError::Invalid),
+        };
+        Ok((vectors, identity, recipe))
     }
 }

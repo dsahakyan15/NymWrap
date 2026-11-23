@@ -6,6 +6,8 @@ use std::{
     process::{Child, Command, Stdio},
     time::Duration,
 };
+#[path = "../../../tests/leak/src/multilingual_assertions.rs"]
+mod multilingual_assertions;
 struct Managed(Child);
 impl Drop for Managed {
     fn drop(&mut self) {
@@ -34,11 +36,13 @@ fn worker_mode_rejects_execution_outside_appcontainer() {
     assert!(!result.status.success());
     assert!(result.stdout.is_empty());
 }
-#[tokio::test]
-#[ignore = "requires pinned GGUFs and creates offline AppContainers for actual native inference"]
-async fn actual_appcontainer_model_over_private_ipc() {
+async fn start_model(
+    embedding: &str,
+    hash: &str,
+    label: &str,
+) -> (Managed, nw_llm::UnixModel, nw_ipc::Endpoint) {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/test-models");
-    let address = format!("nymwrap-isolated-model-test-{}", std::process::id());
+    let address = format!("nymwrap-isolated-model-{label}-test-{}", std::process::id());
     let mut child = Managed(
         Command::new(env!("CARGO_BIN_EXE_nw-llmd"))
             .creation_flags(0x08000000)
@@ -49,11 +53,8 @@ async fn actual_appcontainer_model_over_private_ipc() {
                 "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
                 "--embed-model",
             ])
-            .arg(root.join("nomic-embed-text-v1.5.Q4_K_M.gguf"))
-            .args([
-                "--embed-sha256",
-                "d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac",
-            ])
+            .arg(root.join(embedding))
+            .args(["--embed-sha256", hash])
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
@@ -67,7 +68,8 @@ async fn actual_appcontainer_model_over_private_ipc() {
                 child.0.try_wait().unwrap().is_none(),
                 "model broker exited before ready"
             );
-            if endpoint.connect().await.is_ok() {
+            if let Ok(stream) = endpoint.connect().await {
+                assert_eq!(nw_ipc::peer_process(&stream).unwrap(), child.0.id());
                 break;
             }
             tokio::time::sleep(Duration::from_millis(100)).await;
@@ -75,8 +77,25 @@ async fn actual_appcontainer_model_over_private_ipc() {
     })
     .await
     .unwrap();
-    let model = nw_llm::UnixModel::new(address.into(), "default".into(), "nomic-embed-text".into())
+    let model = nw_llm::UnixModel::new(address.into(), "default".into(), "local-embedding".into())
+        .unwrap()
+        .expect_peer_image(
+            std::path::Path::new(env!("CARGO_BIN_EXE_nw-llmd"))
+                .canonicalize()
+                .unwrap(),
+        )
         .unwrap();
+    (child, model, endpoint)
+}
+#[tokio::test]
+#[ignore = "requires pinned GGUFs and creates offline AppContainers for actual native inference"]
+async fn actual_appcontainer_model_over_private_ipc() {
+    let (child, model, endpoint) = start_model(
+        "nomic-embed-text-v1.5.Q4_K_M.gguf",
+        nw_llm::embedding::NOMIC_SHA256,
+        "nomic",
+    )
+    .await;
     let answer = model
         .complete_with_limit(
             &[Message {
@@ -151,6 +170,9 @@ async fn actual_appcontainer_model_over_private_ipc() {
     assert_eq!(vectors[0].len(), 768);
     let dot = |a: &[f64], b: &[f64]| a.iter().zip(b).map(|(x, y)| x * y).sum::<f64>();
     assert!(dot(&vectors[0], &vectors[1]) > dot(&vectors[0], &vectors[2]));
+    stop_model(child, &endpoint).await;
+}
+async fn stop_model(mut child: Managed, endpoint: &nw_ipc::Endpoint) {
     drop(child.0.stdin.take());
     tokio::time::timeout(Duration::from_secs(10), async {
         while child.0.try_wait().unwrap().is_none() {
@@ -160,4 +182,16 @@ async fn actual_appcontainer_model_over_private_ipc() {
     .await
     .unwrap();
     assert!(endpoint.connect().await.is_err());
+}
+#[tokio::test]
+#[ignore = "requires pinned multilingual GGUF and creates offline AppContainers"]
+async fn actual_multilingual_appcontainer_embeddings() {
+    let (child, model, endpoint) = start_model(
+        "Qwen3-Embedding-0.6B-Q8_0.gguf",
+        nw_llm::embedding::QWEN3_SHA256,
+        "multilingual",
+    )
+    .await;
+    multilingual_assertions::verify(&model).await;
+    stop_model(child, &endpoint).await;
 }

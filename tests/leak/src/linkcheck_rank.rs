@@ -113,12 +113,14 @@ fn references_require_fifty_distinct_decoys_and_bounded_user_data() {
 struct Model {
     calls: std::sync::Mutex<Zeroizing<Vec<Vec<String>>>>,
     identity: String,
+    recipe: Option<&'static str>,
 }
 impl Model {
     fn new() -> Self {
         Self {
             calls: Default::default(),
             identity: MODEL_SHA256.into(),
+            recipe: None,
         }
     }
 }
@@ -133,16 +135,78 @@ impl LocalModel for Model {
         self.calls.lock().unwrap().push(texts.to_vec());
         Ok(EmbeddingBatch {
             model_sha256: self.identity.clone(),
+            recipe_id: self
+                .recipe
+                .unwrap_or_else(|| {
+                    nw_llm::embedding::for_model(&self.identity)
+                        .map_or("synthetic_test_v1", |recipe| recipe.id)
+                })
+                .into(),
             vectors: texts
                 .iter()
                 .map(|t| {
-                    basis(usize::from(
+                    let dimension = nw_llm::embedding::for_model(&self.identity)
+                        .map_or(DIMENSION, |recipe| recipe.dimension);
+                    let mut vector = vec![0.0; dimension];
+                    vector[usize::from(
                         !(t.contains("old rare craft") && t.contains("new rare schedule")),
-                    ))
+                    )] = 1.0;
+                    vector
                 })
                 .collect(),
         })
     }
+}
+#[tokio::test]
+async fn pinned_recipe_dimension_and_cached_model_cannot_be_interchanged() {
+    let references =
+        || References::with_synthetic_decoys("old rare craft; new rare schedule".into()).unwrap();
+    let history = [Message {
+        role: Role::User,
+        content: "A public topic".into(),
+    }];
+    let cache = references();
+    assert!(
+        !cache
+            .inspect(&Model::new(), &history, &settings())
+            .await
+            .unwrap()
+            .risky
+    );
+    let mut wrong_recipe = Model::new();
+    wrong_recipe.recipe = Some("qwen3_0_6b_last_plain_v1");
+    assert_eq!(
+        cache
+            .inspect(&wrong_recipe, &history, &settings())
+            .await
+            .unwrap_err(),
+        Unavailable::Identity
+    );
+    assert_eq!(
+        references()
+            .inspect(&wrong_recipe, &history, &settings())
+            .await
+            .unwrap_err(),
+        Unavailable::Identity
+    );
+    let mut qwen = Model::new();
+    qwen.identity = nw_llm::embedding::QWEN3_SHA256.into();
+    let policy = Settings {
+        model_sha256: qwen.identity.clone(),
+        ..settings()
+    };
+    assert_eq!(
+        cache.inspect(&qwen, &history, &policy).await.unwrap_err(),
+        Unavailable::Identity
+    );
+    assert!(
+        !references()
+            .inspect(&qwen, &history, &policy)
+            .await
+            .unwrap()
+            .risky
+    );
+    assert!(rank(&basis(0), &vec![basis(0); 65], &policy).is_err());
 }
 #[tokio::test]
 async fn accumulated_history_is_checked_and_cached_references_do_not_bypass_model_identity() {

@@ -6,6 +6,9 @@ use std::{process::Stdio, time::Duration};
 
 struct Count(usize);
 impl Inference for Count {
+    fn embedding_recipe(&self) -> Option<&str> {
+        Some("synthetic_peer_test_v1")
+    }
     fn embedding_sha256(&self) -> Option<&str> {
         Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     }

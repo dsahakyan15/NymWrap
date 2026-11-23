@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {summarizeLinkcheckReport,checkDevelopmentReport} from '../linkcheck-report.mjs';
+import {embeddingModel} from '../linkcheck-embeddings.mjs';
 const sha='a'.repeat(64);
 function fixture(){
   const corpus={version:3,partition:'development',synthetic_only:true,candidates:64,utility_scope:'integer arithmetic, not general answer quality',cases:[{id:'dev_0000',language:'hy',group:'linkage_multiturn',turns:[{},{}]}]};
@@ -9,6 +10,8 @@ function fixture(){
     calls:{ner:2,canonicalize:2,generalize:1,embeddings:4,answers:0,errors:0,linkage_ranks:Array.from({length:2},()=>({candidates:65,rank_min:65,rank_max:65,user_score:0,best_decoy_score:1000000,background_score:1000000,risky:false}))},local_reasons:[null,null],elapsed_ms:12};
   const report={version:3,status:'complete',partition:'development',case_count:1,scope:{external_requests:false,local_answers_stubbed:false,provider_answers:'real local model, simulated provider'},
     provenance:Object.fromEntries(['corpus_sha256','client_sha256','defender_worker_sha256','attacker_worker_sha256','model_sha256','attacker_model_sha256','embedding_sha256','config_sha256','evaluator_script_sha256','report_script_sha256','statistics_sha256','shard_script_sha256'].map(k=>[k,sha])),observations:[row]};
+  const embedding=embeddingModel('nomic');
+  Object.assign(report.provenance,{embedding_sha256:embedding.sha256,embedding_recipe_id:embedding.recipe_id,embedding_dimension:embedding.dimension,embedding_catalog_sha256:sha});
   return {corpus,report,row};
 }
 test('real-answer measurement reports both attackers and never labels development held-out acceptance',()=>{
@@ -30,6 +33,7 @@ test('partial progress, missing attacker pairs, stubbed answers and incompatible
     r=>r.scope.external_requests=true,r=>delete r.provenance.model_sha256,r=>r.observations[0].id='other',
     r=>r.observations[0].local_reasons=[],r=>r.observations[0].calls.errors='<script>',r=>r.observations[0].literal_attack=undefined,
     r=>r.observations[0].remote_turns=3,r=>r.observations[0].calls.linkage_ranks=[],
+    r=>r.sample='dev_0000',r=>delete r.provenance.embedding_recipe_id,r=>r.provenance.embedding_dimension=1024,
   ]){
     const {report,corpus}=fixture();change(report);assert.throws(()=>summarizeLinkcheckReport(report,corpus,sha));
   }

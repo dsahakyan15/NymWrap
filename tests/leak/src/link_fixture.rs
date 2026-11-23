@@ -8,6 +8,10 @@ pub fn references() -> nw_core::linkcheck::References {
 pub fn identified(texts: &[String]) -> nw_llm::EmbeddingBatch {
     nw_llm::EmbeddingBatch {
         model_sha256: nw_core::linkcheck::MODEL_SHA256.into(),
+        recipe_id: nw_llm::embedding::for_model(nw_core::linkcheck::MODEL_SHA256)
+            .unwrap()
+            .id
+            .into(),
         vectors: texts
             .iter()
             .map(|text| {

@@ -38,7 +38,7 @@ impl Launch {
             if !Path::new(&plan.model_path).is_absolute()
                 || !Path::new(&plan.embed_path).is_absolute()
                 || !super::hex_hash(&plan.model_sha256)
-                || plan.embed_sha256 != nw_core::linkcheck::MODEL_SHA256
+                || nw_llm::embedding::for_model(&plan.embed_sha256).is_none()
             {
                 return Err("invalid_worker_plan".into());
             }

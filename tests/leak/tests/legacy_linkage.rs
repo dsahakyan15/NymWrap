@@ -28,6 +28,10 @@ impl LocalModel for ConjunctionModel {
     async fn embed_identified(&self, texts: &[String]) -> Result<EmbeddingBatch, ModelError> {
         Ok(EmbeddingBatch {
             model_sha256: linkcheck::MODEL_SHA256.into(),
+            recipe_id: nw_llm::embedding::for_model(linkcheck::MODEL_SHA256)
+                .unwrap()
+                .id
+                .into(),
             vectors: texts
                 .iter()
                 .map(|text| {

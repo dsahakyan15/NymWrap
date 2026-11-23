@@ -9,11 +9,12 @@ import {StringDecoder} from 'node:string_decoder';
 import {artifactHash,pinnedBinary} from './evaluation-artifacts.mjs';
 import {summarizeLinkcheckReport} from './linkcheck-report.mjs';
 import {shardRange} from './linkcheck-shards.mjs';
+import {embeddingModel} from './linkcheck-embeddings.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),execute=promisify(execFile);
 const digest=value=>createHash('sha256').update(value).digest('hex');
-function options(args){
-  const result={model:'smoke',attacker:'qwen2.5-7b-q4_k_m',limit:Infinity,resume:false,failInvalidAttacker:false,shard:null};
+export function options(args){
+  const result={model:'smoke',attacker:'qwen2.5-7b-q4_k_m',embedding:'nomic',sample:null,limit:Infinity,resume:false,failInvalidAttacker:false,shard:null};
   const seen=new Set();
   for(let i=0;i<args.length;i++){
     const key=args[i];if(seen.has(key))throw Error('duplicate_linkcheck_option');seen.add(key);
@@ -21,6 +22,8 @@ function options(args){
     else if(key==='--fail-invalid-attacker')result.failInvalidAttacker=true;
     else if(key==='--model')result.model=args[++i];
     else if(key==='--attacker')result.attacker=args[++i];
+    else if(key==='--embedding')result.embedding=args[++i];
+    else if(key==='--sample')result.sample=args[++i];
     else if(key==='--limit')result.limit=Number(args[++i]);
     else if(key==='--shard'){
       const match=/^(0|[1-9][0-9]?)\/([1-9][0-9]?)$/.exec(args[++i]??'');
@@ -31,7 +34,17 @@ function options(args){
   }
   if(!['smoke','qwen2.5-7b-q4_k_m'].includes(result.model)||!['smoke','qwen2.5-7b-q4_k_m'].includes(result.attacker)||
     result.limit!==Infinity&&(!Number.isSafeInteger(result.limit)||result.limit<1||result.limit>1024))throw Error('invalid_linkcheck_options');
+  embeddingModel(result.embedding);
+  if(result.sample!==null&&(!/^dev_[0-9]{4}$/.test(result.sample??'')||result.shard||result.limit!==Infinity))throw Error('invalid_linkcheck_diagnostic_sample');
   return result;
+}
+export function evaluationRange(cases,opts){
+  if(opts.sample!==null){
+    const index=cases.findIndex(item=>item.id===opts.sample);
+    if(index<0)throw Error('unknown_linkcheck_diagnostic_sample');
+    return {start:index,end:index+1};
+  }
+  return opts.shard?shardRange(cases.length,opts.shard.index,opts.shard.count):{start:0,end:cases.length};
 }
 async function modelIdentity(id){
   if(id==='smoke')return {file:'qwen2.5-0.5b-instruct-q4_k_m.gguf',sha256:'74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db'};
@@ -75,26 +88,31 @@ export async function main(args=process.argv.slice(2)){
   if(corpusHash!==manifest.sha256||await artifactHash(join(root,'scripts/generate-linkcheck-corpus.mjs'))!==manifest.generator_sha256)throw Error('invalid_development_corpus_manifest');
   const corpus=JSON.parse(await readFile(corpusPath,'utf8'));
   if(corpus.partition!=='development'||corpus.version!==3||corpus.cases.length!==384)throw Error('invalid_development_corpus');
-  const range=opts.shard?shardRange(corpus.cases.length,opts.shard.index,opts.shard.count):{start:0,end:corpus.cases.length};
+  const range=evaluationRange(corpus.cases,opts);
   const suffix=process.platform==='win32'?'.exe':'',worker=await pinnedBinary(reports,join(root,'target/release','nw-llmd'+suffix),'nw-llmd');
   const client=await pinnedBinary(reports,join(root,'target/release/examples','privacy_linkcheck'+suffix),'privacy_linkcheck');
   const model=await modelIdentity(opts.model),attackerModel=await modelIdentity(opts.attacker);
-  const embed={path:join(root,'target/test-models/nomic-embed-text-v1.5.Q4_K_M.gguf'),sha256:'d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac'};
+  const embedding=embeddingModel(opts.embedding),embed={...embedding,path:join(root,'target/test-models',embedding.file)};
   await verifyFile(join(root,'target/test-models',model.file),model.sha256);
   if(attackerModel.sha256!==model.sha256)await verifyFile(join(root,'target/test-models',attackerModel.file),attackerModel.sha256);
   await verifyFile(embed.path,embed.sha256);
   const configResult=await execute(client,['--evaluation-config'],{cwd:root,windowsHide:true,maxBuffer:1024*1024});
-  const config=JSON.parse(configResult.stdout),policy=JSON.stringify(config)+'\n';
+  const config=JSON.parse(configResult.stdout);
+  config.llm.embed_model='local-embedding';config.llm.embed_sha256=embed.sha256;
+  config.shield.linkcheck.model_sha256=embed.sha256;
+  const policy=JSON.stringify(config)+'\n';
   const workerHash=await artifactHash(worker);
   const provenance={client_sha256:await artifactHash(client),defender_worker_sha256:workerHash,attacker_worker_sha256:workerHash,
     corpus_sha256:corpusHash,model_sha256:model.sha256,attacker_model_sha256:attackerModel.sha256,embedding_sha256:embed.sha256,
     config_sha256:digest(policy),evaluator_script_sha256:await artifactHash(fileURLToPath(import.meta.url)),
     report_script_sha256:await artifactHash(join(root,'scripts/linkcheck-report.mjs')),statistics_sha256:await artifactHash(join(root,'scripts/linkcheck-statistics.mjs')),
     shard_script_sha256:await artifactHash(join(root,'scripts/linkcheck-shards.mjs')),
+    embedding_catalog_sha256:await artifactHash(join(root,'scripts/linkcheck-embeddings.mjs')),
+    embedding_recipe_id:embed.recipe_id,embedding_dimension:embed.dimension,
     model:opts.model,attacker_model:opts.attacker,platform:process.platform,arch:process.arch};
-  const receiptHash=digest(JSON.stringify(provenance)),path=join(reports,'development-'+opts.model+'-vs-'+opts.attacker+'-'+receiptHash.slice(0,20)+(opts.shard?`-shard-${range.index}-of-${range.count}`:'')+'.json');
+  const receiptHash=digest(JSON.stringify(provenance)),path=join(reports,'development-'+opts.model+'-vs-'+opts.attacker+'-'+receiptHash.slice(0,20)+(opts.shard?`-shard-${range.index}-of-${range.count}`:'')+(opts.sample?`-sample-${opts.sample}`:'')+'.json');
   const report={version:3,status:'running',partition:'development',case_count:corpus.cases.length,provenance,
-    ...(opts.shard?{shard:range}:{}),evidence:{workflow_run:process.env.GITHUB_RUN_ID??null,commit:process.env.GITHUB_SHA??null},
+    ...(opts.shard?{shard:range}:{}),...(opts.sample?{sample:opts.sample}:{}),evidence:{workflow_run:process.env.GITHUB_RUN_ID??null,commit:process.env.GITHUB_SHA??null},
     scope:{profile:config.profile,policy:config,external_requests:false,local_answers_stubbed:false,provider_answers:'real local model, simulated provider',
       inventory:'synthetic Device records; no host collection',attacker:'real local fact extraction and deterministic 64-dossier ranking plus independent literal matcher; full cumulative provider view',
       utility:corpus.utility_scope,held_out:false},observations:[]};
@@ -142,7 +160,7 @@ export async function main(args=process.argv.slice(2)){
         evaluation.once('exit',code=>{clearTimeout(timer);pending+=decoder.end();if(code!==0||range.start+report.observations.length!==end||pending.trim())reject(Error('linkcheck_evaluation_failed_or_incomplete'));else accept();});
       });
     }
-    report.status=report.observations.length===range.end-range.start?(opts.shard?'complete_shard':'complete'):'partial';
+    report.status=opts.sample?'diagnostic':report.observations.length===range.end-range.start?(opts.shard?'complete_shard':'complete'):'partial';
     if(report.status==='complete')report.analysis=summarizeLinkcheckReport(report,corpus,corpusHash);
     await save();console.log(JSON.stringify({report:path,status:report.status,cases:report.observations.length,total:corpus.cases.length,held_out:false}));
   }catch(e){report.status='failed';await save();throw e;}
