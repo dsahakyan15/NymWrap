@@ -8,6 +8,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: cargo test -p nw-platform --lib default_owner_scope --locked -- --ignored
       - run: cargo test -p nw-platform --lib fresh_profile_has_user_owned_storage --locked -- --ignored
       - run: cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
   core:

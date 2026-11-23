@@ -52,17 +52,6 @@ struct Profile {
     sid: PSID,
     directory: PathBuf,
 }
-#[cfg(test)]
-mod ownership_tests {
-    use super::*;
-    #[test]
-    #[ignore = "requires actual Windows AppContainer creation; CI runs it explicitly"]
-    fn fresh_profile_has_user_owned_storage_before_worker_execution() {
-        let profile = Profile::new().unwrap();
-        super::super::private_directory(profile.directory.parent().unwrap()).unwrap();
-        super::super::private_directory(&profile.directory).unwrap();
-    }
-}
 impl Drop for Profile {
     fn drop(&mut self) {
         unsafe {
@@ -73,6 +62,7 @@ impl Drop for Profile {
 }
 impl Profile {
     fn new() -> io::Result<Self> {
+        super::windows::user_owned_objects()?;
         use std::sync::atomic::{AtomicU64, Ordering};
         static SEQUENCE: AtomicU64 = AtomicU64::new(0);
         let clock = std::time::SystemTime::now()
@@ -769,4 +759,46 @@ pub fn inherited_read_file(value: usize) -> io::Result<File> {
         return Err(failed());
     }
     Ok(duplicate_read_file(raw, false)?.file())
+}
+
+#[cfg(test)]
+mod ownership_tests {
+    use super::*;
+    #[test]
+    #[ignore = "requires actual Windows AppContainer creation; CI runs it explicitly"]
+    fn fresh_profile_has_user_owned_storage_before_worker_execution() {
+        let profile = Profile::new().unwrap();
+        super::super::private_directory(profile.directory.parent().unwrap()).unwrap();
+        super::super::private_directory(&profile.directory).unwrap();
+    }
+    #[test]
+    #[ignore = "checks Windows token ownership in an isolated child process; CI runs it explicitly"]
+    fn default_owner_scope_is_local_to_child_process() {
+        if std::env::var_os("NYMWRAP_OWNER_SCOPE_CHILD").is_some() {
+            super::super::windows::user_owned_objects().unwrap();
+            assert!(
+                super::super::windows::default_owner_id().unwrap()
+                    == super::super::current_user_id().unwrap()
+            );
+            return;
+        }
+        let before = zeroize::Zeroizing::new(super::super::windows::default_owner_id().unwrap());
+        let name = concat!(
+            module_path!(),
+            "::default_owner_scope_is_local_to_child_process"
+        );
+        use std::os::windows::process::CommandExt;
+        let result = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", name.split_once("::").unwrap().1, "--ignored"])
+            .env("NYMWRAP_OWNER_SCOPE_CHILD", "1")
+            .creation_flags(0x08000000)
+            .stdin(std::process::Stdio::null())
+            .status()
+            .unwrap();
+        assert!(result.success(), "owner_child_failed");
+        assert!(
+            *before == super::super::windows::default_owner_id().unwrap(),
+            "owner_scope_changed_parent"
+        );
+    }
 }

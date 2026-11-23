@@ -473,6 +473,76 @@ mod windows {
         let user = unsafe { &*aligned.as_ptr().cast::<TOKEN_USER>() };
         sid_string(user.User.Sid)
     }
+    fn token_info(
+        token: HANDLE,
+        kind: TOKEN_INFORMATION_CLASS,
+    ) -> io::Result<zeroize::Zeroizing<Vec<usize>>> {
+        let mut length = 0;
+        unsafe { GetTokenInformation(token, kind, ptr::null_mut(), 0, &mut length) };
+        if length < std::mem::size_of::<TOKEN_USER>() as u32 || length > 1024 * 1024 {
+            return Err(failed());
+        }
+        let mut bytes = zeroize::Zeroizing::new(vec![
+            0usize;
+            (length as usize)
+                .div_ceil(std::mem::size_of::<usize>())
+        ]);
+        if unsafe {
+            GetTokenInformation(token, kind, bytes.as_mut_ptr().cast(), length, &mut length)
+        } == 0
+        {
+            return Err(failed());
+        }
+        Ok(bytes)
+    }
+    /// Select an existing SID in this process token for ownership of new objects.
+    /// No privilege/group/capability or existing object's security is changed.
+    pub(super) fn user_owned_objects() -> io::Result<()> {
+        let mut token = ptr::null_mut();
+        if unsafe {
+            OpenProcessToken(
+                GetCurrentProcess(),
+                TOKEN_QUERY | TOKEN_ADJUST_DEFAULT,
+                &mut token,
+            )
+        } == 0
+        {
+            return Err(failed());
+        }
+        let token = Handle(token);
+        let user = token_info(token.0, TokenUser)?;
+        let user = unsafe { &*user.as_ptr().cast::<TOKEN_USER>() };
+        let owner = TOKEN_OWNER {
+            Owner: user.User.Sid,
+        };
+        if unsafe {
+            SetTokenInformation(
+                token.0,
+                TokenOwner,
+                (&owner as *const TOKEN_OWNER).cast(),
+                std::mem::size_of::<TOKEN_OWNER>() as u32,
+            )
+        } == 0
+        {
+            return Err(failed());
+        }
+        let verified = token_info(token.0, TokenOwner)?;
+        let verified = unsafe { &*verified.as_ptr().cast::<TOKEN_OWNER>() };
+        if unsafe { EqualSid(verified.Owner, user.User.Sid) } == 0 {
+            return Err(io::Error::other("private_object_owner_mismatch"));
+        }
+        Ok(())
+    }
+    #[cfg(test)]
+    pub(super) fn default_owner_id() -> io::Result<String> {
+        let mut token = ptr::null_mut();
+        if unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } == 0 {
+            return Err(failed());
+        }
+        let token = Handle(token);
+        let owner = token_info(token.0, TokenOwner)?;
+        sid_string(unsafe { (*owner.as_ptr().cast::<TOKEN_OWNER>()).Owner })
+    }
     pub fn process_image(pid: u32) -> io::Result<std::path::PathBuf> {
         let raw = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid) };
         if raw.is_null() {
