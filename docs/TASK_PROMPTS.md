@@ -70,7 +70,14 @@
 ```text
 Задача 1 — CI. Репозиторий публичный, GitHub Actions работает (ADR 0079).
 Проверь последний run ci.yml на текущем HEAD (или запусти его), дождись результата через gh и почини все
-красные задания. Известно: tor-pcap падает, потому что chutney импортирует cgitb,
+красные задания. Известно по run 45482671411 (a73683a):
+- core (ubuntu): nw-core --test rpc_process —
+  actual_core_api_bootstrap_rejects_foreign_processes_and_exits_with_parent
+  падает в tests/leak/src/core_rpc_process.rs:208 (авторизация RPC из 3d262fa
+  ещё не проходила CI);
+- desktop (Windows): extension/tests/native/firefox.test.mjs —
+  fixture_core_start_failed (вероятно, та же смена запуска core);
+- tor-pcap падает, потому что chutney импортирует cgitb,
 которого нет в Python 3.13+ (закреплённый коммит = последний upstream) — выбери
 решение (закреплённый Python 3.12 для этого шага или минимальный патч chutney с
 обоснованием в ADR). dependency-audits красные из-за cargo-vet — это задача 9,

@@ -28,6 +28,9 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 network/ubuntu (Tor убрал 16.0.1 с dist — источник переведён на archive, ADR 0048)
 и tor-pcap: закреплённый chutney 62b54a5 (он же последний upstream) импортирует
 `cgitb`, удалённый в Python 3.13, а runner использует Python 3.14. Не исправлено.
+Run 45482671411 (a73683a): network зелёный на трёх ОС после перехода на archive.
+Красные: core/ubuntu (rpc_process, авторизация RPC 3d262fa впервые в CI),
+desktop (Firefox native: fixture_core_start_failed), tor-pcap, dependency-audits.
 
 **Подпись выпуска (ADR 0080).** `scripts/release-signature.mjs`: keygen/sign/verify
 ключом Tauri signer, проверка на `node:crypto`, тест с настоящим Tauri CLI.
