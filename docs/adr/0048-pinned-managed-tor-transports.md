@@ -56,3 +56,8 @@ Lyrebird получен из точного tar member без исполнени
 [документация Tor](https://support.torproject.org/little-t-tor/circumvention/using-bridges/)
 и локальный исходный код закреплённого Arti. Зелёный CI, реальный PT lifecycle
 и pcap требуются отдельно; подпись upstream не является подписью релиза NymWrap.
+
+Дополнение (2026-11-25): Tor Project убрал 16.0.1 с dist.torproject.org (404),
+и CI упал с `transport_download_failed`. Источник заменён на
+archive.torproject.org/tor-package-archive с теми же файлами. Закреплённые
+SHA-256 не менялись; скачанный из архива linux-x86_64 совпал с пином.

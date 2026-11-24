@@ -1,7 +1,7 @@
 {
   "version": 1,
   "release": "16.0.1",
-  "base_url": "https://dist.torproject.org/torbrowser/16.0.1/",
+  "base_url": "https://archive.torproject.org/tor-package-archive/torbrowser/16.0.1/",
   "signing_primary": "EF6E286DDA85EA2A4BA7DE684E2C6E8793298290",
   "signing_subkey": "022DA248432D2A0E0F54E65E316C1FACD62D07D9",
   "signature_sha256": "d4e1f4b34231aba6f3a5ccd4cec41396807c53bdca009b17cf52d7ce2c1b201b",
