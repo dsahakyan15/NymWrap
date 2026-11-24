@@ -28,6 +28,26 @@ payments либо необходимости увеличить spending limit. 
 аккаунта не восстановит Actions, последующие локальные изменения остаются без
 подтверждения CI. Перенос в публичный репозиторий или обход ограничения не выполняется.
 
+## Подготовка процессного сетевого сценария — M2/M3 остаются открыты
+
+- ADR 0077: настоящий AEAD dispatcher nw-netd выделен из main в server;
+  release entry point всегда использует production Tor constructor. Частные
+  фабрики нужны для будущего тестового worker, runtime переключателя нет.
+  Текущий pcap по-прежнему вызывает библиотечный Tor::send: его scope и
+  production_daemon_namespace_integration/full_core_pipeline=false не менялись.
+- Native тест воспроизвёл задержку разрешённого Reset одним пустым same-user
+  соединением (4,13 с, target/netd-idle-peer-red.log). До проверки ключа теперь
+  действует 2-секундный предел чтения. Затем разрешённый запрос проходит.
+  Защита от непрерывного потока DoS-соединений этим не заявлена.
+- Canary в tests/leak/src/netd_dispatcher.rs проходит настоящий dispatcher,
+  подменяя только транспорт. Неправильный ключ и старый sequence не вызывают
+  отправку, Send/SendOnce передают точное подготовленное тело без Device-канарейки,
+  ответ защищён AEAD, Reset отзывает соединение. Новая проверка и полные
+  сетевые test/clippy зелёные; native lifecycle — 2 pass. Логи
+  target/netd-{dispatcher-canary,shared-dispatcher-tests-final,
+  shared-dispatcher-clippy-final,shared-dispatcher-lifecycle}.log.
+  Ни процессный pcap, ни production netns этой частью ещё не реализованы.
+
 ## Авторизация core RPC M6 — локальная часть, CI ещё не выполнен
 
 - ADR 0076: исходный отрицательный тест снова воспроизвёл выдачу канарейки

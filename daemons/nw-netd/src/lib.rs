@@ -8,6 +8,7 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 use tor_rtcompat::PreferredRuntime;
 use zeroize::Zeroizing;
 mod bridges;
+pub mod server;
 
 #[derive(Clone)]
 pub struct Provider {

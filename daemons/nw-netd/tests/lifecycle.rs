@@ -70,3 +70,33 @@ fn nw_shield_for_test() -> Result<nw_shield::Prepared, nw_shield::Block> {
         |text| Ok(text.into()),
     )
 }
+
+#[tokio::test]
+async fn one_idle_unauthenticated_peer_cannot_hold_the_transport_for_the_general_frame_timeout() {
+    let directory = tempfile::tempdir().unwrap();
+    #[cfg(windows)]
+    let address = format!("nymwrap-netd-idle-test-{}", std::process::id());
+    #[cfg(unix)]
+    let address = directory
+        .path()
+        .join("private/idle.sock")
+        .to_string_lossy()
+        .into_owned();
+    let endpoint = nw_ipc::Endpoint::new(address, Lane::Shadow).unwrap();
+    let client = Client::spawn(
+        std::path::Path::new(env!("CARGO_BIN_EXE_nw-netd")),
+        endpoint.clone(),
+    )
+    .await
+    .unwrap();
+    client.reset().await.unwrap();
+    let idle = endpoint.connect().await.unwrap();
+    let reset = tokio::time::timeout(std::time::Duration::from_secs(4), client.reset()).await;
+    drop(idle);
+    drop(client);
+    directory.close().unwrap();
+    assert!(
+        matches!(reset, Ok(Ok(()))),
+        "one empty peer must be disconnected within the authentication deadline"
+    );
+}
