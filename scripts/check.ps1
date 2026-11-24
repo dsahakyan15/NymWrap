@@ -7,6 +7,10 @@ try {
     if ($LASTEXITCODE) { throw 'rustfmt failed' }
     cargo test --workspace --locked
     if ($LASTEXITCODE) { throw 'workspace tests failed' }
+    cargo build -p nw-api -p nw-core --bins --locked
+    if ($LASTEXITCODE) { throw 'RPC process components failed to build' }
+    cargo test -p nw-core --test rpc_process actual_ --locked -- --ignored
+    if ($LASTEXITCODE) { throw 'RPC process authorization failed' }
     cargo test -p nw-llm --example privacy_eval --locked
     if ($LASTEXITCODE) { throw 'privacy evaluation scorer checks failed' }
     cargo test -p nw-core --example privacy_pipeline --locked

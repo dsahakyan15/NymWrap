@@ -81,6 +81,8 @@ jobs:
           "LIBCLANG_PATH=$PWD/target/tools/libclang-18.1.1" >> $env:GITHUB_ENV
       - run: cargo fmt --all -- --check
       - run: cargo test --workspace --locked
+      - run: cargo build -p nw-api -p nw-core --bins --locked
+      - run: cargo test -p nw-core --test rpc_process actual_ --locked -- --ignored
       - run: cargo test -p nw-llm --example privacy_eval --locked
       - run: cargo test -p nw-core --example privacy_pipeline --locked
       - run: cargo test -p nw-core --example privacy_linkcheck --locked

@@ -14,6 +14,37 @@ use thiserror::Error;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use zeroize::Zeroizing;
 
+/// Different configured data roots must never share a Windows pipe namespace.
+/// In particular, a synthetic test instance cannot bind the user's live pipes.
+#[cfg(windows)]
+pub fn user_namespace() -> Result<String, IpcError> {
+    use sha2::{Digest, Sha256};
+    use std::{
+        os::windows::ffi::OsStrExt,
+        path::{Component, PathBuf},
+    };
+    let root = PathBuf::from(std::env::var_os("LOCALAPPDATA").ok_or(IpcError::Endpoint)?);
+    if !root.is_absolute()
+        || root
+            .components()
+            .any(|component| matches!(component, Component::ParentDir))
+    {
+        return Err(IpcError::Endpoint);
+    }
+    let user = nw_platform::current_user_id().map_err(|_| IpcError::Peer)?;
+    let mut hash = Sha256::new();
+    hash.update(b"nymwrap-user-data-root-v1\0");
+    hash.update((user.len() as u64).to_le_bytes());
+    hash.update(user.as_bytes());
+    for code in root.as_os_str().encode_wide() {
+        if code == 0 {
+            return Err(IpcError::Endpoint);
+        }
+        hash.update(code.to_le_bytes());
+    }
+    Ok(format!("{:x}", hash.finalize())[..24].to_owned())
+}
+
 #[derive(Debug, Error)]
 pub enum IpcError {
     #[error("invalid_ipc_endpoint")]

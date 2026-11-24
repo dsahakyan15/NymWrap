@@ -2,7 +2,6 @@
 use crate::CoreError;
 use nw_proto::{Profile, TrustLevel};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{io::Read, path::PathBuf};
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -332,12 +331,15 @@ impl Paths {
             .map(PathBuf::from)
             .unwrap_or_else(|| data.join("runtime"))
             .join("nymwrap");
-        let user = nw_platform::current_user_id().map_err(|_| CoreError::Request)?;
-        let hash = format!("{:x}", Sha256::digest(user.as_bytes()));
+        #[cfg(windows)]
+        let namespace = nw_ipc::user_namespace().map_err(|_| CoreError::Request)?;
         let endpoint = |role: &str| {
-            if cfg!(windows) {
-                format!(r"\\.\pipe\nymwrap-{}-{role}", &hash[..16])
-            } else {
+            #[cfg(windows)]
+            {
+                format!(r"\\.\pipe\nymwrap-{namespace}-{role}")
+            }
+            #[cfg(not(windows))]
+            {
                 runtime
                     .join(format!("{role}.sock"))
                     .to_string_lossy()

@@ -12,6 +12,7 @@ mod sys;
 mod wlan;
 #[cfg(unix)]
 pub use sys::current_group_id;
+pub use sys::inherited_stdin_pipe;
 #[cfg(target_os = "macos")]
 pub use sys::local_peer_process;
 pub use sys::open_device_config;

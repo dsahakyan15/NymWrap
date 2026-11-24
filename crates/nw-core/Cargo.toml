@@ -34,6 +34,7 @@ tokio = {workspace=true,features=["signal"]}
 thiserror.workspace = true
 toml.workspace = true
 sha2.workspace = true
+chacha20poly1305.workspace = true
 nw-platform.workspace = true
 nw-ipc.workspace = true
 nw-probe.workspace = true

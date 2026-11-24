@@ -23,14 +23,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let endpoint = nw_ipc::Endpoint::new(args[1].clone(), Lane::Shadow)?;
     let mut bytes = Zeroizing::new([0; 32]);
     use std::io::Read;
-    std::io::stdin().read_exact(&mut *bytes)?;
+    let mut parent = nw_platform::inherited_stdin_pipe()?;
+    parent.read_exact(&mut *bytes)?;
     let key = SessionKey::new(*bytes)?;
     bytes.zeroize();
     // EOF on the parent-owned pipe cancels all network work after parent death.
     let (tx, mut rx) = tokio::sync::oneshot::channel();
     std::thread::spawn(move || {
         let mut byte = [0];
-        let _ = std::io::stdin().read(&mut byte);
+        let _ = parent.read(&mut byte);
         let _ = tx.send(());
     });
     let listener = nw_ipc::Listener::bind(endpoint)?;

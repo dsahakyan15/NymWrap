@@ -11,7 +11,6 @@ use std::time::Duration;
 const CANARY: &str = "SESSION_PRIVATE_CANARY_68124";
 
 #[tokio::test]
-#[ignore = "M6 open: production shadow RPC needs authorization against an unapproved same-user client"]
 async fn unapproved_same_user_shadow_client_cannot_read_unlocked_secrets() {
     use nw_ipc::{Endpoint, Listener, Packet};
     use nw_proto::Lane;
@@ -39,9 +38,8 @@ async fn unapproved_same_user_shadow_client_cannot_read_unlocked_secrets() {
     });
     let mut stream = endpoint.connect().await.unwrap();
     let bytes = serde_json::to_vec(&Packet::new(Lane::Shadow, 1, Command::LoadSecrets {})).unwrap();
-    nw_ipc::write_frame(&mut stream, &bytes, 4096)
-        .await
-        .unwrap();
+    // Early rejection can close the pipe before the first legacy frame is written.
+    let _write = nw_ipc::write_frame(&mut stream, &bytes, 4096).await;
     let reply = tokio::time::timeout(
         Duration::from_secs(2),
         nw_ipc::read_frame(&mut stream, 4096),
@@ -62,6 +60,68 @@ async fn unapproved_same_user_shadow_client_cannot_read_unlocked_secrets() {
             assert!(matches!(packet.body, Reply::Error { .. }));
         }
         Err(_) => panic!("unapproved client must be rejected within the bounded handshake"),
+    }
+}
+
+#[tokio::test]
+async fn authorized_control_reads_its_canary_but_api_cannot_read_or_approve() {
+    use crate::service::{Client, RpcRole};
+    use nw_ipc::{Endpoint, Listener};
+    use nw_proto::Lane;
+    for role in [RpcRole::Control, RpcRole::Api] {
+        let (directory, source) = fixture(false);
+        let mut service = Service::runtime(None);
+        service.state.session.lock().unwrap().workspace =
+            source.session.lock().unwrap().workspace.take();
+        #[cfg(unix)]
+        let address = directory
+            .path()
+            .join("private/authorized.sock")
+            .to_string_lossy()
+            .into_owned();
+        #[cfg(windows)]
+        let address = format!(
+            "nymwrap-authorized-{}-{}",
+            std::process::id(),
+            directory.path().file_name().unwrap().to_string_lossy()
+        );
+        let endpoint = Endpoint::new(address, Lane::Shadow).unwrap();
+        let listener = Listener::bind(endpoint.clone()).unwrap();
+        let client: Client = service.authorize_test_client(endpoint, role);
+        let server = tokio::spawn(async move {
+            service.serve_shadow(listener).await.unwrap();
+        });
+        let secrets = client.request(Command::LoadSecrets {}).await;
+        let approval = client
+            .request(Command::ApproveRemote {
+                approval_id: "a".repeat(32),
+                hash: "b".repeat(64),
+            })
+            .await;
+        let config = client.request(Command::LoadConfig {}).await;
+        let history = client
+            .request(Command::LoadHistory {
+                conversation: "a".repeat(32),
+            })
+            .await;
+        let lock = client.request(Command::Lock {}).await;
+        server.abort();
+        let _ = server.await;
+        if role == RpcRole::Control {
+            let value = serde_json::to_string(&secrets.unwrap()).unwrap();
+            assert!(
+                value.contains(CANARY),
+                "positive control must read the unlocked synthetic vault"
+            );
+            assert!(matches!(config.unwrap(), Reply::Config { .. }));
+            assert!(matches!(lock.unwrap(), Reply::Ack {}));
+        } else {
+            for outcome in [secrets, approval, config, history, lock] {
+                assert!(
+                    matches!(outcome.unwrap(), Reply::Error { code } if code == "ipc_forbidden")
+                );
+            }
+        }
     }
 }
 
@@ -123,6 +183,82 @@ fn private_bridges_are_encrypted_reopened_bound_to_approvals_and_guarded_by_shie
     assert_eq!(w.bridge_status().unwrap().lines, 1);
     w.set_bridges(None).unwrap();
     assert_eq!(w.routing_context().unwrap(), before);
+}
+
+#[tokio::test]
+async fn rpc_replay_reflection_wrong_role_key_and_legacy_frames_cannot_read_vault() {
+    use crate::service::{RpcRole, auth};
+    use nw_ipc::{Endpoint, IpcError, Listener, Packet};
+    use nw_proto::Lane;
+    let (directory, source) = fixture(false);
+    let mut service = Service::runtime(None);
+    service.state.session.lock().unwrap().workspace =
+        source.session.lock().unwrap().workspace.take();
+    #[cfg(unix)]
+    let address = directory
+        .path()
+        .join("private/replay.sock")
+        .to_string_lossy()
+        .into_owned();
+    #[cfg(windows)]
+    let address = format!(
+        "nymwrap-rpc-replay-{}-{}",
+        std::process::id(),
+        directory.path().file_name().unwrap().to_string_lossy()
+    );
+    let endpoint = Endpoint::new(address, Lane::Shadow).unwrap();
+    let listener = Listener::bind(endpoint.clone()).unwrap();
+    let client = service.authorize_test_client(endpoint.clone(), RpcRole::Control);
+    let server = tokio::spawn(async move {
+        service.serve_shadow(listener).await.unwrap();
+    });
+    let outcome: Result<bool, Box<dyn std::error::Error>> = async {
+        let request = zeroize::Zeroizing::new(serde_json::to_vec(&Packet::new(
+            Lane::Shadow,
+            81,
+            Command::LoadSecrets {},
+        ))?);
+        let key = &client.grant.key;
+        let other_key = auth::Key::random()?;
+        let mut stream = endpoint.connect().await?;
+        let challenge = nw_ipc::read_frame(&mut stream, 32).await?;
+        let challenge: [u8; 32] = challenge.as_slice().try_into()?;
+        let recorded = key.seal(RpcRole::Control, &challenge, false, &request)?;
+        nw_ipc::write_frame(&mut stream, &recorded, 4096).await?;
+        let response = nw_ipc::read_frame(&mut stream, 4096).await?;
+        let response = key.open(RpcRole::Control, &challenge, true, &response)?;
+        let mut all_checked = response
+            .windows(CANARY.len())
+            .any(|part| part == CANARY.as_bytes());
+        drop(stream);
+        for mode in 0..5 {
+            let mut stream = endpoint.connect().await?;
+            let fresh = nw_ipc::read_frame(&mut stream, 32).await?;
+            let fresh: [u8; 32] = fresh.as_slice().try_into()?;
+            all_checked &= fresh != challenge;
+            let invalid = match mode {
+                0 => recorded.clone(),
+                1 => key.seal(RpcRole::Control, &fresh, true, &request)?,
+                2 => other_key.seal(RpcRole::Control, &fresh, false, &request)?,
+                3 => key.seal(RpcRole::Api, &fresh, false, &request)?,
+                _ => request.clone(),
+            };
+            nw_ipc::write_frame(&mut stream, &invalid, 4096).await?;
+            let response =
+                nw_ipc::read_frame_timeout(&mut stream, 4096, Duration::from_secs(2)).await;
+            all_checked &= matches!(response, Err(IpcError::Io));
+        }
+        let valid = client.request(Command::LoadSecrets {}).await?;
+        all_checked &= serde_json::to_string(&valid)?.contains(CANARY);
+        Ok(all_checked)
+    }
+    .await;
+    server.abort();
+    let _ = server.await;
+    assert!(
+        outcome.unwrap(),
+        "invalid authority must close its connection; the authorized positive control must remain available"
+    );
 }
 
 #[derive(Default)]

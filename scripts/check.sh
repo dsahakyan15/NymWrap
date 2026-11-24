@@ -3,6 +3,8 @@ set -eu
 cd "$(dirname "$0")/.."
 cargo fmt --all -- --check
 cargo test --workspace --locked
+cargo build -p nw-api -p nw-core --bins --locked
+cargo test -p nw-core --test rpc_process actual_ --locked -- --ignored
 cargo test -p nw-llm --example privacy_eval --locked
 cargo test -p nw-core --example privacy_pipeline --locked
 cargo test -p nw-core --example privacy_linkcheck --locked

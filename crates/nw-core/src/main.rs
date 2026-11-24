@@ -21,13 +21,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         "status" => serde_json::to_value(nw_core::status())?,
         "paths" => serde_json::to_value(nw_core::config::Paths::discover()?)?,
         "rpc" => {
-            let bytes = stdin_bounded(16 * 1024 * 1024)?;
-            let command: nw_core::service::Command =
-                serde_json::from_slice(&bytes).map_err(|_| "invalid_input")?;
-            let runtime = tokio::runtime::Runtime::new()?;
-            let reply =
-                runtime.block_on(nw_core::service::Client::current_user()?.request(command))?;
-            reply.into_json()?
+            return Err("rpc_requires_desktop_session".into());
         }
         "demo" => {
             let preview = nw_core::preview(PreviewInput {
@@ -83,7 +77,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
         "help" | "--help" | "-h" => {
             println!(
-                "nymwrap status | rpc < command.json | demo | shield < input.json | audit [takeout|chatgpt|claude|gemini|browser|chrome|firefox|safari] < export | purge-template | run -- /absolute/program [args]\nRPC connects to the private nymwrapd daemon. Secrets are accepted on stdin, never command arguments."
+                "nymwrap status | demo | shield < input.json | audit [takeout|chatgpt|claude|gemini|browser|chrome|firefox|safari] < export | purge-template | run -- /absolute/program [args]\nPrivileged workspace operations require the desktop session. Secrets are accepted on stdin, never command arguments."
             );
             return Ok(());
         }

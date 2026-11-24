@@ -13,6 +13,32 @@ pub use windows_sandbox::{
 fn failed() -> io::Error {
     io::Error::other("platform_security_operation_failed")
 }
+/// Own a CLOEXEC duplicate of the read pipe without std::io::Stdin's persistent
+/// shared buffer retaining a second, unlocked copy of the bootstrap key.
+#[cfg(unix)]
+pub fn inherited_stdin_pipe() -> io::Result<std::fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    let fd = unsafe { libc::fcntl(libc::STDIN_FILENO, libc::F_DUPFD_CLOEXEC, 3) };
+    if fd < 0 {
+        return Err(failed());
+    }
+    // SAFETY: this descriptor was just allocated and has exactly one File owner.
+    let file = unsafe { std::fs::File::from_raw_fd(fd) };
+    let mut metadata = std::mem::MaybeUninit::<libc::stat>::uninit();
+    if unsafe { libc::fstat(file.as_raw_fd(), metadata.as_mut_ptr()) } != 0 {
+        return Err(failed());
+    }
+    // SAFETY: fstat succeeded and initialized the complete stat allocation.
+    let metadata = unsafe { metadata.assume_init() };
+    let flags = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL) };
+    if metadata.st_mode & libc::S_IFMT != libc::S_IFIFO
+        || flags < 0
+        || flags & libc::O_ACCMODE != libc::O_RDONLY
+    {
+        return Err(failed());
+    }
+    Ok(file)
+}
 /// Supply public, immutable sandbox identity files without filesystem staging.
 /// Descriptors stay CLOEXEC in the parent and are inherited only by this command.
 #[cfg(target_os = "linux")]
@@ -406,7 +432,7 @@ mod windows {
     use std::{
         os::windows::{
             ffi::OsStrExt,
-            io::{AsRawHandle, BorrowedHandle},
+            io::{AsRawHandle, BorrowedHandle, FromRawHandle},
         },
         path::Path,
         ptr,
@@ -728,6 +754,40 @@ mod windows {
             WerUnregisterExcludedMemoryBlock(page as *const _);
             VirtualUnlock(page as *const _, size)
         };
+    }
+    pub fn inherited_stdin_pipe() -> io::Result<std::fs::File> {
+        use windows_sys::Win32::{
+            Storage::FileSystem::{FILE_GENERIC_READ, FILE_TYPE_PIPE, GetFileType},
+            System::Console::{GetStdHandle, STD_INPUT_HANDLE},
+        };
+        let source = unsafe { GetStdHandle(STD_INPUT_HANDLE) };
+        if source.is_null() || source == INVALID_HANDLE_VALUE {
+            return Err(failed());
+        }
+        let mut copy = ptr::null_mut();
+        if unsafe {
+            DuplicateHandle(
+                GetCurrentProcess(),
+                source,
+                GetCurrentProcess(),
+                &mut copy,
+                FILE_GENERIC_READ,
+                0,
+                0,
+            )
+        } == 0
+        {
+            return Err(failed());
+        }
+        let copy = Handle(copy);
+        if unsafe { GetFileType(copy.0) } != FILE_TYPE_PIPE {
+            return Err(failed());
+        }
+        // SAFETY: this non-inheritable read handle was just allocated. Transfer
+        // its sole ownership to File without closing the original std handle.
+        let file = unsafe { std::fs::File::from_raw_handle(copy.0) };
+        std::mem::forget(copy);
+        Ok(file)
     }
     pub fn harden_process() -> io::Result<()> {
         unsafe { SetErrorMode(SEM_NOGPFAULTERRORBOX | SEM_FAILCRITICALERRORS) };

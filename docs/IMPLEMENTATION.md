@@ -28,6 +28,45 @@ payments либо необходимости увеличить spending limit. 
 аккаунта не восстановит Actions, последующие локальные изменения остаются без
 подтверждения CI. Перенос в публичный репозиторий или обход ограничения не выполняется.
 
+## Авторизация core RPC M6 — локальная часть, CI ещё не выполнен
+
+- ADR 0076: исходный отрицательный тест снова воспроизвёл выдачу канарейки
+  неразрешённому same-user клиенту (target/core-rpc-authorization-red.log).
+  Ignore снят. Теперь ephemeral ключи UI/API передаются только через inherited
+  pipe; kernel PID и сохранённый child проверяются до отправки команды.
+  На соединение выдаётся новый challenge, AEAD связывает роль и направление.
+  API получает только chat/embeddings/submit/status/cancel, без vault и одобрений.
+- Канареечные тесты разрешённого control и ограниченного API, replay,
+  отражения ответа, другого ключа/роли и старого plaintext протокола зелёные.
+  Неверная авторизация закрывает соединение, затем разрешённый клиент всё ещё
+  читает синтетический vault. Все эти проверки входят в обычный workspace.
+  Логи target/core-rpc-{authorization-canary-green,replay-green}.log.
+- На Windows настоящий nymwrapd сам запустил настоящий nw-api; bootstrap,
+  отказ другому PID и другой копии того же образа, закрытие endpoints после
+  Lock и потери parent pipe проверены в отдельном data/runtime namespace.
+  Реальные workspace/keyring/accounts не использовались. TempDir удалён;
+  после проверки nymwrapd/nw-api не осталось в списке процессов.
+  Лог target/core-rpc-native-final-process.log. Этот actual_ тест добавлен
+  в CI core matrix всех трёх ОС и scripts/check, но новый CI ещё не запускался.
+- Bootstrap core/API и начальный ключ nw-netd читаются напрямую из read-only
+  duplicate pipe, без дополнительной копии в общем буфере std::io::Stdin.
+  Native тест pipe/read-only/file/null прошёл; копия handle не наследуется.
+  Лог target/core-rpc-stdin-pipe-test.log. Версии зависимостей не менялись:
+  прямые edges используют закреплённые chacha20poly1305/sha2, windows-sys
+  получил feature Console. Все четыре lock-файла обновлены без смены версий.
+- После изменений зелёные полный workspace (core lib: 50 pass, 1 ignored —
+  отдельный тест OS credential store), clippy всех targets/features, leak,
+  network tests/clippy, native Tauri check, fuzz harness check, app 12,
+  extension 24, scripts 43 и actionlint. Логи target/core-rpc-*.log.
+  cargo-vet повторён на новых locks: 268 / 514 / 499 / 248 пробелов,
+  все четыре красные. Это не полный scripts/check и не прохождение M6.
+- Изоляция core/API/drift-host, защита их памяти и OS keyring остаются
+  открытыми. Native matrix не проверяет этот RPC внутри bwrap PID namespace
+  или AppContainer; их интеграция требует отдельных проверок. Новая UI не
+  наследует ключ предыдущей UI и ждёт окончания её согласованного хвоста.
+  Привилегированный CLI rpc отключён; запуск API теперь выполняет core.
+  USER_GUIDE и SPEC обновлены. Интерактивный smoke новой UI не проведён.
+
 ## Аудиты зависимостей M6 — критерий красный
 
 - ADR 0073: установлен закреплённый cargo-vet 0.10.4 с проверкой архивов и
@@ -449,7 +488,7 @@ payments либо необходимости увеличить spending limit. 
 
 | Область | Реализовано | Остаётся |
 |---|---|---|
-| Shield | Classify/minimize/leakcheck/rehydrate, секреты, IPv4/IPv6, кодировки, транслитерация, нечёткая проверка, локальная NER с проверкой буквальных фрагментов, canonicalize, полный удалённый конвейер; детерминированные ограничения личных/чувствительных сведений и неполностью скрытых составных имён; локальный оценщик на 62 синтетических кейсах | Независимая оценка на новых данных, одиночные/строчные имена и косвенные признаки, optional split и поиск |
+| Shield | Classify/minimize/leakcheck/rehydrate, секреты, IPv4/IPv6, кодировки, транслитерация, нечёткая проверка, локальная NER с проверкой буквальных фрагментов, canonicalize, полный удалённый конвейер; детерминированные ограничения личных/чувствительных сведений и неполностью скрытых составных имён; локальный оценщик на 62 синтетических кейсах | Независимая оценка на новых данных, одиночные/строчные имена и косвенные признаки, независимый split и поиск |
 | Локальная модель | nw-llmd с CPU llama.cpp, SHA-256, свежие контексты, greedy generation/nomic; Windows native worker в одноразовом LPAC с двумя read handles; запуск из UI с контролем PID, таймаутом, kill_on_drop и stdin-lifetime | Изоляция брокера и остальных ОС, оптимизация повторной загрузки |
 | IPC/API | Общий типизированный RPC, SID ACL/peer, версии/полосы/лимиты/PID; local/remote-модели, min-trust, одноразовый human review; async HTTP submit/poll/cancel; сохраняемый Idempotency-Key для submit с tombstones и без replay | Проверки на всех ОС |
 | Хранение | SQLCipher по доменам, XChaCha записей, OS key store + Argon2id, блокировка store, защищённые ключи, атомарная ротация root и crypto-shredding с восстановлением очистки | Проверка сбоев на всех ОС и полный аудит жизненного цикла памяти |

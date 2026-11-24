@@ -164,12 +164,7 @@ impl Command {
 }
 pub fn endpoint() -> std::result::Result<Endpoint, IpcError> {
     #[cfg(windows)]
-    let value = {
-        use sha2::{Digest, Sha256};
-        let user = nw_platform::current_user_id().map_err(|_| IpcError::Peer)?;
-        let hash = format!("{:x}", Sha256::digest(user.as_bytes()));
-        format!("nymwrap-{}-core-cover", &hash[..16])
-    };
+    let value = { format!("nymwrap-{}-core-cover", nw_ipc::user_namespace()?) };
     #[cfg(unix)]
     let value = {
         use std::path::PathBuf;

@@ -1210,7 +1210,6 @@ dependencies = [
  "nw-proto",
  "serde",
  "serde_json",
- "sha2",
  "tokio",
  "zeroize",
 ]
@@ -1220,6 +1219,7 @@ name = "nw-core"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "chacha20poly1305",
  "nw-audit",
  "nw-bridge",
  "nw-cover",
@@ -1291,6 +1291,7 @@ dependencies = [
  "nw-proto",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror",
  "tokio",
  "widestring",

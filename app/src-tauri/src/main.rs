@@ -1,18 +1,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use nw_core::service::{Client, Command, Sensitive};
 use serde_json::Value;
-use std::{path::PathBuf, process::Stdio, sync::Arc, time::Duration};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 use tauri::Manager;
 #[derive(Clone)]
 struct Proxy {
-    client: Client,
-    start: Arc<tokio::sync::Mutex<()>>,
+    client: Arc<tokio::sync::Mutex<Option<Client>>>,
 }
 impl Proxy {
     fn new() -> Result<Self, String> {
         Ok(Self {
-            client: Client::current_user()?,
-            start: Arc::new(tokio::sync::Mutex::new(())),
+            client: Arc::default(),
         })
     }
     fn binary() -> Result<PathBuf, String> {
@@ -36,61 +34,40 @@ impl Proxy {
             .find(|p| p.is_file())
             .ok_or_else(|| "runtime_component_missing".into())
     }
-    async fn ready(&self) -> Result<(), String> {
-        let _start = self.start.lock().await;
-        match self.client.request(Command::Status {}).await {
-            Ok(_) => return Ok(()),
-            Err(code) if code == "ipc_unavailable" || code == "ipc_timeout" => {}
-            Err(code) => return Err(code),
+    async fn ready(&self) -> Result<Client, String> {
+        let mut connection = self.client.lock().await;
+        if let Some(client) = &*connection {
+            match client.request(Command::Status {}).await {
+                Ok(_) => return Ok(client.clone()),
+                Err(code) if code == "ipc_unavailable" => {}
+                Err(code) => return Err(code),
+            }
+            *connection = None;
         }
         let binary = Self::binary()?;
-        let mut command = std::process::Command::new(&binary);
-        command
-            .current_dir(binary.parent().ok_or("runtime_component_missing")?)
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .env_clear();
-        for name in [
-            "SystemRoot",
-            "WINDIR",
-            "LOCALAPPDATA",
-            "APPDATA",
-            "USERPROFILE",
-            "HOME",
-            "XDG_DATA_HOME",
-            "XDG_CACHE_HOME",
-            "XDG_RUNTIME_DIR",
-            "DBUS_SESSION_BUS_ADDRESS",
-            "TEMP",
-            "TMP",
-        ] {
-            if let Some(value) = std::env::var_os(name) {
-                command.env(name, value);
+        let client = Client::spawn_daemon(&binary).await?;
+        tokio::time::timeout(Duration::from_secs(10), async {
+            for _ in 0..50 {
+                match client.request(Command::Status {}).await {
+                    Ok(_) => return Ok(()),
+                    Err(code) if code == "ipc_unavailable" || code == "ipc_timeout" => {}
+                    Err(code) => return Err(code),
+                }
+                tokio::time::sleep(Duration::from_millis(100)).await;
             }
-        }
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            command.creation_flags(0x08000000);
-        }
-        let mut child = command.spawn().map_err(|_| "daemon_start_failed")?;
-        std::thread::spawn(move || {
-            let _ = child.wait();
-        });
-        for _ in 0..50 {
-            match self.client.request(Command::Status {}).await {
-                Ok(_) => return Ok(()),
-                Err(code) if code == "ipc_wrong_peer" => return Err(code),
-                _ => {}
-            }
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-        Err("daemon_start_failed".into())
+            Err("daemon_start_failed".to_owned())
+        })
+        .await
+        .map_err(|_| "daemon_start_failed")??;
+        *connection = Some(client.clone());
+        Ok(client)
     }
     async fn call(&self, command: Command) -> Result<Value, String> {
-        self.ready().await?;
-        self.client.request(command).await?.into_json()
+        self.ready().await?.request(command).await?.into_json()
+    }
+    async fn close_request(&self, command: Command) -> Result<nw_core::service::Reply, String> {
+        let client = self.client.lock().await.clone().ok_or("workspace_locked")?;
+        client.request(command).await
     }
 }
 macro_rules! command{
@@ -203,7 +180,7 @@ fn main() {
                 tauri::async_runtime::spawn(async move {
                     let closed = tokio::time::timeout(
                         Duration::from_secs(5),
-                        proxy.client.request(Command::CloseSession {}),
+                        proxy.close_request(Command::CloseSession {}),
                     )
                     .await;
                     if !matches!(
@@ -212,7 +189,7 @@ fn main() {
                     ) {
                         let _ = tokio::time::timeout(
                             Duration::from_secs(5),
-                            proxy.client.request(Command::Lock {}),
+                            proxy.close_request(Command::Lock {}),
                         )
                         .await;
                     }

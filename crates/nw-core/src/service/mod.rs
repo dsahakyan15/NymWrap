@@ -1,16 +1,20 @@
 //! Typed shadow RPC. The daemon is the sole owner of the unlocked workspace.
+mod auth;
 mod backend;
 mod cover;
+mod process;
 use crate::{
     config::Config,
     planning::PlanInput,
     workspace::{self, ConversationInfo, DayReview, Persona, PurgeCandidate, Review, SecretRecord},
 };
+pub use auth::{ParentSession, RpcRole};
 pub use backend::{ChatResponse, RemoteSubmission, SessionPhase, SessionTiming, StorageStatus};
 use nw_ipc::{Endpoint, Listener, Packet};
 use nw_llm::Message;
 pub use nw_net::bridges::BridgeConfig;
 use nw_proto::{DriftTask, Lane, Profile};
+pub use process::ApiProcess;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::{io::AsyncReadExt, sync::Semaphore};
@@ -455,6 +459,7 @@ pub struct Service {
     state: backend::State,
     shutdown: Arc<tokio::sync::Notify>,
     exit_on_lock: bool,
+    access: Arc<auth::Access>,
 }
 impl Service {
     pub async fn run_traffic(&self) {
@@ -474,7 +479,19 @@ impl Service {
             state: backend::State::runtime(egress),
             shutdown: Arc::default(),
             exit_on_lock: true,
+            access: Arc::default(),
         }
+    }
+    pub fn authorize_parent(
+        &mut self,
+        parent: ParentSession,
+    ) -> Result<tokio::sync::oneshot::Receiver<()>, String> {
+        let access = Arc::get_mut(&mut self.access).ok_or("ipc_authorization_failed")?;
+        if parent.grant.role != RpcRole::Control || !access.grants.is_empty() {
+            return Err("ipc_authorization_failed".into());
+        }
+        access.grants.push(parent.grant);
+        Ok(parent.parent_closed)
     }
     pub async fn stopped(&self) {
         self.shutdown.notified().await;
@@ -748,13 +765,33 @@ impl Service {
         let permits = Arc::new(Semaphore::new(8));
         loop {
             let mut stream = listener.accept().await.map_err(std::io::Error::other)?;
+            let Some(grant) = nw_ipc::peer_process(&stream)
+                .ok()
+                .and_then(|pid| self.access.for_peer(pid))
+            else {
+                continue;
+            };
             let Ok(permit) = permits.clone().try_acquire_owned() else {
                 continue;
             };
             let service = self.clone();
             tokio::spawn(async move {
                 let _permit = permit;
-                let Ok(bytes) = nw_ipc::read_frame(&mut stream, FRAME_LIMIT).await else {
+                use rand::RngCore;
+                let mut challenge = [0; auth::CHALLENGE_BYTES];
+                rand::rngs::OsRng.fill_bytes(&mut challenge);
+                if nw_ipc::write_frame(&mut stream, &challenge, auth::CHALLENGE_BYTES)
+                    .await
+                    .is_err()
+                {
+                    return;
+                }
+                let Ok(encrypted) =
+                    nw_ipc::read_frame_timeout(&mut stream, FRAME_LIMIT, auth::HANDSHAKE).await
+                else {
+                    return;
+                };
+                let Ok(bytes) = grant.key.open(grant.role, &challenge, false, &encrypted) else {
                     return;
                 };
                 let Ok(packet) = serde_json::from_slice::<Packet<Command>>(&bytes) else {
@@ -771,7 +808,11 @@ impl Service {
                         &packet.body,
                         Command::Lock {} | Command::CloseSession {} | Command::DestroyData { .. }
                     );
-                let reply = tokio::select! {reply=service.handle(packet.body)=>Some(reply),_closed=stream.read_u8()=>None};
+                let reply = if grant.role.permits(&packet.body) {
+                    tokio::select! {reply=service.handle(packet.body)=>Some(reply),_closed=stream.read_u8()=>None}
+                } else {
+                    Some(error("ipc_forbidden".into()))
+                };
                 if let Some(reply) = reply {
                     let stop = exit
                         && matches!(
@@ -787,7 +828,10 @@ impl Service {
                     let packet = Packet::new(Lane::Shadow, packet.request_id, reply);
                     if let Ok(bytes) = serde_json::to_vec(&packet) {
                         let bytes = zeroize::Zeroizing::new(bytes);
-                        let _ = nw_ipc::write_frame(&mut stream, &bytes, FRAME_LIMIT).await;
+                        if let Ok(encrypted) = grant.key.seal(grant.role, &challenge, true, &bytes)
+                        {
+                            let _ = nw_ipc::write_frame(&mut stream, &encrypted, FRAME_LIMIT).await;
+                        }
                     }
                     if stop {
                         service.shutdown.notify_one();
@@ -799,56 +843,53 @@ impl Service {
     pub async fn serve_cover(&self, listener: Listener) -> std::io::Result<()> {
         nw_bridge::serve(listener, cover::DesktopCover(self.state.clone())).await
     }
+    #[cfg(test)]
+    fn authorize_test_client(&mut self, endpoint: Endpoint, role: RpcRole) -> Client {
+        let grant = auth::Grant {
+            key: auth::Key::random().unwrap(),
+            pid: std::process::id(),
+            role,
+        };
+        let access = Arc::get_mut(&mut self.access).unwrap();
+        assert!(access.grants.is_empty());
+        access.grants.push(grant.clone());
+        Client::authorized(endpoint, grant, Peer::Parent(std::process::id()))
+    }
 }
 
 #[derive(Clone)]
 pub struct Client {
     endpoint: Endpoint,
-    #[cfg(not(target_os = "linux"))]
-    expected_images: Vec<std::path::PathBuf>,
+    grant: auth::Grant,
+    peer: Peer,
+}
+#[derive(Clone)]
+enum Peer {
+    Child(Arc<process::OwnedProcess>),
+    Parent(u32),
 }
 impl Client {
-    pub fn with_endpoint(
-        endpoint: Endpoint,
-        expected_image: std::path::PathBuf,
-    ) -> Result<Self, String> {
-        if endpoint.lane() != Lane::Shadow {
-            return Err("ipc_wrong_lane".into());
-        }
-        if !expected_image.is_absolute() {
-            return Err("invalid_core_binary".into());
-        }
-        Ok(Self {
+    fn authorized(endpoint: Endpoint, grant: auth::Grant, peer: Peer) -> Self {
+        Self {
             endpoint,
-            #[cfg(not(target_os = "linux"))]
-            expected_images: vec![expected_image],
-        })
-    }
-    pub fn current_user() -> Result<Self, String> {
-        let paths = crate::config::Paths::discover().map_err(|e| e.to_string())?;
-        let binary = std::env::current_exe()
-            .map_err(|_| "invalid_core_binary")?
-            .parent()
-            .ok_or("invalid_core_binary")?
-            .join(format!("nymwrapd{}", std::env::consts::EXE_SUFFIX));
-        let client = Self::with_endpoint(
-            Endpoint::new(paths.core_shadow, Lane::Shadow).map_err(|e| e.to_string())?,
-            binary,
-        )?;
-        #[cfg(not(target_os = "linux"))]
-        {
-            let mut client = client;
-            if cfg!(debug_assertions) {
-                client.expected_images.push(
-                    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                        .join("../../target/debug")
-                        .join(format!("nymwrapd{}", std::env::consts::EXE_SUFFIX)),
-                );
-            }
-            Ok(client)
+            grant,
+            peer,
         }
-        #[cfg(target_os = "linux")]
-        Ok(client)
+    }
+    pub fn from_parent(
+        parent: ParentSession,
+    ) -> Result<(Self, tokio::sync::oneshot::Receiver<()>), String> {
+        if parent.grant.role != RpcRole::Api {
+            return Err("ipc_authorization_failed".into());
+        }
+        let paths = crate::config::Paths::discover().map_err(|e| e.to_string())?;
+        let endpoint =
+            Endpoint::new(paths.core_shadow, Lane::Shadow).map_err(|error| error.to_string())?;
+        let peer = Peer::Parent(parent.grant.pid);
+        Ok((
+            Self::authorized(endpoint, parent.grant, peer),
+            parent.parent_closed,
+        ))
     }
     pub async fn request(&self, command: Command) -> Result<Reply, String> {
         use rand::RngCore;
@@ -858,25 +899,29 @@ impl Client {
         }
         let expected = command.expected();
         let mut stream = self.endpoint.connect().await.map_err(|e| e.to_string())?;
-        #[cfg(not(target_os = "linux"))]
-        {
-            let pid = nw_ipc::peer_process(&stream).map_err(|_| "ipc_wrong_peer")?;
-            let image = nw_platform::process_image(pid)
-                .and_then(|p| p.canonicalize())
-                .map_err(|_| "ipc_wrong_peer")?;
-            if !self
-                .expected_images
-                .iter()
-                .any(|p| p.canonicalize().is_ok_and(|expected| expected == image))
-            {
-                return Err("ipc_wrong_peer".into());
-            }
+        let pid = nw_ipc::peer_process(&stream).map_err(|_| "ipc_wrong_peer")?;
+        let confirmed = match &self.peer {
+            Peer::Child(process) => process.confirms(pid),
+            Peer::Parent(expected) => *expected == pid,
+        };
+        if !confirmed {
+            return Err("ipc_wrong_peer".into());
         }
+        let challenge =
+            nw_ipc::read_frame_timeout(&mut stream, auth::CHALLENGE_BYTES, auth::HANDSHAKE)
+                .await
+                .map_err(|error| error.to_string())?;
+        let challenge = <[u8; auth::CHALLENGE_BYTES]>::try_from(&**challenge)
+            .map_err(|_| "ipc_authentication_failed")?;
         let bytes = zeroize::Zeroizing::new(
             serde_json::to_vec(&Packet::new(Lane::Shadow, id, command))
                 .map_err(|_| "invalid_core_request")?,
         );
-        nw_ipc::write_frame(&mut stream, &bytes, FRAME_LIMIT)
+        let encrypted = self
+            .grant
+            .key
+            .seal(self.grant.role, &challenge, false, &bytes)?;
+        nw_ipc::write_frame(&mut stream, &encrypted, FRAME_LIMIT)
             .await
             .map_err(|e| e.to_string())?;
         let response = nw_ipc::read_frame_timeout(
@@ -886,6 +931,10 @@ impl Client {
         )
         .await
         .map_err(|e| e.to_string())?;
+        let response = self
+            .grant
+            .key
+            .open(self.grant.role, &challenge, true, &response)?;
         let packet: Packet<Reply> =
             serde_json::from_slice(&response).map_err(|_| "invalid_core_reply")?;
         if packet.version != nw_proto::SCHEMA_VERSION
@@ -943,11 +992,11 @@ mod tests {
         let _keep = dir;
         let endpoint = Endpoint::new(address, Lane::Shadow).unwrap();
         let listener = Listener::bind(endpoint.clone()).unwrap();
-        let service = Service::new();
+        let mut service = Service::new();
+        let client = service.authorize_test_client(endpoint, RpcRole::Control);
         let server = tokio::spawn(async move {
             service.serve_shadow(listener).await.unwrap();
         });
-        let client = Client::with_endpoint(endpoint, std::env::current_exe().unwrap()).unwrap();
         assert!(matches!(
             client.request(Command::Status {}).await.unwrap(),
             Reply::Status { .. }

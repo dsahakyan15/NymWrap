@@ -13,10 +13,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         );
         return Ok(());
     }
-    if !args.is_empty() {
+    if args.len() != 1 || args[0] != "--bootstrap-stdin" {
         return Err("invalid_arguments".into());
     }
     nw_platform::harden_process()?;
+    let parent = nw_core::service::ParentSession::read(nw_core::service::RpcRole::Control).await?;
     let paths = nw_core::config::Paths::discover()?;
     let egress = spawn_egress(&paths).await;
     // The idle network child already exists. This filter is never weakened.
@@ -27,13 +28,38 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         nw_proto::Lane::Shadow,
     )?)?;
     let cover = nw_ipc::Listener::bind(nw_bridge::endpoint()?)?;
-    let service = nw_core::service::Service::runtime(egress);
-    tokio::select! {
-        result=service.serve_shadow(shadow)=>{result?;},
-        result=service.serve_cover(cover)=>{result?;},
-        _traffic=service.run_traffic()=>{},
-        _signal=tokio::signal::ctrl_c()=>{},
-        _stopped=service.stopped()=>{},
+    let mut service = nw_core::service::Service::runtime(egress);
+    let mut parent_closed = service.authorize_parent(parent)?;
+    let api_binary = std::env::current_exe()?
+        .parent()
+        .ok_or("runtime_component_missing")?
+        .join(format!("nw-api{}", std::env::consts::EXE_SUFFIX));
+    let _api = service.spawn_api(&api_binary).await?;
+    let mut parent_gone = false;
+    let shadow_service = service.serve_shadow(shadow);
+    let cover_service = service.serve_cover(cover);
+    let traffic_service = service.run_traffic();
+    tokio::pin!(shadow_service, cover_service, traffic_service);
+    loop {
+        tokio::select! {
+          result=&mut shadow_service=>{result?;},
+          result=&mut cover_service=>{result?;},
+          _traffic=&mut traffic_service=>{},
+          _signal=tokio::signal::ctrl_c()=>{},
+          _stopped=service.stopped()=>{},
+          _parent=&mut parent_closed, if !parent_gone=>{
+              parent_gone = true;
+              let reply = service.handle(nw_core::service::Command::CloseSession {}).await;
+              if matches!(reply, nw_core::service::Reply::SessionTiming {
+                  value: nw_core::service::SessionTiming {
+                      phase: nw_core::service::SessionPhase::Tail, ..
+                  }
+              }) {
+                  continue;
+              }
+          },
+        }
+        break;
     }
     let _ = service.handle(nw_core::service::Command::Lock {}).await;
     Ok(())
