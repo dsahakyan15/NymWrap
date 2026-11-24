@@ -12,7 +12,7 @@ use tokio::process::{Child, ChildStdin};
 
 pub(super) struct OwnedProcess {
     pub(super) child: Mutex<Child>,
-    _lifetime: ChildStdin,
+    lifetime: Option<ChildStdin>,
     kill_on_drop: bool,
 }
 impl Drop for OwnedProcess {
@@ -45,6 +45,20 @@ impl OwnedProcess {
 }
 pub struct ApiProcess {
     _process: Arc<OwnedProcess>,
+}
+impl ApiProcess {
+    /// Let the API release its Unix listener before a new session can bind it.
+    /// Drop still kills the retained child if graceful shutdown fails.
+    pub async fn shutdown(mut self) -> Result<(), String> {
+        let process = Arc::get_mut(&mut self._process).ok_or("api_shutdown_failed")?;
+        drop(process.lifetime.take());
+        let child = process.child.get_mut().map_err(|_| "api_shutdown_failed")?;
+        tokio::time::timeout(std::time::Duration::from_secs(5), child.wait())
+            .await
+            .map_err(|_| "api_shutdown_timeout")?
+            .map_err(|_| "api_shutdown_failed")?;
+        Ok(())
+    }
 }
 pub(super) async fn launch(
     binary: &Path,
@@ -102,7 +116,7 @@ pub(super) async fn launch(
     Ok((
         Arc::new(OwnedProcess {
             child: Mutex::new(child),
-            _lifetime: lifetime,
+            lifetime: Some(lifetime),
             kill_on_drop,
         }),
         Grant { key, pid, role },

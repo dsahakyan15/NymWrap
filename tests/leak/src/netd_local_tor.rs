@@ -58,6 +58,46 @@ fn shaped(fact: &str, length: usize, index: usize) -> Request {
         authorization: "synthetic-provider-token".into(),
     }
 }
+fn chutney_config(bytes: &[u8]) -> arti_client::TorClientConfig {
+    // Pinned Chutney emits the pre-proposal-330 list. Arti 0.48 expects
+    // AuthorityContacts; never retain its public authority contact defaults.
+    let mut config: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+    let authorities = &mut config["tor_network"]["authorities"];
+    let identities: Vec<_> = authorities
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|authority| authority["v3ident"].as_str().unwrap().to_owned())
+        .collect();
+    assert!(!identities.is_empty());
+    *authorities = serde_json::json!({
+        "v3idents": identities, "uploads": [], "downloads": [], "votes": []
+    });
+    let builder: arti_client::config::TorClientConfigBuilder =
+        serde_json::from_value(config).unwrap();
+    builder.build().unwrap()
+}
+#[test]
+fn chutney_authorities_replace_all_public_directory_defaults() {
+    let identity = "0101010101010101010101010101010101010101";
+    let config = serde_json::json!({"tor_network": {
+        "authorities": [{"name":"synthetic", "v3ident":identity}],
+        "fallback_caches": [{"rsa_identity":identity,
+            "ed_identity":base64ct::Base64Unpadded::encode_string(&[2; 32]),
+            "orports":["192.0.2.2:5000"]}]
+    }});
+    let config = chutney_config(&serde_json::to_vec(&config).unwrap());
+    let directory = config.dir_mgr_config().unwrap();
+    let authorities = directory.authorities();
+    assert_eq!(
+        authorities.v3idents(),
+        &vec![tor_llcrypto::pk::rsa::RsaIdentity::from_hex(identity).unwrap()]
+    );
+    assert!(authorities.uploads().is_empty());
+    assert!(authorities.downloads().is_empty());
+    assert!(authorities.votes().is_empty());
+    assert_eq!(directory.fallbacks().len(), 1);
+}
 #[test]
 fn every_pcap_canary_and_encoding_is_vetoed_after_a_model_reintroduction() {
     let data = canaries();
@@ -95,11 +135,10 @@ async fn actual_local_tor_tls_packets_have_no_hard_canaries_or_direct_fallback()
     nw_platform::encrypted_directory(&fixture.join("mount/private")).unwrap();
     let bytes = std::fs::read(fixture.join("arti.json")).unwrap();
     assert!(bytes.len() < 128 * 1024);
-    let builder: arti_client::config::TorClientConfigBuilder =
-        serde_json::from_slice(&bytes).unwrap();
+    let config = chutney_config(&bytes);
     let root = tokio::time::timeout(
         Duration::from_secs(180),
-        TorClient::create_bootstrapped(builder.build().unwrap()),
+        TorClient::create_bootstrapped(config),
     )
     .await
     .unwrap()

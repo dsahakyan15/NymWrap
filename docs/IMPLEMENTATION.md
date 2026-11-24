@@ -27,10 +27,46 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 Первый публичный run: красные dependency-audits (известный непокрытый cargo-vet),
 network/ubuntu (Tor убрал 16.0.1 с dist — источник переведён на archive, ADR 0048)
 и tor-pcap: закреплённый chutney 62b54a5 (он же последний upstream) импортирует
-`cgitb`, удалённый в Python 3.13, а runner использует Python 3.14. Не исправлено.
+`cgitb`, удалённый в Python 3.13, а runner использует Python 3.14. Исправление —
+ADR 0081 и результат ниже.
 Run 45482671411 (a73683a): network зелёный на трёх ОС после перехода на archive.
 Красные: core/ubuntu (rpc_process, авторизация RPC 3d262fa впервые в CI),
 desktop (Firefox native: fixture_core_start_failed), tor-pcap, dependency-audits.
+
+**Задача 1 — CI восстановлен в согласованном объёме (ADR 0081).**
+Run [45503957290](https://github.com/dsahakyan15/NymWrap/actions/runs/45503957290)
+для кода c337c22 завершён 2026-11-25: все 16 заданий вне dependency-audits зелёные,
+включая core/network на Ubuntu, Windows и macOS, desktop и Firefox Native Messaging.
+Общий conclusion workflow остаётся failure только из-за четырёх cargo-vet jobs;
+они не менялись и относятся к задаче 9. Allowed-failure и отключений проверок нет.
+Предшествующий run 45503174436 выявил kernel IPv6 router solicitation в IPv4-only
+pcap fixture. Теперь IPv6 выключен и проверен только в созданных тестом namespace
+до поднятия veth; oracle по-прежнему отвергает IPv6-пакеты. Исправление вошло
+в полный успешный прогон выше; хостовые настройки не менялись.
+
+- Core штатно закрывает parent pipe API и ждёт retained child перед выходом:
+  Unix socket удаляется самим API, повторный запуск после Lock проходит.
+  Исходный actual_ regression проверил точные PID, чужой процесс/экземпляр,
+  bootstrap, повторный запуск и потерю parent pipe на всех трёх ОС.
+- Firefox fixture использует production авторизованный Client в отдельном
+  тестовом Cargo example; привилегированный CLI RPC остаётся отключённым.
+  CI-артефакт firefox-native.json: Firefox 160.0.1, connect/pause/resume,
+  независимое состояние core, ноль сетевых резервов и восстановленная регистрация.
+- Chutney: закреплён Python 3.12.16, явный интерпретатор в netns, минимальный
+  патч неиспользуемого импорта Traffic, адаптер authorities для Arti 0.48 и
+  обязательная готовность всех релеев. Tshark анализирует сверенные копии в
+  приватном /tmp, со штатным AppArmor. report.json: 16 запросов, пять корзин,
+  ноль канареек/прямых пакетов/DNS, разные circuits, fail-closed при живом provider,
+  teardown_complete=true. Это библиотечный Tor::send, не полный core/process pcap.
+- Windows fixture выделяет TCP/UDP-порты независимо и проверяет положительную
+  доставку до проверки запрета AppContainer; все отрицательные требования сохранены.
+
+Локально на Windows зелёные workspace test, clippy всех targets/features с
+`-D warnings`, nw-leak-tests, netd test/clippy, extension 24, app 12, browser 10,
+Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
+Скачанный CI pcap повторно прошёл oracle и сверку всех хешей локально.
+Логи — target/ci-*. Локальные результаты не заменяют указанный CI;
+этапы SPEC и оставшиеся критерии M2/M3H/M6 этой задачей не закрываются.
 
 **Подпись выпуска (ADR 0080).** `scripts/release-signature.mjs`: keygen/sign/verify
 ключом Tauri signer, проверка на `node:crypto`, тест с настоящим Tauri CLI.
@@ -90,7 +126,7 @@ desktop (Firefox native: fixture_core_start_failed), tor-pcap, dependency-audits
   shared-dispatcher-clippy-final,shared-dispatcher-lifecycle}.log.
   Ни процессный pcap, ни production netns этой частью ещё не реализованы.
 
-## Авторизация core RPC M6 — локальная часть, CI ещё не выполнен
+## Авторизация core RPC M6 — процессная проверка в CI, M6 открыт
 
 - ADR 0076: исходный отрицательный тест снова воспроизвёл выдачу канарейки
   неразрешённому same-user клиенту (target/core-rpc-authorization-red.log).
@@ -109,7 +145,8 @@ desktop (Firefox native: fixture_core_start_failed), tor-pcap, dependency-audits
   Реальные workspace/keyring/accounts не использовались. TempDir удалён;
   после проверки nymwrapd/nw-api не осталось в списке процессов.
   Лог target/core-rpc-native-final-process.log. Этот actual_ тест добавлен
-  в CI core matrix всех трёх ОС и scripts/check, но новый CI ещё не запускался.
+  в CI core matrix всех трёх ОС и scripts/check; теперь он прошёл на всех ОС
+  в run 45503957290 после исправления штатного завершения API (ADR 0081).
 - Bootstrap core/API и начальный ключ nw-netd читаются напрямую из read-only
   duplicate pipe, без дополнительной копии в общем буфере std::io::Stdin.
   Native тест pipe/read-only/file/null прошёл; копия handle не наследуется.

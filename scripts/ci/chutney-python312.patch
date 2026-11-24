@@ -1,0 +1,11 @@
+diff --git a/lib/chutney/TorNet.py b/lib/chutney/TorNet.py
+--- a/lib/chutney/TorNet.py
++++ b/lib/chutney/TorNet.py
+@@ -30,7 +30,6 @@ from chutney.Debug import debug_flag, debug
+ 
+ import chutney.Host
+ import chutney.Templating
+-import chutney.Traffic
+ import chutney.Util
+ 
+ # Keep in sync with torrc_templates/authority.i V3AuthVotingInterval

@@ -23,6 +23,10 @@ jobs:
           ref: 62b54a55215c94eb14adc22c5acd17b2ada04b76
           path: target/tools/chutney
           persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        id: chutney-python
+        with:
+          python-version: '3.12.16'
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
@@ -37,6 +41,8 @@ jobs:
           key: tor-pcap-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml') }}
       - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config tor tcpdump tshark nftables
       - run: bash scripts/ci/tor-pcap.sh
+        env:
+          NW_CHUTNEY_PYTHON: ${{ steps.chutney-python.outputs.python-path }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -53,6 +59,7 @@ jobs:
       - run: cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
   core:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}

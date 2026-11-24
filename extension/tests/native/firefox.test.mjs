@@ -9,6 +9,7 @@ import {resolve,join,dirname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomBytes,createHash} from 'node:crypto';
 import net from 'node:net';
+import {createInterface} from 'node:readline';
 import {Marionette} from '../browser/helpers/marionette.mjs';
 import {extensionDigest} from '../browser/helpers/artifact.mjs';
 import {HOST} from '../../dist/protocol.js';
@@ -21,6 +22,7 @@ async function stop(child){if(!alive(child))return;child.kill();for(let i=0;i<50
 test('stock Firefox Native Messaging reaches the actual core and persists pause/resume',{timeout:120000,skip:process.platform!=='win32'?'Windows native-host registration fixture':false},async t=>{
   await mkdir(base,{recursive:true});const fixture=await mkdtemp(join(base,'firefox-native-'));
   const binaries=join(root,'app/src-tauri/target/release'),profile=join(fixture,'profile'),extension=join(fixture,'extension');
+  const ownerBinary=join(root,'target/release/examples/native_browser_fixture.exe');
   const portablePowerShell=join(root,'target/tools/powershell-7.7.0/pwsh.exe');
   const powershell=await lstat(portablePowerShell).then(()=>portablePowerShell,e=>{if(e.code!=='ENOENT')throw e;return 'pwsh';}),alias='org.nymwrap.fixture'+randomBytes(12).toString('hex');
   const manifestPath=join(fixture,'native-host.json'),registryScript=join(root,'extension/tests/native/registry-fixture.ps1');
@@ -29,12 +31,11 @@ test('stock Firefox Native Messaging reaches the actual core and persists pause/
   await writeFile(reportPath,JSON.stringify({status:'running',browser:'Firefox',scope:'real native messaging integration'}));
   let daemon,browser,client,proxy,registered=false,created=false,store,record;
   const sockets=new Set(),mark=phase=>writeFile(reportPath,JSON.stringify({status:'running',browser:'Firefox',scope:'real native messaging integration',phase}));
+  let pending;
   function rpc(command){return new Promise((accept,reject)=>{
-    const child=spawn(join(binaries,'nymwrap.exe'),['rpc'],{cwd:root,env,windowsHide:true,stdio:['pipe','pipe','ignore']});let output='';
-    const timer=setTimeout(()=>{child.kill();reject(Error('fixture_rpc_timeout'));},15000);
-    child.stdout.on('data',b=>{output+=b;if(output.length>1024**2)child.kill();});child.once('error',reject);
-    child.once('exit',code=>{clearTimeout(timer);if(code!==0)reject(Error('fixture_rpc_failed'));else{try{accept(JSON.parse(output));}catch{reject(Error('fixture_rpc_invalid'));}}});
-    child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify(command));
+    if(pending||!alive(daemon))return reject(Error('fixture_rpc_unavailable'));
+    const timer=setTimeout(()=>{pending=undefined;daemon.kill();reject(Error('fixture_rpc_timeout'));},15000);
+    pending={accept,reject,timer};daemon.stdin.write(JSON.stringify(command)+'\n');
   });}
   function nativeStatus(){return new Promise((accept,reject)=>{
     const child=spawn(join(binaries,'nw-drift-host.exe'),[],{cwd:root,env,windowsHide:true,stdio:['pipe','pipe','ignore']});let output=Buffer.alloc(0);
@@ -46,9 +47,13 @@ test('stock Firefox Native Messaging reaches the actual core and persists pause/
   const registry=mode=>run(powershell,['-NoProfile','-NonInteractive','-File',registryScript,'-Mode',mode,'-Name',alias,'-Manifest',manifestPath],{windowsHide:true,maxBuffer:65536});
   try{
     await mkdir(env.XDG_RUNTIME_DIR);await mkdir(profile);await mkdir(extension);
-    let existing=false;try{await rpc({op:'status'});existing=true;}catch{}
-    if(existing)throw Error('daemon_already_running_close_it_before_native_test');
-    daemon=spawn(join(binaries,'nymwrapd.exe'),[],{cwd:root,env,windowsHide:true,stdio:'ignore'});daemon.on('error',()=>{});
+    daemon=spawn(ownerBinary,[join(binaries,'nymwrapd.exe')],{cwd:root,env,windowsHide:true,stdio:['pipe','pipe','ignore']});
+    const failed=()=>{if(pending){clearTimeout(pending.timer);pending.reject(Error('fixture_core_start_failed'));pending=undefined;}};
+    daemon.on('error',failed);daemon.on('exit',failed);daemon.stdin.on('error',failed);
+    createInterface({input:daemon.stdout}).on('line',line=>{
+      const request=pending;pending=undefined;if(!request)return;clearTimeout(request.timer);
+      try{if(line.length>1024**2)throw Error();const reply=JSON.parse(line);if(reply.error)request.reject(Error(reply.error));else request.accept(reply.value);}catch{request.reject(Error('fixture_rpc_invalid'));}
+    });
     await until(async()=>{if(!alive(daemon))throw Error('fixture_core_start_failed');try{return await rpc({op:'status'});}catch{return null;}},Boolean);
     const opened=await rpc({op:'open_workspace',password:'',create:true,profile:'standard'});store=opened.path;created=true;
     assert.ok(resolve(store).startsWith(resolve(fixture)+sep));assert.equal((await nativeStatus()).paused,false);
@@ -85,12 +90,13 @@ test('stock Firefox Native Messaging reaches the actual core and persists pause/
     await mark('pause_resume_verified');
     assert.equal((await rpc({op:'load_network_usage'})).requests,0);
     const hash=async path=>createHash('sha256').update(await readFile(path)).digest('hex');
-    record={status:'passed',browser:'Firefox '+session.capabilities.browserVersion,checked_at:new Date().toISOString(),extension_sha256:artifact,native_host_sha256:await hash(join(binaries,'nw-drift-host.exe')),core_sha256:await hash(join(binaries,'nymwrapd.exe')),test_sha256:await hash(fileURLToPath(import.meta.url)),registry_fixture_sha256:await hash(registryScript),relay_source_sha256:await hash(wrapperSource),relay_binary_sha256:await hash(wrapper),scope:'real Firefox Native Messaging via temporary alias; unchanged product JS and CSP; actual release host/core; synthetic encrypted workspace; network denied',scenarios:['connect','pause','resume','independent_core_status','zero_network_reservations'],registry_restored:true};
+    record={status:'passed',browser:'Firefox '+session.capabilities.browserVersion,checked_at:new Date().toISOString(),extension_sha256:artifact,native_host_sha256:await hash(join(binaries,'nw-drift-host.exe')),core_sha256:await hash(join(binaries,'nymwrapd.exe')),owner_fixture_sha256:await hash(ownerBinary),owner_source_sha256:await hash(join(root,'tests/leak/src/native_browser_fixture.rs')),test_sha256:await hash(fileURLToPath(import.meta.url)),registry_fixture_sha256:await hash(registryScript),relay_source_sha256:await hash(wrapperSource),relay_binary_sha256:await hash(wrapper),scope:'real Firefox Native Messaging via temporary alias; unchanged product JS and CSP; actual release host/core with desktop authenticated parent; synthetic encrypted workspace; network denied',scenarios:['owned_authenticated_session','connect','pause','resume','independent_core_status','zero_network_reservations'],registry_restored:true};
   }finally{
     if(client){try{await client.call('Marionette:Quit',{flags:['eForceQuit']});}catch{}client.close();}
     await stop(browser);
     if(registered)await registry('Remove');
     if(created){const status=await rpc({op:'workspace_status'});if(resolve(status.path)!==resolve(store)||!resolve(store).startsWith(resolve(fixture)+sep))throw Error('foreign_workspace_cleanup_refused');await rpc({op:'destroy_data',confirmation:'СТЕРЕТЬ ВСЁ'});}
+    if(alive(daemon)){daemon.stdin.end();await until(async()=>alive(daemon),value=>!value,10000);}
     await stop(daemon);for(const socket of sockets)socket.destroy();if(proxy?.listening)await new Promise(r=>proxy.close(r));
     const actual=await realpath(fixture),parent=await realpath(base);if((await lstat(fixture)).isSymbolicLink()||!actual.toLowerCase().startsWith((parent+sep).toLowerCase()))throw Error('unsafe_native_fixture_cleanup');await rm(fixture,{recursive:true,force:true});
   }

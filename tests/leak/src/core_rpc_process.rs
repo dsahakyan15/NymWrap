@@ -207,8 +207,9 @@ async fn actual_core_api_bootstrap_rejects_foreign_processes_and_exits_with_pare
     let output = result.expect("native RPC probe timed out").unwrap();
     assert!(
         output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stdout)
+        "stdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
     );
     assert!(String::from_utf8_lossy(&output.stdout).contains("NYMWRAP_RPC_PROCESS_PROBE_OK"));
 }

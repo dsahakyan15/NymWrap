@@ -34,7 +34,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .parent()
         .ok_or("runtime_component_missing")?
         .join(format!("nw-api{}", std::env::consts::EXE_SUFFIX));
-    let _api = service.spawn_api(&api_binary).await?;
+    let api = service.spawn_api(&api_binary).await?;
     let mut parent_gone = false;
     let shadow_service = service.serve_shadow(shadow);
     let cover_service = service.serve_cover(cover);
@@ -62,6 +62,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         break;
     }
     let _ = service.handle(nw_core::service::Command::Lock {}).await;
+    api.shutdown().await?;
     Ok(())
 }
 async fn spawn_egress(

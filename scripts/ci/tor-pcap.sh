@@ -20,6 +20,7 @@ link_created=false
 mounted=false
 capture_client=
 capture_provider=
+analysis_root=
 output="$project_root/target/pcap"
 mkdir -p -- "$output"
 cleanup() {
@@ -49,6 +50,13 @@ cleanup() {
   for log in "$fixture_root/chutney/nodes"/*/notice.log; do
     if test -f "$log"; then tail -n 80 -- "$log" >> "$output/chutney-notices.log"; fi
   done
+  if test -n "$analysis_root"; then
+    if test ! -L "$analysis_root" && test "$(realpath "$analysis_root")" = "$analysis_root" && [[ "$analysis_root" == /tmp/nymwrap-pcap.* ]]; then
+      rm -rf -- "$analysis_root" || failed=1
+    else
+      failed=1
+    fi
+  fi
   if "$mounted"; then
     if sudo umount -- "$fixture_root/mount"; then mounted=false; else failed=1; fi
   fi
@@ -68,10 +76,16 @@ trap cleanup EXIT
 
 chutney="$project_root/target/tools/chutney"
 test "$(git -C "$chutney" rev-parse HEAD)" = 62b54a55215c94eb14adc22c5acd17b2ada04b76
+chutney_python=$(realpath "${NW_CHUTNEY_PYTHON:?}")
+"$chutney_python" -c 'import cgitb,sys; assert sys.version_info[:2] == (3,12)'
+git -C "$chutney" diff --exit-code
+git -C "$chutney" apply --check "$project_root/scripts/ci/chutney-python312.patch"
+git -C "$chutney" apply "$project_root/scripts/ci/chutney-python312.patch"
+PYTHONPATH="$chutney/lib" "$chutney_python" -c 'import chutney.TorNet'
 cargo test --manifest-path daemons/nw-netd/Cargo.toml --lib --no-run --message-format=json --locked > "$fixture_root/build.jsonl" 2> "$fixture_root/build.log"
 test_binary=$(node scripts/pcap-report.mjs --binary "$fixture_root/build.jsonl")
 node_binary=$(command -v node)
-{ tor --version; tcpdump --version; tshark --version; } > "$fixture_root/tools.txt" 2>&1
+{ "$chutney_python" --version; sha256sum scripts/ci/chutney-python312.patch; tor --version; tcpdump --version; tshark --version; } > "$fixture_root/tools.txt" 2>&1
 
 mkdir -- "$fixture_root/mount"
 truncate -s 256M -- "$fixture_root/state.img"
@@ -102,6 +116,17 @@ sudo ip link add "$client_if" type veth peer name "$relay_if"
 link_created=true
 sudo ip link set "$client_if" netns "$client_ns"
 sudo ip link set "$relay_if" netns "$relay_ns"
+# This fixture has only IPv4 addresses. Suppress kernel link-local IPv6
+# router solicitations in these owned namespaces, before either veth is up.
+ipv4_only() {
+  local namespace=$1 interface=$2 scope
+  sudo ip netns exec "$namespace" sysctl -q -w net.ipv6.conf.all.disable_ipv6=1 net.ipv6.conf.default.disable_ipv6=1 "net.ipv6.conf.$interface.disable_ipv6=1"
+  for scope in all default "$interface"; do
+    test "$(sudo ip netns exec "$namespace" sysctl -n "net.ipv6.conf.$scope.disable_ipv6")" = 1
+  done
+}
+ipv4_only "$client_ns" "$client_if"
+ipv4_only "$relay_ns" "$relay_if"
 sudo ip -n "$client_ns" address add 192.0.2.1/30 dev "$client_if"
 sudo ip -n "$relay_ns" address add 192.0.2.2/30 dev "$relay_if"
 sudo ip -n "$client_ns" link set lo up
@@ -125,13 +150,13 @@ sudo ip netns exec "$client_ns" nft -f "$fixture_root/client.nft"
 test -z "$(sudo ip -n "$client_ns" route show default)"
 test -z "$(sudo ip -n "$relay_ns" route show default)"
 netns_cookie=$(sudo ip netns exec "$client_ns" readlink /proc/self/ns/net)
-relay_env=(env -i PATH=/usr/bin:/bin TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" CHUTNEY_PATH="$chutney" CHUTNEY_DATA_DIR="$fixture_root/chutney" CHUTNEY_LISTEN_ADDRESS=192.0.2.2 CHUTNEY_DNS_CONF="$fixture_root/resolv.conf")
+relay_env=(env -i PATH=/usr/bin:/bin PYTHON="$chutney_python" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" CHUTNEY_PATH="$chutney" CHUTNEY_DATA_DIR="$fixture_root/chutney" CHUTNEY_LISTEN_ADDRESS=192.0.2.2 CHUTNEY_DNS_CONF="$fixture_root/resolv.conf" CHUTNEY_START_TIME=180)
 relay() { sudo ip netns exec "$relay_ns" setpriv --reuid "$runner_uid" --regid "$runner_gid" --init-groups "${relay_env[@]}" "$@"; }
 relay "$node_binary" "$project_root/scripts/ci/tor-provider.mjs" "$fixture_root" > "$fixture_root/provider.log" 2>&1 &
 for attempt in $(seq 1 100); do test -f "$fixture_root/provider-ready" && break; sleep 0.1; done
 test -f "$fixture_root/provider-ready"
 relay "$chutney/chutney" configure "$chutney/networks/basic-min"
-python3 - "$fixture_root" <<'PY'
+"$chutney_python" - "$fixture_root" <<'PY'
 import json,pathlib,sys,tomllib
 root=pathlib.Path(sys.argv[1])
 config=tomllib.loads((root/'chutney/nodes/arti.toml').read_text())
@@ -139,6 +164,9 @@ config['storage']={'cache_dir':str(root/'mount/private/cache'),'state_dir':str(r
 (root/'arti.json').write_text(json.dumps(config))
 PY
 relay "$chutney/chutney" start "$chutney/networks/basic-min"
+# Arti can bootstrap from an early consensus containing only the authorities.
+# Require Chutney's full network/descriptor readiness, including the sole exit.
+relay "$chutney/chutney" wait_for_bootstrap "$chutney/networks/basic-min"
 sudo ip netns exec "$client_ns" tcpdump -Z root -i "$client_if" -s 0 -U -w "$fixture_root/client.pcap" > "$fixture_root/tcpdump-client.log" 2>&1 &
 capture_client=$!
 sudo ip netns exec "$relay_ns" tcpdump -Z root -i lo -s 0 -U -w "$fixture_root/provider.pcap" 'tcp port 443' > "$fixture_root/tcpdump-provider.log" 2>&1 &
@@ -163,6 +191,15 @@ wait "$capture_provider"
 capture_client=
 capture_provider=
 sudo chown "$runner_uid:$runner_gid" -- "$fixture_root/client.pcap" "$fixture_root/provider.pcap"
-tshark -r "$fixture_root/provider.pcap" -o "tls.keylog_file:$fixture_root/tls.keys" -Y http.request -T pdml > "$fixture_root/provider.pdml"
-tshark -r "$fixture_root/client.pcap" -T fields -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e tcp.dstport -e udp.dstport > "$fixture_root/client.tsv"
+# Ubuntu 26.04's tshark AppArmor profile permits user-tmp, not RUNNER_TEMP
+# under /home. Keep the profile enforced and stage only synthetic evidence.
+analysis_root=$(mktemp -d /tmp/nymwrap-pcap.XXXXXXXX)
+test "$(realpath "$analysis_root")" = "$analysis_root"
+for file in provider.pcap client.pcap tls.keys; do
+  cp -- "$fixture_root/$file" "$analysis_root/$file"
+  cmp -- "$fixture_root/$file" "$analysis_root/$file"
+done
+tshark -r "$analysis_root/provider.pcap" -o "tls.keylog_file:$analysis_root/tls.keys" -Y http.request -T pdml > "$analysis_root/provider.pdml"
+tshark -r "$analysis_root/client.pcap" -T fields -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e tcp.dstport -e udp.dstport > "$analysis_root/client.tsv"
+cp -- "$analysis_root/provider.pdml" "$analysis_root/client.tsv" "$fixture_root/"
 node scripts/pcap-report.mjs --fixture "$fixture_root" --out "$output"

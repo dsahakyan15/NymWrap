@@ -19,10 +19,12 @@ fn appcontainer_child_probe() {
         .read_to_string(&mut input)
         .unwrap();
     let mut lines = input.lines();
-    assert_eq!(lines.next(), Some("NYMWRAP_SANDBOX_PROBE_V1"));
+    assert_eq!(lines.next(), Some("NYMWRAP_SANDBOX_PROBE_V2"));
     let read = lines.next().unwrap();
     let write = lines.next().unwrap();
     let address = lines.next().unwrap().parse().unwrap();
+    let udp_address: std::net::SocketAddr = lines.next().unwrap().parse().unwrap();
+    assert!(lines.next().is_none());
     let read_denied = std::fs::read(read).is_err();
     let write_denied = std::fs::write(write, b"SYNTHETIC_SANDBOX_PROBE").is_err();
     let temp_denied = std::fs::write(
@@ -38,7 +40,7 @@ fn appcontainer_child_probe() {
     .map_or(true, |result| result.is_err());
     let udp_denied = std::panic::catch_unwind(|| {
         UdpSocket::bind("127.0.0.1:0")
-            .and_then(|socket| socket.send_to(b"SYNTHETIC_SANDBOX_PROBE", address))
+            .and_then(|socket| socket.send_to(b"SYNTHETIC_SANDBOX_PROBE", udp_address))
     })
     .map_or(true, |result| result.is_err());
     let child_denied = std::process::Command::new(std::env::current_exe().unwrap())
@@ -132,15 +134,32 @@ fn check_network_files_and_children(device: bool) {
     let target = root.join("forbidden-write");
     std::fs::write(&source, b"SYNTHETIC_PARSER_SOURCE").unwrap();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    listener.set_nonblocking(true).unwrap();
-    let udp = UdpSocket::bind(listener.local_addr().unwrap()).unwrap();
+    // TCP's allocated ephemeral port can be excluded or occupied for UDP.
+    // Let Windows allocate each protocol's port independently.
+    let udp = UdpSocket::bind("127.0.0.1:0").unwrap();
     udp.set_read_timeout(Some(Duration::from_millis(500)))
         .unwrap();
+    // Prove both receivers work before testing the confined child's denial.
+    let connection =
+        TcpStream::connect_timeout(&listener.local_addr().unwrap(), Duration::from_secs(2))
+            .unwrap();
+    let (accepted, _) = listener.accept().unwrap();
+    drop((connection, accepted));
+    listener.set_nonblocking(true).unwrap();
+    let sender = UdpSocket::bind("127.0.0.1:0").unwrap();
+    sender
+        .send_to(b"SYNTHETIC_BASELINE", udp.local_addr().unwrap())
+        .unwrap();
+    let mut packet = [0; 64];
+    let (size, _) = udp.recv_from(&mut packet).unwrap();
+    assert_eq!(&packet[..size], b"SYNTHETIC_BASELINE");
+    drop(sender);
     let input = format!(
-        "NYMWRAP_SANDBOX_PROBE_V1\n{}\n{}\n{}\n",
+        "NYMWRAP_SANDBOX_PROBE_V2\n{}\n{}\n{}\n{}\n",
         source.display(),
         target.display(),
-        listener.local_addr().unwrap()
+        listener.local_addr().unwrap(),
+        udp.local_addr().unwrap()
     );
     let args = [
         "--exact".into(),

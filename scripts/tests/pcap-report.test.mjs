@@ -28,3 +28,8 @@ test('independent packet oracle detects raw, encoded, wrapped and partial path c
   }
   assert.equal(hasCanary('ordinary public pottery instructions'),false);
 });
+
+test('IPv4-only packet evidence rejects kernel IPv6 router solicitations',()=>{
+  const data=capture();data.client+='\t\tfe80::1\tff02::2\t\t\n';
+  assert.throws(()=>auditCapture(data),/unexpected_ipv6_packet/);
+});
