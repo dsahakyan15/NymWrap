@@ -31,13 +31,7 @@ impl Client {
             .canonicalize()
             .map_err(|_| "transport_component_missing")?;
         let mut command = tokio::process::Command::new(&binary);
-        command
-            .args(["--socket", endpoint.value()])
-            .env_clear()
-            .stdin(Stdio::piped())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .kill_on_drop(true);
+        command.args(["--socket", endpoint.value()]).env_clear();
         for name in [
             "SystemRoot",
             "WINDIR",
@@ -52,6 +46,32 @@ impl Client {
                 command.env(name, value);
             }
         }
+        Self::spawn_prepared(command, endpoint).await
+    }
+    /// Trusted launchers may prepare namespace/identity setup and fixed fixture
+    /// arguments. The program must already be canonical and absolute. Authority
+    /// still belongs to our retained child; no existing PID can be attached.
+    /// Bootstrap stdin and output sinks are always replaced here, never supplied
+    /// by the caller. The ordinary spawn() keeps its minimal environment policy.
+    pub async fn spawn_prepared(
+        mut command: tokio::process::Command,
+        endpoint: Endpoint,
+    ) -> Result<Self, &'static str> {
+        let program = Path::new(command.as_std().get_program());
+        if endpoint.lane() != nw_proto::Lane::Shadow || !program.is_absolute() {
+            return Err("invalid_egress_configuration");
+        }
+        let binary = program
+            .canonicalize()
+            .map_err(|_| "transport_component_missing")?;
+        if program != binary || !binary.is_file() {
+            return Err("invalid_egress_configuration");
+        }
+        command
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .kill_on_drop(true);
         #[cfg(windows)]
         command.creation_flags(0x08000000);
         let mut process = command.spawn().map_err(|_| "transport_start_failed")?;

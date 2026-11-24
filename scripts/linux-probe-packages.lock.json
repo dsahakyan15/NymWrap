@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "alpine": "v3.24",
+  "arch": "x86_64",
+  "packages": [
+    {"name":"python3","version":"3.14.10-r2","repository":"main","archive":"python3-3.14.10-r2.apk","sha256":"ef4c4688fa4360e7b544aa723374fb202af25ff662b0b6adef2cd34f03254c7b","bytes":8482165,"license":"PSF-2.0"},
+    {"name":"bubblewrap","version":"0.12.0-r0","repository":"main","archive":"bubblewrap-0.12.0-r0.apk","sha256":"7755592c3f7c6de79a5c3c13554ada6302dbd98e520fe6dd8064f87ba77092e5","bytes":29647,"license":"LGPL-2.1-or-later"}
+  ]
+}

@@ -72,6 +72,61 @@ fn nw_shield_for_test() -> Result<nw_shield::Prepared, nw_shield::Block> {
 }
 
 #[tokio::test]
+async fn prepared_command_still_uses_an_owned_child_and_a_private_bootstrap_pipe() {
+    let directory = tempfile::tempdir().unwrap();
+    #[cfg(windows)]
+    let address = format!("nymwrap-netd-prepared-test-{}", std::process::id());
+    #[cfg(unix)]
+    let address = directory
+        .path()
+        .join("private/prepared.sock")
+        .to_string_lossy()
+        .into_owned();
+    let endpoint = nw_ipc::Endpoint::new(address, Lane::Shadow).unwrap();
+    let binary = std::path::Path::new(env!("CARGO_BIN_EXE_nw-netd"))
+        .canonicalize()
+        .unwrap();
+    let mut command = tokio::process::Command::new(binary);
+    command
+        .args(["--socket", endpoint.value()])
+        .env_clear()
+        .stdin(std::process::Stdio::null());
+    for name in [
+        "SystemRoot",
+        "WINDIR",
+        "LOCALAPPDATA",
+        "APPDATA",
+        "USERPROFILE",
+        "HOME",
+        "TEMP",
+        "TMP",
+    ] {
+        if let Some(value) = std::env::var_os(name) {
+            command.env(name, value);
+        }
+    }
+    let client = Client::spawn_prepared(command, endpoint.clone())
+        .await
+        .unwrap();
+    let reset = client.reset().await;
+    drop(client);
+    let mut stopped = false;
+    for _ in 0..50 {
+        if endpoint.connect().await.is_err() {
+            stopped = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    directory.close().unwrap();
+    reset.unwrap();
+    assert!(
+        stopped,
+        "the prepared launch must retain the same parent/child lifetime rule"
+    );
+}
+
+#[tokio::test]
 async fn one_idle_unauthenticated_peer_cannot_hold_the_transport_for_the_general_frame_timeout() {
     let directory = tempfile::tempdir().unwrap();
     #[cfg(windows)]

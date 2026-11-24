@@ -13,6 +13,102 @@ pub use windows_sandbox::{
 fn failed() -> io::Error {
     io::Error::other("platform_security_operation_failed")
 }
+
+/// An administrative launcher may drop to a non-root identity, never to root.
+#[cfg(target_os = "linux")]
+#[derive(Clone, Copy)]
+pub struct ChildIdentity {
+    uid: libc::uid_t,
+    gid: libc::gid_t,
+}
+#[cfg(target_os = "linux")]
+impl ChildIdentity {
+    pub fn new(uid: u32, gid: u32) -> io::Result<Self> {
+        if uid == 0 || gid == 0 || uid == u32::MAX || gid == u32::MAX {
+            return Err(failed());
+        }
+        Ok(Self { uid, gid })
+    }
+}
+/// Prepare a trusted command in an already provisioned netns. This grants no
+/// privilege: the caller must already be root and setns must pass the kernel's
+/// namespace checks. No shell, path lookup, sudo or fallback is involved.
+#[cfg(target_os = "linux")]
+pub fn enter_child_network_namespace(
+    command: &mut std::process::Command,
+    namespace: &std::fs::File,
+    identity: ChildIdentity,
+) -> io::Result<()> {
+    use std::os::{fd::AsRawFd, unix::process::CommandExt};
+    if unsafe { libc::geteuid() } != 0
+        || unsafe { libc::prctl(libc::PR_GET_SECUREBITS, 0, 0, 0, 0) } != 0
+    {
+        return Err(failed());
+    }
+    let namespace = namespace.try_clone()?;
+    // SAFETY: after fork, only direct Linux syscalls and errno capture run.
+    // The owned CLOEXEC descriptor remains live until exec; no allocation,
+    // environment access, locks or libc thread-synchronizing setxid wrappers.
+    unsafe {
+        command.pre_exec(move || {
+            if libc::prctl(libc::PR_GET_SECUREBITS, 0, 0, 0, 0) != 0 {
+                return Err(io::Error::from_raw_os_error(libc::EPERM));
+            }
+            if libc::setns(namespace.as_raw_fd(), libc::CLONE_NEWNET) != 0
+                || libc::prctl(libc::PR_SET_KEEPCAPS, 0, 0, 0, 0) != 0
+                || libc::syscall(libc::SYS_setgroups, 0usize, std::ptr::null::<libc::gid_t>()) != 0
+                || libc::syscall(
+                    libc::SYS_setresgid,
+                    libc::c_ulong::from(identity.gid),
+                    libc::c_ulong::from(identity.gid),
+                    libc::c_ulong::from(identity.gid),
+                ) != 0
+                || libc::syscall(
+                    libc::SYS_setresuid,
+                    libc::c_ulong::from(identity.uid),
+                    libc::c_ulong::from(identity.uid),
+                    libc::c_ulong::from(identity.uid),
+                ) != 0
+                || libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0
+            {
+                return Err(io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+    Ok(())
+}
+/// One-way identity transition in the administrative coordinator, before it
+/// handles test data. libc setxid wrappers synchronize the process's threads.
+#[cfg(target_os = "linux")]
+pub fn drop_process_identity(identity: ChildIdentity) -> io::Result<()> {
+    if unsafe { libc::geteuid() } != 0
+        || unsafe { libc::prctl(libc::PR_GET_SECUREBITS, 0, 0, 0, 0) } != 0
+    {
+        return Err(failed());
+    }
+    if unsafe { libc::prctl(libc::PR_SET_KEEPCAPS, 0, 0, 0, 0) } != 0
+        || unsafe { libc::setgroups(0, std::ptr::null()) } != 0
+        || unsafe { libc::setresgid(identity.gid, identity.gid, identity.gid) } != 0
+        || unsafe { libc::setresuid(identity.uid, identity.uid, identity.uid) } != 0
+        || unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) } != 0
+    {
+        return Err(failed());
+    }
+    let (mut real, mut effective, mut saved) = (0, 0, 0);
+    if unsafe { libc::getresuid(&mut real, &mut effective, &mut saved) } != 0
+        || (real, effective, saved) != (identity.uid, identity.uid, identity.uid)
+        || unsafe { libc::getresgid(&mut real, &mut effective, &mut saved) } != 0
+        || (real, effective, saved) != (identity.gid, identity.gid, identity.gid)
+    {
+        return Err(failed());
+    }
+    Ok(())
+}
+#[cfg(all(test, target_os = "linux"))]
+#[path = "../../../tests/leak/src/netns_identity.rs"]
+mod namespace_tests;
+
 /// Own a CLOEXEC duplicate of the read pipe without std::io::Stdin's persistent
 /// shared buffer retaining a second, unlocked copy of the bootstrap key.
 #[cfg(unix)]

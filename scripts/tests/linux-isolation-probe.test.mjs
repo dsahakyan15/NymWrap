@@ -1,6 +1,19 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {archivePaths,sevenZipPayload} from '../linux-isolation-probe.mjs';
+import {archivePaths,sevenZipPayload,probePackageAssets} from '../linux-isolation-probe.mjs';
+
+test('guest package lock fixes official archives and rejects path or version substitutions',()=>{
+  const lock={version:1,alpine:'v3.24',arch:'x86_64',packages:[
+    {name:'python3',version:'3.14.10-r2',repository:'main',archive:'python3-3.14.10-r2.apk',sha256:'a'.repeat(64),bytes:100,license:'PSF-2.0'},
+    {name:'bubblewrap',version:'0.12.0-r0',repository:'main',archive:'bubblewrap-0.12.0-r0.apk',sha256:'b'.repeat(64),bytes:100,license:'LGPL-2.1-or-later'}]};
+  const assets=probePackageAssets(lock);
+  assert.equal(assets[0].url,'https://dl-cdn.alpinelinux.org/alpine/v3.24/main/x86_64/python3-3.14.10-r2.apk');
+  for(const change of [x=>x.arch='../x86_64',x=>x.alpine='latest',x=>x.packages.pop(),x=>x.packages.reverse(),
+    x=>x.packages[0].version='latest',x=>x.packages[0].archive='../../program',x=>x.packages[0].repository='main/../outside',
+    x=>x.packages[0].sha256='',x=>x.packages[0].bytes=33*1024*1024,x=>x.packages[0].url='https://example.test/payload']){
+    const altered=structuredClone(lock);change(altered);assert.throws(()=>probePackageAssets(altered),/invalid_probe_package_lock/);
+  }
+});
 
 test('VM tool extraction rejects traversal, absolute paths and archive links',()=>{
   for(const path of ['../worker.exe','..\\worker.exe','C:\\worker.exe','/tmp/worker','\\\\server\\file','directory:stream','safe\\..\\worker','safe//worker']){

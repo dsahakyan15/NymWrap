@@ -1,6 +1,6 @@
 # Состояние реализации
 
-Обновлено: 2026-11-24. Работа продолжается по SPEC. Этапы закрываются только после
+Обновлено: 2026-11-25. Работа продолжается по SPEC. Этапы закрываются только после
 проверки всех критериев в CI. Tor с ключом провайдера (L3) требует standard и
 полной проверки секретов устройства либо явного отключения автоматического сбора
 в конфигурации. Текущий Windows probe сообщает недоступные user/Wi-Fi источники;
@@ -27,6 +27,38 @@ payments либо необходимости увеличить spending limit. 
 Последний полностью зелёный checks — d806acb / 45099848732. Пока владелец
 аккаунта не восстановит Actions, последующие локальные изменения остаются без
 подтверждения CI. Перенос в публичный репозиторий или обход ограничения не выполняется.
+
+## Запуск дочернего процесса в netns — локальная проверка, M2/M6 открыты
+
+- ADR 0078: доверенный launcher может подготовить namespace/identity до exec
+  того же сохранённого child. Client::spawn_prepared сохраняет проверку точного
+  kernel PID, liveness, private bootstrap pipe и kill_on_drop; чужой stdin
+  заменяется. Режим не присоединяется к существующему процессу и не получает root.
+- В Linux дочерний процесс входит только в CLONE_NEWNET и теряет supplementary
+  groups, real/effective/saved UID/GID и KEEP_CAPS; включается NO_NEW_PRIVS.
+  Неверный fd останавливает запуск до payload. Coordinator теряет права через
+  синхронизирующие libc wrappers и ставит seccomp TSYNC до обработки данных.
+  Production launcher, файловая песочница и весь процессный pcap ещё не подключены.
+- Настоящий regression actual_child_network_namespace_and_identity_cannot_escalate
+  прошёл в одноразовой QEMU/Alpine VM (kernel 6.18.60-0-virt): другой netns,
+  UID/GID 1000, пустые supplementary groups, отказ вернуть root и прочитать
+  root-only канарейку, проверка уже существующего thread и неверного fd.
+  Teardown завершён. Логи target/netns-vm-identity-green.{serial.log,report.json};
+  report v2 связывает hashes crates, tests/leak, harness, package lock, Cargo.lock
+  и ELF. Это локальная административная fixture, не приёмка production M2/M6.
+- ADR 0079: probe закрепляет официальные Python 3.14.10-r2 и bubblewrap 0.12.0-r0
+  APK с размерами, лицензиями и SHA-256; обычный apk проверяет исходный подписанный
+  APKINDEX. Три предшествующие попытки остановились до приёмки из-за устаревшего
+  Python pin, diskless local-package restriction и ошибки копирования metadata;
+  их failed reports сохранены и успехом не считаются. Transitive APK-граф не
+  закреплён полностью, воспроизводимость M6 этим не заявляется.
+- После изменений повторены: workspace test, clippy всех targets/features, leak,
+  полные netd test/clippy (native lifecycle 3 pass), Rust fmt, app 12,
+  extension 24, scripts 44 и actionlint — все зелёные локально. Логи
+  target/netns-launch-*.log. Cross clippy для Linux musl также зелёный.
+  CI VM job уже вызывает тот же probe, включая явный root regression; новый CI
+  не выполнялся. 2026-11-25 annotation checks 45101662588 повторно подтвердила
+  внешний payment/spending blocker. Никакой этап не закрыт.
 
 ## Подготовка процессного сетевого сценария — M2/M3 остаются открыты
 
