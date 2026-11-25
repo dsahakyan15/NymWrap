@@ -70,9 +70,10 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
 
 **Подпись выпуска (ADR 0080).** `scripts/release-signature.mjs`: keygen/sign/verify
 ключом Tauri signer, проверка на `node:crypto`, тест с настоящим Tauri CLI.
-Ключ выпуска ещё не создан владельцем, поэтому `release/nymwrap-release.pub`
-отсутствует, и пункт THREAT_MODEL §9 «релиз подписан» остаётся открытым вместе
-с воспроизводимостью сборки.
+Владелец создал ключ выпуска 2026-11-25: публичная часть закреплена в
+`release/nymwrap-release.pub` (minisign key id A1F9B182A82829E0), приватная
+хранится только у владельца. Пункт THREAT_MODEL §9 «релиз подписан» остаётся
+открытым, пока не подписан первый выпуск и сборка не воспроизведена на двух машинах.
 
 ## Запуск дочернего процесса в netns — локальная проверка, M2/M6 открыты
 
