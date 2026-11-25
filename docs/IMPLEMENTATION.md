@@ -7,7 +7,15 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
-## Задача 2 — production netns подключён; M2 ждёт нового CI
+## M2 закрыт по Linux-критериям SPEC §9 — 2026-11-25
+
+ADR 0083 добавляет ограниченную проверку настоящего Tor-потока до первой
+отправки: до 10 попыток по 8 с с паузой 2 с, без TLS/HTTP, внутри общего
+180-секундного bootstrap deadline. Production отправки не повторяются;
+проверка явной ошибки после остановки Tor сохранена. Исправлен также probe
+пустого core netns: IPv6 может вернуть `EADDRNOTAVAIL` до поиска маршрута.
+Три локальные регрессии ожидания прошли. Три последовательных независимых
+процессных `tor-pcap` в CI зелёные; критерии и ссылки приведены ниже.
 
 ADR 0082 подключает ADR 0078 к Linux `nymwrapd`. До Tokio создаётся пустой netns
 core; проверенный fd отдельного транспортного netns используется в pre-exec
@@ -18,11 +26,16 @@ core; проверенный fd отдельного транспортного 
 
 Обычный Linux desktop без административной подготовки теперь работает только
 в L0, без запуска netd в host netns. Production CLI принимает `--netns/--uid/--gid`
-только от уже привилегированного coordinator с private bootstrap. Установщик
-службы и административный coordinator GUI не добавлены; маршруты/firewall
-транспорта подготавливаются вне процесса. На Windows/macOS наличие AppContainer
-или App Sandbox не выдаётся за реализованную изоляцию core/netd: её пока нет.
-Прикладные IPC/Tor проверки сохранены; USER_GUIDE и THREAT_MODEL §7 уточнены.
+только от уже привилегированного coordinator с private bootstrap. Маршруты/firewall
+транспорта подготавливаются вне процесса. Прикладные IPC/Tor проверки сохранены;
+USER_GUIDE и THREAT_MODEL §7 описывают эти ограничения.
+
+**Открытые долги M6:** установщик службы и административный coordinator GUI;
+полная файловая песочница Linux-демонов; запуск core/netd в AppContainer на
+Windows и production App Sandbox на macOS. Изоляция отдельных LPAC workers
+не даёт такой гарантии для core/netd. До выполнения этих долгов Linux desktop
+без подготовленного netns остаётся в L0, а эквивалентная Linux защита от сокетов
+скомпрометированного core на Windows/macOS не заявляется.
 
 Обязательный job `tor-pcap` теперь запускает настоящий `nymwrapd` с настоящими
 idle netd/API и проверяет namespace всех threads, сброс прав, seccomp, запрет
@@ -35,21 +48,54 @@ circuit IDs берутся из actual HTTP streams. Остановка лока
 `full_core_pipeline=false`: локальная модель/одобрения не входят в этот pcap.
 VM job дополнен проверкой сброса прав при ошибке запуска и отмене future.
 
-Новые CI-сценарии добавлены без allowed-failure; результат нового CI пока
-отсутствует. M2 не отмечен закрытым. Более ранние результаты ниже — история,
-а не подтверждение изменений задачи 2.
+**Приёмка M2 в CI:** один и тот же проверенный SHA
+`f0e1438cbcc8b06f5fd45b5e2c10f3074e705013`, без изменений кода между прогонами.
+Следующий `tor-pcap` запускался после завершения предыдущего; каждый создавал
+свои реле, namespace, зашифрованное состояние и захват.
 
-Локально на Windows зелёные `cargo test --workspace --locked`, clippy workspace
-всех targets/features с `-D warnings`, отдельные `nw-leak-tests`, полные netd
-test/clippy, native core/API lifecycle regression, extension 24, app 12,
-scripts 50, Rust fmt, workflow lint,
-синтаксис shell/Python и Linux musl clippy для nw-net со всеми targets.
-Одноразовая QEMU/Alpine VM (kernel 6.18.60-0-virt, report v3) выполнила настоящие
-namespace/identity regressions и новые failure/cancel probes production launcher:
-отдельный core netns, UID/GID 1000, последующие threads без IP-сокетов,
-teardown завершён. Это локальные проверки; настоящий `nymwrapd` Linux и новый
-процессный Tor pcap здесь не запускались и ждут CI. Журналы — `target/m2-*`,
-VM evidence — `target/linux-isolation/{report.json,serial.log}`.
+| Прогон `tor-pcap` | Начало — завершение (UTC, 2026-11-25) | Результат |
+|---|---|---|
+| [45561266129 / job 139025281640](https://github.com/dsahakyan15/NymWrap/actions/runs/45561266129/job/139025281640) | 06:31:47 — 06:38:22 | success |
+| [45562125147 / job 139028090034](https://github.com/dsahakyan15/NymWrap/actions/runs/45562125147/job/139028090034) | 06:39:12 — 06:47:12 | success |
+| [45563271763 / job 139031850183](https://github.com/dsahakyan15/NymWrap/actions/runs/45563271763/job/139031850183) | 06:48:00 — 06:54:56 | success |
+
+Во всех трёх артефактах `local-tor-os-pcap` подтверждены критерии SPEC §9:
+
+- Core в отдельном netns не может открыть внешний сокет: настоящий production
+  `nymwrapd`, все runtime threads со сброшенными правами и seccomp; отдельный
+  процессный coordinator требует `PermissionDenied` TCP/UDP IPv4/IPv6.
+  Свидетельства — `daemon-result.json` и `rust-result.json`.
+- После остановки Tor получен явный AEAD-ответ с ошибкой при живом provider;
+  внешний таймаут не принимается. `report.json` и `health-after-stop.json`
+  подтверждают fail-closed, ноль прямых пакетов и DNS; provider pcap содержит
+  ровно 16 безопасных запросов, все пять корзин и ноль канареек.
+- Два разговора используют разные цепочки: `circuit-receipt.json` содержит
+  circuit IDs actual HTTP streams; независимый oracle проверяет их различие.
+  В каждом `report.json` также `teardown_complete=true`.
+
+Все три скачанных артефакта повторно проверены локально: `auditCapture`, поиск
+канареек в обоих raw pcap и все 12 SHA-256 каждого report. Копии —
+`target/m2-tor-ci-{1,2,3}/`. После этих прогонов изменён только этот отчёт;
+исполняемые исходники, тесты, workflow и lock-файлы совпадают с проверенным SHA.
+
+Первый полный workflow завершён: все 16 jobs вне `dependency-audits` зелёные,
+включая core/network трёх ОС, frontends, браузеры, desktop/native Firefox и
+Linux VM. Общий conclusion — **failure** из-за четырёх известных cargo-vet
+jobs (долг M6); отключений или allowed-failure нет. Закрыт только M2 по Linux,
+остальные этапы, включая M6 и M3H, этой приёмкой не закрываются.
+
+На этой задаче локально на Windows зелёные `cargo test --workspace --locked`,
+`cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`,
+отдельный `cargo test -p nw-leak-tests --locked`, полные netd test/clippy всех
+targets (включая три новые регрессии ожидания), extension 24, app 12, scripts 50,
+Rust fmt workspace/netd и workflow lint. Журналы — `target/m2-exit-*.log`.
+Linux netns/Tor pcap локально на Windows не запускались; их приёмка выполнена
+в трёх указанных GitHub Actions jobs. Предыдущая локальная QEMU/Alpine проверка
+launcher остаётся дополнительным свидетельством:
+`target/linux-isolation/{report.json,serial.log}`.
+
+Далее — история предыдущих работ; прежние пометки об открытом M2 заменены
+приведённой выше Linux-приёмкой.
 
 Рабочий каталог первоначально не содержал `.git`; источник remote отсутствовал
 также в метаданных T3. Создан [приватный репозиторий](https://github.com/dsahakyan15/NymWrap)
@@ -643,7 +689,7 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
 | Purge | Ранжирование импорта, просмотр/выбор партии, хеш одобрения, локальный шаблон; пять отдельных offline-инструкций с официальными источниками, сохраняемые ручные отметки и наблюдаемый результат партии | Живая проверка актуальных интерфейсов сервисов пользователем |
 | Mirror | Снимки, реальные embeddings/позиции, график по источникам, таблица, ручной account activity; наблюдаемые cover/challenge rates; ежедневный YouTube по opt-in с суточным резервом и safety stop; реальные Chromium/Firefox alarms на синтетической ленте | Персонализированный DOM реальных аккаунтов, периодические снимки остальных источников; MyAdCenter пока вручную |
 | Расширение | MV3 Chrome/Firefox сборки, native messaging, строгий cover-only протокол, ручные задачи и snapshots; opt-in Mirror и поисковый executor с optional permissions, CAPTCHA/login stop и no replay, XSS-safe текст; изолированные Chromium/штатный Firefox integration tests и чтение публичного DOM | Аккаунтные интерфейсы и сквозная работа с реальными сервисами, адаптеры видео/ИИ |
-| Сеть | nw-netd/arti, отдельный клиент на разговор, проверяемый HTTPS, DNS через Tor, EFS/fscrypt до bootstrap, AEAD IPC, полный Route, nonce-bound review, budget reserve, watcher cancellation и parent lifetime; Linux administrative production launcher с отдельными netns | Новый процессный CI/pcap; административная интеграция GUI; изоляция core/netd Windows/macOS; очередь paranoid |
+| Сеть | nw-netd/arti, отдельный клиент на разговор, проверяемый HTTPS, DNS через Tor, EFS/fscrypt до bootstrap, AEAD IPC, полный Route, nonce-bound review, budget reserve, watcher cancellation и parent lifetime; Linux production launcher, настоящий startup core и процессный Tor/TLS/HTTP pcap: M2 подтверждён тремя CI-прогонами | M6: установщик службы/coordinator GUI, файловая песочница Linux, изоляция core/netd Windows/macOS; очередь paranoid |
 | Удостоверения | OS credential store, mlock, зашифрованный staging/каталог, постоянные привязки ключей к разговору, интеграция Route, восстановление и удаление OS-записей | zkAPI |
 | Cover traffic | Poisson/Constant standard, FIFO реальных заданий в слотах, независимая предварительная подготовка приманок, одноразовые Tor-клиенты, encrypted slots/jobs, общий бюджет, Uncertain без replay, 7-дневная симуляция | Пакетный ритм и захват трафика, paranoid с более сильным маршрутом; корзины байтовые |
 | Жёсткие данные (M3H, ADR 0043–0048) | Device и семь детекторов; нормализованный bwrap; nw-probe и зашифрованные секреты с сохранением удалений; отказ вложений; byte golden HTTP/TLS; Defer; начальная задержка и согласованный хвост standard; закреплённые мосты и ограниченный PT lifecycle; экран покрытия «Гигиена»; одобренные UTC-окна легенды | Полнота probe Windows/macOS; автоматическая гигиена и метрики; WSL2 агентов; хвост strict/paranoid; bridge bootstrap и изоляция PT; OS pcap; все межплатформенные проверки в зелёном CI |
