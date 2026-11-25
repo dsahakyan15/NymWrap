@@ -20,6 +20,7 @@ link_created=false
 mounted=false
 capture_client=
 capture_provider=
+test_pid=
 analysis_root=
 output="$project_root/target/pcap"
 mkdir -p -- "$output"
@@ -28,6 +29,7 @@ cleanup() {
   trap - EXIT
   set +e
   failed=0
+  if test -n "$test_pid"; then kill -TERM "$test_pid" 2>/dev/null; wait "$test_pid"; fi
   for namespace in "$client_ns" "$relay_ns"; do
     if { test "$namespace" = "$client_ns" && "$client_created"; } || { test "$namespace" = "$relay_ns" && "$relay_created"; }; then
       # Only PIDs in namespaces this invocation successfully created.
@@ -44,7 +46,7 @@ cleanup() {
   for file in client.pcap provider.pcap; do
     if test -f "$fixture_root/$file" && test ! -L "$fixture_root/$file"; then sudo chown --no-dereference "$runner_uid:$runner_gid" -- "$fixture_root/$file" || failed=1; fi
   done
-  for file in test.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt; do
+  for file in test.log worker.log daemon.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json daemon-result.json circuit-receipt.json worker-state.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt; do
     if test -f "$fixture_root/$file"; then cp -- "$fixture_root/$file" "$output/$file" || failed=1; fi
   done
   for log in "$fixture_root/chutney/nodes"/*/notice.log; do
@@ -83,6 +85,9 @@ git -C "$chutney" apply --check "$project_root/scripts/ci/chutney-python312.patc
 git -C "$chutney" apply "$project_root/scripts/ci/chutney-python312.patch"
 PYTHONPATH="$chutney/lib" "$chutney_python" -c 'import chutney.TorNet'
 cargo test --manifest-path daemons/nw-netd/Cargo.toml --lib --no-run --message-format=json --locked > "$fixture_root/build.jsonl" 2> "$fixture_root/build.log"
+cargo build --manifest-path daemons/nw-netd/Cargo.toml --bin nw-netd --locked >> "$fixture_root/build.log" 2>&1
+cargo build -p nw-core -p nw-api --bins --locked >> "$fixture_root/build.log" 2>&1
+cargo build -p nw-net --example linux-process-egress --locked >> "$fixture_root/build.log" 2>&1
 test_binary=$(node scripts/pcap-report.mjs --binary "$fixture_root/build.jsonl")
 node_binary=$(command -v node)
 { "$chutney_python" --version; sha256sum scripts/ci/chutney-python312.patch; tor --version; tcpdump --version; tshark --version; } > "$fixture_root/tools.txt" 2>&1
@@ -167,12 +172,23 @@ relay "$chutney/chutney" start "$chutney/networks/basic-min"
 # Arti can bootstrap from an early consensus containing only the authorities.
 # Require Chutney's full network/descriptor readiness, including the sole exit.
 relay "$chutney/chutney" wait_for_bootstrap "$chutney/networks/basic-min"
+# Smoke the actual production executable and its real idle netd/API children.
+# This is distinct from the private-CA transport worker used for packet evidence.
+sudo env -i PATH=/usr/bin:/bin GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" "$chutney_python" "$project_root/scripts/ci/core-netns.py" "$fixture_root" "$project_root/target/debug/nymwrapd" "/run/netns/$client_ns" "$runner_uid" "$runner_gid" > "$fixture_root/daemon.log" 2>&1
+mkdir -m 700 -- "$fixture_root/bin"
+{
+  printf '#!/bin/bash\nset -euo pipefail\ntest "$#" = 2 && test "$1" = --socket\n'
+  printf 'export GITHUB_ACTIONS=true NW_TEST_SOCKET="$2"\n'
+  printf 'export NW_TEST_TOR_FIXTURE=%q NW_TEST_NETNS_COOKIE=%q SSLKEYLOGFILE=%q\n' "$fixture_root" "$netns_cookie" "$fixture_root/tls.keys"
+  printf 'exec %q --exact local_tor_tests::netd_process_worker --ignored --test-threads=1 > %q 2>&1\n' "$test_binary" "$fixture_root/worker.log"
+} > "$fixture_root/bin/nw-netd"
+chmod 700 -- "$fixture_root/bin/nw-netd"
 sudo ip netns exec "$client_ns" tcpdump -Z root -i "$client_if" -s 0 -U -w "$fixture_root/client.pcap" > "$fixture_root/tcpdump-client.log" 2>&1 &
 capture_client=$!
 sudo ip netns exec "$relay_ns" tcpdump -Z root -i lo -s 0 -U -w "$fixture_root/provider.pcap" 'tcp port 443' > "$fixture_root/tcpdump-provider.log" 2>&1 &
 capture_provider=$!
 sleep 1
-sudo ip netns exec "$client_ns" setpriv --reuid "$runner_uid" --regid "$runner_gid" --init-groups env -i PATH=/usr/bin:/bin TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" NW_TEST_TOR_FIXTURE="$fixture_root" NW_TEST_NETNS_COOKIE="$netns_cookie" SSLKEYLOGFILE="$fixture_root/tls.keys" "$test_binary" --exact local_tor_tests::actual_local_tor_tls_packets_have_no_hard_canaries_or_direct_fallback --ignored --test-threads 1 > "$fixture_root/test.log" 2>&1 &
+timeout --signal=TERM --kill-after=10 480s sudo env -i PATH=/usr/bin:/bin HOME="$fixture_root" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" "$project_root/target/debug/examples/linux-process-egress" "$fixture_root" "/run/netns/$client_ns" "$runner_uid" "$runner_gid" > "$fixture_root/test.log" 2>&1 &
 test_pid=$!
 for attempt in $(seq 1 300); do
   test -f "$fixture_root/ready-to-stop" && break
@@ -184,6 +200,7 @@ relay "$chutney/chutney" stop "$chutney/networks/basic-min"
 relay "$node_binary" "$project_root/scripts/ci/tor-provider.mjs" --health "$fixture_root"
 printf stopped > "$fixture_root/transport-stopped"
 wait "$test_pid"
+test_pid=
 test -f "$fixture_root/rust-result.json"
 sudo kill -INT "$capture_client" "$capture_provider"
 wait "$capture_client"

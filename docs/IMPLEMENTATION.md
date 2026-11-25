@@ -7,6 +7,50 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Задача 2 — production netns подключён; M2 ждёт нового CI
+
+ADR 0082 подключает ADR 0078 к Linux `nymwrapd`. До Tokio создаётся пустой netns
+core; проверенный fd отдельного транспортного netns используется в pre-exec
+того же retained child через `Client::spawn_prepared`. До чтения bootstrap core и данных
+сбрасываются UID/GID/groups, ставятся NNP и seccomp TSYNC. Ошибка exec и отмена
+также необратимо сбрасывают права. Неверный fd, текущий netns и нулевой UID/GID
+отвергаются. Ключи остаются в anonymous pipe/памяти, kernel PID не подменён.
+
+Обычный Linux desktop без административной подготовки теперь работает только
+в L0, без запуска netd в host netns. Production CLI принимает `--netns/--uid/--gid`
+только от уже привилегированного coordinator с private bootstrap. Установщик
+службы и административный coordinator GUI не добавлены; маршруты/firewall
+транспорта подготавливаются вне процесса. На Windows/macOS наличие AppContainer
+или App Sandbox не выдаётся за реализованную изоляцию core/netd: её пока нет.
+Прикладные IPC/Tor проверки сохранены; USER_GUIDE и THREAT_MODEL §7 уточнены.
+
+Обязательный job `tor-pcap` теперь запускает настоящий `nymwrapd` с настоящими
+idle netd/API и проверяет namespace всех threads, сброс прав, seccomp, запрет
+маршрута core и lifecycle. Процессный coordinator использует тот же production
+launcher, retained test-only netd, настоящий AEAD dispatcher и Tor/TLS/HTTP.
+16 синтетических канареечных запросов проверяются по pcap и квитанциям;
+circuit IDs берутся из actual HTTP streams. Остановка локальных Tor-релеев
+требует явной ошибки транспорта при живом provider. Oracle не принимает
+таймаут, пустую запись, одинаковые circuits или отсутствие daemon evidence.
+`full_core_pipeline=false`: локальная модель/одобрения не входят в этот pcap.
+VM job дополнен проверкой сброса прав при ошибке запуска и отмене future.
+
+Новые CI-сценарии добавлены без allowed-failure; результат нового CI пока
+отсутствует. M2 не отмечен закрытым. Более ранние результаты ниже — история,
+а не подтверждение изменений задачи 2.
+
+Локально на Windows зелёные `cargo test --workspace --locked`, clippy workspace
+всех targets/features с `-D warnings`, отдельные `nw-leak-tests`, полные netd
+test/clippy, native core/API lifecycle regression, extension 24, app 12,
+scripts 50, Rust fmt, workflow lint,
+синтаксис shell/Python и Linux musl clippy для nw-net со всеми targets.
+Одноразовая QEMU/Alpine VM (kernel 6.18.60-0-virt, report v3) выполнила настоящие
+namespace/identity regressions и новые failure/cancel probes production launcher:
+отдельный core netns, UID/GID 1000, последующие threads без IP-сокетов,
+teardown завершён. Это локальные проверки; настоящий `nymwrapd` Linux и новый
+процессный Tor pcap здесь не запускались и ждут CI. Журналы — `target/m2-*`,
+VM evidence — `target/linux-isolation/{report.json,serial.log}`.
+
 Рабочий каталог первоначально не содержал `.git`; источник remote отсутствовал
 также в метаданных T3. Создан [приватный репозиторий](https://github.com/dsahakyan15/NymWrap)
 для требуемого CI (ADR 0049). [Первый run](https://github.com/dsahakyan15/NymWrap/actions/runs/45082675972)
@@ -599,7 +643,7 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
 | Purge | Ранжирование импорта, просмотр/выбор партии, хеш одобрения, локальный шаблон; пять отдельных offline-инструкций с официальными источниками, сохраняемые ручные отметки и наблюдаемый результат партии | Живая проверка актуальных интерфейсов сервисов пользователем |
 | Mirror | Снимки, реальные embeddings/позиции, график по источникам, таблица, ручной account activity; наблюдаемые cover/challenge rates; ежедневный YouTube по opt-in с суточным резервом и safety stop; реальные Chromium/Firefox alarms на синтетической ленте | Персонализированный DOM реальных аккаунтов, периодические снимки остальных источников; MyAdCenter пока вручную |
 | Расширение | MV3 Chrome/Firefox сборки, native messaging, строгий cover-only протокол, ручные задачи и snapshots; opt-in Mirror и поисковый executor с optional permissions, CAPTCHA/login stop и no replay, XSS-safe текст; изолированные Chromium/штатный Firefox integration tests и чтение публичного DOM | Аккаунтные интерфейсы и сквозная работа с реальными сервисами, адаптеры видео/ИИ |
-| Сеть | nw-netd/arti, отдельный клиент на разговор, проверяемый HTTPS, DNS через Tor, EFS/fscrypt до bootstrap, AEAD IPC, полный Route, nonce-bound review, budget reserve, watcher cancellation и parent lifetime | Очередь paranoid, namespace netd и захват трафика |
+| Сеть | nw-netd/arti, отдельный клиент на разговор, проверяемый HTTPS, DNS через Tor, EFS/fscrypt до bootstrap, AEAD IPC, полный Route, nonce-bound review, budget reserve, watcher cancellation и parent lifetime; Linux administrative production launcher с отдельными netns | Новый процессный CI/pcap; административная интеграция GUI; изоляция core/netd Windows/macOS; очередь paranoid |
 | Удостоверения | OS credential store, mlock, зашифрованный staging/каталог, постоянные привязки ключей к разговору, интеграция Route, восстановление и удаление OS-записей | zkAPI |
 | Cover traffic | Poisson/Constant standard, FIFO реальных заданий в слотах, независимая предварительная подготовка приманок, одноразовые Tor-клиенты, encrypted slots/jobs, общий бюджет, Uncertain без replay, 7-дневная симуляция | Пакетный ритм и захват трафика, paranoid с более сильным маршрутом; корзины байтовые |
 | Жёсткие данные (M3H, ADR 0043–0048) | Device и семь детекторов; нормализованный bwrap; nw-probe и зашифрованные секреты с сохранением удалений; отказ вложений; byte golden HTTP/TLS; Defer; начальная задержка и согласованный хвост standard; закреплённые мосты и ограниченный PT lifecycle; экран покрытия «Гигиена»; одобренные UTC-окна легенды | Полнота probe Windows/macOS; автоматическая гигиена и метрики; WSL2 агентов; хвост strict/paranoid; bridge bootstrap и изоляция PT; OS pcap; все межплатформенные проверки в зелёном CI |

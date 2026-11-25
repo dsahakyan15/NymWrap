@@ -33,3 +33,21 @@ test('IPv4-only packet evidence rejects kernel IPv6 router solicitations',()=>{
   const data=capture();data.client+='\t\tfe80::1\tff02::2\t\t\n';
   assert.throws(()=>auditCapture(data),/unexpected_ipv6_packet/);
 });
+
+function processCapture(){
+  const data=capture();
+  Object.assign(data.rust,{production_launcher:true,authenticated_dispatcher:true,core_socket_denied:true,
+    core_namespace:'net:[101]',worker_namespace:'net:[102]',host_namespace:'net:[103]'});
+  data.daemon=Object.fromEntries(['complete','actual_production_daemon','separate_namespaces','core_namespace_unreachable','all_threads_dropped',
+    'api_inherits_core_namespace','netd_in_transport_namespace','parent_eof_stops_children','invalid_setup_rejected'].map(key=>[key,true]));
+  data.circuits=Object.fromEntries(Array.from({length:16},(_,index)=>[index.toString(16).padStart(32,'0'),`circuit-${index}`]));
+  return data;
+}
+test('process pcap requires actual daemon, distinct namespaces, explicit error and observed circuit IDs',()=>{
+  const report=auditCapture(processCapture());assert.equal(report.production_daemon_namespace_integration,true);assert.equal(report.full_core_pipeline,false);
+  for(const change of [data=>delete data.daemon,data=>data.daemon.all_threads_dropped=false,data=>data.daemon.parent_eof_stops_children=false,
+    data=>data.rust.worker_namespace=data.rust.core_namespace,data=>data.rust.core_socket_denied=false,data=>data.rust.authenticated_dispatcher=false,
+    data=>delete data.circuits,data=>data.circuits['0'.repeat(31)+'1']=data.circuits['0'.repeat(32)],data=>delete data.circuits['0'.repeat(32)]]){
+    const data=processCapture();change(data);assert.throws(()=>auditCapture(data));
+  }
+});

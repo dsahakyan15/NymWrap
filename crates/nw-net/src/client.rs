@@ -24,6 +24,13 @@ pub struct Client {
 }
 impl Client {
     pub async fn spawn(binary: &Path, endpoint: Endpoint) -> Result<Self, &'static str> {
+        let command = Self::command(binary, &endpoint)?;
+        Self::spawn_prepared(command, endpoint).await
+    }
+    pub(crate) fn command(
+        binary: &Path,
+        endpoint: &Endpoint,
+    ) -> Result<tokio::process::Command, &'static str> {
         if endpoint.lane() != nw_proto::Lane::Shadow || !binary.is_absolute() {
             return Err("invalid_egress_configuration");
         }
@@ -46,7 +53,7 @@ impl Client {
                 command.env(name, value);
             }
         }
-        Self::spawn_prepared(command, endpoint).await
+        Ok(command)
     }
     /// Trusted launchers may prepare namespace/identity setup and fixed fixture
     /// arguments. The program must already be canonical and absolute. Authority

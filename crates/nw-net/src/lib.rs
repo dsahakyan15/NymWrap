@@ -1,6 +1,8 @@
 //! Checked payloads and authenticated egress IPC; no remote socket implementation.
 pub mod bridges;
 pub mod client;
+#[cfg(target_os = "linux")]
+pub mod launcher;
 pub mod wire;
 use nw_proto::TrustLevel;
 use nw_shield::Prepared;

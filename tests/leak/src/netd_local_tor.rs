@@ -7,6 +7,120 @@ use rustls::pki_types::pem::PemObject;
 use std::time::Duration;
 use tor_proto::client::stream::ClientStreamCtrl;
 
+pub(super) fn record_circuit(request: &Request, stream: &arti_client::DataStream) {
+    let Some(fixture) = std::env::var_os("NW_TEST_TOR_FIXTURE") else {
+        return;
+    };
+    static CIRCUITS: std::sync::Mutex<BTreeMap<String, String>> =
+        std::sync::Mutex::new(BTreeMap::new());
+    let circuit = format!(
+        "{:?}",
+        stream
+            .client_stream_ctrl()
+            .unwrap()
+            .tunnel()
+            .unwrap()
+            .unique_id()
+    );
+    let mut circuits = CIRCUITS.lock().unwrap();
+    circuits.insert(request.conversation.clone(), circuit);
+    std::fs::write(
+        std::path::Path::new(&fixture).join("circuit-receipt.json"),
+        serde_json::to_vec(&*circuits).unwrap(),
+    )
+    .unwrap();
+}
+
+struct LocalFactory;
+impl crate::server::Factory for LocalFactory {
+    type Transport = Tor;
+    async fn bootstrap(
+        &self,
+        directory: &Path,
+        provider: Provider,
+        bridges: Option<&nw_net::bridges::BridgeConfig>,
+    ) -> Result<Tor, &'static str> {
+        assert!(bridges.is_none());
+        let fixture = std::path::PathBuf::from(std::env::var_os("NW_TEST_TOR_FIXTURE").unwrap());
+        assert_eq!(directory, fixture.join("mount/private"));
+        nw_platform::encrypted_directory(directory).unwrap();
+        let config = chutney_config(&std::fs::read(fixture.join("arti.json")).unwrap());
+        let root = tokio::time::timeout(
+            Duration::from_secs(180),
+            TorClient::create_bootstrapped(config),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        let mut roots = rustls::RootCertStore::empty();
+        roots
+            .add(
+                rustls::pki_types::CertificateDer::from_pem_slice(
+                    &std::fs::read(fixture.join("provider-ca.pem")).unwrap(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        let mut tls = provider_tls_with_roots(roots).unwrap();
+        tls.key_log = Arc::new(rustls::KeyLogFile::new());
+        Ok(Tor {
+            root,
+            conversations: Mutex::new(BTreeMap::new()),
+            provider,
+            _transport_binary: None,
+            test_tls: Some(Arc::new(tls)),
+        })
+    }
+}
+
+#[tokio::test]
+#[ignore = "test-only netd process, launched by the administrative CI coordinator"]
+async fn netd_process_worker() {
+    use std::io::Read;
+    use zeroize::Zeroize;
+    let fixture = std::path::PathBuf::from(std::env::var_os("NW_TEST_TOR_FIXTURE").unwrap());
+    assert_eq!(std::env::var("GITHUB_ACTIONS").as_deref(), Ok("true"));
+    assert_ne!(nw_platform::current_user_id().unwrap(), "0");
+    let namespace = std::fs::read_link("/proc/self/ns/net").unwrap();
+    assert_eq!(
+        namespace.to_str().unwrap(),
+        std::env::var("NW_TEST_NETNS_COOKIE").unwrap()
+    );
+    nw_platform::harden_process().unwrap();
+    let denied = matches!(
+        tokio::time::timeout(
+            Duration::from_secs(2),
+            tokio::net::TcpStream::connect("192.0.2.2:443")
+        )
+        .await,
+        Err(_) | Ok(Err(_))
+    );
+    assert!(denied);
+    std::fs::write(fixture.join("worker-state.json"), serde_json::to_vec(&serde_json::json!({
+        "namespace":namespace.to_str().unwrap(), "pid":std::process::id(), "direct_provider_connection_denied":denied
+    })).unwrap()).unwrap();
+    let mut parent = nw_platform::inherited_stdin_pipe().unwrap();
+    let mut bytes = Zeroizing::new([0; 32]);
+    parent.read_exact(&mut *bytes).unwrap();
+    let key = nw_net::wire::SessionKey::new(*bytes).unwrap();
+    bytes.zeroize();
+    let (tx, mut rx) = tokio::sync::oneshot::channel();
+    std::thread::spawn(move || {
+        let _ = parent.read(&mut [0]);
+        let _ = tx.send(());
+    });
+    let endpoint = nw_ipc::Endpoint::new(
+        std::env::var("NW_TEST_SOCKET").unwrap(),
+        nw_proto::Lane::Shadow,
+    )
+    .unwrap();
+    let listener = nw_ipc::Listener::bind(endpoint).unwrap();
+    tokio::select! {
+        result = crate::server::serve_with(listener, key, LocalFactory) => result.unwrap(),
+        _ = &mut rx => {},
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Canaries {

@@ -14,7 +14,7 @@ jobs:
       - run: node scripts/lint-workflows.mjs
   tor-pcap:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -38,8 +38,11 @@ jobs:
             daemons/nw-netd/target/debug/build
             daemons/nw-netd/target/debug/deps
             daemons/nw-netd/target/debug/.fingerprint
-          key: tor-pcap-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml') }}
-      - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config tor tcpdump tshark nftables
+            target/debug/build
+            target/debug/deps
+            target/debug/.fingerprint
+          key: tor-process-pcap-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'crates/**/Cargo.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml') }}
+      - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config libdbus-1-dev tor tcpdump tshark nftables
       - run: bash scripts/ci/tor-pcap.sh
         env:
           NW_CHUTNEY_PYTHON: ${{ steps.chutney-python.outputs.python-path }}

@@ -129,6 +129,8 @@ impl Tor {
             .connect((self.provider.host.as_str(), 443))
             .await
             .map_err(|_| "tor_connect_failed")?;
+        #[cfg(test)]
+        local_tor_tests::record_circuit(request, &stream);
         let name = rustls::pki_types::ServerName::try_from(self.provider.host.clone())
             .map_err(|_| "invalid_provider")?;
         let tls = Arc::new(provider_tls()?);

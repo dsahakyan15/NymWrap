@@ -30,6 +30,28 @@ impl ChildIdentity {
         Ok(Self { uid, gid })
     }
 }
+/// Called by the privileged production coordinator, before creating threads or
+/// reading bootstrap/user data. Retain only a descriptor for a different,
+/// administratively provisioned transport netns; core gets an empty netns.
+#[cfg(target_os = "linux")]
+pub fn isolate_core_network(namespace: &std::fs::File) -> io::Result<()> {
+    use std::os::{fd::AsRawFd, unix::fs::MetadataExt};
+    let target = namespace.metadata()?;
+    let current = std::fs::metadata("/proc/self/ns/net")?;
+    if unsafe { libc::geteuid() } != 0
+        || std::fs::read_dir("/proc/self/task")?.count() != 1
+        || (target.dev(), target.ino()) == (current.dev(), current.ino())
+        // NS_GET_NSTYPE: reject files and namespaces of another type before
+        // changing anything. The descriptor, rather than its path, is pinned.
+        || unsafe { libc::ioctl(namespace.as_raw_fd(), 0xb703) } != libc::CLONE_NEWNET
+    {
+        return Err(failed());
+    }
+    if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+        return Err(failed());
+    }
+    Ok(())
+}
 /// Prepare a trusted command in an already provisioned netns. This grants no
 /// privilege: the caller must already be root and setns must pass the kernel's
 /// namespace checks. No shell, path lookup, sudo or fallback is involved.

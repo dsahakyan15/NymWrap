@@ -83,9 +83,10 @@ async function main(){
   const before=await sourceDigest(join(root,'crates')),lock=digest(await regular(join(root,'Cargo.lock')));
   const testSources=await sourceDigest(join(root,'tests/leak')),harness=digest(await regular(fileURLToPath(import.meta.url))),packageLock=digest(packageManifestBytes);
   const build=await run('cargo',['test','-p','nw-platform','-p','nw-sandbox','-p','nw-probe','--target','x86_64-unknown-linux-musl','--no-run','--locked','--message-format','json','--target-dir',join(reports,'build')],{...options,env:{...process.env,CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER:'rust-lld'}});
-  const artifacts=build.stdout.split(/\r?\n/).filter(Boolean).map(line=>JSON.parse(line)).filter(m=>m.reason==='compiler-artifact'&&m.executable);
+  const launcherBuild=await run('cargo',['build','-p','nw-net','--example','linux-process-egress','--target','x86_64-unknown-linux-musl','--locked','--message-format','json','--target-dir',join(reports,'build')],{...options,env:{...process.env,CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER:'rust-lld'}});
+  const artifacts=(build.stdout+'\n'+launcherBuild.stdout).split(/\r?\n/).filter(Boolean).map(line=>JSON.parse(line)).filter(m=>m.reason==='compiler-artifact'&&m.executable);
   const files=new Map(),binaries={};
-  for(const [name,kind,test] of [['nw_platform','lib',true],['nw_sandbox','lib',true],['agent','test',true],['nw_probe','lib',true],['worker','test',true],['nw-probe','bin',false]]){
+  for(const [name,kind,test] of [['nw_platform','lib',true],['nw_sandbox','lib',true],['agent','test',true],['nw_probe','lib',true],['worker','test',true],['nw-probe','bin',false],['linux-process-egress','example',false]]){
     const found=artifacts.filter(m=>m.target.name===name&&m.target.kind.includes(kind)&&m.profile.test===test);if(found.length!==1)throw Error('missing_probe_binary');
     const path=await realpath(found[0].executable);
     if(!normalized(path).startsWith(normalized(join(reports,'build')+sep)))throw Error('unsafe_probe_binary');
@@ -148,6 +149,16 @@ bwrap --version
 python3 --version
 su -s /bin/sh -c 'test "$(id -u)" = 1000 && echo NW_VM_UID:$(id -u) && /opt/nw-probes/nw_platform --nocapture --color never && /opt/nw-probes/nw_sandbox --nocapture --color never && /opt/nw-probes/agent actual_agent --ignored --nocapture --color never && /opt/nw-probes/nw_probe --nocapture --color never && NW_PROBE_TEST_BINARY=/opt/nw-probes/nw-probe /opt/nw-probes/worker actual_device_probe --ignored --nocapture --color never' nwtest
 /opt/nw-probes/nw_platform --exact sys::namespace_tests::actual_child_network_namespace_and_identity_cannot_escalate --ignored --test-threads=1 --nocapture --color never
+mkdir /tmp/nw-launcher
+chown 1000:1000 /tmp/nw-launcher
+unshare -n sleep 300 &
+keeper=$!
+sleep 1
+for mode in --failure-probe --cancel-probe; do
+  GITHUB_ACTIONS=true /opt/nw-probes/linux-process-egress "$mode" /tmp/nw-launcher "/proc/$keeper/ns/net" 1000 1000
+done
+kill "$keeper"
+wait "$keeper" || test "$?" = 143
 `;
     files.set('/script',Buffer.from(commands));
     child=spawn(join(qemu,'qemu-system-x86_64.exe'),['-no-user-config','-nodefaults','-accel','tcg,thread=multi','-cpu','max','-smp','2','-m','1536','-display','none','-monitor','none','-serial','stdio','-no-reboot','-kernel',join(alpine,'boot/vmlinuz-virt'),'-initrd',join(alpine,'boot/initramfs-virt'),'-append','console=ttyS0,115200 modules=loop,squashfs,sd-mod,usb-storage quiet','-cdrom',paths[1],'-nic','user,model=virtio-net-pci'],{cwd:fixture,windowsHide:true,stdio:['pipe','pipe','pipe']});
@@ -169,14 +180,15 @@ su -s /bin/sh -c 'test "$(id -u)" = 1000 && echo NW_VM_UID:$(id -u) && /opt/nw-p
     const succeeded=code===0&&/NW_VM_TEST_EXIT:0\r?\n/.test(log)&&log.includes('NW_VM_UID:1000')
       && ['seccomp_denies_ip_sockets_but_keeps_private_ipc','seccomp_covers_existing_and_future_threads','actual_agent_sees_only_http_socket_and_cannot_open_external_sockets','actual_child_network_namespace_and_identity_cannot_escalate'].every(name=>new RegExp(name+'[^\\r\\n]* \\.\\.\\. ok').test(log));
     if(digest(await regular(packageManifestPath))!==packageLock||await sourceDigest(join(root,'crates'))!==before||await sourceDigest(join(root,'tests/leak'))!==testSources||digest(await regular(fileURLToPath(import.meta.url)))!==harness||digest(await regular(join(root,'Cargo.lock')))!==lock)throw Error('probe_sources_changed');
-    if(!succeeded||!log.includes('actual_device_probe_is_confined_and_uses_only_bounded_shadow_frames ... ok'))throw Error('linux_isolation_probe_failed');
+    if(!succeeded||!log.includes('actual_device_probe_is_confined_and_uses_only_bounded_shadow_frames ... ok')||
+      !['--failure-probe','--cancel-probe'].every(mode=>log.includes('NW_LAUNCHER_PROBE_VERIFIED:'+mode)))throw Error('linux_isolation_probe_failed');
     passed=true;
   }finally{
     clearTimeout(timer);
     if(child&&child.exitCode===null&&!child.killed){child.kill();await new Promise(accept=>{child.once('exit',accept);setTimeout(accept,5000).unref();});}
     server?.closeAllConnections();if(server?.listening)await new Promise(accept=>server.close(accept));
     await writeFile(join(reports,'serial.log'),stripVTControlCharacters(log));
-    await writeFile(join(reports,'report.json'),JSON.stringify({version:2,repository_index_sha256:repositoryIndexes,package_lock_sha256:packageLock,test_sources_sha256:testSources,harness_sha256:harness,namespace_identity_tested:passed,administrative_fixture: true,status:passed?'passed':'failed',target:'x86_64-unknown-linux-musl',unprivileged_uid:passed?1000:null,kernel:log.match(/NW_VM_KERNEL:([^\r\n]+)/)?.[1]??null,source_sha256:before,lock_sha256:lock,binaries,assets:assets.map(({name,hash,algorithm})=>({name,hash,algorithm:algorithm??'sha256'}))},null,2)+'\n');
+    await writeFile(join(reports,'report.json'),JSON.stringify({version:3,repository_index_sha256:repositoryIndexes,package_lock_sha256:packageLock,test_sources_sha256:testSources,harness_sha256:harness,namespace_identity_tested:passed,production_launcher_failure_and_cancellation_tested:passed,administrative_fixture: true,status:passed?'passed':'failed',target:'x86_64-unknown-linux-musl',unprivileged_uid:passed?1000:null,kernel:log.match(/NW_VM_KERNEL:([^\r\n]+)/)?.[1]??null,source_sha256:before,lock_sha256:lock,binaries,assets:assets.map(({name,hash,algorithm})=>({name,hash,algorithm:algorithm??'sha256'}))},null,2)+'\n');
     const actual=await realpath(fixture),parent=await realpath(base),stat=await lstat(fixture);
     if(stat.isSymbolicLink()||!normalized(actual).startsWith(normalized(parent+sep)))throw Error('unsafe_probe_cleanup');
     await rm(fixture,{recursive:true,force:true});

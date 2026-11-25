@@ -17,7 +17,9 @@ pub use sys::inherited_stdin_pipe;
 pub use sys::local_peer_process;
 pub use sys::open_device_config;
 #[cfg(target_os = "linux")]
-pub use sys::{ChildIdentity, drop_process_identity, enter_child_network_namespace};
+pub use sys::{
+    ChildIdentity, drop_process_identity, enter_child_network_namespace, isolate_core_network,
+};
 #[cfg(target_os = "linux")]
 pub use sys::{confine_import_worker, deny_remote_sockets};
 pub use sys::{current_user_id, harden_process, process_image};

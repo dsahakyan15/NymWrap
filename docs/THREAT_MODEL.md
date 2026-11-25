@@ -118,6 +118,9 @@
 
 ## 7. Песочницы
 
+Таблица задаёт целевую архитектуру. Наличие механизма в ОС не означает, что
+все production-процессы уже запускаются в нём; текущие границы перечислены ниже.
+
 | Процесс | Linux | Windows | macOS |
 |---|---|---|---|
 | все, кроме `nw-netd` | bwrap `--unshare-net --unshare-pid --die-with-parent`, seccomp-фильтр, ФС только нужные пути | AppContainer без capability `internetClient` | App Sandbox без network entitlement |
@@ -127,6 +130,18 @@
 Linux — эталонная платформа для `paranoid`. На Windows лучший вариант — запуск
 демонов внутри WSL2 с linux-песочницами; нативный режим Windows поддерживается
 в `standard` и `strict`.
+
+Текущее сетевое разделение (ADR 0082): административный Linux launcher до Tokio
+создаёт пустой netns core, запускает retained netd в заранее подготовленном
+отдельном netns, сбрасывает UID/GID/groups и запрещает IP-сокеты core через
+seccomp TSYNC. Ограничение маршрутов/firewall netd обязан подготовить доверенный
+coordinator. Без него Linux desktop доступен только в L0. Полная файловая
+песочница демонов ещё относится к M6.
+
+Windows LPAC сейчас изолирует отдельные workers, но core/netd не помещены в
+AppContainer. На macOS production App Sandbox демонов не подключён. Поэтому
+на этих ОС прикладной Tor fail-closed не заменяет запрет сокетов для остальных
+процессов и не даёт Linux namespace-гарантию; оба пункта M6 остаются открытыми.
 
 ## 8. Остаточные риски (честно показываются пользователю)
 
