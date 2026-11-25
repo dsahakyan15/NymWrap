@@ -1,0 +1,8 @@
+{
+  "restarted_conversations": 0,
+  "helper_sha256": "c33d835480d9b98ef2007e142311e24066e6b99f7542d7f66cc47953991a1ef8",
+  "stopped_utc": "2026-11-25T12:05:09.2704370Z",
+  "reason": "stop resource-bound initial coordinators before their fixed four-hour deadline; retain completed observations, never repeat in-flight cases",
+  "owned_processes": 56,
+  "roots": 8
+}

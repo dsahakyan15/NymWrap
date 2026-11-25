@@ -6,7 +6,7 @@ import {artifactHash} from './evaluation-artifacts.mjs';
 import {validateLinkcheckReport,summarizeLinkcheckReport} from './linkcheck-report.mjs';
 
 export function mergeShardReports(sources,corpus,corpusHash){
-  if(corpus?.partition!=='development'||!Array.isArray(sources)||sources.length<2||sources.length>16)throw Error('incomplete_linkcheck_shards');
+  if(!['development','held_out'].includes(corpus?.partition)||!Array.isArray(sources)||sources.length<2||sources.length>16)throw Error('incomplete_linkcheck_shards');
   const ordered=[...sources].sort((a,b)=>(a.report?.shard?.index??-1)-(b.report?.shard?.index??-1));
   const first=ordered[0].report;
   const evidence=first?.evidence;

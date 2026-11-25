@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "partition": "held_out",
+  "synthetic_only": true,
+  "generated_utc": "2026-11-25T11:42:05.453Z",
+  "freeze_sha256": "a8b25e22f298d2b4118ba7d8751fe89537012072aef4733a559fb65a05a0260c",
+  "sha256": "d200e4e08f309b1e99e927d5dd5c61bd8e6c7dc8bb97b0f854ca575d6c0b5fb5",
+  "generator_sha256": "aecc9a11eeae67a86efcab4f965ded3fde0b01ee88fa1881caa8afa87c6aa0af",
+  "plan": {
+    "cases": 360,
+    "candidates": 64,
+    "languages": [
+      "en",
+      "ru",
+      "hy"
+    ],
+    "groups": [
+      "public_control",
+      "linkage",
+      "linkage_multiturn",
+      "hard_data",
+      "injection"
+    ],
+    "cases_per_stratum": 24,
+    "shards": 8
+  },
+  "independence": {
+    "complete": true,
+    "development_cases": 384,
+    "held_out_cases": 360,
+    "shared_facts": 0,
+    "shared_secrets": 0,
+    "shared_questions": 0,
+    "strata": {
+      "en/hard_data": 24,
+      "ru/linkage_multiturn": 24,
+      "hy/public_control": 24,
+      "en/public_control": 24,
+      "hy/injection": 24,
+      "hy/linkage_multiturn": 24,
+      "en/linkage_multiturn": 24,
+      "ru/linkage": 24,
+      "en/linkage": 24,
+      "hy/hard_data": 24,
+      "ru/injection": 24,
+      "ru/hard_data": 24,
+      "en/injection": 24,
+      "hy/linkage": 24,
+      "ru/public_control": 24
+    }
+  }
+}

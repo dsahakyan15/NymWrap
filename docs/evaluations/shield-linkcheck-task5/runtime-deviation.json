@@ -1,0 +1,20 @@
+{
+  "reason": "Eight non-mmap model loads exceeded physical memory; reduce concurrent shards to four without rerunning conversations",
+  "started_utc": "2026-11-25T11:46:35.8524103Z",
+  "held_shards": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "active_shards": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "first_case_errors_retained": true,
+  "thresholds_changed": false,
+  "helper_sha256": "365c6ebd71d81fcd15270ce34376604c5cd5801278f367eaf5a076ca2a5b3bfc",
+  "paused_processes": 28
+}

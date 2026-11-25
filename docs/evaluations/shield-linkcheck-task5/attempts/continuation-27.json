@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "amendment_sha256": "26f24040c39599a1554943f0573bd0d09c09fef807ec3a3d2cc05ade4437779d",
+  "freeze_sha256": "a8b25e22f298d2b4118ba7d8751fe89537012072aef4733a559fb65a05a0260c",
+  "corpus_sha256": "d200e4e08f309b1e99e927d5dd5c61bd8e6c7dc8bb97b0f854ca575d6c0b5fb5",
+  "index": 27,
+  "start": 308,
+  "end": 315,
+  "initial_shard": 6,
+  "started_utc": "2026-11-25T21:58:59.720Z",
+  "reruns_allowed": false
+}

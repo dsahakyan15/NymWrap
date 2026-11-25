@@ -1,0 +1,12 @@
+{
+  "observed_utc": "2026-11-25T18:13:00Z",
+  "host_boot_utc": "2026-11-25T16:18:50.500Z",
+  "boot_source": "Win32_OperatingSystem.LastBootUpTime",
+  "prior_coordinator_process_present": false,
+  "prior_inference_processes_present": false,
+  "prior_exec_session": "unavailable after restart",
+  "last_completed_checkpoint_utc": "2026-11-25T15:08:24.176Z",
+  "completed_observations": 123,
+  "outcome_accuracy_or_utility_inspected": false,
+  "cause_of_earlier_checkpoint_gap": "unknown; reboot confirms loss of all prior processes, not why checkpoints stopped earlier"
+}

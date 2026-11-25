@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "created_utc": "2026-11-25T11:42:03.653Z",
+  "synthetic_only": true,
+  "decision": "measure_existing_candidate_without_threshold_tuning; development quality failed",
+  "development_sha256": "818bcf5fdbc0e277fbb2a3aaddacd4f4773037096c6064cb47b25da0b02284e0",
+  "development_corpus_sha256": "58b89acf9215016e698e582b0053483dc480a1c27a8013f4ffc8ac6e9fa32721",
+  "policy": {
+    "profile": "standard",
+    "shield": {
+      "linkcheck": {
+        "top_k": 3,
+        "max_margin": 0.03,
+        "model_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439"
+      },
+      "min_trust": "L3",
+      "translate_to_english": false,
+      "show_diff_before_send": false,
+      "max_turns_per_conversation": 30,
+      "secrets_list": "vault:secrets",
+      "history_retention_days": 30
+    },
+    "cover": {
+      "enabled": false,
+      "mode": "poisson",
+      "mean_interval_s": 600,
+      "max_requests_per_day": 60,
+      "max_spend_per_day_usd": 0.5
+    },
+    "net": {
+      "transport": "local",
+      "provider_host": null,
+      "provider_path": null,
+      "credential_ref": null,
+      "provider_model": null,
+      "max_request_cost_microusd": null
+    },
+    "drift": {
+      "mode": "assisted",
+      "days_per_stage": 5,
+      "stages": 10,
+      "min_hours_between_days": 12,
+      "allow_ai_web_automation": false
+    },
+    "llm": {
+      "backend": "llama.cpp",
+      "endpoint": "nymwrap-synthetic-evaluation-llm",
+      "model": "default",
+      "embed_model": "local-embedding",
+      "model_sha256": null,
+      "model_path": null,
+      "embed_path": null,
+      "embed_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439"
+    },
+    "hard": {
+      "defer_max_hours": 0,
+      "device_secrets": true,
+      "background_tail": false
+    }
+  },
+  "expected_provenance": {
+    "client_sha256": "8e812ac0c1917440df42ac0ae8cba82c0d94255296a1be52f55c74b6f0ef3682",
+    "defender_worker_sha256": "6af824d6164d5cff4c40b72e84e580d5c529436ef7e54ba10487ae6f4f087ea6",
+    "attacker_worker_sha256": "6af824d6164d5cff4c40b72e84e580d5c529436ef7e54ba10487ae6f4f087ea6",
+    "model_sha256": "7376371b5fb12633c2d9fd4805c8312538072a59c1929db40c7d95794becab76",
+    "attacker_model_sha256": "7376371b5fb12633c2d9fd4805c8312538072a59c1929db40c7d95794becab76",
+    "embedding_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+    "config_sha256": "212a0217615d33c439dd5fa59841b111a2c3ca9169d7ec0e0bc17a402cdbf9df",
+    "embedding_catalog_sha256": "f44a4cd9535e6faa1a6be2cc4ddfd8f82137ad95648af34cf8cd2a798200f128",
+    "embedding_recipe_id": "qwen3_0_6b_last_plain_v1",
+    "embedding_dimension": 1024,
+    "model": "qwen2.5-7b-q4_k_m",
+    "attacker_model": "qwen2.5-7b-q4_k_m",
+    "platform": "win32",
+    "arch": "x64",
+    "evaluator_script_sha256": "89fc5fdb2d0f38b4dccd1e80d43af66ea91bc2c716ec2420d8d9e33d35702a7a",
+    "report_script_sha256": "23cc8b683c9fa5e86e418b1e23cffb53bc6cb9e8472984ec6eaa047e3826fbe6",
+    "statistics_sha256": "632046271a9f657732f8cef1a3d5234907ff2a6398cf73c34f31f11e0aba86c1",
+    "shard_script_sha256": "cc1df313180d8a7f0b86b5431df375bd37fb5e5936ce65423a78136dfe3b53b8"
+  },
+  "scripts": {
+    "scripts/linkcheck-eval.mjs": "89fc5fdb2d0f38b4dccd1e80d43af66ea91bc2c716ec2420d8d9e33d35702a7a",
+    "scripts/linkcheck-experiment.mjs": "fdf8daa7d23216ef0007bf85786e0d4339c5a864f08987941545995e6c8a6dc0",
+    "scripts/generate-linkcheck-held-out.mjs": "aecc9a11eeae67a86efcab4f965ded3fde0b01ee88fa1881caa8afa87c6aa0af",
+    "scripts/linkcheck-report.mjs": "23cc8b683c9fa5e86e418b1e23cffb53bc6cb9e8472984ec6eaa047e3826fbe6",
+    "scripts/linkcheck-statistics.mjs": "632046271a9f657732f8cef1a3d5234907ff2a6398cf73c34f31f11e0aba86c1",
+    "scripts/linkcheck-shards.mjs": "cc1df313180d8a7f0b86b5431df375bd37fb5e5936ce65423a78136dfe3b53b8",
+    "scripts/linkcheck-merge.mjs": "42f9b24ae23d8f40df99845549e714cb4a1ba2137b30d5fab6e66f543384c504",
+    "scripts/linkcheck-embeddings.mjs": "f44a4cd9535e6faa1a6be2cc4ddfd8f82137ad95648af34cf8cd2a798200f128"
+  },
+  "held_out_plan": {
+    "cases": 360,
+    "candidates": 64,
+    "languages": [
+      "en",
+      "ru",
+      "hy"
+    ],
+    "groups": [
+      "public_control",
+      "linkage",
+      "linkage_multiturn",
+      "hard_data",
+      "injection"
+    ],
+    "cases_per_stratum": 24,
+    "shards": 8
+  },
+  "selection": "Retain the measured top_k=3/max_margin=0.03 and Qwen candidate, including its negative development outcome; no search or production-default change.",
+  "inference_source_commit": null,
+  "inference_identity": "retained executable SHA-256, not a claim that the current source head produced these binaries",
+  "inference_development_provenance": {
+    "client_sha256": "8e812ac0c1917440df42ac0ae8cba82c0d94255296a1be52f55c74b6f0ef3682",
+    "defender_worker_sha256": "6af824d6164d5cff4c40b72e84e580d5c529436ef7e54ba10487ae6f4f087ea6",
+    "attacker_worker_sha256": "6af824d6164d5cff4c40b72e84e580d5c529436ef7e54ba10487ae6f4f087ea6",
+    "corpus_sha256": "58b89acf9215016e698e582b0053483dc480a1c27a8013f4ffc8ac6e9fa32721",
+    "model_sha256": "7376371b5fb12633c2d9fd4805c8312538072a59c1929db40c7d95794becab76",
+    "attacker_model_sha256": "7376371b5fb12633c2d9fd4805c8312538072a59c1929db40c7d95794becab76",
+    "embedding_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+    "config_sha256": "212a0217615d33c439dd5fa59841b111a2c3ca9169d7ec0e0bc17a402cdbf9df",
+    "evaluator_script_sha256": "bbb4abacfeeff0ff51ab6f4a0b2da923bd13b5a4541543a436c7d86d7ab2943c",
+    "report_script_sha256": "23cc8b683c9fa5e86e418b1e23cffb53bc6cb9e8472984ec6eaa047e3826fbe6",
+    "statistics_sha256": "632046271a9f657732f8cef1a3d5234907ff2a6398cf73c34f31f11e0aba86c1",
+    "shard_script_sha256": "cc1df313180d8a7f0b86b5431df375bd37fb5e5936ce65423a78136dfe3b53b8",
+    "embedding_catalog_sha256": "f44a4cd9535e6faa1a6be2cc4ddfd8f82137ad95648af34cf8cd2a798200f128",
+    "embedding_recipe_id": "qwen3_0_6b_last_plain_v1",
+    "embedding_dimension": 1024,
+    "model": "qwen2.5-7b-q4_k_m",
+    "attacker_model": "qwen2.5-7b-q4_k_m",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "development_outcome": {
+    "model": {
+      "cases": 384,
+      "remote_cases": 86,
+      "private_remote_cases": 33,
+      "local_cases": 293,
+      "blocked_cases": 14,
+      "errors": 62,
+      "canary_leaks": 0,
+      "invalid_attacks": 0,
+      "useful_answers": 243,
+      "utility_failures": 127,
+      "utility_unmeasured": 14,
+      "useful_fraction": 0.6328125,
+      "top1": {
+        "correct": 7,
+        "trials": 86,
+        "accuracy": 0.08139534883720931,
+        "ci95": [
+          0.03335242903017589,
+          0.16053967133308222
+        ],
+        "chance": 0.015625,
+        "pvalue_greater": 0.00041591640212088434,
+        "no_significant_excess": false
+      },
+      "private_top1": {
+        "correct": 6,
+        "trials": 33,
+        "accuracy": 0.18181818181818182,
+        "ci95": [
+          0.06978788366631003,
+          0.354600559450269
+        ],
+        "chance": 0.015625,
+        "pvalue_greater": 0.000011214580593740709,
+        "no_significant_excess": false
+      },
+      "chance_gate": "failed",
+      "raw_private": {
+        "correct": 226,
+        "trials": 296,
+        "accuracy": 0.7635135135135135,
+        "ci95": [
+          0.7109098538171648,
+          0.8107567049326181
+        ],
+        "chance": 0.015625,
+        "pvalue_greater": 0,
+        "no_significant_excess": false,
+        "invalid": 0
+      }
+    },
+    "literal": {
+      "cases": 384,
+      "remote_cases": 86,
+      "private_remote_cases": 33,
+      "local_cases": 293,
+      "blocked_cases": 14,
+      "errors": 62,
+      "canary_leaks": 0,
+      "invalid_attacks": 0,
+      "useful_answers": 243,
+      "utility_failures": 127,
+      "utility_unmeasured": 14,
+      "useful_fraction": 0.6328125,
+      "top1": {
+        "correct": 0,
+        "trials": 86,
+        "accuracy": 0,
+        "ci95": [
+          0,
+          0.04198701530414417
+        ],
+        "chance": 0.015625,
+        "pvalue_greater": 1,
+        "no_significant_excess": true
+      },
+      "private_top1": {
+        "correct": 0,
+        "trials": 33,
+        "accuracy": 0,
+        "ci95": [
+          0,
+          0.10576281007457955
+        ],
+        "chance": 0.015625,
+        "pvalue_greater": 1,
+        "no_significant_excess": true
+      },
+      "chance_gate": "passes_test",
+      "raw_private": {
+        "correct": 296,
+        "trials": 296,
+        "accuracy": 1,
+        "ci95": [
+          0.9876149039079027,
+          1
+        ],
+        "chance": 0.015625,
+        "pvalue_greater": 0,
+        "no_significant_excess": false,
+        "invalid": 0
+      }
+    }
+  },
+  "protocol": {
+    "one_attempt_per_conversation": true,
+    "resume": false,
+    "regenerate": false,
+    "confidence": 0.95,
+    "alpha": 0.05,
+    "chance": 0.015625,
+    "unit": "whole conversation, cumulative provider-visible history",
+    "utility": "integer arithmetic, not general answer quality",
+    "primary_endpoint": "model private top-1 on outgoing conversations",
+    "subgroup_tests": "descriptive unadjusted p-values; no population-anonymity claim",
+    "refusal": "blocked turns; errors reported separately; missing attacks and L0 never count as incorrect attacker guesses",
+    "inference_scope": "production Engine in the retained evaluator; final L0 and provider-simulation answers from the real local model; no external requests",
+    "acceptance": "report negative or inconclusive outcomes; no significance is not evidence of equality or population anonymity"
+  }
+}

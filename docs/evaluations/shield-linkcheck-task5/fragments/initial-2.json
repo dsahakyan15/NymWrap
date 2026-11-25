@@ -1,0 +1,198 @@
+{
+  "version": 3,
+  "status": "running",
+  "partition": "held_out",
+  "case_count": 360,
+  "provenance": {
+    "client_sha256": "8e812ac0c1917440df42ac0ae8cba82c0d94255296a1be52f55c74b6f0ef3682",
+    "defender_worker_sha256": "6af824d6164d5cff4c40b72e84e580d5c529436ef7e54ba10487ae6f4f087ea6",
+    "attacker_worker_sha256": "6af824d6164d5cff4c40b72e84e580d5c529436ef7e54ba10487ae6f4f087ea6",
+    "corpus_sha256": "d200e4e08f309b1e99e927d5dd5c61bd8e6c7dc8bb97b0f854ca575d6c0b5fb5",
+    "model_sha256": "7376371b5fb12633c2d9fd4805c8312538072a59c1929db40c7d95794becab76",
+    "attacker_model_sha256": "7376371b5fb12633c2d9fd4805c8312538072a59c1929db40c7d95794becab76",
+    "embedding_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
+    "config_sha256": "212a0217615d33c439dd5fa59841b111a2c3ca9169d7ec0e0bc17a402cdbf9df",
+    "evaluator_script_sha256": "89fc5fdb2d0f38b4dccd1e80d43af66ea91bc2c716ec2420d8d9e33d35702a7a",
+    "report_script_sha256": "23cc8b683c9fa5e86e418b1e23cffb53bc6cb9e8472984ec6eaa047e3826fbe6",
+    "statistics_sha256": "632046271a9f657732f8cef1a3d5234907ff2a6398cf73c34f31f11e0aba86c1",
+    "shard_script_sha256": "cc1df313180d8a7f0b86b5431df375bd37fb5e5936ce65423a78136dfe3b53b8",
+    "embedding_catalog_sha256": "f44a4cd9535e6faa1a6be2cc4ddfd8f82137ad95648af34cf8cd2a798200f128",
+    "embedding_recipe_id": "qwen3_0_6b_last_plain_v1",
+    "embedding_dimension": 1024,
+    "model": "qwen2.5-7b-q4_k_m",
+    "attacker_model": "qwen2.5-7b-q4_k_m",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "attempt_sha256": "91f912a79d4dd71ff039009965303e616821ebc1513609c0b5f59b31d4d21633",
+  "shard": {
+    "index": 2,
+    "count": 8,
+    "start": 90,
+    "end": 135
+  },
+  "evidence": {
+    "workflow_run": null,
+    "commit": null
+  },
+  "scope": {
+    "profile": "standard",
+    "policy": {
+      "profile": "standard",
+      "shield": {
+        "linkcheck": {
+          "top_k": 3,
+          "max_margin": 0.03,
+          "model_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439"
+        },
+        "min_trust": "L3",
+        "translate_to_english": false,
+        "show_diff_before_send": false,
+        "max_turns_per_conversation": 30,
+        "secrets_list": "vault:secrets",
+        "history_retention_days": 30
+      },
+      "cover": {
+        "enabled": false,
+        "mode": "poisson",
+        "mean_interval_s": 600,
+        "max_requests_per_day": 60,
+        "max_spend_per_day_usd": 0.5
+      },
+      "net": {
+        "transport": "local",
+        "provider_host": null,
+        "provider_path": null,
+        "credential_ref": null,
+        "provider_model": null,
+        "max_request_cost_microusd": null
+      },
+      "drift": {
+        "mode": "assisted",
+        "days_per_stage": 5,
+        "stages": 10,
+        "min_hours_between_days": 12,
+        "allow_ai_web_automation": false
+      },
+      "llm": {
+        "backend": "llama.cpp",
+        "endpoint": "nymwrap-synthetic-evaluation-llm",
+        "model": "default",
+        "embed_model": "local-embedding",
+        "model_sha256": null,
+        "model_path": null,
+        "embed_path": null,
+        "embed_sha256": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439"
+      },
+      "hard": {
+        "defer_max_hours": 0,
+        "device_secrets": true,
+        "background_tail": false
+      }
+    },
+    "external_requests": false,
+    "local_answers_stubbed": false,
+    "provider_answers": "real local model, simulated provider",
+    "inventory": "synthetic Device records; no host collection",
+    "attacker": "real local fact extraction and deterministic 64-dossier ranking plus independent literal matcher; full cumulative provider view",
+    "utility": "integer arithmetic, not general answer quality",
+    "held_out": true,
+    "freeze_sha256": "a8b25e22f298d2b4118ba7d8751fe89537012072aef4733a559fb65a05a0260c"
+  },
+  "observations": [
+    {
+      "id": "held_0090",
+      "language": "ru",
+      "group": "linkage_multiturn",
+      "remote_turns": 0,
+      "local_turns": 0,
+      "blocked_turns": 1,
+      "canary_leaks": 0,
+      "error": true,
+      "utility": null,
+      "utility_outcomes": [
+        "unavailable"
+      ],
+      "attack": null,
+      "raw_attack": {
+        "valid": true,
+        "top1_correct": false,
+        "evidence": {
+          "matched_facts": 3,
+          "nonce_matched": false,
+          "tied_candidates": 3
+        }
+      },
+      "literal_attack": null,
+      "raw_literal_attack": {
+        "valid": true,
+        "top1_correct": true,
+        "evidence": {
+          "matched_facts": 6,
+          "nonce_matched": false,
+          "tied_candidates": 1
+        }
+      },
+      "calls": {
+        "ner": 1,
+        "ner_rejections": {},
+        "canonicalize": 1,
+        "generalize": 0,
+        "embeddings": 0,
+        "answers": 0,
+        "errors": 1,
+        "linkage_ranks": []
+      },
+      "local_reasons": [],
+      "elapsed_ms": 351269
+    },
+    {
+      "id": "held_0091",
+      "language": "hy",
+      "group": "public_control",
+      "remote_turns": 0,
+      "local_turns": 1,
+      "blocked_turns": 0,
+      "canary_leaks": 0,
+      "error": true,
+      "utility": false,
+      "utility_outcomes": [
+        "not_integer"
+      ],
+      "attack": null,
+      "raw_attack": {
+        "valid": true,
+        "top1_correct": false,
+        "evidence": {
+          "matched_facts": 0,
+          "nonce_matched": false,
+          "tied_candidates": 64
+        }
+      },
+      "literal_attack": null,
+      "raw_literal_attack": {
+        "valid": true,
+        "top1_correct": false,
+        "evidence": {
+          "matched_facts": 0,
+          "nonce_matched": false,
+          "tied_candidates": 64
+        }
+      },
+      "calls": {
+        "ner": 1,
+        "ner_rejections": {},
+        "canonicalize": 1,
+        "generalize": 0,
+        "embeddings": 0,
+        "answers": 1,
+        "errors": 1,
+        "linkage_ranks": []
+      },
+      "local_reasons": [
+        "entity_verification_unavailable"
+      ],
+      "elapsed_ms": 505857
+    }
+  ]
+}

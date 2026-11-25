@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "created_utc": "2026-11-25T12:14:42.497Z",
+  "source_sha256": "72739fc47b09c32be8ba359aaf1574fb83e41a84d9de225048bd95adbea80196",
+  "source_requirement": "ADR 0040: same outgoing cases for before/after comparison",
+  "scope": "secondary descriptive paired comparison; primary endpoint and thresholds unchanged; exclude invalid pairs rather than counting them as guesses"
+}

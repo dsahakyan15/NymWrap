@@ -1,0 +1,790 @@
+{
+  "version": 1,
+  "scope": "same measured private outgoing conversations with both valid attacks; not L0 or public controls",
+  "phases": {
+    "development": {
+      "model": {
+        "all": {
+          "private_outgoing": 33,
+          "paired": 33,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "dev_0008",
+            "dev_0011",
+            "dev_0024",
+            "dev_0033",
+            "dev_0053",
+            "dev_0064",
+            "dev_0078",
+            "dev_0091",
+            "dev_0103",
+            "dev_0108",
+            "dev_0120",
+            "dev_0128",
+            "dev_0131",
+            "dev_0146",
+            "dev_0150",
+            "dev_0160",
+            "dev_0176",
+            "dev_0182",
+            "dev_0197",
+            "dev_0199",
+            "dev_0228",
+            "dev_0231",
+            "dev_0244",
+            "dev_0257",
+            "dev_0259",
+            "dev_0263",
+            "dev_0273",
+            "dev_0275",
+            "dev_0280",
+            "dev_0285",
+            "dev_0338",
+            "dev_0342",
+            "dev_0359"
+          ],
+          "before": {
+            "correct": 20,
+            "trials": 33,
+            "accuracy": 0.6060606060606061,
+            "ci95": [
+              0.42139372138825026,
+              0.7709337616357992
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 3.548560672969276e-28,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 6,
+            "trials": 33,
+            "accuracy": 0.18181818181818182,
+            "ci95": [
+              0.06978788366631003,
+              0.354600559450269
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.000011214580593740709,
+            "no_significant_excess": false
+          }
+        },
+        "en": {
+          "private_outgoing": 4,
+          "paired": 4,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "dev_0008",
+            "dev_0197",
+            "dev_0263",
+            "dev_0359"
+          ],
+          "before": {
+            "correct": 3,
+            "trials": 4,
+            "accuracy": 0.75,
+            "ci95": [
+              0.19412044968324343,
+              0.9936905367902902
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.000015079975128173837,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 4,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.6023646356164746
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        },
+        "ru": {
+          "private_outgoing": 29,
+          "paired": 29,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "dev_0011",
+            "dev_0024",
+            "dev_0033",
+            "dev_0053",
+            "dev_0064",
+            "dev_0078",
+            "dev_0091",
+            "dev_0103",
+            "dev_0108",
+            "dev_0120",
+            "dev_0128",
+            "dev_0131",
+            "dev_0146",
+            "dev_0150",
+            "dev_0160",
+            "dev_0176",
+            "dev_0182",
+            "dev_0199",
+            "dev_0228",
+            "dev_0231",
+            "dev_0244",
+            "dev_0257",
+            "dev_0259",
+            "dev_0273",
+            "dev_0275",
+            "dev_0280",
+            "dev_0285",
+            "dev_0338",
+            "dev_0342"
+          ],
+          "before": {
+            "correct": 17,
+            "trials": 29,
+            "accuracy": 0.5862068965517241,
+            "ci95": [
+              0.3893627913969062,
+              0.7647597902471015
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 8.562771887004152e-24,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 6,
+            "trials": 29,
+            "accuracy": 0.20689655172413793,
+            "ci95": [
+              0.07994184887608008,
+              0.39724694922723924
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.00000507433595619933,
+            "no_significant_excess": false
+          }
+        },
+        "hy": {
+          "private_outgoing": 0,
+          "paired": 0,
+          "unmeasured_pairs": 0,
+          "case_ids": [],
+          "before": {
+            "correct": 0,
+            "trials": 0,
+            "accuracy": null,
+            "ci95": null,
+            "chance": 0.015625,
+            "pvalue_greater": null,
+            "no_significant_excess": null
+          },
+          "after": {
+            "correct": 0,
+            "trials": 0,
+            "accuracy": null,
+            "ci95": null,
+            "chance": 0.015625,
+            "pvalue_greater": null,
+            "no_significant_excess": null
+          }
+        }
+      },
+      "literal": {
+        "all": {
+          "private_outgoing": 33,
+          "paired": 33,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "dev_0008",
+            "dev_0011",
+            "dev_0024",
+            "dev_0033",
+            "dev_0053",
+            "dev_0064",
+            "dev_0078",
+            "dev_0091",
+            "dev_0103",
+            "dev_0108",
+            "dev_0120",
+            "dev_0128",
+            "dev_0131",
+            "dev_0146",
+            "dev_0150",
+            "dev_0160",
+            "dev_0176",
+            "dev_0182",
+            "dev_0197",
+            "dev_0199",
+            "dev_0228",
+            "dev_0231",
+            "dev_0244",
+            "dev_0257",
+            "dev_0259",
+            "dev_0263",
+            "dev_0273",
+            "dev_0275",
+            "dev_0280",
+            "dev_0285",
+            "dev_0338",
+            "dev_0342",
+            "dev_0359"
+          ],
+          "before": {
+            "correct": 33,
+            "trials": 33,
+            "accuracy": 1,
+            "ci95": [
+              0.8942371899254205,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 2.489206111144458e-60,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 33,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.10576281007457955
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        },
+        "en": {
+          "private_outgoing": 4,
+          "paired": 4,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "dev_0008",
+            "dev_0197",
+            "dev_0263",
+            "dev_0359"
+          ],
+          "before": {
+            "correct": 4,
+            "trials": 4,
+            "accuracy": 1,
+            "ci95": [
+              0.3976353643835254,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 5.960464477539072e-8,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 4,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.6023646356164746
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        },
+        "ru": {
+          "private_outgoing": 29,
+          "paired": 29,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "dev_0011",
+            "dev_0024",
+            "dev_0033",
+            "dev_0053",
+            "dev_0064",
+            "dev_0078",
+            "dev_0091",
+            "dev_0103",
+            "dev_0108",
+            "dev_0120",
+            "dev_0128",
+            "dev_0131",
+            "dev_0146",
+            "dev_0150",
+            "dev_0160",
+            "dev_0176",
+            "dev_0182",
+            "dev_0199",
+            "dev_0228",
+            "dev_0231",
+            "dev_0244",
+            "dev_0257",
+            "dev_0259",
+            "dev_0273",
+            "dev_0275",
+            "dev_0280",
+            "dev_0285",
+            "dev_0338",
+            "dev_0342"
+          ],
+          "before": {
+            "correct": 29,
+            "trials": 29,
+            "accuracy": 1,
+            "ci95": [
+              0.8805551309304971,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 4.176194859519125e-53,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 29,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.11944486906950291
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        },
+        "hy": {
+          "private_outgoing": 0,
+          "paired": 0,
+          "unmeasured_pairs": 0,
+          "case_ids": [],
+          "before": {
+            "correct": 0,
+            "trials": 0,
+            "accuracy": null,
+            "ci95": null,
+            "chance": 0.015625,
+            "pvalue_greater": null,
+            "no_significant_excess": null
+          },
+          "after": {
+            "correct": 0,
+            "trials": 0,
+            "accuracy": null,
+            "ci95": null,
+            "chance": 0.015625,
+            "pvalue_greater": null,
+            "no_significant_excess": null
+          }
+        }
+      }
+    },
+    "held_out": {
+      "model": {
+        "all": {
+          "private_outgoing": 40,
+          "paired": 39,
+          "unmeasured_pairs": 1,
+          "case_ids": [
+            "held_0006",
+            "held_0008",
+            "held_0010",
+            "held_0024",
+            "held_0028",
+            "held_0030",
+            "held_0038",
+            "held_0052",
+            "held_0057",
+            "held_0063",
+            "held_0074",
+            "held_0079",
+            "held_0100",
+            "held_0111",
+            "held_0116",
+            "held_0131",
+            "held_0145",
+            "held_0154",
+            "held_0157",
+            "held_0163",
+            "held_0168",
+            "held_0170",
+            "held_0183",
+            "held_0198",
+            "held_0207",
+            "held_0233",
+            "held_0243",
+            "held_0269",
+            "held_0273",
+            "held_0276",
+            "held_0297",
+            "held_0302",
+            "held_0319",
+            "held_0320",
+            "held_0329",
+            "held_0335",
+            "held_0342",
+            "held_0349",
+            "held_0357"
+          ],
+          "before": {
+            "correct": 25,
+            "trials": 39,
+            "accuracy": 0.6410256410256411,
+            "ci95": [
+              0.47179511362541193,
+              0.7879628144392001
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 8.550750180017645e-36,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 5,
+            "trials": 39,
+            "accuracy": 0.1282051282051282,
+            "ci95": [
+              0.04296834300178917,
+              0.27429941044471606
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.00034439504474127535,
+            "no_significant_excess": false
+          }
+        },
+        "en": {
+          "private_outgoing": 2,
+          "paired": 2,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "held_0008",
+            "held_0276"
+          ],
+          "before": {
+            "correct": 0,
+            "trials": 2,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.841886116991581
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          },
+          "after": {
+            "correct": 0,
+            "trials": 2,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.841886116991581
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        },
+        "ru": {
+          "private_outgoing": 27,
+          "paired": 26,
+          "unmeasured_pairs": 1,
+          "case_ids": [
+            "held_0006",
+            "held_0010",
+            "held_0024",
+            "held_0028",
+            "held_0030",
+            "held_0052",
+            "held_0057",
+            "held_0063",
+            "held_0074",
+            "held_0079",
+            "held_0100",
+            "held_0154",
+            "held_0157",
+            "held_0163",
+            "held_0168",
+            "held_0207",
+            "held_0243",
+            "held_0269",
+            "held_0297",
+            "held_0302",
+            "held_0319",
+            "held_0320",
+            "held_0329",
+            "held_0342",
+            "held_0349",
+            "held_0357"
+          ],
+          "before": {
+            "correct": 19,
+            "trials": 26,
+            "accuracy": 0.7307692307692307,
+            "ci95": [
+              0.5221252103061687,
+              0.884267786708496
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 2.852432541916271e-29,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 5,
+            "trials": 26,
+            "accuracy": 0.19230769230769232,
+            "ci95": [
+              0.06554810873678249,
+              0.39350552793932203
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.0000465717788867429,
+            "no_significant_excess": false
+          }
+        },
+        "hy": {
+          "private_outgoing": 11,
+          "paired": 11,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "held_0038",
+            "held_0111",
+            "held_0116",
+            "held_0131",
+            "held_0145",
+            "held_0170",
+            "held_0183",
+            "held_0198",
+            "held_0233",
+            "held_0273",
+            "held_0335"
+          ],
+          "before": {
+            "correct": 6,
+            "trials": 11,
+            "accuracy": 0.5454545454545454,
+            "ci95": [
+              0.23379359765934515,
+              0.8325119059362929
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 6.284925335427279e-9,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 11,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.2849141529181545
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        }
+      },
+      "literal": {
+        "all": {
+          "private_outgoing": 40,
+          "paired": 40,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "held_0006",
+            "held_0008",
+            "held_0010",
+            "held_0024",
+            "held_0028",
+            "held_0030",
+            "held_0038",
+            "held_0052",
+            "held_0057",
+            "held_0063",
+            "held_0074",
+            "held_0079",
+            "held_0100",
+            "held_0111",
+            "held_0116",
+            "held_0131",
+            "held_0145",
+            "held_0154",
+            "held_0157",
+            "held_0163",
+            "held_0168",
+            "held_0170",
+            "held_0183",
+            "held_0198",
+            "held_0207",
+            "held_0233",
+            "held_0243",
+            "held_0269",
+            "held_0273",
+            "held_0276",
+            "held_0278",
+            "held_0297",
+            "held_0302",
+            "held_0319",
+            "held_0320",
+            "held_0329",
+            "held_0335",
+            "held_0342",
+            "held_0349",
+            "held_0357"
+          ],
+          "before": {
+            "correct": 40,
+            "trials": 40,
+            "accuracy": 1,
+            "ci95": [
+              0.9119026971211974,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 5.659799424266898e-73,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 1,
+            "trials": 40,
+            "accuracy": 0.025,
+            "ci95": [
+              0.0006327449320494196,
+              0.13158585848276583
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.4673731952309547,
+            "no_significant_excess": true
+          }
+        },
+        "en": {
+          "private_outgoing": 2,
+          "paired": 2,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "held_0008",
+            "held_0276"
+          ],
+          "before": {
+            "correct": 2,
+            "trials": 2,
+            "accuracy": 1,
+            "ci95": [
+              0.158113883008419,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.00024414062500000016,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 2,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.841886116991581
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        },
+        "ru": {
+          "private_outgoing": 27,
+          "paired": 27,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "held_0006",
+            "held_0010",
+            "held_0024",
+            "held_0028",
+            "held_0030",
+            "held_0052",
+            "held_0057",
+            "held_0063",
+            "held_0074",
+            "held_0079",
+            "held_0100",
+            "held_0154",
+            "held_0157",
+            "held_0163",
+            "held_0168",
+            "held_0207",
+            "held_0243",
+            "held_0269",
+            "held_0278",
+            "held_0297",
+            "held_0302",
+            "held_0319",
+            "held_0320",
+            "held_0329",
+            "held_0342",
+            "held_0349",
+            "held_0357"
+          ],
+          "before": {
+            "correct": 27,
+            "trials": 27,
+            "accuracy": 1,
+            "ci95": [
+              0.8722971323845676,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1.7105694144589991e-49,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 1,
+            "trials": 27,
+            "accuracy": 0.037037037037037035,
+            "ci95": [
+              0.0009372570919447076,
+              0.1897056174130447
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 0.34636464105054804,
+            "no_significant_excess": true
+          }
+        },
+        "hy": {
+          "private_outgoing": 11,
+          "paired": 11,
+          "unmeasured_pairs": 0,
+          "case_ids": [
+            "held_0038",
+            "held_0111",
+            "held_0116",
+            "held_0131",
+            "held_0145",
+            "held_0170",
+            "held_0183",
+            "held_0198",
+            "held_0233",
+            "held_0273",
+            "held_0335"
+          ],
+          "before": {
+            "correct": 11,
+            "trials": 11,
+            "accuracy": 1,
+            "ci95": [
+              0.7150858470818455,
+              1
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1.3552527156068872e-20,
+            "no_significant_excess": false
+          },
+          "after": {
+            "correct": 0,
+            "trials": 11,
+            "accuracy": 0,
+            "ci95": [
+              0,
+              0.2849141529181545
+            ],
+            "chance": 0.015625,
+            "pvalue_greater": 1,
+            "no_significant_excess": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "created_utc": "2026-11-25T12:10:01.494Z",
+  "amendment_sha256": "26f24040c39599a1554943f0573bd0d09c09fef807ec3a3d2cc05ade4437779d",
+  "reporter_sha256": "cd765c5972bf1fbe3381f7834aa9cad53729a1185683f595499cd7d126cb6e38",
+  "statistics_sha256": "632046271a9f657732f8cef1a3d5234907ff2a6398cf73c34f31f11e0aba86c1",
+  "primary_endpoint": "model private top-1 on outgoing conversations",
+  "unmeasured": "retain all planned denominators; never assume no egress; conditional measured accuracy and a privacy-best-case bound with all missing conversations as incorrect private outbound guesses",
+  "acceptance": "not accepted because of protocol deviation and unmeasured cases; preserve negative development result",
+  "threshold_tuning": false
+}

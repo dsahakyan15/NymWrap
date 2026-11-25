@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "created_utc": "2026-11-25T18:15:13.555Z",
+  "reason": "Host restarted; original coordinator and inference processes no longer exist. Run only never-claimed chunks.",
+  "restart_evidence_sha256": "1eb40b816a4b5bd5bab0d3b7019c1bba50e39b7b4af6d794352cb400d9452ff0",
+  "host_boot_utc": "2026-11-25T16:18:50.500Z",
+  "original_amendment_sha256": "26f24040c39599a1554943f0573bd0d09c09fef807ec3a3d2cc05ade4437779d",
+  "freeze_sha256": "a8b25e22f298d2b4118ba7d8751fe89537012072aef4733a559fb65a05a0260c",
+  "source_sha256": "98b10e28815616cb0d36c332da5dc79bc82a29324da8e76cd49d00e8fbcd5b74",
+  "frozen_chunk_bridge_sha256": "2136867fea09a86e7223798b56946e195b6e0aaa4c484d80d98806d0d444e6ab",
+  "original_coordinator_attempt_sha256": "f9a1a64962a3da33688fd064e4a8375af93fc742dce106373b518d1b9e2278b1",
+  "outcome_based_selection": false,
+  "inference_thresholds_models_deadlines_unchanged": true,
+  "concurrency": 2,
+  "prior_claims": [
+    {
+      "file": "continuation-0.json",
+      "attempt_sha256": "f64788524e04c03adaca8af500f0e268ccdbeb2591d401556d6e032b8a554c7e",
+      "fragment_sha256": "a1c0306dcceca3ed4a9e9ff7fb3ec081bf1702db5c13538a2de7f458e9647ecc",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-1.json",
+      "attempt_sha256": "8cc1f53fc8853f3da6fac2b412220038ef89cbb3cd9132381ae4bad992a088e9",
+      "fragment_sha256": "6d11f6525b733f632cfb776c71912504c7ef43c6b6d9b27057023151d1be3096",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-2.json",
+      "attempt_sha256": "9994b1a28e18bf8062d4229971ea120d797fcd4571d9d2e44b4412dc2eed99f4",
+      "fragment_sha256": "1ccbf3b36a512ba4f1e1c887aaf6447ca1d6bf52c54193d0490292c74080157b",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-3.json",
+      "attempt_sha256": "feaa64ee9f8a623d86e508a60f0d53fa36e5901f8ffa08b122f0f5fe3c708837",
+      "fragment_sha256": "71c067ba5e9b0fd067e1201e7bf8eb78342dab44aa5a81cf0ba904e419f510ae",
+      "status": "complete",
+      "observations": 5
+    },
+    {
+      "file": "continuation-4.json",
+      "attempt_sha256": "ca43549311c3f5005398ad3d557d9da6f326382334a44d97d4a8fd97fc3fbc32",
+      "fragment_sha256": "685b3b051685a681fea147532587dfbb70d474ba27f59a556abc3eef7f698e66",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-5.json",
+      "attempt_sha256": "3826900ca712c9b720d793af57ea7f0225dd7d6ec617742d5c72304bc80c2ce8",
+      "fragment_sha256": "210a498c7249205c1afafc1b5bc731eab3e2a56e63e8e391a2b63dd0c55d06fb",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-6.json",
+      "attempt_sha256": "3846f3532732c2081568e186804a208288427fc2503878d6dd961338dc5cfe87",
+      "fragment_sha256": "568651f2f83c291c786b1dda63ab8af7c3ca85b7309b6da1b1f578bfdd21333c",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-7.json",
+      "attempt_sha256": "e7f2013f9d3765c9694541e0a084355964abfbe7eaa0f5b5702377fb7ca373a8",
+      "fragment_sha256": "151461e0187a46725e4040158a51b8c9bd5e5d594bd60b9dd877f585fda1bc19",
+      "status": "complete",
+      "observations": 5
+    },
+    {
+      "file": "continuation-8.json",
+      "attempt_sha256": "615bdf466fc51570eeab44dca41f9a2f34794a031d605168af1b95cb0045bc63",
+      "fragment_sha256": "ca9bc8299255f383e798a6b4779d64633d9ee05fd34831f00efce8b190073f27",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-9.json",
+      "attempt_sha256": "b8f3e1f972703ee74bfc4191345148cf774892e5c7f50384414687a17d456209",
+      "fragment_sha256": "09213926bd8a65e4fb3bdb8f438139912013fa86c621a470f42d73d3f270830f",
+      "status": "complete",
+      "observations": 12
+    },
+    {
+      "file": "continuation-10.json",
+      "attempt_sha256": "135928cd0f59480241367a109757d02abdd0f5edbb2e8c1d35158a68f2d13420",
+      "fragment_sha256": "4ef73b8c9cda4214d601aae2e9228097605c4298f960fe2e7c87dd4341bda4cd",
+      "status": "running",
+      "observations": 6
+    },
+    {
+      "file": "continuation-11.json",
+      "attempt_sha256": "4fa6b11b7f339200111da6c5a46818b98b2e8b471ec9fd6f65016fe79dc33ea0",
+      "fragment_sha256": "e63a9ad9a03879168d1e94055a5b694415dac5ac0ca06c920e3908c3aaef4e89",
+      "status": "running",
+      "observations": 3
+    }
+  ],
+  "settlements": [
+    {
+      "file": "continuation-10.json",
+      "archive": "host-restart-continuation-10.json",
+      "before_sha256": "4ef73b8c9cda4214d601aae2e9228097605c4298f960fe2e7c87dd4341bda4cd",
+      "after_sha256": "bb3d352a58a58d5654c4f77770ed3058f66841c4d214daf0ce77228a0e1b30c1"
+    },
+    {
+      "file": "continuation-11.json",
+      "archive": "host-restart-continuation-11.json",
+      "before_sha256": "e63a9ad9a03879168d1e94055a5b694415dac5ac0ca06c920e3908c3aaef4e89",
+      "after_sha256": "9d72fe9dc56408ed14ea8f24c152f274026f66200d8205ba89ad951d7af310b0"
+    }
+  ],
+  "pending": [
+    {
+      "index": 12,
+      "start": 139,
+      "end": 151,
+      "initial_shard": 3
+    },
+    {
+      "index": 13,
+      "start": 151,
+      "end": 163,
+      "initial_shard": 3
+    },
+    {
+      "index": 14,
+      "start": 163,
+      "end": 175,
+      "initial_shard": 3
+    },
+    {
+      "index": 15,
+      "start": 175,
+      "end": 180,
+      "initial_shard": 3
+    },
+    {
+      "index": 16,
+      "start": 182,
+      "end": 194,
+      "initial_shard": 4
+    },
+    {
+      "index": 17,
+      "start": 194,
+      "end": 206,
+      "initial_shard": 4
+    },
+    {
+      "index": 18,
+      "start": 206,
+      "end": 218,
+      "initial_shard": 4
+    },
+    {
+      "index": 19,
+      "start": 218,
+      "end": 225,
+      "initial_shard": 4
+    },
+    {
+      "index": 20,
+      "start": 227,
+      "end": 239,
+      "initial_shard": 5
+    },
+    {
+      "index": 21,
+      "start": 239,
+      "end": 251,
+      "initial_shard": 5
+    },
+    {
+      "index": 22,
+      "start": 251,
+      "end": 263,
+      "initial_shard": 5
+    },
+    {
+      "index": 23,
+      "start": 263,
+      "end": 270,
+      "initial_shard": 5
+    },
+    {
+      "index": 24,
+      "start": 272,
+      "end": 284,
+      "initial_shard": 6
+    },
+    {
+      "index": 25,
+      "start": 284,
+      "end": 296,
+      "initial_shard": 6
+    },
+    {
+      "index": 26,
+      "start": 296,
+      "end": 308,
+      "initial_shard": 6
+    },
+    {
+      "index": 27,
+      "start": 308,
+      "end": 315,
+      "initial_shard": 6
+    },
+    {
+      "index": 28,
+      "start": 317,
+      "end": 329,
+      "initial_shard": 7
+    },
+    {
+      "index": 29,
+      "start": 329,
+      "end": 341,
+      "initial_shard": 7
+    },
+    {
+      "index": 30,
+      "start": 341,
+      "end": 353,
+      "initial_shard": 7
+    },
+    {
+      "index": 31,
+      "start": 353,
+      "end": 360,
+      "initial_shard": 7
+    }
+  ],
+  "unmeasured": [
+    {
+      "id": "held_0124",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 10
+    },
+    {
+      "id": "held_0125",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 10
+    },
+    {
+      "id": "held_0126",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 10
+    },
+    {
+      "id": "held_0127",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 10
+    },
+    {
+      "id": "held_0128",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 10
+    },
+    {
+      "id": "held_0129",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 10
+    },
+    {
+      "id": "held_0133",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 11
+    },
+    {
+      "id": "held_0134",
+      "reason": "host_restart_claim_not_retried",
+      "possible_egress": "unknown",
+      "chunk": 11
+    }
+  ]
+}

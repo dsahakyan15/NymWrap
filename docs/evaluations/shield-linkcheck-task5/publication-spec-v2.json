@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "created_utc": "2026-11-25T13:29:13.177Z",
+  "amendment_sha256": "26f24040c39599a1554943f0573bd0d09c09fef807ec3a3d2cc05ade4437779d",
+  "reporter_sha256": "aeaf1ea574d43c71bfc5f649b8df2fe3b499ef596d26915b1dc6d29912b3582d",
+  "statistics_sha256": "632046271a9f657732f8cef1a3d5234907ff2a6398cf73c34f31f11e0aba86c1",
+  "primary_endpoint": "model private top-1 on outgoing conversations",
+  "unmeasured": "retain all planned denominators; never assume no egress; conditional measured accuracy and a privacy-best-case bound with all missing conversations as incorrect private outbound guesses",
+  "acceptance": "not accepted because of protocol deviation and unmeasured cases; preserve negative development result",
+  "threshold_tuning": false,
+  "previous_spec_sha256": "5c9e6c1ea43b92efa3cdfd34fa0c222f0839d75d1690b736019dcc6f276894b8",
+  "turn_accounting_sha256": "5b5a4c03945baa74a106047df95b2d548dee0dcdf901e1d4d3e22a331205a9a2",
+  "correction": "Derived attempted/unstarted turns count successful replies plus refusals; a disclosed request can overlap a refusal if its reply fails. No primary endpoint, score, threshold, observation or frozen statistical function changes. Original reporter preserved by its registered SHA.",
+  "held_out_outcomes_inspected": false
+}

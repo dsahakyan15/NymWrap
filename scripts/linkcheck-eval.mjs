@@ -78,16 +78,19 @@ export async function finishEvaluation(child){
   });
   if(!child.killed)child.kill();await stopped;
 }
-export async function main(args=process.argv.slice(2)){
+export async function main(args=process.argv.slice(2),frozenRun=null){
   const opts=options(args),reports=join(root,'target/linkcheck-eval');await mkdir(reports,{recursive:true});
   if((await lstat(reports)).isSymbolicLink())throw Error('unsafe_linkcheck_report_directory');
-  // Held-out generation/evaluation will require a frozen development receipt.
-  // This CLI deliberately exposes only development until that protocol exists.
-  const corpusPath=join(root,'tests/models/privacy-v3-dev.json'),corpusHash=await artifactHash(corpusPath);
-  const manifest=JSON.parse(await readFile(join(root,'tests/models/privacy-v3-dev.manifest.json'),'utf8'));
-  if(corpusHash!==manifest.sha256||await artifactHash(join(root,'scripts/generate-linkcheck-corpus.mjs'))!==manifest.generator_sha256)throw Error('invalid_development_corpus_manifest');
+  // The ordinary CLI remains development-only. Held-out is entered by the
+  // experiment coordinator after its freeze and exclusive attempt receipt.
+  const corpusPath=frozenRun?.corpusPath??join(root,'tests/models/privacy-v3-dev.json'),corpusHash=await artifactHash(corpusPath);
+  const manifest=frozenRun?.manifest??JSON.parse(await readFile(join(root,'tests/models/privacy-v3-dev.manifest.json'),'utf8'));
+  const generator=frozenRun?'scripts/generate-linkcheck-held-out.mjs':'scripts/generate-linkcheck-corpus.mjs';
+  if(corpusHash!==manifest.sha256||await artifactHash(join(root,generator))!==manifest.generator_sha256)throw Error('invalid_development_corpus_manifest');
   const corpus=JSON.parse(await readFile(corpusPath,'utf8'));
-  if(corpus.partition!=='development'||corpus.version!==3||corpus.cases.length!==384)throw Error('invalid_development_corpus');
+  const partition=frozenRun?'held_out':'development';
+  if(corpus.partition!==partition||corpus.version!==3||corpus.cases.length!==(frozenRun?360:384))throw Error('invalid_development_corpus');
+  if(frozenRun&&(opts.resume||opts.sample||opts.limit!==Infinity||!opts.shard))throw Error('held_out_requires_one_complete_shard_attempt');
   const range=evaluationRange(corpus.cases,opts);
   const suffix=process.platform==='win32'?'.exe':'',worker=await pinnedBinary(reports,join(root,'target/release','nw-llmd'+suffix),'nw-llmd');
   const client=await pinnedBinary(reports,join(root,'target/release/examples','privacy_linkcheck'+suffix),'privacy_linkcheck');
@@ -96,8 +99,7 @@ export async function main(args=process.argv.slice(2)){
   await verifyFile(join(root,'target/test-models',model.file),model.sha256);
   if(attackerModel.sha256!==model.sha256)await verifyFile(join(root,'target/test-models',attackerModel.file),attackerModel.sha256);
   await verifyFile(embed.path,embed.sha256);
-  const configResult=await execute(client,['--evaluation-config'],{cwd:root,windowsHide:true,maxBuffer:1024*1024});
-  const config=JSON.parse(configResult.stdout);
+  const config=frozenRun?structuredClone(frozenRun.policy):JSON.parse((await execute(client,['--evaluation-config'],{cwd:root,windowsHide:true,maxBuffer:1024*1024})).stdout);
   config.llm.embed_model='local-embedding';config.llm.embed_sha256=embed.sha256;
   config.shield.linkcheck.model_sha256=embed.sha256;
   const policy=JSON.stringify(config)+'\n';
@@ -110,12 +112,14 @@ export async function main(args=process.argv.slice(2)){
     embedding_catalog_sha256:await artifactHash(join(root,'scripts/linkcheck-embeddings.mjs')),
     embedding_recipe_id:embed.recipe_id,embedding_dimension:embed.dimension,
     model:opts.model,attacker_model:opts.attacker,platform:process.platform,arch:process.arch};
-  const receiptHash=digest(JSON.stringify(provenance)),path=join(reports,'development-'+opts.model+'-vs-'+opts.attacker+'-'+receiptHash.slice(0,20)+(opts.shard?`-shard-${range.index}-of-${range.count}`:'')+(opts.sample?`-sample-${opts.sample}`:'')+'.json');
-  const report={version:3,status:'running',partition:'development',case_count:corpus.cases.length,provenance,
+  if(frozenRun)for(const [key,value]of Object.entries(frozenRun.expectedProvenance))if(provenance[key]!==value)throw Error('frozen_linkcheck_identity_changed');
+  const receiptHash=digest(JSON.stringify(provenance)),path=join(reports,(frozenRun?'held-out-':'development-')+opts.model+'-vs-'+opts.attacker+'-'+receiptHash.slice(0,20)+(opts.shard?`-shard-${range.index}-of-${range.count}`:'')+(opts.sample?`-sample-${opts.sample}`:'')+'.json');
+  const report={version:3,status:'running',partition,case_count:corpus.cases.length,provenance,
+    ...(frozenRun?{attempt_sha256:frozenRun.attemptHash}:{}),
     ...(opts.shard?{shard:range}:{}),...(opts.sample?{sample:opts.sample}:{}),evidence:{workflow_run:process.env.GITHUB_RUN_ID??null,commit:process.env.GITHUB_SHA??null},
     scope:{profile:config.profile,policy:config,external_requests:false,local_answers_stubbed:false,provider_answers:'real local model, simulated provider',
       inventory:'synthetic Device records; no host collection',attacker:'real local fact extraction and deterministic 64-dossier ranking plus independent literal matcher; full cumulative provider view',
-      utility:corpus.utility_scope,held_out:false},observations:[]};
+      utility:corpus.utility_scope,held_out:!!frozenRun,...(frozenRun?{freeze_sha256:frozenRun.freezeHash}:{} )},observations:[]};
   if(opts.resume){
     try{const old=JSON.parse(await readFile(path,'utf8'));if(JSON.stringify(old.provenance)!==JSON.stringify(provenance)||JSON.stringify(old.shard)!==JSON.stringify(report.shard)||JSON.stringify(old.evidence)!==JSON.stringify(report.evidence))throw Error('linkcheck_checkpoint_changed');report.observations=old.observations;}
     catch(e){if(e.code!=='ENOENT')throw e;}
@@ -164,7 +168,7 @@ export async function main(args=process.argv.slice(2)){
     }
     report.status=opts.sample?'diagnostic':report.observations.length===range.end-range.start?(opts.shard?'complete_shard':'complete'):'partial';
     if(report.status==='complete')report.analysis=summarizeLinkcheckReport(report,corpus,corpusHash);
-    await save();console.log(JSON.stringify({report:path,status:report.status,cases:report.observations.length,total:corpus.cases.length,held_out:false}));
+    await save();console.log(JSON.stringify({report:path,status:report.status,cases:report.observations.length,total:corpus.cases.length,held_out:!!frozenRun}));
   }catch(e){report.status='failed';await save();throw e;}
   finally{await finishEvaluation(evaluation);try{await writes;}finally{await cleanup(fixture,reports);}}
 }
