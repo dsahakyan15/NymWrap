@@ -118,4 +118,9 @@ impl BridgeConfig {
 pub struct BridgeStatus {
     pub transport: Option<BridgeTransport>,
     pub lines: usize,
+    #[serde(default)]
+    pub isolation_supported: bool,
+}
+pub fn isolation_supported() -> bool {
+    cfg!(any(target_os = "linux", target_os = "macos"))
 }

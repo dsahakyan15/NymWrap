@@ -101,7 +101,7 @@ impl<R: Runtime> PtReactor<R> {
     ) {
         match result {
             Err(e) => {
-                warn!("Spawning PT for {:?} failed: {}", covers, e);
+                warn!("pt_spawn_failed");
                 // Go and tell all the transports about the bad news.
                 let senders = covers
                     .iter()
@@ -171,12 +171,12 @@ impl<R: Runtime> PtReactor<R> {
                 drop(all_next_messages); // no idea why NLL doesn't just infer this but sure
 
                 match result {
-                    Ok(m) => {
+                    Ok(_m) => {
                         // FIXME(eta): We should forward the Status messages onto API consumers.
-                        debug!("PT {} message: {:?}", self.running[idx].identifier(), m);
+                        debug!("pt_control_message");
                     },
-                    Err(e) => {
-                        warn!("PT {} quit: {:?}", self.running[idx].identifier(), e);
+                    Err(_e) => {
+                        warn!("pt_stopped");
                         let pt = self.running.remove(idx);
                         self.remove_pt(pt);
                     }
@@ -282,6 +282,7 @@ async fn spawn_from_config<R: Runtime>(
     // FIXME(eta): make the rest of these parameters configurable
     let pt_common_params = PtCommonParameters::builder()
         .state_location(new_state_dir)
+        .isolate(true)
         .build()
         .expect("PtCommonParameters constructed incorrectly");
 

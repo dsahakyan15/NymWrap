@@ -9,10 +9,12 @@ class Element{
   all(tag){return this.children.flatMap(c=>[...(c.tag===tag?[c]:[]),...c.all(tag)]);}
 }
 test('device inventory does not permit remote work with missing, failed, stale or future observations',()=>{
-  const good={last_attempt:1000,last_success:1000,protected_values:4,unavailable:[],code:null};
+  const good={last_attempt:1000,last_success:1000,protected_values:4,unavailable:[],observed:['user','host','home','mac','wifi','ip','machine','timezone','git'],code:null};
   assert.equal(deviceInventoryReady(good,1001),true);
   for(const status of [undefined,{...good,unavailable:['wifi']},{...good,code:'probe_failed'},{...good,last_success:0},{...good,last_success:1002}])assert.equal(deviceInventoryReady(status,1001),false);
   assert.equal(deviceInventoryReady(good,87400),false);
+  assert.equal(deviceInventoryReady({...good,observed:[]},1001),false);
+  assert.equal(deviceInventoryReady({...good,observed:undefined},1001),false);
 });
 test('unknown hygiene points remain in the denominator and cannot make an unmeasured score green',()=>{
   const checks=['wifi_mac','hostname','multicast','location','clock','browser'].map(kind=>({kind,verdict:'unknown'}));
@@ -29,7 +31,7 @@ test('hygiene UI keeps untrusted source labels as text and distinguishes manual 
     assert.equal(root.all('script').length,0);assert.equal(root.all('img').length,0);
     assert.ok(root.all('li').some(item=>item.textContent.includes('<script>synthetic</script>')));
     const page=createHygienePanel();assert.equal(page.dataset.panel,'hygiene');assert.equal(page.all('input').length,0);
-    assert.ok(page.all('p').some(p=>p.textContent.includes('не реализованы')));assert.equal(page.all('li').length,6);
+    assert.ok(page.all('p').some(p=>p.textContent.includes('остаются неизвестными')));assert.equal(page.all('li').length,6);
     renderDeviceProbe(root,undefined);assert.equal(root.all('li').length,0);
   }finally{globalThis.document=previous;}
 });

@@ -13,6 +13,7 @@ impl Workspace {
         Ok(BridgeStatus {
             transport: config.as_ref().map(|c| c.transport),
             lines: config.as_ref().map_or(0, |c| c.lines.len()),
+            isolation_supported: nw_net::bridges::isolation_supported(),
         })
     }
     pub fn set_bridges(

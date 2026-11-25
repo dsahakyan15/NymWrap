@@ -62,7 +62,7 @@ fn binary_size_hash_and_file_type_are_checked_before_execution() {
 
 #[tokio::test]
 #[ignore = "requires installed pinned Lyrebird and encrypted PT state; CI runs it explicitly"]
-async fn actual_installed_pt_listeners_stop_when_managed_handle_is_dropped() {
+async fn actual_installed_pt_requires_isolation_and_managed_lifetime() {
     use tor_ptmgr::ipc::{
         PluggableClientTransport, PluggableTransport, PtClientParametersBuilder,
         PtCommonParametersBuilder,
@@ -91,6 +91,7 @@ async fn actual_installed_pt_listeners_stop_when_managed_handle_is_dropped() {
         nw_platform::encrypted_directory(&state).unwrap();
         let common = PtCommonParametersBuilder::default()
             .state_location(state)
+            .isolate(true)
             .timeout(Some(std::time::Duration::from_secs(10)))
             .build()
             .unwrap();
@@ -99,9 +100,18 @@ async fn actual_installed_pt_listeners_stop_when_managed_handle_is_dropped() {
             .build()
             .unwrap();
         let mut pt = PluggableClientTransport::new(binary.path.clone(), vec![], common, client);
-        pt.launch(tor_rtcompat::PreferredRuntime::current().unwrap())
-            .await
-            .unwrap();
+        let launched = pt
+            .launch(tor_rtcompat::PreferredRuntime::current().unwrap())
+            .await;
+        if cfg!(windows) {
+            assert!(
+                launched.is_err(),
+                "unsupported PT isolation must not start an unconfined child"
+            );
+            assert!(pt.transport_methods().is_empty());
+            continue;
+        }
+        launched.unwrap();
         assert_eq!(pt.transport_methods().len(), 1);
         let endpoint = pt.transport_methods().values().next().unwrap().endpoint();
         assert!(endpoint.ip().is_loopback());

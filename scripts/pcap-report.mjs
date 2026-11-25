@@ -52,7 +52,7 @@ export function httpBodies(pdml){
   }
   return records;
 }
-export function auditCapture({pdml,client,provider,rust,health,daemon,circuits,week}){
+export function auditCapture({pdml,client,provider,rust,health,daemon,circuits,week,bridge}){
   const expected=week?100:16;
   if(!rust?.complete||rust.requests!==expected||!rust.different_circuits||!rust.transport_stop_failed_closed||!rust.direct_provider_connection_denied)throw Error('incomplete_rust_transport_evidence');
   if(health?.provider_alive_after_stop!==true)throw Error('missing_live_provider_control');
@@ -70,7 +70,7 @@ export function auditCapture({pdml,client,provider,rust,health,daemon,circuits,w
     if(v6source||v6target)throw Error('unexpected_ipv6_packet');
     if(source!=='192.0.2.1')continue;
     const port=Number(tcp);
-    if(target!=='192.0.2.2'||!tcp||udp||!Number.isInteger(port)||!(port>=5000&&port<5100||port>=7000&&port<7100))throw Error('packet_outside_tor_ports');
+    if(target!=='192.0.2.2'||!tcp||udp||!Number.isInteger(port)||!(bridge?port===9905:port>=5000&&port<5100||port>=7000&&port<7100))throw Error('packet_outside_tor_ports');
     packets++;
   }
   if(packets===0)throw Error('empty_netd_packet_capture');
@@ -87,7 +87,12 @@ export function auditCapture({pdml,client,provider,rust,health,daemon,circuits,w
       circuits[first]===circuits[second])throw Error('missing_independent_circuit_evidence');
   }
   const cover=week?auditCoverWeek(week,bodies):null;
+  if(bridge){
+    const required=['complete','separate_mount_and_pid_namespaces','shared_transport_network_namespace','unprivileged','no_capabilities','no_new_privs','core_storage_and_ipc_absent','pt_stopped_without_stopping_tor','tor_relay_alive_after_pt_stop'];
+    if(bridge.transport!=='obfs4'||bridge.port!==9905||required.some(key=>bridge[key]!==true))throw Error('missing_pt_isolation_or_stop_evidence');
+  }
   return {complete:true,synthetic_only:true,public_tor_used:false,requests:bodies.length,buckets,canary_leaks:0,cover,
+    hard_data_sources:Object.keys(synthetic.device),hard_data_detectors:Object.keys(synthetic.detectors),bridge:bridge??null,
     netd_outbound_packets:packets,direct_provider_packets:0,dns_packets:0,different_circuits:true,transport_stop_failed_closed:true,provider_alive_after_stop:true,
     scope:processIntegration?'production nymwrapd startup and namespace checks; production launcher -> retained test worker -> authenticated dispatcher -> Tor/TLS/HTTP; test-only authorities and PKI':
       'production nw-netd Tor::send, TLS and HTTP; test-only authorities and PKI; CI namespace configuration',
@@ -113,12 +118,14 @@ export async function main(args=process.argv.slice(2)){
     health:JSON.parse(await bounded(join(fixture,'health-after-stop.json'),65536)),
     daemon:JSON.parse(await bounded(join(fixture,'daemon-result.json'),65536)),
     circuits:JSON.parse(await bounded(join(fixture,'circuit-receipt.json'),65536)),
-    week:JSON.parse(await bounded(join(fixture,'cover-week.json'),128*1024))});
+    week:JSON.parse(await bounded(join(fixture,'cover-week.json'),128*1024)),
+    bridge:process.env.NW_TEST_TOR_MODE==='obfs4'?JSON.parse(await bounded(join(fixture,'bridge-evidence.json'),65536)):null});
   if(!result.production_daemon_namespace_integration)throw Error('process_integration_required_in_ci');
   if(!result.cover)throw Error('cover_week_required_in_ci');
   for(const file of ['client.pcap','provider.pcap'])if(hasCanary(await bounded(join(fixture,file),64*1024*1024)))throw Error('canary_in_raw_os_capture');
   await mkdir(output,{recursive:true});if((await lstat(output)).isSymbolicLink()||!(await realpath(output)).startsWith((await realpath(root))+sep))throw Error('unsafe_pcap_output_directory');
   const files=['client.pcap','provider.pcap','provider.pdml','client.tsv','provider-receipt.json','rust-result.json','daemon-result.json','circuit-receipt.json','worker-state.json','health-after-stop.json','provider-ca.pem','tls.keys','cover-week.json'];
+  if(result.bridge)files.push('bridge-evidence.json');
   const hashes={};
   for(const file of files){await bounded(join(fixture,file),64*1024*1024);hashes[file]=await artifactHash(join(fixture,file));await copyFile(join(fixture,file),join(output,file));}
   const report={version:1,...result,hashes,workflow_run:process.env.GITHUB_RUN_ID,commit:process.env.GITHUB_SHA};

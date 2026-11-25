@@ -134,6 +134,10 @@ pub fn probe_command(program: &Path, git: Option<&std::fs::File>) -> Result<Comm
     }
     Ok(command)
 }
+#[cfg(target_os = "macos")]
+pub fn probe_command(program: &Path, git: Option<&std::fs::File>) -> Result<Command, SandboxError> {
+    nw_platform::macos_probe_command(program, git).map_err(|_| SandboxError::Launch)
+}
 pub fn offline_command(
     workdir: &Path,
     program: &Path,

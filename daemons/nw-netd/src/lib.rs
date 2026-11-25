@@ -264,6 +264,9 @@ mod http_wire_canaries;
 #[path = "../../../tests/leak/src/netd_local_tor.rs"]
 mod local_tor_tests;
 #[cfg(test)]
+#[path = "../../../tests/leak/src/netd_golden_evidence.rs"]
+mod protocol_evidence;
+#[cfg(test)]
 #[path = "../../../tests/leak/src/netd_tls.rs"]
 mod tls_wire_golden;
 #[derive(Deserialize)]

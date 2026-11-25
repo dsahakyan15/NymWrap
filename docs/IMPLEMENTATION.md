@@ -7,6 +7,76 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Задача 4: границы M3H усилены; M3H открыт — 2026-11-25
+
+ADR 0085 вводит явное подтверждение полноты каждого из девяти источников probe.
+Отсутствующий `observed`, частичное чтение, ошибка, устаревший или будущий снимок
+не разрешают удалённый выход при включённой защите устройства. Legacy-снимки
+обновляются один раз, отказ доступа не вызывает бесконечного повторного запуска.
+Найденные значения защищаются и при частичном источнике; удаления сохраняются.
+Домашний путь теперь подтверждается нативно, hints окружения недостаточно.
+
+Windows использует токен профиля и локальные API без доменных запросов.
+На этом хосте настоящий AppContainer probe подтвердил семь источников, а
+`user`/`wifi` явно оставил неизвестными. Никаких дополнительных capabilities.
+Добавлен macOS worker с CoreFoundation/SystemConfiguration/IOKit/getifaddrs,
+нативным домашним путём и системным часовым поясом независимо от TZ=UTC.
+До запроса worker применяет deny-default Seatbelt; передаётся только read-only
+git fd, сеть/запись/spawn запрещены. Старый KnownNetworks не подтверждает
+полноту Wi-Fi macOS. Нативный прогон macOS ещё не проводился; cross-Clippy прошёл.
+
+Гигиена дополнена чтением Windows NetBIOS всех доступных интерфейсов, read-only
+оценкой часов ядра Linux и ограниченным JSON политик Firefox по умолчанию.
+Нет исполнения JS или изменения настроек ОС. Browser Pass требует двух явных
+заблокированных false, однозначной установки и проверенного источника политики;
+managed preferences macOS не считаются проверенными. mDNS и остальные недоступные
+источники неизвестны. Multicast Pass требует всех трёх отключений; ошибка новой
+проверки не позволяет показывать старую оценку как свежую. Pass/6 сохранён.
+
+По решению пользователя strict/paranoid завершают сеанс без сетевого хвоста.
+UI явно блокирует согласие до появления L1/L2 и индивидуального одобрения,
+backend отклоняет даже прежнее сохранённое согласие с L3. Реализация новых
+маршрутов не начата. Хвост standard и его бюджеты сохранены.
+
+Production managed PT теперь обязательно требует песочницу: Linux bwrap
+отделяет user/mount/PID/IPC/UTS/cgroup, снимает capabilities и оставляет только
+транспортный netns, публичную систему, закреплённый бинарник и собственное
+шифрованное состояние. Для macOS добавлен обязательный sandbox-exec профиль.
+На Windows запуск PT fail-closed до реализации изоляции; UI сообщает, что
+мосты недоступны, обычный Tor автоматически вместо них не включается.
+Сырые LOG/control/error-строки PT не выдаются изменёнными обработчиками;
+возвращаемые ошибки тоже содержат фиксированные коды. Регрессия проверяет
+восемь синтетических ошибок/параметров, включая некорректный control line.
+
+`tor-pcap` расширен вариантами `tor`/`obfs4`. Новый локальный Chutney bridge
+использует закреплённый Lyrebird; firewall разрешает клиенту только 192.0.2.2:9905.
+CI observer проверяет настоящие PT namespaces, UID/caps/NNP и отсутствие core
+storage/IPC, останавливает PT при живом Tor/provider. Независимый oracle требует
+fail-closed и все прежние 100 HTTP-запросов, включая девять Device и семь detector
+канареек. Артефакты: `local-tor-os-pcap-tor` и `local-tor-os-pcap-obfs4`.
+Новый `protocol-golden` сравнивает настоящие HTTP/ClientHello artifacts трёх ОС,
+а не только копии ожидаемого golden. Генерация golden в CI запрещена.
+
+Локально на Windows прошли workspace tests, workspace Clippy со всеми
+targets/features и `-D warnings`, отдельные leak tests и тесты/Clippy `nw-netd`,
+app 13, extension 24, scripts 54, fmt, workflow lint и bash syntax check.
+Настоящие AppContainer отрицательные проверки TCP/UDP/FS/spawn/read-handle
+прошли (3), настоящий probe прошёл (1); закреплённый PT подтвердил запрет
+неизолированного запуска на Windows для всех трёх протоколов. Cargo-deny обоих
+workspaces прошёл (имеющиеся duplicate warnings не являются ошибками).
+Журналы: `target/m3h-{workspace-final,clippy,leak-final,netd-final,netd-clippy,
+app-final,extension-final,scripts-final,workflow-lint,windows-probe,windows-pt,
+appcontainer,macos-check,deny-root,deny-netd,pt-canary}.log`; реальные Windows golden —
+`target/protocol-windows/`.
+
+**CI нового кода не запускался; M3H не закрыт.** На этом Windows-хосте нет
+рабочего Linux/WSL для pcap и PT namespaces; нативного macOS также нет.
+Остаются CI-приёмка pcap/межплатформенных bytes и macOS worker, bootstrap
+Snowflake/WebTunnel, изолированный Windows PT, шифрованный каталог транспорта
+macOS, недоступные автоматические наблюдения и WSL2 агентов. Последние общие
+песочницы core/netd относятся к M6; новый worker их не заменяет. Хвост
+strict/paranoid остаётся явно недоступным до сильного маршрута, по согласованию.
+
 ## Задача 3: сквозная приёмка M3 добавлена; M3 ждёт CI — 2026-11-25
 
 ADR 0084 расширяет обязательный `tor-pcap`: новый координатор `nw-core`
@@ -686,8 +756,9 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
   покрытие и Pass/6 не позволяют считать непрочитанные пункты зелёными; снимок
   старше суток, будущее время и legacy без наблюдений не дают оценку. Проверены
   строгий WLAN namespace/parser и зашифрованное переоткрытие. Полные OS-источники,
-  NetBIOS/mDNS, часы, браузер и hard_blocks пока не реализованы; экран
-  прямо сообщает об этом. App тесты (11) зелёные, XSS остаётся буквальным текстом.
+  mDNS и недоступные OS-источники остаются неизвестными. Дополнения NetBIOS,
+  часов Linux и политик Firefox описаны в задаче 4 выше. App сохраняет XSS-safe
+  вывод буквальным текстом; полноценное наблюдение всех браузеров не заявляется.
 - Новые планы получают детерминированное UTC-окно каждого этапа (ADR 0046).
   Окно входит в хеш одобрения; шаг не больше 2 часов, полночь поддержана. Core
   проверяет окно при выдаче задач, каждом validate search permit и завершении.
@@ -702,7 +773,8 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
   всё сразу. Регрессии tests/leak/src/core_session.rs проверяют отсутствие выдачи
   секретов/истории и удаления без разблокировки, отмену queued/sending, недоступный
   транспорт/согласие, срок хвоста и отмену начального ожидания. Core/cover и app
-  локально прошли; реальный pcap, CI и хвост strict/paranoid остаются открыты.
+  локально прошли; реальный pcap и CI остаются открыты. Хвост strict/paranoid
+  явно недоступен до L1/L2 и одобренной очереди (решение задачи 4).
 - Добавлены управляемые obfs4/Snowflake/WebTunnel через tor-ptmgr 0.48.0 и
   закреплённый Lyrebird Expert Bundle 16.0.1 (ADR 0048). Подпись официального
   списка и хеши архивов/бинарников пяти платформ проверены. Схема не принимает
@@ -714,13 +786,10 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
   с fscrypt прошёл в run 45084257527. Windows CI выявил владельца Administrators
   у нового temp-каталога: новые каталоги получают явного владельца при создании
   (ADR 0052), существующий чужой владелец по-прежнему отвергается; повтор CI
-  ещё нужен. Bridge bootstrap, полная изоляция PT и
-  pcap остаются открыты; локальный запуск PT не считается их заменой.
-- Остальное M3H открыто: полные источники на всех ОС, WSL2 для Windows-агентов,
-  bridge bootstrap/OS-изоляция/CI, хвост strict/paranoid,
-  OS pcap, межплатформенный golden и полный зелёный CI. Последние локальные
-  журналы: target/m3h-workspace-tests.log, m3h-clippy.log, m3h-leak-tests.log,
-  m3h-network-tests.log и m3h-deny.log. Это проверка текущей части, не закрытие M3H.
+  ещё нужен. Задача 4 добавляет обязательную песочницу PT и локальный obfs4
+  bootstrap/pcap в CI; новая CI-приёмка и остальные bootstrap остаются открытыми.
+- Актуальные ограничения и локальные журналы M3H перечислены в задаче 4 выше.
+  Частичное покрытие и добавление CI не закрывают этап без зелёной приёмки.
 
 | Область | Реализовано | Остаётся |
 |---|---|---|
@@ -738,7 +807,7 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
 | Сеть | nw-netd/arti, отдельный клиент на разговор, проверяемый HTTPS, DNS через Tor, EFS/fscrypt до bootstrap, AEAD IPC, полный Route, nonce-bound review, budget reserve, watcher cancellation и parent lifetime; Linux production launcher, настоящий startup core и процессный Tor/TLS/HTTP pcap: M2 подтверждён тремя CI-прогонами | M6: установщик службы/coordinator GUI, файловая песочница Linux, изоляция core/netd Windows/macOS; очередь paranoid |
 | Удостоверения | OS credential store, mlock, зашифрованный staging/каталог, постоянные привязки ключей к разговору, интеграция Route, восстановление и удаление OS-записей | zkAPI |
 | Cover traffic | Poisson/Constant standard, FIFO реальных заданий в слотах, независимая предварительная подготовка приманок, одноразовые Tor-клиенты, encrypted slots/jobs, общий бюджет, Uncertain без replay; семидневный core → netd OS pcap добавлен в CI (ADR 0084) | Зелёная CI-приёмка нового M3; точный ритм пакетов, paranoid с более сильным маршрутом; корзины байтовые |
-| Жёсткие данные (M3H, ADR 0043–0048) | Device и семь детекторов; нормализованный bwrap; nw-probe и зашифрованные секреты с сохранением удалений; отказ вложений; byte golden HTTP/TLS; Defer; начальная задержка и согласованный хвост standard; закреплённые мосты и ограниченный PT lifecycle; экран покрытия «Гигиена»; одобренные UTC-окна легенды | Полнота probe Windows/macOS; автоматическая гигиена и метрики; WSL2 агентов; хвост strict/paranoid; bridge bootstrap и изоляция PT; OS pcap; все межплатформенные проверки в зелёном CI |
+| Жёсткие данные (M3H, ADR 0043–0048, 0085) | Device и семь детекторов; нормализованный bwrap; явное покрытие девяти источников с fail-closed, Windows/macOS native adapters и ограниченные probe workers; шифрованные секреты с сохранением удалений; отказ вложений; HTTP/TLS byte golden и сравнение CI artifacts; Defer; задержка и хвост standard, явный запрет хвоста strict/paranoid с L3; обязательная PT-песочница Linux/macOS, Windows PT fail-closed; локальный obfs4 pcap добавлен в CI; частичная автоматическая гигиена/Pass/6; UTC-окна легенды | Зелёная CI-приёмка pcap, macOS worker и межплатформенных bytes; недоступные источники/наблюдения остаются неизвестными; bootstrap Snowflake/WebTunnel; изоляция Windows PT и шифрованное состояние транспорта macOS; WSL2 агентов; хвост strict/paranoid до L1/L2 и одобренной очереди |
 | M6 | Закрепления/deny/CSP/mlock; Linux seccomp TSYNC/bwrap, реальные проверки в QEMU/Alpine под UID 1000; Windows LPAC импортера и native модели; отрицательные TCP/UDP/FS/spawn/read-handle проверки; source SBOM для трёх targets; coverage/ASan smoke импортёров, IPC/core RPC и Shield с отчётами | Изоляция остальных Windows-процессов, полные Linux-демоны и macOS, MicroVM, vet, подписи, воспроизводимость бинарников на двух машинах, 24h fuzz и проверка инструментации C/ASM |
 | M7 | Экспериментальные флаги, проверены upstream pin/deployment/dependency gates (ADR 0024) | Nym требует обновлений SDK и транзитивных зависимостей; указанная zkAPI-ветка не развёрнута и не имеет production proving keys; адаптеры не завершены |
 

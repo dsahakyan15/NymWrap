@@ -9,6 +9,22 @@ use nw_proto::{Profile, TrustLevel};
 use nw_vault::{VaultError, os_secret::SecretStore};
 use std::time::Duration;
 const CANARY: &str = "SESSION_PRIVATE_CANARY_68124";
+#[test]
+fn strict_and_paranoid_never_keep_an_unapproved_l3_tail_even_with_stale_consent() {
+    for profile in [Profile::Strict, Profile::Paranoid] {
+        let (_directory, state) = fixture(true);
+        {
+            let mut session = state.session.lock().unwrap();
+            let workspace = session.workspace.as_mut().unwrap();
+            workspace.config.profile = profile;
+            assert!(workspace.config.shield.min_trust == TrustLevel::L3);
+        }
+        let closed = close_at(&state, true, Instant::now()).unwrap();
+        assert!(closed.value.phase == Phase::Locked);
+        assert!(closed.timer.is_none());
+        assert!(state.session.lock().unwrap().workspace.is_none());
+    }
+}
 
 #[tokio::test]
 async fn unapproved_same_user_shadow_client_cannot_read_unlocked_secrets() {

@@ -51,6 +51,17 @@ test('process pcap requires actual daemon, distinct namespaces, explicit error a
     const data=processCapture();change(data);assert.throws(()=>auditCapture(data));
   }
 });
+test('obfs4 pcap allows only the private bridge and requires independent PT isolation evidence',()=>{
+  const data=processCapture();data.client=data.client.replace('\t5000\t','\t9905\t');
+  data.bridge={complete:true,transport:'obfs4',port:9905,separate_mount_and_pid_namespaces:true,shared_transport_network_namespace:true,
+    unprivileged:true,no_capabilities:true,no_new_privs:true,core_storage_and_ipc_absent:true,pt_stopped_without_stopping_tor:true,tor_relay_alive_after_pt_stop:true};
+  const report=auditCapture(data);assert.equal(report.bridge.transport,'obfs4');
+  assert.equal(report.hard_data_sources.length,9);assert.equal(report.hard_data_detectors.length,7);
+  for(const key of ['no_capabilities','no_new_privs','core_storage_and_ipc_absent','pt_stopped_without_stopping_tor']){
+    const bad=structuredClone(data);bad.bridge[key]=false;assert.throws(()=>auditCapture(bad));
+  }
+  data.client+='192.0.2.1\t192.0.2.2\t\t\t5000\t\n';assert.throws(()=>auditCapture(data),/packet_outside_tor_ports/);
+});
 
 function coverCapture(){
   const data=processCapture(100);let index=16;

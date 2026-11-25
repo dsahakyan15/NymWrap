@@ -157,7 +157,22 @@ impl crate::server::Factory for LocalFactory {
         let fixture = std::path::PathBuf::from(std::env::var_os("NW_TEST_TOR_FIXTURE").unwrap());
         assert_eq!(directory, fixture.join("mount/private"));
         nw_platform::encrypted_directory(directory).unwrap();
-        let config = chutney_config(&std::fs::read(fixture.join("arti.json")).unwrap());
+        let mut builder = chutney_builder(&std::fs::read(fixture.join("arti.json")).unwrap());
+        let binary = if fixture.join("bridge.json").is_file() {
+            let settings: nw_net::bridges::BridgeConfig =
+                serde_json::from_slice(&std::fs::read(fixture.join("bridge.json")).unwrap())
+                    .unwrap();
+            Some(crate::bridges::configure_fixture(
+                &mut builder,
+                &settings,
+                &fixture.join("bin/lyrebird"),
+            )?)
+        } else {
+            None
+        };
+        let config = builder
+            .build()
+            .map_err(|_| "invalid_local_tor_configuration")?;
         let root = bootstrap_local_exit(config, &provider).await?;
         let mut roots = rustls::RootCertStore::empty();
         roots
@@ -174,7 +189,7 @@ impl crate::server::Factory for LocalFactory {
             root,
             conversations: Mutex::new(BTreeMap::new()),
             provider,
-            _transport_binary: None,
+            _transport_binary: binary,
             test_tls: Some(Arc::new(tls)),
         })
     }
@@ -280,6 +295,9 @@ fn shaped(fact: &str, length: usize, index: usize) -> Request {
     }
 }
 fn chutney_config(bytes: &[u8]) -> arti_client::TorClientConfig {
+    chutney_builder(bytes).build().unwrap()
+}
+fn chutney_builder(bytes: &[u8]) -> arti_client::config::TorClientConfigBuilder {
     // Pinned Chutney emits the pre-proposal-330 list. Arti 0.48 expects
     // AuthorityContacts; never retain its public authority contact defaults.
     let mut config: serde_json::Value = serde_json::from_slice(bytes).unwrap();
@@ -296,7 +314,7 @@ fn chutney_config(bytes: &[u8]) -> arti_client::TorClientConfig {
     });
     let builder: arti_client::config::TorClientConfigBuilder =
         serde_json::from_value(config).unwrap();
-    builder.build().unwrap()
+    builder
 }
 #[test]
 fn chutney_authorities_replace_all_public_directory_defaults() {

@@ -68,6 +68,11 @@ fn close_at(state: &State, has_egress: bool, now: Instant) -> Result<Closed, Str
         && s.timing.is_some()
         && s.workspace.as_mut().is_some_and(|w| {
             w.config.hard.background_tail
+                && w.config.profile == nw_proto::Profile::Standard
+                && !w.config.profile.requires_approval()
+                && w.config.shield.min_trust == nw_proto::TrustLevel::L3
+                && w.config.net.transport == crate::config::Transport::Tor
+                && w.config.validate().is_ok()
                 && w.config.cover.enabled
                 && w.device_probe_ready().unwrap_or(false)
         });

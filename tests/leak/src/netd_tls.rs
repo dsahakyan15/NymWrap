@@ -67,7 +67,13 @@ fn provider_clienthello_matches_cross_platform_golden_with_fresh_entropy() {
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect();
+    crate::protocol_evidence::write("provider-tls.hex", &hex);
     if std::env::var_os("NW_UPDATE_PROTOCOL_GOLDEN").is_some() {
+        assert_ne!(
+            std::env::var("GITHUB_ACTIONS").as_deref(),
+            Ok("true"),
+            "CI must not regenerate its own golden"
+        );
         std::fs::write(
             concat!(
                 env!("CARGO_MANIFEST_DIR"),

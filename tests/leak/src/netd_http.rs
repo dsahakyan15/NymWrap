@@ -73,7 +73,13 @@ async fn provider_headers_match_cross_platform_golden_bytes() {
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect();
+    crate::protocol_evidence::write("provider-http.hex", &hex);
     if std::env::var_os("NW_UPDATE_PROTOCOL_GOLDEN").is_some() {
+        assert_ne!(
+            std::env::var("GITHUB_ACTIONS").as_deref(),
+            Ok("true"),
+            "CI must not regenerate its own golden"
+        );
         std::fs::write(
             concat!(
                 env!("CARGO_MANIFEST_DIR"),

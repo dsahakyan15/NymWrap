@@ -1,0 +1,8 @@
+# Only private RFC 5737 listeners; the client may reach the obfs4 port alone.
+import os
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+Bridge = Node(tag="br", bridge=1, pt_bridge=1, relay=1, pt_transport="obfs4",
+              obfs4proxy=os.environ["NW_TEST_OBFS4_BINARY"], torrc="bridge-obfs4.tmpl")
+Client = Node(tag="c", client=1, torrc="client.tmpl")
+ConfigureNodes(Authority.getN(4) + ExitRelay.getN(1) + Bridge.getN(1) + Client.getN(1))

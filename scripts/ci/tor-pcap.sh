@@ -4,6 +4,8 @@ set -euo pipefail
 test "${GITHUB_ACTIONS:-}" = true
 test "$(uname -s)" = Linux
 test "$(id -u)" != 0
+mode=${NW_TEST_TOR_MODE:-tor}
+case "$mode" in tor|obfs4) ;; *) exit 1 ;; esac
 umask 077
 project_root=$(pwd -P)
 fixture_root=$(mktemp -d "${RUNNER_TEMP:?}/nymwrap-tor.XXXXXXXX")
@@ -46,7 +48,7 @@ cleanup() {
   for file in client.pcap provider.pcap; do
     if test -f "$fixture_root/$file" && test ! -L "$fixture_root/$file"; then sudo chown --no-dereference "$runner_uid:$runner_gid" -- "$fixture_root/$file" || failed=1; fi
   done
-  for file in test.log worker.log daemon.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json daemon-result.json circuit-receipt.json worker-state.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt cover-week.json; do
+  for file in test.log worker.log daemon.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json daemon-result.json circuit-receipt.json worker-state.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt cover-week.json bridge-evidence.json; do
     if test -f "$fixture_root/$file"; then cp -- "$fixture_root/$file" "$output/$file" || failed=1; fi
   done
   for log in "$fixture_root/chutney/nodes"/*/notice.log; do
@@ -140,11 +142,13 @@ sudo ip -n "$relay_ns" link set lo up
 sudo ip -n "$client_ns" link set "$client_if" up
 sudo ip -n "$relay_ns" link set "$relay_if" up
 sudo ip netns exec "$relay_ns" sysctl -q -w net.ipv4.ip_unprivileged_port_start=0
-cat > "$fixture_root/client.nft" <<'RULES'
+tor_ports='5000-5099, 7000-7099'
+if test "$mode" = obfs4; then tor_ports=9905; fi
+cat > "$fixture_root/client.nft" <<RULES
 table inet nymwrap_ci {
   chain output { type filter hook output priority 0; policy drop;
     oifname "lo" accept
-    ip daddr 192.0.2.2 tcp dport { 5000-5099, 7000-7099 } accept
+    ip daddr 192.0.2.2 tcp dport { $tor_ports } accept
   }
   chain input { type filter hook input priority 0; policy drop;
     iifname "lo" accept
@@ -156,12 +160,19 @@ sudo ip netns exec "$client_ns" nft -f "$fixture_root/client.nft"
 test -z "$(sudo ip -n "$client_ns" route show default)"
 test -z "$(sudo ip -n "$relay_ns" route show default)"
 netns_cookie=$(sudo ip netns exec "$client_ns" readlink /proc/self/ns/net)
-relay_env=(env -i PATH=/usr/bin:/bin PYTHON="$chutney_python" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" CHUTNEY_PATH="$chutney" CHUTNEY_DATA_DIR="$fixture_root/chutney" CHUTNEY_LISTEN_ADDRESS=192.0.2.2 CHUTNEY_DNS_CONF="$fixture_root/resolv.conf" CHUTNEY_START_TIME=180)
+relay_env=(env -i PATH=/usr/bin:/bin PYTHON="$chutney_python" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" CHUTNEY_PATH="$chutney" CHUTNEY_DATA_DIR="$fixture_root/chutney" CHUTNEY_LISTEN_ADDRESS=192.0.2.2 CHUTNEY_DNS_CONF="$fixture_root/resolv.conf" CHUTNEY_START_TIME=180 NW_TEST_OBFS4_BINARY="$project_root/daemons/nw-netd/target/debug/transports/lyrebird")
 relay() { sudo ip netns exec "$relay_ns" setpriv --reuid "$runner_uid" --regid "$runner_gid" --init-groups "${relay_env[@]}" "$@"; }
 relay "$node_binary" "$project_root/scripts/ci/tor-provider.mjs" "$fixture_root" > "$fixture_root/provider.log" 2>&1 &
 for attempt in $(seq 1 100); do test -f "$fixture_root/provider-ready" && break; sleep 0.1; done
 test -f "$fixture_root/provider-ready"
-relay "$chutney/chutney" configure "$chutney/networks/basic-min"
+network="$chutney/networks/basic-min"
+mkdir -m 700 -- "$fixture_root/bin"
+if test "$mode" = obfs4; then
+  network="$project_root/scripts/ci/chutney-obfs4"
+  cp -- "$project_root/daemons/nw-netd/target/debug/transports/lyrebird" "$fixture_root/bin/lyrebird"
+  chmod 700 -- "$fixture_root/bin/lyrebird"
+fi
+relay "$chutney/chutney" configure "$network"
 "$chutney_python" - "$fixture_root" <<'PY'
 import json,pathlib,sys,tomllib
 root=pathlib.Path(sys.argv[1])
@@ -169,14 +180,26 @@ config=tomllib.loads((root/'chutney/nodes/arti.toml').read_text())
 config['storage']={'cache_dir':str(root/'mount/private/cache'),'state_dir':str(root/'mount/private/state')}
 (root/'arti.json').write_text(json.dumps(config))
 PY
-relay "$chutney/chutney" start "$chutney/networks/basic-min"
+relay "$chutney/chutney" start "$network"
 # Arti can bootstrap from an early consensus containing only the authorities.
 # Require Chutney's full network/descriptor readiness, including the sole exit.
-relay "$chutney/chutney" wait_for_bootstrap "$chutney/networks/basic-min"
+relay "$chutney/chutney" wait_for_bootstrap "$network"
+if test "$mode" = obfs4; then
+  "$chutney_python" - "$fixture_root" <<'PY'
+import json,pathlib,re,sys,time
+root=pathlib.Path(sys.argv[1]); bridge=root/'chutney/nodes/005br'
+for _ in range(100):
+    path=bridge/'pt_state/obfs4_bridgeline.txt'
+    if path.is_file() and 'cert=' in path.read_text(): break
+    time.sleep(.1)
+match=re.search(r'cert=([A-Za-z0-9+/=]+)\s+iat-mode=([012])',path.read_text()); assert match
+fingerprint=(bridge/'fingerprint').read_text().split()[-1]; assert re.fullmatch('[A-Fa-f0-9]{40}',fingerprint)
+(root/'bridge.json').write_text(json.dumps({'transport':'obfs4','lines':[f'obfs4 192.0.2.2:9905 {fingerprint} cert={match[1]} iat-mode={match[2]}']}))
+PY
+fi
 # Smoke the actual production executable and its real idle netd/API children.
 # This is distinct from the private-CA transport worker used for packet evidence.
 sudo env -i PATH=/usr/bin:/bin GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" "$chutney_python" "$project_root/scripts/ci/core-netns.py" "$fixture_root" "$project_root/target/debug/nymwrapd" "/run/netns/$client_ns" "$runner_uid" "$runner_gid" > "$fixture_root/daemon.log" 2>&1
-mkdir -m 700 -- "$fixture_root/bin"
 {
   printf '#!/bin/bash\nset -euo pipefail\ntest "$#" = 2 && test "$1" = --socket\n'
   printf 'export GITHUB_ACTIONS=true NW_TEST_SOCKET="$2"\n'
@@ -197,7 +220,18 @@ for attempt in $(seq 1 1020); do
   sleep 1
 done
 test -f "$fixture_root/ready-to-stop"
-relay "$chutney/chutney" stop "$chutney/networks/basic-min"
+if test "$mode" = obfs4; then
+  sudo env GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" "$chutney_python" "$project_root/scripts/ci/pt-isolation.py" "$fixture_root" "$runner_uid"
+  relay "$chutney_python" - "$fixture_root" <<'PY'
+import json,pathlib,socket,sys
+with socket.create_connection(('192.0.2.2',5004),timeout=5): pass
+path=pathlib.Path(sys.argv[1])/'bridge-evidence.json'
+value=json.loads(path.read_text()); value['tor_relay_alive_after_pt_stop']=True
+path.write_text(json.dumps(value))
+PY
+else
+  relay "$chutney/chutney" stop "$network"
+fi
 relay "$node_binary" "$project_root/scripts/ci/tor-provider.mjs" --health "$fixture_root"
 printf stopped > "$fixture_root/transport-stopped"
 wait "$test_pid"

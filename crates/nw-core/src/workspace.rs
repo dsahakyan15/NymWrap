@@ -1086,6 +1086,7 @@ impl Workspace {
         let device = self.device_probe_status()?;
         let at = now();
         if device.last_success > 0
+            && device.code.is_none()
             && at >= device.last_success
             && at - device.last_success < 86400
             && let Some(hygiene) = device.hygiene.filter(|h| h.valid())
@@ -1356,6 +1357,7 @@ mod tests {
                     value: "SYNTHETIC_DEVICE_HOST_CANARY_6319".into(),
                 }],
                 unavailable: vec![],
+                observed: nw_probe::Source::ALL.to_vec(),
                 hygiene: Default::default(),
             }
         }

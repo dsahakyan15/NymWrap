@@ -13,6 +13,10 @@ jobs:
           node-version: '24'
       - run: node scripts/lint-workflows.mjs
   tor-pcap:
+    strategy:
+      fail-fast: false
+      matrix:
+        transport: [tor, obfs4]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -42,15 +46,18 @@ jobs:
             target/debug/deps
             target/debug/.fingerprint
           key: tor-process-pcap-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'crates/**/Cargo.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml') }}
-      - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config libdbus-1-dev tor tcpdump tshark nftables
+      - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config libdbus-1-dev tor tcpdump tshark nftables bubblewrap
+      - if: matrix.transport == 'obfs4'
+        run: node scripts/fetch-transports.mjs
       - run: bash scripts/ci/tor-pcap.sh
         name: M2 isolation and M3 seven-day core to netd packet evidence
         env:
           NW_CHUTNEY_PYTHON: ${{ steps.chutney-python.outputs.python-path }}
+          NW_TEST_TOR_MODE: ${{ matrix.transport }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: local-tor-os-pcap
+          name: local-tor-os-pcap-${{ matrix.transport }}
           path: target/pcap
           if-no-files-found: error
   windows-object-owner:
@@ -106,7 +113,7 @@ jobs:
         run: cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
       - if: runner.os == 'Linux'
         run: cargo test -p nw-sandbox --test agent actual_agent --locked -- --ignored
-      - if: runner.os == 'Windows' || runner.os == 'Linux'
+      - if: runner.os == 'Windows' || runner.os == 'Linux' || runner.os == 'macOS'
         run: cargo test -p nw-probe --test worker actual_device_probe --locked -- --ignored
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - run: cargo test -p nw-leak-tests --locked
@@ -248,9 +255,16 @@ jobs:
           node-version: '24'
       - run: rustup show
       - if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config bubblewrap
       - run: cargo fmt --manifest-path daemons/nw-netd/Cargo.toml -- --check
       - run: cargo test --manifest-path daemons/nw-netd/Cargo.toml --locked
+        env:
+          NW_PROTOCOL_EVIDENCE_DIR: ${{ github.workspace }}/target/protocol
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: protocol-golden-${{ runner.os }}
+          path: target/protocol/*.hex
+          if-no-files-found: error
       - run: node scripts/fetch-transports.mjs
       - if: runner.os == 'Windows'
         shell: pwsh
@@ -260,6 +274,25 @@ jobs:
       - if: runner.os == 'Linux'
         run: bash scripts/ci/transport-fscrypt.sh
       - run: cargo clippy --manifest-path daemons/nw-netd/Cargo.toml --all-targets --locked -- -D warnings
+  protocol-golden:
+    needs: network
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: protocol-golden-*
+          path: target/protocol-comparison
+      - run: node scripts/compare-protocol.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: protocol-golden-comparison
+          path: target/protocol-comparison/report.json
+          if-no-files-found: error
   desktop:
     runs-on: windows-latest
     steps:

@@ -155,5 +155,24 @@ fn configure_builder(
 }
 
 #[cfg(test)]
+pub(super) fn configure_fixture(
+    builder: &mut TorClientConfigBuilder,
+    settings: &BridgeConfig,
+    path: &Path,
+) -> Result<VerifiedBinary, &'static str> {
+    let manifest: Manifest =
+        serde_json::from_str(include_str!("../../../scripts/transport-binaries.json")).unwrap();
+    let platform = format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH);
+    let pin = manifest
+        .artifacts
+        .iter()
+        .find(|pin| pin.platform == platform)
+        .ok_or("unsupported_fixture_platform")?;
+    let binary = verify(path, pin)?;
+    configure_builder(builder, settings, &binary.path)?;
+    Ok(binary)
+}
+
+#[cfg(test)]
 #[path = "../../../tests/leak/src/netd_bridges.rs"]
 mod tests;

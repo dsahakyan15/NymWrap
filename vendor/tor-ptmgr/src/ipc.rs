@@ -20,7 +20,6 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::{io, thread};
-use tor_basic_utils::PathExt as _;
 use tor_error::internal;
 use tor_linkspec::PtTransportName;
 use tor_rtcompat::{Runtime, SleepProviderExt};
@@ -279,7 +278,7 @@ impl FromStr for PtMessage {
                             if parsed_args.contains_key(&k) {
                                 // At least check our assumption that this is actually k/v
                                 // and not Vec<(String, String)>.
-                                warn!("PT SMETHOD arguments contain repeated key {}!", k);
+                                warn!("pt_duplicate_method_argument");
                             }
                             parsed_args.insert(k, v);
                             args = rest;
@@ -342,7 +341,7 @@ impl FromStr for PtMessage {
                     if ret.contains_key(k) {
                         // At least check our assumption that this is actually k/v
                         // and not Vec<(String, String)>.
-                        warn!("STATUS contains repeated key {}!", k);
+                        warn!("pt_duplicate_status_argument");
                     }
                     ret.insert(k.to_owned(), v);
                     message = rest;
@@ -392,15 +391,28 @@ pub(crate) mod sealed {
         binary_path: &PathBuf,
         arguments: &[String],
         environment: &HashMap<OsString, OsString>,
+        isolate: bool,
     ) -> io::Result<Command> {
         let state = environment.get(std::ffi::OsStr::new("TOR_PT_STATE_LOCATION"))
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing_pt_state"))?;
-        let mut command = Command::new(binary_path);
-        command.args(arguments).env_clear().envs(environment)
+        let mut command = if isolate {
+            isolated_command(binary_path, arguments, std::path::Path::new(state))?
+        } else {
+            let mut command = Command::new(binary_path);
+            command.args(arguments);
+            command
+        };
+        command.env_clear().envs(environment)
             .env("HOME", state).env("USERPROFILE", state).env("TEMP", state).env("TMP", state)
             .env("USER", "user").env("LOGNAME", "user").env("HOSTNAME", "localhost")
             .env("TZ", "UTC").env("LANG", "C.UTF-8").env("LC_ALL", "C.UTF-8")
             .current_dir(state).stderr(Stdio::null());
+        #[cfg(target_os = "linux")]
+        if isolate {
+            command.current_dir("/").env("TOR_PT_STATE_LOCATION", "/state")
+                .env("HOME", "/state").env("USERPROFILE", "/state").env("TEMP", "/state").env("TMP", "/state");
+        }
+        #[cfg(windows)]
         for name in ["SystemRoot", "WINDIR"] {
             if let Some(value) = std::env::var_os(name) { command.env(name, value); }
         }
@@ -409,6 +421,45 @@ pub(crate) mod sealed {
             command.creation_flags(0x08000000);
         }
         Ok(command)
+    }
+
+    /// The runtime-managed configuration always requests isolation. There is
+    /// no unconfined retry when a platform or sandbox helper is unavailable.
+    #[cfg(target_os = "linux")]
+    fn isolated_command(binary: &std::path::Path, arguments: &[String], state: &std::path::Path) -> io::Result<Command> {
+        let binary = binary.canonicalize()?;
+        let state = state.canonicalize()?;
+        let bwrap = ["/usr/bin/bwrap", "/bin/bwrap"].into_iter().find(|path| std::path::Path::new(path).is_file())
+            .ok_or_else(|| io::Error::other("transport_sandbox_unavailable"))?;
+        let mut command = Command::new(bwrap);
+        command.args(["--unshare-user", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup",
+            "--die-with-parent", "--new-session", "--cap-drop", "ALL", "--uid", "1000", "--gid", "1000",
+            "--hostname", "localhost", "--ro-bind", "/usr", "/usr"]);
+        for path in ["/lib", "/lib64", "/bin", "/etc/ssl/certs", "/etc/resolv.conf", "/etc/hosts", "/etc/nsswitch.conf"] {
+            if std::path::Path::new(path).exists() { command.args(["--ro-bind", path, path]); }
+        }
+        command.args(["--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--dir", "/run/pt", "--bind"])
+            .arg(state).arg("/state").arg("--ro-bind").arg(binary).arg("/run/pt/transport")
+            .args(["--chdir", "/state", "--", "/run/pt/transport"]).args(arguments);
+        Ok(command)
+    }
+    #[cfg(target_os = "macos")]
+    fn isolated_command(binary: &std::path::Path, arguments: &[String], state: &std::path::Path) -> io::Result<Command> {
+        fn literal(path: &std::path::Path) -> io::Result<String> {
+            let text = path.to_str().ok_or_else(|| io::Error::other("invalid_pt_path"))?;
+            if text.chars().any(char::is_control) { return Err(io::Error::other("invalid_pt_path")); }
+            Ok(format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\"")))
+        }
+        let binary = binary.canonicalize()?;
+        let state = state.canonicalize()?;
+        let profile = format!("(version 1)(deny default)(allow file-read-metadata)(allow sysctl-read)(allow mach-lookup (global-name \"com.apple.mDNSResponder\"))(allow file-read-data (subpath \"/System\")(subpath \"/usr/lib\")(subpath \"/private/etc\")(subpath \"/dev\")(literal {})(subpath {}))(allow file-write* (subpath {}))(allow process-exec (literal {}))(allow network-outbound)(allow network-inbound (local ip \"localhost:*\"))", literal(&binary)?, literal(&state)?, literal(&state)?, literal(&binary)?);
+        let mut command = Command::new("/usr/bin/sandbox-exec");
+        command.args(["-p", &profile]).arg(binary).args(arguments);
+        Ok(command)
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    fn isolated_command(_binary: &std::path::Path, _arguments: &[String], _state: &std::path::Path) -> io::Result<Command> {
+        Err(io::Error::other("transport_sandbox_unavailable"))
     }
 
     impl AsyncPtChild {
@@ -435,8 +486,8 @@ pub(crate) mod sealed {
                 for line in reader.lines() {
                     let err = line.is_err();
                     match &line {
-                        Ok(l) => trace!("<-- PT {}: {:?}", ident, l),
-                        Err(e) => trace!("<-- PT {}: Error: {:?}", ident, e),
+                        Ok(_) => trace!("pt_control_line"),
+                        Err(_) => trace!("pt_read_failed"),
                     }
                     if let Err(e) = tx.try_send(line) {
                         if e.is_disconnected() {
@@ -485,20 +536,20 @@ pub(crate) mod sealed {
                     Some(Ok(line)) => {
                         let line =
                             line.parse::<PtMessage>()
-                                .map_err(|e| PtError::IpcParseFailed {
-                                    line,
-                                    error: e.into(),
+                                .map_err(|_| PtError::IpcParseFailed {
+                                    line: "pt_invalid_control_line".into(),
+                                    error: "pt_parse_failed".into(),
                                 })?;
-                        if let PtMessage::Log { severity, message } = line {
+                        if let PtMessage::Log { severity, message: _ } = line {
                             // FIXME(eta): I wanted to make this integrate with `tracing` more nicely,
                             //             but gave up after 15 minutes of clicking through spaghetti.
                             match &severity as &str {
-                                "error" => error!("[pt {}] {}", self.identifier, message),
-                                "warning" => warn!("[pt {}] {}", self.identifier, message),
-                                "notice" => info!("[pt {}] {}", self.identifier, message),
-                                "info" => debug!("[pt {}] {}", self.identifier, message),
-                                "debug" => trace!("[pt {}] {}", self.identifier, message),
-                                x => warn!("[pt] {} {} {}", self.identifier, x, message),
+                                "error" => error!("pt_error"),
+                                "warning" => warn!("pt_warning"),
+                                "notice" => info!("pt_notice"),
+                                "info" => debug!("pt_info"),
+                                "debug" => trace!("pt_debug"),
+                                _ => warn!("pt_invalid_log_level"),
                             }
                         } else {
                             return Ok(line);
@@ -536,20 +587,14 @@ pub(crate) mod sealed {
             methods: &mut HashMap<PtTransportName, PtClientMethod>,
         ) -> Result<(), PtError> {
             if !self.specific_params_contains(&transport) {
-                return Err(PtError::ProtocolViolation(format!(
-                    "binary launched unwanted transport '{}'",
-                    transport
-                )));
+                return Err(PtError::ProtocolViolation("pt_unwanted_transport".into()));
             }
             let protocol = match protocol {
                 Some(protocol_str) => match &protocol_str as &str {
                     "socks4" => SocksVersion::V4,
                     "socks5" => SocksVersion::V5,
-                    x => {
-                        return Err(PtError::ProtocolViolation(format!(
-                            "unknown CMETHOD protocol '{}'",
-                            x
-                        )));
+                    _ => {
+                        return Err(PtError::ProtocolViolation("pt_unknown_socks_protocol".into()));
                     }
                 },
                 None => SocksVersion::V5,
@@ -558,7 +603,7 @@ pub(crate) mod sealed {
                 kind: protocol,
                 endpoint,
             };
-            info!("Transport '{}' uses method {:?}", transport, method);
+            info!("pt_method_ready");
             methods.insert(transport, method);
             Ok(())
         }
@@ -570,6 +615,7 @@ pub(crate) mod sealed {
             binary_path: &PathBuf,
             arguments: &[String],
             all_env_vars: HashMap<OsString, OsString>,
+            isolate: bool,
         ) -> Result<AsyncPtChild, PtError> {
             if inner.is_some() {
                 let warning_msg =
@@ -578,12 +624,8 @@ pub(crate) mod sealed {
                 // WARN: this may not be the correct error to throw here
                 return Err(PtError::ChildProtocolViolation(warning_msg));
             }
-            info!(
-                "Launching pluggable transport at {} for {:?}",
-                binary_path.display_lossy(),
-                transports
-            );
-            let child = managed_command(binary_path, arguments, &all_env_vars)
+            info!("pt_launch");
+            let child = managed_command(binary_path, arguments, &all_env_vars, isolate)
                 .map_err(|e| PtError::ChildSpawnFailed { path: binary_path.clone(), error: Arc::new(e) })?
                 .stdout(Stdio::piped())
                 .stdin(Stdio::piped())
@@ -620,38 +662,32 @@ pub(crate) mod sealed {
                 .await
                 .map_err(|_| PtError::Timeout)??
             {
-                PtMessage::ClientTransportFailed { transport, message }
-                | PtMessage::ServerTransportFailed { transport, message } => {
-                    warn!(
-                        "PT {} unable to launch {}. It said: {:?}",
-                        async_child.identifier, transport, message
-                    );
+                PtMessage::ClientTransportFailed { transport: _, message: _ }
+                | PtMessage::ServerTransportFailed { transport: _, message: _ } => {
+                    warn!("pt_transport_launch_failed");
                     return Err(PtError::TransportGaveError {
-                        transport: transport.to_string(),
-                        message,
+                        transport: "pt".into(),
+                        message: "pt_transport_launch_failed".into(),
                     });
                 }
                 PtMessage::VersionError(e) => {
                     if e != "no-version" {
-                        warn!("weird VERSION-ERROR: {}", e);
+                        warn!("pt_version_error");
                     }
                     return Err(PtError::UnsupportedVersion);
                 }
                 PtMessage::Version(vers) => {
                     if vers != "1" {
-                        return Err(PtError::ProtocolViolation(format!(
-                            "stated version is {}, asked for 1",
-                            vers
-                        )));
+                        return Err(PtError::ProtocolViolation("pt_invalid_version".into()));
                     }
                     Ok(None)
                 }
-                PtMessage::EnvError(e) => return Err(PtError::ChildProtocolViolation(e)),
-                PtMessage::ProxyError(e) => return Err(PtError::ProxyError(e)),
+                PtMessage::EnvError(_) => return Err(PtError::ChildProtocolViolation("pt_environment_rejected".into())),
+                PtMessage::ProxyError(_) => return Err(PtError::ProxyError("pt_proxy_failed".into())),
                 // TODO(eta): We don't do anything with these right now!
                 PtMessage::Status(_) => Ok(None),
-                PtMessage::Unknown(x) => {
-                    warn!("unknown PT line: {}", x);
+                PtMessage::Unknown(_) => {
+                    warn!("pt_unknown_control_line");
                     Ok(None)
                 }
                 // Return the PtMessage as it is for further processing
@@ -669,6 +705,9 @@ pub(crate) mod sealed {
 pub struct PtCommonParameters {
     /// A path where the launched PT can store state.
     state_location: PathBuf,
+    /// NymWrap: require an OS filesystem/process sandbox. Managed configs force this on.
+    #[builder(default)]
+    isolate: bool,
     /// An IPv4 address to bind outgoing connections to (if specified).
     ///
     /// Leaving this out will mean the PT uses a sane default.
@@ -927,6 +966,7 @@ impl PluggableClientTransport {
                 &self.binary_path,
                 &self.arguments,
                 all_env_vars,
+                self.common_params.isolate,
             )?;
 
         let deadline = Instant::get() + self.common_params.timeout.unwrap_or(PT_START_TIMEOUT);
@@ -981,11 +1021,8 @@ impl PluggableClientTransport {
                                 info!("PT binary initialisation done");
                                 break;
                             }
-                            x => {
-                                return Err(PtError::ProtocolViolation(format!(
-                                    "received unexpected {:?}",
-                                    x
-                                )));
+                            _ => {
+                                return Err(PtError::ProtocolViolation("pt_unexpected_client_message".into()));
                             }
                         }
                     }
@@ -1081,6 +1118,7 @@ impl PluggableServerTransport {
                 &self.binary_path,
                 &self.arguments,
                 all_env_vars,
+                self.common_params.isolate,
             )?;
 
         let deadline = Instant::get() + self.common_params.timeout.unwrap_or(PT_START_TIMEOUT);
@@ -1124,11 +1162,8 @@ impl PluggableServerTransport {
                                 info!("PT binary initialisation done");
                                 break;
                             }
-                            x => {
-                                return Err(PtError::ProtocolViolation(format!(
-                                    "received unexpected {:?}",
-                                    x
-                                )));
+                            _ => {
+                                return Err(PtError::ProtocolViolation("pt_unexpected_server_message".into()));
                             }
                         }
                     }

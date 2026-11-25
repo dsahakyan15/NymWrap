@@ -2,7 +2,7 @@ import { takeoutExample } from "./fixtures.js";
 import {chatStatusLabel} from "./chat-status.js";
 import {createHygienePanel,renderDeviceProbe,renderHygiene,deviceInventoryReady,type DeviceProbeStatus} from "./hygiene.js";
 import {activityTransition,activityLabel,type ActivitySchedule} from "./activity.js";
-import {sessionTimingLabel,type SessionTiming} from "./session.js";
+import {backgroundTailAvailable,sessionTimingLabel,type SessionTiming} from "./session.js";
 import {bridgeInput,bridgeStatusLabel,type BridgeStatus} from "./bridges.js";
 import {mirrorChart,sourceName,type Observation} from "./mirror.js";
 import {renderPurgeGuide,renderPurgeBatches,type PurgeGuide,type PurgeBatchView} from "./purge.js";
@@ -228,6 +228,8 @@ async function hydrate(){
   $<HTMLInputElement>("net-daily-count").value=String(c.cover.max_requests_per_day);$<HTMLInputElement>("net-daily-budget").value=String(c.cover.max_spend_per_day_usd);
   $<HTMLInputElement>("traffic-enabled").checked=c.cover.enabled===true;$<HTMLInputElement>("traffic-interval").value=String(c.cover.mean_interval_s);
   $<HTMLInputElement>("background-tail").checked=c.hard?.background_tail===true;
+  $<HTMLInputElement>("background-tail").disabled=!backgroundTailAvailable(c.profile);
+  $<HTMLInputElement>("background-tail").title=c.profile==="standard"?"":"Для strict/paranoid сетевой хвост недоступен до появления маршрута L1/L2 и отдельного одобрения каждого запроса. L3 запрещён.";
   $("session-timing").textContent=sessionTimingLabel(await invoke<SessionTiming>("session_timing"));
   $<HTMLSelectElement>("traffic-mode").value=String(c.cover.mode);
   renderTraffic(await invoke<TrafficStatus>("traffic_status"));
@@ -515,7 +517,7 @@ trafficCheckbox.type="checkbox";trafficCheckbox.id="traffic-enabled";trafficCons
 const tailConsent=document.createElement("label"),tailCheckbox=document.createElement("input"),sessionTiming=document.createElement("p");
 tailCheckbox.type="checkbox";tailCheckbox.id="background-tail";tailConsent.append(tailCheckbox,document.createTextNode(" Разрешаю после закрытия окна ещё 10–60 минут держать ядро, локальную модель и ключи в памяти для платных независимых приманок в пределах бюджета. Требуются включённые автоматические приманки. «Заблокировать» останавливает всё сразу."));
 sessionTiming.id="session-timing";sessionTiming.textContent=sessionTimingLabel(undefined);
-const sessionHint=document.createElement("p");sessionHint.className="hint";sessionHint.textContent="Первый внешний запрос после открытия пространства ждёт случайные 5–30 минут. Хвост работает при доступном маршруте, проверке устройства, ключах и бюджете; сон и выключение компьютера прерывают его. Под L3 один ключ связывает запросы: суточный ритм ключа остаётся виден провайдеру.";
+const sessionHint=document.createElement("p");sessionHint.className="hint";sessionHint.textContent="Первый внешний запрос после открытия пространства ждёт случайные 5–30 минут. Хвост работает при доступном маршруте, проверке устройства, ключах и бюджете; сон и выключение компьютера прерывают его. В strict/paranoid сетевой хвост недоступен до появления L1/L2 и одобрения каждого запроса; L3 запрещён. Под L3 один ключ связывает запросы: суточный ритм ключа остаётся виден провайдеру.";
 trafficInterval.type="number";trafficInterval.id="traffic-interval";trafficInterval.min="1";trafficInterval.max="86400";trafficIntervalLabel.textContent="Средний интервал, секунды";trafficIntervalLabel.append(trafficInterval);
 const trafficModeLabel=document.createElement("label"),trafficMode=document.createElement("select");trafficModeLabel.textContent="Режим";trafficMode.id="traffic-mode";for(const [mode,title]of [["poisson","Приманки по Пуассону"],["constant","Постоянные слоты: реальные запросы ждут"]]){const option=document.createElement("option");option.value=mode!;option.textContent=title!;trafficMode.append(option);}trafficModeLabel.append(trafficMode);
 trafficHint.className="hint";trafficHint.textContent="Каждая приманка занимает отдельный ключ и разговор. В постоянном режиме задания ждут слота; без бюджета остаются в очереди. Сеть и модель могут задержать слот. Оставьте ключи для своих вопросов. Прерванные попытки не повторяются. L3 запрещён в strict/paranoid; автоматические приманки недоступны при обязательном просмотре каждого запроса. Изменения сохраняются кнопкой маршрута выше.";

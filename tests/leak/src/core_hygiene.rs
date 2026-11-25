@@ -1,5 +1,58 @@
 use super::*;
 #[test]
+fn legacy_or_missing_source_evidence_cannot_authorize_egress() {
+    let fixture = tempfile::tempdir().unwrap();
+    let mut workspace = Workspace::create_with(
+        &fixture.path().join("coverage"),
+        SecretString::from(""),
+        Profile::Standard,
+        Arc::new(tests::MemoryKeys::default()),
+    )
+    .unwrap();
+    let mut report = nw_probe::Report {
+        version: 1,
+        lane: nw_proto::Lane::Shadow,
+        values: vec![],
+        observed: vec![],
+        unavailable: vec![],
+        hygiene: Default::default(),
+    };
+    workspace.save_device_probe(Ok(report)).unwrap();
+    assert!(!workspace.device_probe_ready().unwrap());
+    assert_eq!(
+        workspace.device_probe_status().unwrap().unavailable.len(),
+        9
+    );
+    report = nw_probe::Report {
+        version: 1,
+        lane: nw_proto::Lane::Shadow,
+        values: vec![],
+        observed: nw_probe::Source::ALL.to_vec(),
+        unavailable: vec![],
+        hygiene: Default::default(),
+    };
+    report
+        .observed
+        .retain(|source| *source != nw_probe::Source::Wifi);
+    workspace.save_device_probe(Ok(report)).unwrap();
+    assert!(!workspace.device_probe_ready().unwrap());
+    assert!(workspace.device_probe_status().unwrap().unavailable == [nw_probe::Source::Wifi]);
+    assert!(
+        !workspace.device_probe_due().unwrap(),
+        "partial results must not cause an automatic retry loop"
+    );
+    let mut legacy = workspace.device_probe_status().unwrap();
+    legacy.coverage_version = 0;
+    workspace
+        .store
+        .put_json(Domain::Vault, "device-probe-status", &legacy, now())
+        .unwrap();
+    assert!(
+        workspace.device_probe_due().unwrap(),
+        "an upgrade must refresh legacy coverage without waiting a day"
+    );
+}
+#[test]
 fn only_fresh_observations_have_scores_and_encrypted_reopen_preserves_unknowns() {
     let fixture = tempfile::tempdir().unwrap();
     let root = fixture.path().join("hygiene");
@@ -20,6 +73,7 @@ fn only_fresh_observations_have_scores_and_encrypted_reopen_preserves_unknowns()
         lane: nw_proto::Lane::Shadow,
         values: vec![],
         unavailable: vec![],
+        observed: nw_probe::Source::ALL.to_vec(),
         hygiene,
     };
     w.save_device_probe(Ok(report)).unwrap();

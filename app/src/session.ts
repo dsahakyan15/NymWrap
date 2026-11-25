@@ -1,4 +1,5 @@
 export interface SessionTiming {phase:"locked"|"starting"|"foreground"|"tail";first_send_in_s:number;tail_remaining_s:number|null}
+export function backgroundTailAvailable(profile:string):boolean{return profile==="standard";}
 export function sessionTimingLabel(status:SessionTiming|undefined):string {
   if(!status)return "Состояние границ сеанса ещё не получено.";
   if(!Number.isSafeInteger(status.first_send_in_s)||status.first_send_in_s<0||status.first_send_in_s>1800||!(status.tail_remaining_s===null||Number.isSafeInteger(status.tail_remaining_s)&&status.tail_remaining_s>=0&&status.tail_remaining_s<=3600))throw new Error("invalid_core_reply");

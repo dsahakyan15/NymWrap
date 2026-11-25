@@ -3,6 +3,10 @@
 use std::io;
 mod device;
 pub use device::*;
+#[cfg(target_os = "macos")]
+mod macos_probe;
+#[cfg(target_os = "macos")]
+pub use macos_probe::*;
 #[cfg(windows)]
 mod windows_sandbox;
 #[cfg(windows)]

@@ -63,6 +63,12 @@ impl Report {
             .iter()
             .zip(CheckKind::ALL)
             .all(|(entry, kind)| entry.kind == kind)
+            && (self.checks[2].verdict != Verdict::Pass
+                || [
+                    self.llmnr_disabled,
+                    self.netbios_disabled,
+                    self.mdns_disabled,
+                ] == [Some(true); 3])
     }
     pub fn known(&self) -> usize {
         self.checks
@@ -79,7 +85,7 @@ impl Report {
     pub fn score(&self) -> Option<f64> {
         (self.known() != 0).then(|| self.passed() as f64 / 6.0)
     }
-    fn set(&mut self, kind: CheckKind, verdict: Verdict) {
+    pub(crate) fn set(&mut self, kind: CheckKind, verdict: Verdict) {
         if let Some(check) = self.checks.iter_mut().find(|c| c.kind == kind) {
             check.verdict = verdict;
         }
@@ -91,6 +97,34 @@ fn observed(value: Option<bool>) -> Verdict {
         Some(false) => Verdict::Fail,
         None => Verdict::Unknown,
     }
+}
+/// A managed Firefox policy is evidence only when both preferences are locked.
+/// Never execute preferences.js/user.js, follow includes, or infer all browsers.
+pub fn browser_policy(mut file: impl std::io::Read) -> Verdict {
+    use std::io::Read;
+    let mut bytes = zeroize::Zeroizing::new(Vec::new());
+    if file.by_ref().take(65537).read_to_end(&mut bytes).is_err() || bytes.len() > 65536 {
+        return Verdict::Unknown;
+    }
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+        return Verdict::Unknown;
+    };
+    let Some(preferences) = value.get("policies").and_then(|v| v.get("Preferences")) else {
+        return Verdict::Unknown;
+    };
+    let mut result = Verdict::Pass;
+    for name in ["geo.enabled", "media.peerconnection.enabled"] {
+        let entry = &preferences[name];
+        if entry.get("Value").and_then(|v| v.as_bool()) == Some(true) {
+            return Verdict::Fail;
+        }
+        if entry.get("Value").and_then(|v| v.as_bool()) != Some(false)
+            || entry.get("Status").and_then(|v| v.as_str()) != Some("locked")
+        {
+            result = Verdict::Unknown;
+        }
+    }
+    result
 }
 fn normalize(value: &str) -> zeroize::Zeroizing<String> {
     zeroize::Zeroizing::new(
@@ -111,6 +145,9 @@ pub fn collect(
     report.set(CheckKind::WifiMac, observed(wifi));
     report.set(CheckKind::Location, observed(policy.location_disabled));
     report.llmnr_disabled = policy.llmnr_disabled;
+    report.netbios_disabled = policy.netbios_disabled;
+    report.mdns_disabled = policy.mdns_disabled;
+    report.set(CheckKind::Clock, observed(policy.clock_within_bounds));
     // All three protocols must be observed off; one observed enabled protocol
     // already needs attention. Unobserved NetBIOS/mDNS cannot produce a pass.
     let protocols = [
@@ -173,6 +210,51 @@ pub fn collect(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn browser_requires_locked_false_preferences_and_never_executes_text() {
+        let policy = |geo: &str, rtc: &str| {
+            format!(
+                r#"{{"policies":{{"Preferences":{{"geo.enabled":{geo},"media.peerconnection.enabled":{rtc}}}}}}}"#
+            )
+        };
+        let off = r#"{"Value":false,"Status":"locked"}"#;
+        assert!(browser_policy(policy(off, off).as_bytes()) == Verdict::Pass);
+        for input in [
+            policy("false", off),
+            policy(r#"{"Value":false,"Status":"default"}"#, off),
+            "NEVER_EXECUTE('SYNTHETIC_HYGIENE_CANARY')".into(),
+            "{}".into(),
+        ] {
+            assert!(browser_policy(input.as_bytes()) == Verdict::Unknown);
+        }
+        assert!(
+            browser_policy(policy(r#"{"Value":true,"Status":"locked"}"#, off).as_bytes())
+                == Verdict::Fail
+        );
+        assert!(browser_policy(&vec![b'x'; 65537][..]) == Verdict::Unknown);
+    }
+    #[test]
+    fn multicast_requires_every_protocol_off_and_clock_needs_an_actual_estimate() {
+        let mut hints = nw_platform::HygienePolicyHints {
+            llmnr_disabled: Some(true),
+            netbios_disabled: Some(true),
+            mdns_disabled: Some(true),
+            clock_within_bounds: Some(true),
+            ..Default::default()
+        };
+        let report = collect(&[], &Default::default(), None, hints);
+        assert!(report.checks[2].verdict == Verdict::Pass);
+        assert!(report.checks[4].verdict == Verdict::Pass);
+        hints = nw_platform::HygienePolicyHints {
+            llmnr_disabled: Some(true),
+            netbios_disabled: None,
+            mdns_disabled: Some(true),
+            ..Default::default()
+        };
+        let report = collect(&[], &Default::default(), None, hints);
+        assert!(report.checks[2].verdict == Verdict::Unknown);
+        assert!(report.checks[4].verdict == Verdict::Unknown);
+    }
     fn value(source: Source, text: &str) -> DeviceValue {
         DeviceValue {
             source,
@@ -193,6 +275,7 @@ mod tests {
             nw_platform::HygienePolicyHints {
                 location_disabled: Some(true),
                 llmnr_disabled: Some(true),
+                ..Default::default()
             },
         );
         assert!(report.valid());

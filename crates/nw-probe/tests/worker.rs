@@ -1,10 +1,10 @@
-#![cfg(any(windows, target_os = "linux"))]
-#[cfg(target_os = "linux")]
+#![cfg(any(windows, target_os = "linux", target_os = "macos"))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::io::Write;
 use std::path::PathBuf;
 use zeroize::Zeroizing;
 #[test]
-#[ignore = "requires real LPAC on Windows or bubblewrap/user namespaces on Linux"]
+#[ignore = "requires native LPAC, bubblewrap/user namespaces or macOS Seatbelt"]
 fn actual_device_probe_is_confined_and_uses_only_bounded_shadow_frames() {
     let directory = tempfile::tempdir().unwrap();
     let git = directory.path().join("gitconfig");
@@ -28,7 +28,7 @@ fn actual_device_probe_is_confined_and_uses_only_bounded_shadow_frames() {
         assert_eq!(output.exit_code, 0);
         output.stdout
     };
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     let output = {
         use std::process::Stdio;
         let mut child = nw_sandbox::probe_command(&program, Some(&file))
@@ -48,6 +48,13 @@ fn actual_device_probe_is_confined_and_uses_only_bounded_shadow_frames() {
     assert_eq!(output.len(), length + 4);
     let report: nw_probe::Report = serde_json::from_slice(&output[4..]).unwrap();
     assert!(report.valid());
+    for source in nw_probe::Source::ALL {
+        assert_ne!(
+            report.observed.contains(&source),
+            report.unavailable.contains(&source),
+            "every source needs an explicit complete/unknown result"
+        );
+    }
     println!(
         "probe_unavailable_sources={}",
         serde_json::to_string(&report.unavailable).unwrap()

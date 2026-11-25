@@ -2,10 +2,14 @@ use super::*;
 #[derive(Default, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeviceProbeStatus {
+    #[serde(default)]
+    pub coverage_version: u16,
     pub last_attempt: u64,
     pub last_success: u64,
     pub protected_values: usize,
     pub unavailable: Vec<nw_probe::Source>,
+    #[serde(default)]
+    pub observed: Vec<nw_probe::Source>,
     pub code: Option<String>,
     #[serde(default)]
     pub hygiene: Option<nw_probe::hygiene::Report>,
@@ -30,7 +34,8 @@ impl Workspace {
         let status = self.device_probe_status()?;
         let at = now();
         Ok(self.config.hard.device_secrets
-            && (status.last_attempt == 0
+            && (status.coverage_version != 2
+                || status.last_attempt == 0
                 || at < status.last_attempt
                 || at.saturating_sub(status.last_attempt) >= 86400))
     }
@@ -44,7 +49,10 @@ impl Workspace {
             && at >= status.last_success
             && at - status.last_success < 86400
             && status.code.is_none()
-            && status.unavailable.is_empty())
+            && status.unavailable.is_empty()
+            && nw_probe::Source::ALL
+                .iter()
+                .all(|source| status.observed.contains(source)))
     }
     pub(crate) fn remember_device_removals(
         &mut self,
@@ -79,6 +87,7 @@ impl Workspace {
     pub(crate) fn begin_device_probe(&mut self) -> Result<(), WorkspaceError> {
         let mut status = self.device_probe_status()?;
         status.last_attempt = now();
+        status.coverage_version = 2;
         status.code = Some("probe_pending".into());
         self.store
             .put_json(Domain::Vault, "device-probe-status", &status, now())?;
@@ -91,6 +100,7 @@ impl Workspace {
         let at = now();
         let mut status = self.device_probe_status()?;
         status.last_attempt = at;
+        status.coverage_version = 2;
         let mut changed = false;
         match report {
             Ok(report) => {
@@ -126,7 +136,8 @@ impl Workspace {
                 changed = previous_len != secrets.len();
                 status.last_success = at;
                 status.code = None;
-                status.unavailable = report.unavailable.clone();
+                status.observed = report.observed.clone();
+                status.unavailable = report.unknown_sources();
                 status.hygiene = Some(report.hygiene.clone());
                 status.protected_values = secrets
                     .iter()

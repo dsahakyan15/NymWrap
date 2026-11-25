@@ -20,18 +20,24 @@ pub use sys::open_device_config;
 pub use sys::{
     ChildIdentity, drop_process_identity, enter_child_network_namespace, isolate_core_network,
 };
+#[cfg(target_os = "macos")]
+pub use sys::{confine_device_probe, inherited_probe_file, macos_probe_command};
 #[cfg(target_os = "linux")]
 pub use sys::{confine_import_worker, deny_remote_sockets};
 pub use sys::{current_user_id, harden_process, process_image};
 pub use sys::{
-    device_host_names, device_ip_addresses, device_mac_addresses, device_machine_ids,
-    device_policy_hints, device_timezones, device_user_names, device_wifi_inventory,
-    device_wifi_ssids,
+    device_browser_policy, device_home_paths, device_host_names, device_ip_addresses,
+    device_mac_addresses, device_machine_ids, device_policy_hints, device_timezones,
+    device_user_names, device_wifi_inventory, device_wifi_ssids,
 };
 #[derive(Default)]
 pub struct HygienePolicyHints {
     pub location_disabled: Option<bool>,
     pub llmnr_disabled: Option<bool>,
+    pub netbios_disabled: Option<bool>,
+    pub mdns_disabled: Option<bool>,
+    /// Kernel synchronization error estimate, not an NTP-enabled setting.
+    pub clock_within_bounds: Option<bool>,
 }
 #[cfg(target_os = "linux")]
 pub use sys::{sandbox_data_files, sandbox_read_files};

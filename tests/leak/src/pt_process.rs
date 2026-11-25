@@ -18,6 +18,71 @@ fn arguments(name: &str) -> Vec<String> {
     ]
 }
 
+#[test]
+#[ignore = "synthetic error child, invoked by the control-error canary regression"]
+fn nymwrap_error_child() {
+    let case: usize = std::env::args()
+        .find_map(|value| value.strip_prefix("case=").map(str::to_owned))
+        .unwrap()
+        .parse()
+        .unwrap();
+    let lines = [
+        "CMETHOD-ERROR obfs4 PT_ERROR_CANARY_61843",
+        "ENV-ERROR PT_ERROR_CANARY_61843",
+        "PROXY-ERROR PT_ERROR_CANARY_61843",
+        "VERSION PT_ERROR_CANARY_61843",
+        "CMETHOD obfs4 socks5 PT_ERROR_CANARY_61843",
+        "SMETHOD obfs4 127.0.0.1:1 cert=PT_ERROR_CANARY_61843",
+        "CMETHOD obfs4 PT_ERROR_CANARY_61843 127.0.0.1:1",
+        "CMETHOD PT_ERROR_CANARY_61843 socks5 127.0.0.1:1",
+    ];
+    println!("VERSION 1\n{}", lines[case]);
+    std::io::stdout().flush().unwrap();
+    std::thread::sleep(Duration::from_secs(2));
+}
+
+#[tokio::test]
+async fn nymwrap_pt_control_errors_cannot_echo_private_parameters_into_parent_logs() {
+    let directory = tempfile::tempdir().unwrap();
+    for (case, code) in [
+        "pt_transport_launch_failed",
+        "pt_environment_rejected",
+        "pt_proxy_failed",
+        "pt_invalid_version",
+        "pt_invalid_control_line",
+        "pt_unexpected_client_message",
+        "pt_unknown_socks_protocol",
+        "pt_unwanted_transport",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let mut args = arguments("nymwrap_error_child");
+        args.push(format!("case={case}"));
+        let common = PtCommonParametersBuilder::default()
+            .state_location(directory.path().to_path_buf())
+            .timeout(Some(Duration::from_secs(3)))
+            .build()
+            .unwrap();
+        let client = PtClientParametersBuilder::default()
+            .transports(vec!["obfs4".parse().unwrap()])
+            .build()
+            .unwrap();
+        let mut pt =
+            PluggableClientTransport::new(std::env::current_exe().unwrap(), args, common, client);
+        let error = pt
+            .launch(tor_rtcompat::PreferredRuntime::current().unwrap())
+            .await
+            .unwrap_err();
+        let loggable = format!("{error:?} {error}");
+        assert!(
+            loggable.contains(code),
+            "expected a processed control error"
+        );
+        assert!(!loggable.contains("PT_ERROR_CANARY_61843"));
+    }
+}
+
 #[tokio::test]
 #[ignore = "synthetic child, invoked by the PT lifetime regression"]
 async fn nymwrap_clean_quiet_child() {

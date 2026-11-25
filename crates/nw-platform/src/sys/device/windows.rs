@@ -13,6 +13,92 @@ fn wide(text: &str) -> Vec<u16> {
 fn string(units: &[u16]) -> String {
     String::from_utf16_lossy(&units[..units.iter().position(|c| *c == 0).unwrap_or(units.len())])
 }
+fn registry_string(root: HKEY, path: &str, name: &str) -> io::Result<Zeroizing<String>> {
+    let mut bytes = Zeroizing::new(vec![0u16; 4096]);
+    let mut length = (bytes.len() * 2) as u32;
+    if unsafe {
+        RegGetValueW(
+            root,
+            wide(path).as_ptr(),
+            wide(name).as_ptr(),
+            RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY,
+            ptr::null_mut(),
+            bytes.as_mut_ptr().cast(),
+            &mut length,
+        )
+    } != ERROR_SUCCESS
+    {
+        return Err(unavailable());
+    }
+    Ok(Zeroizing::new(string(&bytes)))
+}
+pub fn device_browser_policy() -> io::Result<std::fs::File> {
+    let default = registry_string(
+        HKEY_CURRENT_USER,
+        r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice",
+        "ProgId",
+    )?;
+    if !default.starts_with("FirefoxURL") {
+        return Err(unavailable());
+    }
+    // Registry enterprise policies can override distribution/policies.json.
+    // Only a proven absence allows that file to certify the browser settings.
+    for root in [HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER] {
+        let mut key = ptr::null_mut();
+        match unsafe {
+            RegOpenKeyExW(
+                root,
+                wide(r"SOFTWARE\Policies\Mozilla\Firefox").as_ptr(),
+                0,
+                KEY_READ | KEY_WOW64_64KEY,
+                &mut key,
+            )
+        } {
+            ERROR_FILE_NOT_FOUND | ERROR_PATH_NOT_FOUND => {}
+            ERROR_SUCCESS => {
+                unsafe { RegCloseKey(key) };
+                return Err(unavailable());
+            }
+            _ => return Err(unavailable()),
+        }
+    }
+    let program_files = registry_string(
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion",
+        "ProgramFilesDir",
+    )?;
+    let root = std::path::Path::new(program_files.as_str()).join("Mozilla Firefox");
+    // A second/custom Firefox installation must not inherit the verdict from
+    // this installation's policies. Resolve only the literal default command;
+    // never execute it or expand environment variables from the registry.
+    let command = registry_string(
+        HKEY_CLASSES_ROOT,
+        &format!(r"{}\shell\open\command", default.as_str()),
+        "",
+    )?;
+    let executable = command
+        .strip_prefix('"')
+        .and_then(|rest| rest.split_once('"'))
+        .map(|(path, _)| std::path::Path::new(path))
+        .ok_or_else(unavailable)?;
+    if executable.canonicalize()? != root.join("firefox.exe").canonicalize()? {
+        return Err(unavailable());
+    }
+    let x86 = registry_string(
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion",
+        "ProgramFilesDir (x86)",
+    )
+    .ok();
+    if x86.as_ref().is_some_and(|base| {
+        std::path::Path::new(base.as_str())
+            .join("Mozilla Firefox/firefox.exe")
+            .exists()
+    }) {
+        return Err(unavailable());
+    }
+    super::open_device_config(&root.join("distribution/policies.json"))
+}
 pub fn device_policy_hints() -> crate::HygienePolicyHints {
     fn dword(path: &str, name: &str) -> Option<u32> {
         let mut value = 0u32;
@@ -51,7 +137,83 @@ pub fn device_policy_hints() -> crate::HygienePolicyHints {
             1 => Some(false),
             _ => None,
         }),
+        netbios_disabled: netbios_policy(),
+        // Neither absence of Bonjour nor an undocumented Dnscache switch
+        // proves that every mDNS responder is disabled. Keep this unknown.
+        mdns_disabled: None,
+        // No trustworthy phase-error measurement is exposed by a configuration
+        // flag. Do not turn enabled Windows Time service into a clock pass.
+        clock_within_bounds: None,
     }
+}
+fn netbios_policy() -> Option<bool> {
+    let mut key = ptr::null_mut();
+    if unsafe {
+        RegOpenKeyExW(
+            HKEY_LOCAL_MACHINE,
+            wide(r"SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces").as_ptr(),
+            0,
+            KEY_READ | KEY_WOW64_64KEY,
+            &mut key,
+        )
+    } != ERROR_SUCCESS
+    {
+        return None;
+    }
+    struct Key(HKEY);
+    impl Drop for Key {
+        fn drop(&mut self) {
+            unsafe { RegCloseKey(self.0) };
+        }
+    }
+    let key = Key(key);
+    let mut values = vec![];
+    for index in 0..1024 {
+        let mut name = [0u16; 256];
+        let mut length = name.len() as u32;
+        let result = unsafe {
+            RegEnumKeyExW(
+                key.0,
+                index,
+                name.as_mut_ptr(),
+                &mut length,
+                ptr::null(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+            )
+        };
+        if result == ERROR_NO_MORE_ITEMS {
+            return crate::all_observed_true(&values);
+        }
+        if result != ERROR_SUCCESS {
+            return None;
+        }
+        let name = string(&name);
+        let mut option = 0u32;
+        let mut size = 4;
+        let result = unsafe {
+            RegGetValueW(
+                key.0,
+                wide(&name).as_ptr(),
+                wide("NetbiosOptions").as_ptr(),
+                RRF_RT_REG_DWORD,
+                ptr::null_mut(),
+                (&mut option as *mut u32).cast(),
+                &mut size,
+            )
+        };
+        values.push(if result == ERROR_SUCCESS && size == 4 {
+            match option {
+                2 => Some(true),
+                1 => Some(false),
+                _ => None,
+            }
+        } else {
+            None
+        });
+    }
+    None
 }
 unsafe fn os_string(pointer: *const u16, limit: usize) -> io::Result<String> {
     if pointer.is_null() {
@@ -98,6 +260,8 @@ pub fn device_user_names() -> io::Result<Vec<String>> {
     let mut raw = ptr::null_mut();
     let mut values = Zeroizing::new(vec![string(&name)]);
     if unsafe { NetUserGetInfo(ptr::null(), name.as_ptr(), 10, &mut raw) } != 0 {
+        // A domain lookup is not an offline fallback. Retain an explicit
+        // unknown result when the local account database cannot supply a name.
         return Err(unavailable());
     }
     struct Buffer(*mut u8);
@@ -118,6 +282,30 @@ pub fn device_user_names() -> io::Result<Vec<String>> {
         values.push(full);
     }
     Ok(std::mem::take(&mut *values))
+}
+pub fn device_home_paths() -> io::Result<Vec<String>> {
+    use windows_sys::Win32::{
+        Security::TOKEN_QUERY,
+        System::Threading::{GetCurrentProcess, OpenProcessToken},
+        UI::Shell::GetUserProfileDirectoryW,
+    };
+    let mut token = ptr::null_mut();
+    if unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } == 0 {
+        return Err(unavailable());
+    }
+    struct Token(HANDLE);
+    impl Drop for Token {
+        fn drop(&mut self) {
+            unsafe { CloseHandle(self.0) };
+        }
+    }
+    let token = Token(token);
+    let mut bytes = Zeroizing::new(vec![0u16; 4096]);
+    let mut length = bytes.len() as u32;
+    if unsafe { GetUserProfileDirectoryW(token.0, bytes.as_mut_ptr(), &mut length) } == 0 {
+        return Err(unavailable());
+    }
+    Ok(vec![string(&bytes)])
 }
 pub fn device_machine_ids() -> io::Result<Vec<String>> {
     let mut value = Zeroizing::new(vec![0u16; 128]);

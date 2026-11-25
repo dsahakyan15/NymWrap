@@ -48,6 +48,11 @@ pub struct Report {
     /// Unavailable/partial sources are never presented as successful checks.
     #[zeroize(skip)]
     pub unavailable: Vec<Source>,
+    /// Sources completely read, including a verified empty Wi-Fi/git inventory.
+    /// Legacy reports have no such evidence and cannot authorize remote egress.
+    #[serde(default)]
+    #[zeroize(skip)]
+    pub observed: Vec<Source>,
     #[serde(default)]
     #[zeroize(skip)]
     pub hygiene: hygiene::Report,
@@ -104,6 +109,12 @@ impl Hints {
     }
 }
 impl Report {
+    pub fn unknown_sources(&self) -> Vec<Source> {
+        Source::ALL
+            .into_iter()
+            .filter(|source| !self.observed.contains(source) || self.unavailable.contains(source))
+            .collect()
+    }
     pub fn valid(&self) -> bool {
         let mut seen = BTreeSet::new();
         self.version == 1
@@ -118,6 +129,11 @@ impl Report {
             })
             && self.unavailable.len() <= Source::ALL.len()
             && self.unavailable.iter().collect::<BTreeSet<_>>().len() == self.unavailable.len()
+            && self.observed.iter().collect::<BTreeSet<_>>().len() == self.observed.len()
+            && self
+                .observed
+                .iter()
+                .all(|source| !self.unavailable.contains(source))
             && self.hygiene.valid()
     }
 }
@@ -132,6 +148,12 @@ pub fn home_variants(home: &str) -> Vec<String> {
         values.insert(format!("/mnt/{drive}{}", &slash[2..]));
     }
     values.into_iter().collect()
+}
+fn acceptable(text: &str) -> bool {
+    (3..=1024).contains(&text.chars().count())
+        && text.len() <= 1024
+        && !text.chars().any(char::is_control)
+        && !text.contains("⟨NW_")
 }
 fn push(values: &mut Vec<DeviceValue>, source: Source, text: String) {
     let mut text = Zeroizing::new(text);
@@ -225,6 +247,7 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
     }
     let mut values = Vec::new();
     let mut unavailable = BTreeSet::new();
+    let mut observed = BTreeSet::new();
     for text in &hints.user {
         push(&mut values, Source::User, text.clone());
     }
@@ -243,11 +266,23 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
         (Source::Timezone, nw_platform::device_timezones()),
         (Source::Mac, nw_platform::device_mac_addresses()),
         (Source::Ip, nw_platform::device_ip_addresses()),
+        (Source::Home, nw_platform::device_home_paths()),
     ] {
         match result {
             Ok(items) => {
+                observed.insert(source);
                 for text in items {
-                    push(&mut values, source, text);
+                    let valid = acceptable(&text);
+                    if !valid {
+                        unavailable.insert(source);
+                    }
+                    if source == Source::Home {
+                        for variant in home_variants(&text) {
+                            push(&mut values, source, variant);
+                        }
+                    } else {
+                        push(&mut values, source, text);
+                    }
                 }
             }
             Err(_) => {
@@ -257,7 +292,11 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
     }
     let wifi = match nw_platform::device_wifi_inventory() {
         Ok((ssids, randomized)) => {
+            observed.insert(Source::Wifi);
             for ssid in ssids {
+                if !acceptable(&ssid) {
+                    unavailable.insert(Source::Wifi);
+                }
                 push(&mut values, Source::Wifi, ssid);
             }
             randomized
@@ -267,9 +306,17 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
             None
         }
     };
+    // The legacy macOS KnownNetworks database can provide values to protect,
+    // but does not prove coverage of modern per-network/private-address stores.
+    #[cfg(target_os = "macos")]
+    unavailable.insert(Source::Wifi);
     match git.map(git_identity).transpose() {
         Ok(Some(items)) => {
+            observed.insert(Source::Git);
             for text in items {
+                if !acceptable(&text) {
+                    unavailable.insert(Source::Git);
+                }
                 push(&mut values, Source::Git, text);
             }
         }
@@ -290,18 +337,32 @@ pub fn collect(hints: &Hints, git: Option<impl Read>) -> Result<Report, &'static
             unavailable.insert(source);
         }
     }
+    observed.retain(|source| !unavailable.contains(source));
     values.sort_by(|a, b| (a.source, &a.value).cmp(&(b.source, &b.value)));
-    let hygiene = hygiene::collect(
+    let mut hygiene = hygiene::collect(
         &values,
         &unavailable,
         wifi,
         nw_platform::device_policy_hints(),
     );
+    let browser = nw_platform::device_browser_policy()
+        .map(hygiene::browser_policy)
+        .unwrap_or(hygiene::Verdict::Unknown);
+    // A macOS distribution file alone cannot certify overriding managed
+    // preferences. Keep positive results unknown until that source is audited.
+    #[cfg(target_os = "macos")]
+    let browser = if browser == hygiene::Verdict::Pass {
+        hygiene::Verdict::Unknown
+    } else {
+        browser
+    };
+    hygiene.set(hygiene::CheckKind::Browser, browser);
     let report = Report {
         version: 1,
         lane: nw_proto::Lane::Shadow,
         values,
         unavailable: unavailable.into_iter().collect(),
+        observed: observed.into_iter().collect(),
         hygiene,
     };
     if !report.valid() {

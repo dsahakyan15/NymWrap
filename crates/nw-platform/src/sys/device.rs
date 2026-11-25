@@ -32,7 +32,7 @@ pub fn open_device_config(path: &std::path::Path) -> io::Result<std::fs::File> {
     }
     Ok(file)
 }
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn bounded_file(
     path: impl AsRef<std::path::Path>,
     maximum: usize,
@@ -80,7 +80,7 @@ pub fn device_user_names() -> io::Result<Vec<String>> {
     }
     Ok(names)
 }
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 pub fn device_host_names() -> io::Result<Vec<String>> {
     let mut buffer = Zeroizing::new(vec![0u8; 256]);
     if unsafe { libc::gethostname(buffer.as_mut_ptr().cast(), buffer.len()) } != 0 {
@@ -96,17 +96,40 @@ pub fn device_host_names() -> io::Result<Vec<String>> {
             .into(),
     ])
 }
+#[cfg(unix)]
+pub fn device_home_paths() -> io::Result<Vec<String>> {
+    let mut bytes = Zeroizing::new(vec![0u8; 65536]);
+    let mut entry: libc::passwd = unsafe { std::mem::zeroed() };
+    let mut found = std::ptr::null_mut();
+    if unsafe {
+        libc::getpwuid_r(
+            libc::geteuid(),
+            &mut entry,
+            bytes.as_mut_ptr().cast(),
+            bytes.len(),
+            &mut found,
+        )
+    } != 0
+        || found.is_null()
+        || entry.pw_dir.is_null()
+    {
+        return Err(unavailable());
+    }
+    let path = unsafe { std::ffi::CStr::from_ptr(entry.pw_dir) }
+        .to_str()
+        .map_err(|_| unavailable())?;
+    if !std::path::Path::new(path).is_absolute() {
+        return Err(unavailable());
+    }
+    Ok(vec![path.to_owned()])
+}
 #[cfg(target_os = "linux")]
 pub fn device_machine_ids() -> io::Result<Vec<String>> {
     Ok(vec![
         bounded_file("/etc/machine-id", 1024)?.trim().to_owned(),
     ])
 }
-#[cfg(target_os = "macos")]
-pub fn device_machine_ids() -> io::Result<Vec<String>> {
-    Err(unavailable())
-}
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 pub fn device_timezones() -> io::Result<Vec<String>> {
     let mut names = vec![];
     if let Ok(zone) = bounded_file("/etc/timezone", 1024) {
@@ -168,10 +191,6 @@ pub fn device_mac_addresses() -> io::Result<Vec<String>> {
         }
     }
     Ok(std::mem::take(&mut *result))
-}
-#[cfg(target_os = "macos")]
-pub fn device_mac_addresses() -> io::Result<Vec<String>> {
-    Err(unavailable())
 }
 #[cfg(unix)]
 pub fn device_ip_addresses() -> io::Result<Vec<String>> {
@@ -271,19 +290,48 @@ pub fn device_wifi_inventory() -> io::Result<(Vec<String>, Option<bool>)> {
         crate::all_observed_true(&randomized),
     ))
 }
-#[cfg(target_os = "macos")]
-pub fn device_wifi_inventory() -> io::Result<(Vec<String>, Option<bool>)> {
-    Err(unavailable())
-}
 pub fn device_wifi_ssids() -> io::Result<Vec<String>> {
     device_wifi_inventory().map(|(ssids, _)| ssids)
 }
 #[cfg(not(windows))]
 pub fn device_policy_hints() -> crate::HygienePolicyHints {
+    #[cfg(target_os = "linux")]
+    {
+        let mut hints = crate::HygienePolicyHints::default();
+        let mut clock: libc::timex = unsafe { std::mem::zeroed() };
+        // modes=0 only queries kernel state; no clock changes and no network.
+        let state = unsafe { libc::adjtimex(&mut clock) };
+        if state >= 0 {
+            let offset = clock.offset.unsigned_abs()
+                / if clock.status & libc::STA_NANO != 0 {
+                    1000
+                } else {
+                    1
+                };
+            hints.clock_within_bounds = Some(
+                state != libc::TIME_ERROR
+                    && clock.status & libc::STA_UNSYNC == 0
+                    && clock.maxerror >= 0
+                    && clock.esterror >= 0
+                    && offset.saturating_add((clock.maxerror as u64).max(clock.esterror as u64))
+                        < 300_000_000,
+            );
+        }
+        hints
+    }
+    #[cfg(not(target_os = "linux"))]
     crate::HygienePolicyHints::default()
+}
+#[cfg(not(any(windows, target_os = "macos")))]
+pub fn device_browser_policy() -> io::Result<std::fs::File> {
+    Err(unavailable())
 }
 
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
 pub use windows::*;
+#[cfg(target_os = "macos")]
+mod macos;
+#[cfg(target_os = "macos")]
+pub use macos::*;

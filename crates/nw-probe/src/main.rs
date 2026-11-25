@@ -1,4 +1,4 @@
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 use {
     std::io::{Read, Write},
     zeroize::Zeroizing,
@@ -17,11 +17,11 @@ fn run() -> Result<(), &'static str> {
     }
     #[cfg(target_os = "linux")]
     nw_platform::deny_remote_sockets().map_err(|_| "probe_sandbox_unavailable")?;
-    #[cfg(not(any(windows, target_os = "linux")))]
+    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
     {
         Err("probe_sandbox_unavailable")
     }
-    #[cfg(any(windows, target_os = "linux"))]
+    #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
     {
         let args: Vec<_> = std::env::args().skip(1).collect();
         if args.first().is_none_or(|a| a != "--stdio") || !matches!(args.len(), 1 | 3) {
@@ -47,9 +47,23 @@ fn run() -> Result<(), &'static str> {
                 }
                 Some(std::fs::File::open(&args[2]).map_err(|_| "probe_git_unavailable")?)
             }
+            #[cfg(target_os = "macos")]
+            {
+                if args[1] != "--git-fd" {
+                    return Err("invalid_probe_arguments");
+                }
+                Some(
+                    nw_platform::inherited_probe_file(
+                        args[2].parse().map_err(|_| "invalid_probe_arguments")?,
+                    )
+                    .map_err(|_| "probe_git_unavailable")?,
+                )
+            }
         } else {
             None
         };
+        #[cfg(target_os = "macos")]
+        nw_platform::confine_device_probe(git.as_ref()).map_err(|_| "probe_sandbox_unavailable")?;
         let mut input = std::io::stdin().lock();
         let mut header = [0u8; 4];
         input

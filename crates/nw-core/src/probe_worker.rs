@@ -1,19 +1,19 @@
 //! A short-lived trusted inventory worker. Never run it without OS confinement.
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 use nw_probe::Hints;
-#[cfg(any(windows, target_os = "linux", test))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos", test))]
 use nw_probe::MAX_FRAME;
 use nw_probe::Report;
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 use std::path::PathBuf;
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 use zeroize::Zeroizing;
 pub(crate) async fn collect() -> Result<Report, &'static str> {
-    #[cfg(not(any(windows, target_os = "linux")))]
+    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
     {
         Err("probe_sandbox_unavailable")
     }
-    #[cfg(any(windows, target_os = "linux"))]
+    #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
     {
         let program = std::env::current_exe()
             .map_err(|_| "probe_unavailable")?
@@ -49,7 +49,7 @@ pub(crate) async fn collect() -> Result<Report, &'static str> {
             }
             decode(&output.stdout)
         }
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
             use tokio::io::{AsyncReadExt, AsyncWriteExt};
             let command = nw_sandbox::probe_command(&program, git.as_ref())
@@ -84,11 +84,11 @@ pub(crate) async fn collect() -> Result<Report, &'static str> {
         }
     }
 }
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 fn open_git(path: PathBuf) -> Option<std::fs::File> {
     nw_platform::open_device_config(&path).ok()
 }
-#[cfg(any(windows, target_os = "linux", test))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos", test))]
 fn decode(bytes: &[u8]) -> Result<Report, &'static str> {
     if bytes.len() < 4 || bytes.len() > MAX_FRAME + 4 {
         return Err("invalid_probe_result");
