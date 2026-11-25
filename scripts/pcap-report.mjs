@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {join,resolve,dirname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {artifactHash} from './evaluation-artifacts.mjs';
+import {auditCoverWeek} from './cover-pcap-report.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),buckets=[2048,4096,8192,16384,32768];
 const synthetic=JSON.parse(await readFile(new URL('../tests/leak/fixtures/pcap-canaries.json',import.meta.url),'utf8'));
 const values=[...Object.values(synthetic.device),...Object.values(synthetic.detectors)];
@@ -51,11 +52,12 @@ export function httpBodies(pdml){
   }
   return records;
 }
-export function auditCapture({pdml,client,provider,rust,health,daemon,circuits}){
-  if(!rust?.complete||rust.requests!==16||!rust.different_circuits||!rust.transport_stop_failed_closed||!rust.direct_provider_connection_denied)throw Error('incomplete_rust_transport_evidence');
+export function auditCapture({pdml,client,provider,rust,health,daemon,circuits,week}){
+  const expected=week?100:16;
+  if(!rust?.complete||rust.requests!==expected||!rust.different_circuits||!rust.transport_stop_failed_closed||!rust.direct_provider_connection_denied)throw Error('incomplete_rust_transport_evidence');
   if(health?.provider_alive_after_stop!==true)throw Error('missing_live_provider_control');
   const bodies=httpBodies(pdml);
-  if(bodies.length!==16||provider?.requests?.length!==bodies.length)throw Error('incomplete_packet_capture');
+  if(bodies.length!==expected||provider?.requests?.length!==bodies.length)throw Error('incomplete_packet_capture');
   if(JSON.stringify([...new Set(bodies.map(body=>body.length))].sort((a,b)=>a-b))!==JSON.stringify(buckets))throw Error('missing_captured_bucket');
   for(const [index,body]of bodies.entries()){
     if(provider.requests[index].bytes!==body.length||provider.requests[index].sha256!==sha(body))throw Error('packet_and_provider_receipt_mismatch');
@@ -81,10 +83,11 @@ export function auditCapture({pdml,client,provider,rust,health,daemon,circuits})
       'api_inherits_core_namespace','netd_in_transport_namespace','parent_eof_stops_children','invalid_setup_rejected'];
     if(required.some(key=>daemon?.[key]!==true))throw Error('missing_production_daemon_evidence');
     const first='0'.repeat(32),second='0'.repeat(31)+'1';
-    if(!circuits||Object.keys(circuits).length!==16||Object.entries(circuits).some(([key,value])=>!/^0{31}[0-9a-f]$/.test(key)||typeof value!=='string'||!value)||
+    if(!circuits||Object.keys(circuits).length!==expected||Array.from({length:expected},(_,i)=>circuits[i.toString(16).padStart(32,'0')]).some(value=>typeof value!=='string'||!value)||
       circuits[first]===circuits[second])throw Error('missing_independent_circuit_evidence');
   }
-  return {complete:true,synthetic_only:true,public_tor_used:false,requests:bodies.length,buckets,canary_leaks:0,
+  const cover=week?auditCoverWeek(week,bodies):null;
+  return {complete:true,synthetic_only:true,public_tor_used:false,requests:bodies.length,buckets,canary_leaks:0,cover,
     netd_outbound_packets:packets,direct_provider_packets:0,dns_packets:0,different_circuits:true,transport_stop_failed_closed:true,provider_alive_after_stop:true,
     scope:processIntegration?'production nymwrapd startup and namespace checks; production launcher -> retained test worker -> authenticated dispatcher -> Tor/TLS/HTTP; test-only authorities and PKI':
       'production nw-netd Tor::send, TLS and HTTP; test-only authorities and PKI; CI namespace configuration',
@@ -109,11 +112,13 @@ export async function main(args=process.argv.slice(2)){
     provider:JSON.parse(await bounded(join(fixture,'provider-receipt.json'),1024*1024)),rust:JSON.parse(await bounded(join(fixture,'rust-result.json'),65536)),
     health:JSON.parse(await bounded(join(fixture,'health-after-stop.json'),65536)),
     daemon:JSON.parse(await bounded(join(fixture,'daemon-result.json'),65536)),
-    circuits:JSON.parse(await bounded(join(fixture,'circuit-receipt.json'),65536))});
+    circuits:JSON.parse(await bounded(join(fixture,'circuit-receipt.json'),65536)),
+    week:JSON.parse(await bounded(join(fixture,'cover-week.json'),128*1024))});
   if(!result.production_daemon_namespace_integration)throw Error('process_integration_required_in_ci');
+  if(!result.cover)throw Error('cover_week_required_in_ci');
   for(const file of ['client.pcap','provider.pcap'])if(hasCanary(await bounded(join(fixture,file),64*1024*1024)))throw Error('canary_in_raw_os_capture');
   await mkdir(output,{recursive:true});if((await lstat(output)).isSymbolicLink()||!(await realpath(output)).startsWith((await realpath(root))+sep))throw Error('unsafe_pcap_output_directory');
-  const files=['client.pcap','provider.pcap','provider.pdml','client.tsv','provider-receipt.json','rust-result.json','daemon-result.json','circuit-receipt.json','worker-state.json','health-after-stop.json','provider-ca.pem','tls.keys'];
+  const files=['client.pcap','provider.pcap','provider.pdml','client.tsv','provider-receipt.json','rust-result.json','daemon-result.json','circuit-receipt.json','worker-state.json','health-after-stop.json','provider-ca.pem','tls.keys','cover-week.json'];
   const hashes={};
   for(const file of files){await bounded(join(fixture,file),64*1024*1024);hashes[file]=await artifactHash(join(fixture,file));await copyFile(join(fixture,file),join(output,file));}
   const report={version:1,...result,hashes,workflow_run:process.env.GITHUB_RUN_ID,commit:process.env.GITHUB_SHA};

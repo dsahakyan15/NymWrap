@@ -13,6 +13,10 @@ path = "src/main.rs"
 name = "nymwrapd"
 path = "src/daemon.rs"
 
+[[example]]
+name = "core-cover-egress"
+path = "../../tests/leak/src/core_cover_coordinator.rs"
+
 [dependencies]
 nw-proto.workspace = true
 nw-shield.workspace = true

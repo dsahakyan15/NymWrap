@@ -46,7 +46,7 @@ cleanup() {
   for file in client.pcap provider.pcap; do
     if test -f "$fixture_root/$file" && test ! -L "$fixture_root/$file"; then sudo chown --no-dereference "$runner_uid:$runner_gid" -- "$fixture_root/$file" || failed=1; fi
   done
-  for file in test.log worker.log daemon.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json daemon-result.json circuit-receipt.json worker-state.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt; do
+  for file in test.log worker.log daemon.log build.log provider.log tcpdump-client.log tcpdump-provider.log arti.json client.pcap provider.pcap provider.pdml client.tsv rust-result.json daemon-result.json circuit-receipt.json worker-state.json provider-receipt.json health-after-stop.json provider-ca.pem tls.keys tools.txt cover-week.json; do
     if test -f "$fixture_root/$file"; then cp -- "$fixture_root/$file" "$output/$file" || failed=1; fi
   done
   for log in "$fixture_root/chutney/nodes"/*/notice.log; do
@@ -87,7 +87,8 @@ PYTHONPATH="$chutney/lib" "$chutney_python" -c 'import chutney.TorNet'
 cargo test --manifest-path daemons/nw-netd/Cargo.toml --lib --no-run --message-format=json --locked > "$fixture_root/build.jsonl" 2> "$fixture_root/build.log"
 cargo build --manifest-path daemons/nw-netd/Cargo.toml --bin nw-netd --locked >> "$fixture_root/build.log" 2>&1
 cargo build -p nw-core -p nw-api --bins --locked >> "$fixture_root/build.log" 2>&1
-cargo build -p nw-net --example linux-process-egress --locked >> "$fixture_root/build.log" 2>&1
+cargo test -p nw-core --example core-cover-egress --locked >> "$fixture_root/build.log" 2>&1
+cargo build -p nw-core --example core-cover-egress --locked >> "$fixture_root/build.log" 2>&1
 test_binary=$(node scripts/pcap-report.mjs --binary "$fixture_root/build.jsonl")
 node_binary=$(command -v node)
 { "$chutney_python" --version; sha256sum scripts/ci/chutney-python312.patch; tor --version; tcpdump --version; tshark --version; } > "$fixture_root/tools.txt" 2>&1
@@ -188,9 +189,9 @@ capture_client=$!
 sudo ip netns exec "$relay_ns" tcpdump -Z root -i lo -s 0 -U -w "$fixture_root/provider.pcap" 'tcp port 443' > "$fixture_root/tcpdump-provider.log" 2>&1 &
 capture_provider=$!
 sleep 1
-timeout --signal=TERM --kill-after=10 480s sudo env -i PATH=/usr/bin:/bin HOME="$fixture_root" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" "$project_root/target/debug/examples/linux-process-egress" "$fixture_root" "/run/netns/$client_ns" "$runner_uid" "$runner_gid" > "$fixture_root/test.log" 2>&1 &
+timeout --signal=TERM --kill-after=10 1200s sudo env -i PATH=/usr/bin:/bin HOME="$fixture_root" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" "$project_root/target/debug/examples/core-cover-egress" "$fixture_root" "/run/netns/$client_ns" "$runner_uid" "$runner_gid" > "$fixture_root/test.log" 2>&1 &
 test_pid=$!
-for attempt in $(seq 1 300); do
+for attempt in $(seq 1 1020); do
   test -f "$fixture_root/ready-to-stop" && break
   if ! ps -p "$test_pid" -o pid= >/dev/null; then wait "$test_pid"; exit 1; fi
   sleep 1

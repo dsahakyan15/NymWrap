@@ -44,6 +44,7 @@ jobs:
           key: tor-process-pcap-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'crates/**/Cargo.toml', 'daemons/nw-netd/Cargo.lock', 'daemons/nw-netd/Cargo.toml', '.cargo/config.toml') }}
       - run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake clang libclang-dev pkg-config libdbus-1-dev tor tcpdump tshark nftables
       - run: bash scripts/ci/tor-pcap.sh
+        name: M2 isolation and M3 seven-day core to netd packet evidence
         env:
           NW_CHUTNEY_PYTHON: ${{ steps.chutney-python.outputs.python-path }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -109,6 +110,7 @@ jobs:
         run: cargo test -p nw-probe --test worker actual_device_probe --locked -- --ignored
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - run: cargo test -p nw-leak-tests --locked
+      - run: cargo test -p nw-core --example core-cover-egress --locked
   linux-isolation-vm:
     runs-on: windows-latest
     timeout-minutes: 15

@@ -8,6 +8,7 @@ cargo test -p nw-core --test rpc_process actual_ --locked -- --ignored
 cargo test -p nw-llm --example privacy_eval --locked
 cargo test -p nw-core --example privacy_pipeline --locked
 cargo test -p nw-core --example privacy_linkcheck --locked
+cargo test -p nw-core --example core-cover-egress --locked
 if [ "$(uname -s)" = Linux ]; then
   cargo test -p nw-sandbox --test agent actual_agent --locked -- --ignored
 fi

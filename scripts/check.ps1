@@ -17,6 +17,8 @@ try {
     if ($LASTEXITCODE) { throw 'privacy pipeline scorer checks failed' }
     cargo test -p nw-core --example privacy_linkcheck --locked
     if ($LASTEXITCODE) { throw 'linkcheck evaluator checks failed' }
+    cargo test -p nw-core --example core-cover-egress --locked
+    if ($LASTEXITCODE) { throw 'seven-day core cover accounting failed' }
     if ($IsWindows) {
         cargo test -p nw-platform --test appcontainer actual_ --locked -- --ignored
         if ($LASTEXITCODE) { throw 'AppContainer isolation failed' }

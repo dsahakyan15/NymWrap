@@ -104,7 +104,9 @@ impl Workspace {
     pub fn take_traffic_job(&mut self, at: u64) -> Result<Option<TrafficJob>, WorkspaceError> {
         self.take_traffic_slot(at, false)
     }
-    pub(crate) fn take_traffic_slot(
+    /// Consume a persisted slot for a ready real request, or an independent decoy.
+    /// The caller must reserve the shared network budget before dispatching bytes.
+    pub fn take_traffic_slot(
         &mut self,
         at: u64,
         has_real: bool,

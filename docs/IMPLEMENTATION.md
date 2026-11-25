@@ -7,6 +7,52 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Задача 3: сквозная приёмка M3 добавлена; M3 ждёт CI — 2026-11-25
+
+ADR 0084 расширяет обязательный `tor-pcap`: новый координатор `nw-core`
+использует настоящие сохраняемые слоты Workspace и общий сетевой бюджет,
+затем передаёт тела через production launcher/Client и AEAD dispatcher
+отдельному `nw-netd` с локальной Chutney-сетью. Весь трафик синтетический,
+внешних маршрутов, публичной Tor-сети и реальных аккаунтов нет.
+
+Четыре независимых сценария — Poisson/Constant × лимит числа/расхода — проходят
+по семь виртуальных дней. Разрешены три отправки по 3 microUSD в день:
+лимиты 3 запроса / 14 microUSD либо 5 запросов / 10 microUSD. Проверяются
+реальные задания и приманки, сохранение счётчиков после переоткрытия SQLCipher,
+отказ до слота и повторного слота, два отказа сверх бюджета в каждые сутки,
+откат часов и возобновление на следующие сутки. Отправка и завершение задания
+не переигрываются при переоткрытии.
+
+Независимый Node oracle требует ровно 100 восстановленных HTTP-запросов в OS
+pcap: прежние 16 M2 и новые 84 M3. SHA-256 и длины каждого тела сверяются
+с provider receipts и `cover-week.json`; бюджет пересчитывается для всех 28
+scenario/day. Все пять корзин 2048/4096/8192/16384/32768 байт обязательны
+отдельно у real и decoy в каждом сценарии. Лишние и отсутствующие запросы,
+канарейки, неверные длины, подменённые лимиты и сбросы счётчиков отвергаются.
+Артефакты `local-tor-os-pcap` включают семидневный учёт и хеши свидетельств.
+
+Пакетное выравнивание не добавлено: критерии M3 SPEC §9 требуют корзин и
+семидневного бюджета. Слоты проверяются на виртуальных часах; точный ритм
+пакетов реального времени не заявляется. Полный production Route, FIFO backend,
+OS credential pool и локальная генерация модели остаются за границей этого
+захвата; прежние проверки этих компонентов сохранены. Strict/paranoid с L3
+не включаются. Существующий лёгкий `nw-net` coordinator и VM probe M2 сохранены.
+
+Локально на Windows прошли `cargo test --workspace --locked`,
+`cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`,
+отдельный `cargo test -p nw-leak-tests --locked`, тесты `nw-netd`, extension 24,
+app 12, scripts 52, Rust fmt, workflow lint и `bash -n` pcap-скрипта.
+Журналы: `target/m3-{workspace,clippy-final,leak,netd,extension,app,scripts-final,workflow-lint}.log`.
+Семидневный core-драйвер также прошёл отдельной командой
+`cargo test -p nw-core --example core-cover-egress --locked`: 84 синтетические
+доставки и 140 переоткрытий хранилища, 375,28 с. Журнал — `target/m3-driver-final.log`.
+
+Linux pcap локально не запускался: хост Windows без рабочего WSL.
+Дополнительный cross-check Linux остановился до проверки кода на OpenSSL:
+Windows Perl не поддерживает Unix-пути (`target/m3-linux-check.log`). Новый CI
+не запускался; **M3 не отмечен закрытым**. Для закрытия нужен зелёный `tor-pcap`
+для нового коммита и проверка `report.json`/pcap. Локальные проверки его не заменяют.
+
 ## M2 закрыт по Linux-критериям SPEC §9 — 2026-11-25
 
 ADR 0083 добавляет ограниченную проверку настоящего Tor-потока до первой
@@ -691,7 +737,7 @@ Firefox native 1, actual AppContainer 3, scripts 49, Rust fmt и workflow lint.
 | Расширение | MV3 Chrome/Firefox сборки, native messaging, строгий cover-only протокол, ручные задачи и snapshots; opt-in Mirror и поисковый executor с optional permissions, CAPTCHA/login stop и no replay, XSS-safe текст; изолированные Chromium/штатный Firefox integration tests и чтение публичного DOM | Аккаунтные интерфейсы и сквозная работа с реальными сервисами, адаптеры видео/ИИ |
 | Сеть | nw-netd/arti, отдельный клиент на разговор, проверяемый HTTPS, DNS через Tor, EFS/fscrypt до bootstrap, AEAD IPC, полный Route, nonce-bound review, budget reserve, watcher cancellation и parent lifetime; Linux production launcher, настоящий startup core и процессный Tor/TLS/HTTP pcap: M2 подтверждён тремя CI-прогонами | M6: установщик службы/coordinator GUI, файловая песочница Linux, изоляция core/netd Windows/macOS; очередь paranoid |
 | Удостоверения | OS credential store, mlock, зашифрованный staging/каталог, постоянные привязки ключей к разговору, интеграция Route, восстановление и удаление OS-записей | zkAPI |
-| Cover traffic | Poisson/Constant standard, FIFO реальных заданий в слотах, независимая предварительная подготовка приманок, одноразовые Tor-клиенты, encrypted slots/jobs, общий бюджет, Uncertain без replay, 7-дневная симуляция | Пакетный ритм и захват трафика, paranoid с более сильным маршрутом; корзины байтовые |
+| Cover traffic | Poisson/Constant standard, FIFO реальных заданий в слотах, независимая предварительная подготовка приманок, одноразовые Tor-клиенты, encrypted slots/jobs, общий бюджет, Uncertain без replay; семидневный core → netd OS pcap добавлен в CI (ADR 0084) | Зелёная CI-приёмка нового M3; точный ритм пакетов, paranoid с более сильным маршрутом; корзины байтовые |
 | Жёсткие данные (M3H, ADR 0043–0048) | Device и семь детекторов; нормализованный bwrap; nw-probe и зашифрованные секреты с сохранением удалений; отказ вложений; byte golden HTTP/TLS; Defer; начальная задержка и согласованный хвост standard; закреплённые мосты и ограниченный PT lifecycle; экран покрытия «Гигиена»; одобренные UTC-окна легенды | Полнота probe Windows/macOS; автоматическая гигиена и метрики; WSL2 агентов; хвост strict/paranoid; bridge bootstrap и изоляция PT; OS pcap; все межплатформенные проверки в зелёном CI |
 | M6 | Закрепления/deny/CSP/mlock; Linux seccomp TSYNC/bwrap, реальные проверки в QEMU/Alpine под UID 1000; Windows LPAC импортера и native модели; отрицательные TCP/UDP/FS/spawn/read-handle проверки; source SBOM для трёх targets; coverage/ASan smoke импортёров, IPC/core RPC и Shield с отчётами | Изоляция остальных Windows-процессов, полные Linux-демоны и macOS, MicroVM, vet, подписи, воспроизводимость бинарников на двух машинах, 24h fuzz и проверка инструментации C/ASM |
 | M7 | Экспериментальные флаги, проверены upstream pin/deployment/dependency gates (ADR 0024) | Nym требует обновлений SDK и транзитивных зависимостей; указанная zkAPI-ветка не развёрнута и не имеет production proving keys; адаптеры не завершены |
