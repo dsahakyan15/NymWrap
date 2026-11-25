@@ -83,7 +83,11 @@ for family,address in [(socket.AF_INET,('192.0.2.2',5000)),(socket.AF_INET6,('20
   with socket.socket(family,kind) as sock:
    sock.settimeout(1)
    try: sock.connect(address)
-   except OSError as error: assert error.errno == errno.ENETUNREACH, error.errno
+   except OSError as error:
+    # An empty IPv6 namespace can fail source selection before route lookup.
+    allowed = {errno.ENETUNREACH}
+    if family == socket.AF_INET6: allowed.add(errno.EADDRNOTAVAIL)
+    assert error.errno in allowed, error.errno
    else: raise AssertionError('core_netns_reached_external_address')
 """
         subprocess.run(["nsenter", f"--net=/proc/{process.pid}/ns/net", sys.executable, "-c", probe], check=True, timeout=10)

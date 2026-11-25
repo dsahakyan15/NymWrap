@@ -7,6 +7,119 @@ use rustls::pki_types::pem::PemObject;
 use std::time::Duration;
 use tor_proto::client::stream::ClientStreamCtrl;
 
+async fn wait_for_probe<T, E, F, P>(
+    mut probe: P,
+    attempts: usize,
+    attempt_timeout: Duration,
+    retry_delay: Duration,
+) -> Result<usize, &'static str>
+where
+    P: FnMut() -> F,
+    F: std::future::Future<Output = Result<T, E>>,
+{
+    for attempt in 1..=attempts {
+        if let Ok(Ok(stream)) = tokio::time::timeout(attempt_timeout, probe()).await {
+            drop(stream);
+            return Ok(attempt);
+        }
+        if attempt < attempts {
+            tokio::time::sleep(retry_delay).await;
+        }
+    }
+    Err("tor_exit_not_ready")
+}
+
+async fn wait_for_exit(
+    root: &TorClient<PreferredRuntime>,
+    provider: &Provider,
+) -> Result<(), &'static str> {
+    // Chutney's bootstrap/descriptor readiness can precede Arti's usable exit
+    // consensus. Probe the actual destination through an isolated Tor client,
+    // sending no TLS/HTTP bytes, before any real request is dispatched.
+    // At most 10 * 8s + 9 * 2s = 98s; never retry a real send or a stop check.
+    let client = root.isolated_client();
+    let attempts = wait_for_probe(
+        || client.connect((provider.host.as_str(), 443)),
+        10,
+        Duration::from_secs(8),
+        Duration::from_secs(2),
+    )
+    .await?;
+    eprintln!("tor_exit_ready: attempts={attempts}");
+    Ok(())
+}
+
+async fn bootstrap_local_exit(
+    config: arti_client::TorClientConfig,
+    provider: &Provider,
+) -> Result<Arc<TorClient<PreferredRuntime>>, &'static str> {
+    // Keep bootstrap plus readiness inside Initialize's 190-second IPC limit.
+    tokio::time::timeout(Duration::from_secs(180), async {
+        let root = TorClient::create_bootstrapped(config)
+            .await
+            .map_err(|_| "tor_bootstrap_failed")?;
+        wait_for_exit(&root, provider).await?;
+        Ok(root)
+    })
+    .await
+    .map_err(|_| "tor_bootstrap_timeout")?
+}
+
+#[tokio::test]
+async fn exit_readiness_waits_for_a_real_stream_after_early_bootstrap() {
+    let mut calls = 0;
+    let result = wait_for_probe(
+        || {
+            calls += 1;
+            std::future::ready(if calls < 3 { Err(()) } else { Ok(()) })
+        },
+        5,
+        Duration::from_millis(20),
+        Duration::from_millis(1),
+    )
+    .await;
+    assert_eq!(result, Ok(3));
+    assert_eq!(calls, 3);
+}
+
+#[tokio::test]
+async fn exit_readiness_fails_when_the_attempt_budget_is_exhausted() {
+    let mut calls = 0;
+    let result = wait_for_probe(
+        || {
+            calls += 1;
+            std::future::ready(Err::<(), _>(()))
+        },
+        3,
+        Duration::from_millis(20),
+        Duration::from_millis(1),
+    )
+    .await;
+    assert_eq!(result, Err("tor_exit_not_ready"));
+    assert_eq!(calls, 3);
+}
+
+#[tokio::test]
+async fn exit_readiness_bounds_stalled_stream_attempts() {
+    let mut calls = 0;
+    let result = tokio::time::timeout(
+        Duration::from_secs(2),
+        wait_for_probe(
+            || {
+                calls += 1;
+                std::future::pending::<Result<(), ()>>()
+            },
+            3,
+            Duration::from_millis(10),
+            Duration::from_millis(1),
+        ),
+    )
+    .await
+    .expect("exit readiness must have a finite deadline");
+    assert_eq!(result, Err("tor_exit_not_ready"));
+    assert_eq!(calls, 3);
+}
+
 pub(super) fn record_circuit(request: &Request, stream: &arti_client::DataStream) {
     let Some(fixture) = std::env::var_os("NW_TEST_TOR_FIXTURE") else {
         return;
@@ -45,13 +158,7 @@ impl crate::server::Factory for LocalFactory {
         assert_eq!(directory, fixture.join("mount/private"));
         nw_platform::encrypted_directory(directory).unwrap();
         let config = chutney_config(&std::fs::read(fixture.join("arti.json")).unwrap());
-        let root = tokio::time::timeout(
-            Duration::from_secs(180),
-            TorClient::create_bootstrapped(config),
-        )
-        .await
-        .unwrap()
-        .unwrap();
+        let root = bootstrap_local_exit(config, &provider).await?;
         let mut roots = rustls::RootCertStore::empty();
         roots
             .add(
@@ -250,13 +357,8 @@ async fn actual_local_tor_tls_packets_have_no_hard_canaries_or_direct_fallback()
     let bytes = std::fs::read(fixture.join("arti.json")).unwrap();
     assert!(bytes.len() < 128 * 1024);
     let config = chutney_config(&bytes);
-    let root = tokio::time::timeout(
-        Duration::from_secs(180),
-        TorClient::create_bootstrapped(config),
-    )
-    .await
-    .unwrap()
-    .unwrap();
+    let provider = Provider::new("api.example.test".into(), "/v1/chat/completions".into()).unwrap();
+    let root = bootstrap_local_exit(config, &provider).await.unwrap();
     let mut roots = rustls::RootCertStore::empty();
     roots
         .add(
@@ -271,7 +373,7 @@ async fn actual_local_tor_tls_packets_have_no_hard_canaries_or_direct_fallback()
     let tor = Tor {
         root,
         conversations: Mutex::new(BTreeMap::new()),
-        provider: Provider::new("api.example.test".into(), "/v1/chat/completions".into()).unwrap(),
+        provider,
         _transport_binary: None,
         test_tls: Some(Arc::new(tls)),
     };
