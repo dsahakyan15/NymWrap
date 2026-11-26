@@ -122,9 +122,11 @@ Runs 45775540765 и 45778330605 выявили отдельное окно го�
 
 ## Границы
 
-Новый CI ещё не запускался, M3H открыт. Нативный macOS sandbox, Linux PT/pcap и
-межплатформенное совпадение требуют CI. Snowflake/WebTunnel пока имеют только
-проверку запуска/lifetime, не локальный bootstrap. Windows PT, macOS encrypted
+M3H закрыт run 45780888200 для 1e1ae69: нативный macOS sandbox, Linux
+PT/pcap, obfs4 isolation и межплатформенное совпадение protocol golden зелёны.
+Obfs4 report содержит 100 запросов, 84 cover, ноль canary/direct/DNS и все
+isolation/stop признаки `true`. Snowflake/WebTunnel пока имеют только проверку
+запуска/lifetime, не локальный bootstrap. Windows PT, macOS encrypted
 transport directory, WSL2 агентов и общие песочницы core/netd остаются открытыми.
 Наблюдение настроек браузера не является инспекцией всех пользовательских профилей.
 

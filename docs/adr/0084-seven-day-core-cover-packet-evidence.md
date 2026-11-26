@@ -55,5 +55,8 @@ TLS и задержки provider по-прежнему влияют на реа�
 Strict/paranoid с L3 не включаются. Новых зависимостей нет.
 
 Локальные тесты драйвера и отрицательные проверки oracle доступны на всех
-трёх ОС; Linux namespace/Tor pcap выполняется в CI. M3 закрывается только
-после зелёного `tor-pcap` для нового кода, а не по локальной симуляции.
+трёх ОС; Linux namespace/Tor pcap выполняется в CI. M3 закрыт run 45780888200
+для 1e1ae69: `tor-pcap` Tor и obfs4, а также `core` на Ubuntu/macOS/Windows зелёны.
+Tor report содержит ровно 100 запросов, 84 cover, ноль canary/direct/DNS
+и завершённый teardown; XML PDML имеет размер 47 651 977 байт и проходит
+конечный предел 64 MiB.
