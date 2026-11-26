@@ -3,7 +3,11 @@ pub mod bridges;
 pub mod client;
 #[cfg(target_os = "linux")]
 pub mod launcher;
+#[cfg(feature = "experimental-nym")]
+pub mod nym;
 pub mod wire;
+#[cfg(feature = "experimental-zkapi")]
+pub mod zkapi;
 use nw_proto::TrustLevel;
 use nw_shield::Prepared;
 use thiserror::Error;

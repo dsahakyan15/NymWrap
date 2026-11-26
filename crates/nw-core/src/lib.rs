@@ -482,6 +482,9 @@ impl<M: LocalModel> Engine<M> {
             local_only = true;
         }
         let remote_work = if let Some(remote) = remote.filter(|_| !local_only) {
+            // Availability is independent of a candidate's policy floor. Never
+            // offer approval at L1/L2 just because an experimental flag is set.
+            remote.check_available()?;
             if conversation
                 .remote_context
                 .as_deref()
@@ -600,6 +603,9 @@ impl<M: LocalModel> Engine<M> {
     }
 }
 pub trait RemoteCompletion: Send + Sync {
+    fn check_available(&self) -> Result<(), CoreError> {
+        Ok(())
+    }
     fn trust(&self) -> TrustLevel;
     fn context(&self) -> &str;
     fn metadata(&self) -> Option<RemoteMetadata<'_>> {

@@ -155,6 +155,7 @@ impl<M: LocalModel> Engine<M> {
         {
             return Err(CoreError::Approval);
         }
+        remote.check_available()?;
         self.shield
             .leakcheck(pending.prepared.text(), &pending.turn.vault)
             .map_err(|_| CoreError::Blocked)?;
@@ -180,6 +181,7 @@ impl<M: LocalModel> Engine<M> {
         {
             return Err(CoreError::Approval);
         }
+        remote.check_available()?;
         self.shield
             .leakcheck(pending.prepared.text(), &pending.turn.vault)
             .map_err(|_| CoreError::Blocked)?;

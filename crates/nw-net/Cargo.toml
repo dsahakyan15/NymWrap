@@ -9,6 +9,7 @@ name = "linux-process-egress"
 path = "../../tests/leak/src/netd_process_coordinator.rs"
 
 [features]
+experimental-zkapi = []
 experimental-nym = []
 
 [dependencies]

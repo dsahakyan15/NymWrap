@@ -9,6 +9,8 @@ use tor_rtcompat::PreferredRuntime;
 use zeroize::Zeroizing;
 mod bridges;
 pub mod server;
+#[cfg(feature = "experimental-zkapi")]
+pub mod zkapi;
 
 #[derive(Clone)]
 pub struct Provider {
@@ -188,6 +190,19 @@ async fn http_exchange<S>(
 where
     S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
 {
+    http_exchange_to(stream, &provider.host, &provider.path, request, false).await
+}
+
+async fn http_exchange_to<S>(
+    stream: S,
+    host: &str,
+    path: &str,
+    request: &Request,
+    require_zkapi_verification: bool,
+) -> Result<String, &'static str>
+where
+    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
+{
     let (mut sender, connection) =
         hyper::client::conn::http1::handshake(hyper_util::rt::TokioIo::new(stream))
             .await
@@ -215,8 +230,8 @@ where
     authorization.set_sensitive(true);
     let outbound = hyper::Request::builder()
         .method("POST")
-        .uri(&provider.path)
-        .header("Host", &provider.host)
+        .uri(path)
+        .header("Host", host)
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
         .header("Accept-Encoding", "identity")
@@ -230,6 +245,21 @@ where
         .map_err(|_| "provider_http_failed")?;
     if !response.status().is_success() {
         return Err("provider_rejected_request");
+    }
+    if require_zkapi_verification
+        && (response
+            .headers()
+            .get_all("x-oa-verification-status")
+            .iter()
+            .count()
+            != 1
+            || response
+                .headers()
+                .get("x-oa-verification-status")
+                .is_none_or(|h| h != "verified")
+            || response.headers().contains_key("x-oa-verification-detail"))
+    {
+        return Err("zkapi_verification_required");
     }
     if response
         .headers()

@@ -68,7 +68,13 @@ async fn traffic_tick_at(state: &State, at: u64) -> Result<(), String> {
             return Ok(());
         };
         if w.config.profile == nw_proto::Profile::Paranoid {
-            queue::check_route(&w.config, w.config.shield.min_trust, Route::TRUST).map_err(code)?;
+            queue::check_route(
+                &w.config,
+                w.config.shield.min_trust,
+                Route::candidate_trust(&w.config),
+            )
+            .map_err(code)?;
+            Route::availability(&w.config).map_err(code)?;
         }
         let real = !tail && ready && w.config.cover.mode == crate::config::CoverMode::Constant;
         let Some(job) = w.take_traffic_slot(at, real).map_err(code)? else {
@@ -135,8 +141,11 @@ pub(super) struct QueuedSend {
     response: tokio::sync::oneshot::Sender<Result<SecretString, CoreError>>,
 }
 impl RemoteCompletion for Route {
+    fn check_available(&self) -> Result<(), CoreError> {
+        Self::availability(&self.config)
+    }
     fn trust(&self) -> TrustLevel {
-        Self::TRUST
+        Self::candidate_trust(&self.config)
     }
     fn context(&self) -> &str {
         &self.context
@@ -155,10 +164,13 @@ impl RemoteCompletion for Route {
         max_tokens: u32,
     ) -> Result<SecretString, CoreError> {
         queue::check_route(&self.config, self.required, self.trust())?;
+        self.check_available()?;
         if self.config.profile.requires_approval() && self.job.is_none() {
             return Err(CoreError::Approval);
         }
-        if self.config.net.transport != crate::config::Transport::Tor {
+        if self.config.net.transport != crate::config::Transport::Tor
+            || self.config.net.credential_ref.as_deref() != Some("keyring:pool")
+        {
             return Err(CoreError::Transport);
         }
         if self.job.is_none() && self.slot.is_none() {
@@ -213,8 +225,35 @@ impl RemoteCompletion for Route {
     }
 }
 impl Route {
-    // Replace alongside the transport/credential adapter at M7, never from config.
+    // The sole available adapter stays Tor + pooled keys. Experimental candidate
+    // levels never bypass the independent, closed availability gate.
     const TRUST: TrustLevel = TrustLevel::L3;
+    #[cfg(feature = "experimental-zkapi")]
+    fn experimental(config: &Config) -> Option<nw_net::zkapi::Route> {
+        if config.net.credential_ref.as_deref() != Some(nw_net::zkapi::CREDENTIAL_REF) {
+            return None;
+        }
+        match config.net.transport {
+            crate::config::Transport::Tor => Some(nw_net::zkapi::Route::Tor),
+            #[cfg(feature = "experimental-nym")]
+            crate::config::Transport::Nym => Some(nw_net::zkapi::Route::Nym),
+            _ => None,
+        }
+    }
+    fn candidate_trust(_config: &Config) -> TrustLevel {
+        #[cfg(feature = "experimental-zkapi")]
+        if let Some(route) = Self::experimental(_config) {
+            return route.candidate_trust();
+        }
+        Self::TRUST
+    }
+    fn availability(_config: &Config) -> Result<(), CoreError> {
+        #[cfg(feature = "experimental-zkapi")]
+        if let Some(route) = Self::experimental(_config) {
+            return route.ensure_available().map_err(|_| CoreError::Transport);
+        }
+        Ok(())
+    }
     fn workspace<'a>(&self, session: &'a mut Session) -> Result<&'a mut Workspace, CoreError> {
         if session.epoch != self.epoch
             || session.in_tail() && !(self.slot.is_some() && self.job.is_none())
