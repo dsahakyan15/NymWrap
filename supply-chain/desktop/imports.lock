@@ -22,6 +22,13 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.anyhow]]
+version = "1.0.104"
+when = "2026-07-18"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.argon2]]
 version = "0.5.3"
 when = "2024-01-20"
@@ -92,9 +99,35 @@ user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
+[[publisher.bitflags]]
+version = "2.13.2"
+when = "2026-09-10"
+user-id = 3204
+user-login = "KodrAus"
+user-name = "Ashley Mannix"
+
 [[publisher.blake2]]
 version = "0.10.6"
 when = "2022-12-16"
+user-id = 5059
+user-login = "newpavlov"
+user-name = "Artyom Pavlov"
+
+[[publisher.block-buffer]]
+version = "0.10.4"
+when = "2023-03-09"
+user-id = 5059
+user-login = "newpavlov"
+user-name = "Artyom Pavlov"
+
+[[publisher.block-buffer]]
+version = "0.12.1"
+when = "2026-06-11"
+trusted-publisher = "github:RustCrypto/utils"
+
+[[publisher.block-padding]]
+version = "0.3.3"
+when = "2023-04-02"
 user-id = 5059
 user-login = "newpavlov"
 user-name = "Artyom Pavlov"
@@ -152,9 +185,68 @@ user-id = 2396
 user-login = "jdm"
 user-name = "Josh Bowman-Matthews"
 
+[[publisher.cpufeatures]]
+version = "0.2.17"
+when = "2025-01-25"
+user-id = 267
+user-login = "tarcieri"
+user-name = "Tony Arcieri"
+
+[[publisher.crossbeam-channel]]
+version = "0.5.17"
+when = "2026-09-05"
+user-id = 33035
+user-login = "taiki-e"
+user-name = "Taiki Endo"
+
+[[publisher.crossbeam-utils]]
+version = "0.8.23"
+when = "2026-09-05"
+user-id = 33035
+user-login = "taiki-e"
+user-name = "Taiki Endo"
+
+[[publisher.crypto-common]]
+version = "0.1.7"
+when = "2025-11-12"
+user-id = 5059
+user-login = "newpavlov"
+user-name = "Artyom Pavlov"
+
+[[publisher.crypto-common]]
+version = "0.2.2"
+when = "2026-05-19"
+trusted-publisher = "github:RustCrypto/traits"
+
+[[publisher.digest]]
+version = "0.10.7"
+when = "2023-05-19"
+user-id = 267
+user-login = "tarcieri"
+user-name = "Tony Arcieri"
+
+[[publisher.digest]]
+version = "0.11.3"
+when = "2026-05-03"
+trusted-publisher = "github:RustCrypto/traits"
+
 [[publisher.dtoa]]
 version = "1.0.11"
 when = "2025-12-27"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.dyn-clone]]
+version = "1.0.20"
+when = "2025-07-27"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.erased-serde]]
+version = "0.4.11"
+when = "2026-10-25"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -182,6 +274,20 @@ trusted-publisher = "github:rust-lang/cc-rs"
 version = "1.1.11"
 when = "2026-11-06"
 trusted-publisher = "github:rust-lang/flate2-rs"
+
+[[publisher.futures-task]]
+version = "0.3.34"
+when = "2026-08-11"
+user-id = 33035
+user-login = "taiki-e"
+user-name = "Taiki Endo"
+
+[[publisher.futures-util]]
+version = "0.3.34"
+when = "2026-08-11"
+user-id = 33035
+user-login = "taiki-e"
+user-name = "Taiki Endo"
 
 [[publisher.hkdf]]
 version = "0.12.4"
@@ -253,6 +359,13 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.jiff-tzdb-platform]]
+version = "0.1.3"
+when = "2025-03-23"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.libc]]
 version = "0.2.191"
 when = "2026-10-16"
@@ -297,6 +410,13 @@ when = "2026-11-13"
 user-id = 6025
 user-login = "Thomasdezeeuw"
 user-name = "Thomas de Zeeuw"
+
+[[publisher.num]]
+version = "0.4.3"
+when = "2024-05-08"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
 
 [[publisher.num-bigint]]
 version = "0.4.8"
@@ -373,6 +493,20 @@ user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
+[[publisher.ref-cast]]
+version = "1.0.27"
+when = "2026-08-19"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.ref-cast-impl]]
+version = "1.0.27"
+when = "2026-08-19"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.regex]]
 version = "1.12.2"
 when = "2025-10-13"
@@ -394,6 +528,13 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.reqwest]]
+version = "0.13.5"
+when = "2026-09-08"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
 [[publisher.rustix]]
 version = "1.1.6"
 when = "2026-10-27"
@@ -408,9 +549,51 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.same-file]]
+version = "1.0.6"
+when = "2020-01-11"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.scopeguard]]
+version = "1.2.0"
+when = "2023-07-17"
+user-id = 2915
+user-login = "Amanieu"
+user-name = "Amanieu d'Antras"
+
+[[publisher.serde]]
+version = "1.0.229"
+when = "2026-07-18"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde-untagged]]
+version = "0.1.9"
+when = "2025-09-14"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_core]]
+version = "1.0.229"
+when = "2026-07-18"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.serde_derive]]
 version = "1.0.229"
 when = "2026-07-18"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_derive_internals]]
+version = "0.29.1"
+when = "2024-05-15"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -429,9 +612,42 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.serde_repr]]
+version = "0.1.21"
+when = "2026-07-18"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_spanned]]
+version = "0.6.9"
+when = "2025-06-06"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.serde_spanned]]
+version = "1.1.3"
+when = "2026-11-06"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
 [[publisher.sha1]]
 version = "0.10.7"
 when = "2026-07-10"
+trusted-publisher = "github:RustCrypto/hashes"
+
+[[publisher.sha2]]
+version = "0.10.9"
+when = "2025-04-30"
+user-id = 5059
+user-login = "newpavlov"
+user-name = "Artyom Pavlov"
+
+[[publisher.sha2]]
+version = "0.11.1"
+when = "2026-10-12"
 trusted-publisher = "github:RustCrypto/hashes"
 
 [[publisher.slab]]
@@ -511,6 +727,13 @@ user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
 
+[[publisher.tokio-util]]
+version = "0.7.20"
+when = "2026-10-09"
+user-id = 6741
+user-login = "Darksonn"
+user-name = "Alice Ryhl"
+
 [[publisher.toml]]
 version = "0.8.2"
 when = "2023-10-03"
@@ -567,6 +790,20 @@ user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
+[[publisher.tower-http]]
+version = "0.6.11"
+when = "2026-05-18"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
+[[publisher.typeid]]
+version = "1.0.3"
+when = "2025-03-04"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.unicode-ident]]
 version = "1.0.27"
 when = "2026-10-12"
@@ -602,6 +839,13 @@ user-id = 4484
 user-login = "hsivonen"
 user-name = "Henri Sivonen"
 
+[[publisher.walkdir]]
+version = "2.5.1"
+when = "2026-11-21"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.wasi]]
 version = "0.11.1+wasi-snapshot-preview1"
 when = "2025-06-10"
@@ -615,6 +859,76 @@ when = "2026-06-12"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
+
+[[publisher.winapi-util]]
+version = "0.1.11"
+when = "2025-09-07"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.windows]]
+version = "0.62.2"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-collections]]
+version = "0.3.2"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-core]]
+version = "0.62.2"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-future]]
+version = "0.3.2"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-implement]]
+version = "0.60.2"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-interface]]
+version = "0.59.3"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-numerics]]
+version = "0.3.1"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-result]]
+version = "0.4.1"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-strings]]
+version = "0.5.1"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
 
 [[publisher.windows-sys]]
 version = "0.45.0"
@@ -667,6 +981,20 @@ user-name = "Kenny Kerr"
 
 [[publisher.windows-targets]]
 version = "0.53.5"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-threading]]
+version = "0.2.1"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-version]]
+version = "0.1.7"
 when = "2025-10-06"
 user-id = 64539
 user-login = "kennykerr"
@@ -1270,6 +1598,22 @@ and `lib.rs` pointing out "Zero `unsafe`").
 '''
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
+[[audits.google.audits.bitflags]]
+who = "Lukasz Anforowicz <lukasza@chromium.org>"
+criteria = "safe-to-deploy"
+version = "1.3.2"
+notes = """
+Security review of earlier versions of the crate can be found at
+(Google-internal, sorry): go/image-crate-chromium-security-review
+
+The crate exposes a function marked as `unsafe`, but doesn't use any
+`unsafe` blocks (except for tests of the single `unsafe` function).  I
+think this justifies marking this crate as `ub-risk-1`.
+
+Additional review comments can be found at https://crrev.com/c/4723145/31
+"""
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
 [[audits.google.audits.byteorder]]
 who = "danakj <danakj@chromium.org>"
 criteria = "safe-to-deploy"
@@ -1849,6 +2193,15 @@ who = "Erich Gubler <erichdongubler@gmail.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.3 -> 0.2.0"
 aggregated-from = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cpufeatures]]
+who = "Alex Franchuk <afranchuk@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.3.1"
+notes = """
+No dependencies aside from libc, and no use of std. Unsafe code is minimal and necessary.
+"""
+aggregated-from = "https://raw.githubusercontent.com/mozilla/cargo-vet/main/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.cssparser]]
 who = "Emilio Cobos Álvarez <emilio@crisal.io>"
