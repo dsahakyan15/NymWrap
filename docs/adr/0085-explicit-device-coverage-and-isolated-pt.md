@@ -103,6 +103,22 @@ Run 45775540765 подтвердил strict bridge-authority bootstrap, полн
 обычный файл, а не symlink, CI явно передаёт его закреплённым UID/GID и
 проверяет результат. Режим `0600` не расширяется, сетевые и namespace-
 проверки не меняются.
+Отдельный obfs4 job run 45778330605 для 523554d затем прошёл полностью:
+100 HTTPS-запросов, из них 84 M3 cover, ноль canary/direct-provider/DNS packets,
+все isolation и stop-with-live-Tor признаки `true`. XML PDML объёмом
+47 403 763 байта прошёл ограничение ADR 0084.
+
+Runs 45775540765 и 45778330605 выявили отдельное окно готовности тестовой
+сети: Chutney считает клиента bootstrapped после internal circuit, но первый
+подписанный microdescriptor consensus ещё не содержит единственный exit. В
+первом run Arti потерял достаточную долю microdescriptors после 23 запросов;
+во втором production preflight отказал до первого HTTP-запроса, а Chutney
+затем зафиксировал `The current consensus contains exit nodes`.
+
+Тестовая сеть теперь до запуска Arti ожидает `Exit` в подписанном
+`cached-microdesc-consensus` Chutney client. Ожидание ограничено теми же 180
+секундами, что и fixture bootstrap; отсутствие exit явно падает. Production
+повторы, таймауты и fail-closed поведение не меняются.
 
 ## Границы
 

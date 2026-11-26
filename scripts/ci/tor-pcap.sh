@@ -194,6 +194,19 @@ fi
 # Arti can bootstrap from an early consensus containing only the authorities.
 # Require Chutney's full network/descriptor readiness, including the sole exit.
 relay "$chutney/chutney" wait_for_bootstrap "$network"
+# Chutney considers its client bootstrapped after an internal circuit, which can
+# precede the first signed consensus that carries an Exit flag. Starting Arti in
+# that window makes the production preflight correctly fail closed. Bound the
+# fixture-only wait by the existing 180-second Chutney bootstrap budget.
+exit_consensus_ready=false
+for attempt in $(seq 1 1800); do
+  if grep -Eqs '^s .*Exit( |$)' "$fixture_root"/chutney/nodes/*c/cached-microdesc-consensus; then
+    exit_consensus_ready=true
+    break
+  fi
+  sleep 0.1
+done
+test "$exit_consensus_ready" = true
 if test "$mode" = obfs4; then
   "$chutney_python" - "$fixture_root" <<'PY'
 import json,pathlib,re,sys,time
