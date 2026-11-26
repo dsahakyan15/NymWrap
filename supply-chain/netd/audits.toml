@@ -24,6 +24,17 @@ Reviewed both manifests, README, and all code in lib.rs, generate.rs and hazmat.
 Random generation requires CryptoRng/TryCryptoRng and propagates fill failures without returning partially filled keys; explicit infallible system generation may panic on entropy failure. Underlying RNG, hybrid-array and typenum soundness require separate audits; this is not certification of cryptographic algorithms or their implementations. SetIvState::peek restores IV only on normal closure return, not during unwinding; callers must not treat it as transactional or use it to guarantee nonce uniqueness. No zeroization guarantee for local temporaries is inferred. Offline all-feature compilation in an isolated source copy seeded with netd's lock resolution succeeded; upstream has zero unit tests and four ignored doctests, so this is compile evidence only.
 """
 
+[[audits.displaydoc]]
+who = "NymWrap Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.2.7"
+notes = """
+Проверено агентом, не человеком. AI source review by Codex; not an independent human security audit.
+Published archive SHA-256: c6232dd377dcc64799954cbd3a9bb882e9cdc1308ccd87b1c098f1fb2eaf82a8.
+Archive verified against Cargo.lock and the local sparse registry index; reviewed directly from archive bytes.
+Reviewed both manifests and all production modules: lib.rs, attr.rs, expand.rs and fmt.rs, including both std/no_std expansion branches, shorthand parsing and generic bounds. No build script, unsafe, native component or ambient I/O. Doc text is retained as syn::LitStr; identifiers use checked character classes and compiler token types, never eval, a shell or a parsed arbitrary expression. Brace slicing uses ASCII byte positions from find; identifier slicing uses char_indices. Malformed or unsupported attributes may panic during compilation or produce diagnostics, not runtime execution of doc text. Generated code destructures a shared borrow, adds core::fmt::Display bounds, emits ordinary write! calls and safe borrowed Path display helpers; it introduces no unsafe impl or unchecked lifetime extension. Empty-enum unreachable! is not reachable by a safely constructed value. Formatting intentionally exposes values selected by the caller: NymWrap must retain its content-free logging policy. Dependencies syn/quote/proc-macro2 remain separately accountable. The full upstream offline test command was blocked by an uncached pretty_assertions dev dependency and ran no tests. A separate dependency-only harness used three unmodified upstream integration test files: std mode passed three tests, no-default-features passed two, and the no_std target compiled in both. Other upstream unit/UI/doctests were not run.
+"""
+
 [[audits.equivalent]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -60,6 +71,17 @@ AI delta source review, not an independent human audit. Both published archives 
 Base SHA-256: 6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26.
 Target SHA-256: 9c187e0a369471c550af028cba56d4f4fa2a489ad28151ae95a4d340a2a8b782.
 Reviewed all package differences and SpannedDeserializer field/key/value consumption. The only executable addition is a MapAccess::size_hint counting the three remaining Option fields. Each count is 0 or 1; their sum is bounded to 3 regardless of untrusted span values or T, and the method only borrows self. No new unsafe code, allocation, I/O or dependencies. Production features and build=false are unchanged. Remaining changes are packaging, lints, docs/license attribution, release/VCS metadata and the package's development lockfile. This delta does not certify dependencies or the base version.
+"""
+
+[[audits.strum]]
+who = "NymWrap Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.28.0"
+notes = """
+Проверено агентом, не человеком. AI source review by Codex; not an independent human security audit.
+Published archive SHA-256: 9628de9b8791db39ceda2b119bbe13134770b56c138ec1d3af810d045c04f9bd.
+Archive verified against Cargo.lock and the local sparse registry index; reviewed directly from archive bytes.
+Reviewed both manifests, complete src/lib.rs and the documentation-only additional_attributes.rs, README and package inventory. The crate defines safe trait interfaces/constants and a fixed ParseError formatter; all user-supplied strings are passed as data to formatting. The only macro emits cfg-gated reexports of a finite identifier list. No unsafe code, build script, native component, filesystem/process/network access or generated pointer manipulation. Optional strum_macros and phf are only reexports and require independent safe-to-deploy coverage; this audit does not certify their generated implementations. In an isolated archive copy with only an empty workspace marker added and netd lock resolution seeded, offline all-feature cargo test compiled and passed four doctests, with zero unit tests. The procedural macro implementation remains a separate explicit gap.
 """
 
 [[audits.toml_datetime]]
@@ -122,6 +144,13 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2026-08-03"
 end = "2026-08-04"
 notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.arti-client]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: arti-client 0.48.0 (Library for connecting to the Tor network as an anonymous client). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.async-trait]]
 criteria = "safe-to-deploy"
@@ -207,6 +236,13 @@ start = "2026-11-17"
 end = "2026-11-18"
 notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.caret]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: caret 0.11.1 (Macros for declaring non-exhaustive C-style enumerations, with named members). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.cc]]
 criteria = "safe-to-deploy"
 trusted-publisher = "github:rust-lang/cc-rs"
@@ -241,6 +277,17 @@ trusted-publisher = "github:RustCrypto/utils"
 start = "2026-05-28"
 end = "2026-05-29"
 notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.const-oid]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/formats"
+start = "2026-11-10"
+end = "2026-11-11"
+notes = """
+ADR 0103 continuation: Trust RustCrypto format maintainers for const-oid from the official formats repository enumerating this library. Product trust covers hostile BER/DER object identifiers, checked length/arc arithmetic, encoding canonicality and bounds. This extends the same cryptographic-format responsibility described in ADR 0103 to this exact repository publisher; it does not independently validate every protocol that embeds an OID. Package: const-oid 0.10.3 (Const-friendly implementation of the ISO/IEC Object Identifier (OID) standard
+as defined in ITU X.660, with support for BER/DER encoding/decoding as well as
+no_std + no_alloc (i.e. embedded) support
+). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."""
 
 [[trusted.cpubits]]
 criteria = "safe-to-deploy"
@@ -305,6 +352,13 @@ start = "2023-05-19"
 end = "2023-05-20"
 notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.digest]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/traits"
+start = "2026-05-03"
+end = "2026-05-04"
+notes = "ADR 0103 continuation: Trust RustCrypto maintainers for digest from their official traits repository, whose pinned package table links digest. Product trust covers buffering, length accounting, trait defaults and serialization macros used in deployed hashing under adversarial message lengths. Specific hash implementations, side-channel resistance and callers remain separately accountable. Package: digest 0.11.3 (Traits for cryptographic hash functions and message authentication codes). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.dyn-clone]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -361,6 +415,20 @@ start = "2026-11-06"
 end = "2026-11-07"
 notes = "ADR 0103: Only flate2 from its official release workflow. Rust compression maintainers are trusted for bounds/state handling of adversarial compressed streams in deployment; decompressed-size quotas remain the application responsibility. Compression backends/native dependencies require their own coverage. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.fs-mistrust]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: fs-mistrust 0.16.1 (Ensure that files can only be read or written by trusted users). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.fslock-guard]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: fslock-guard 0.9.1 (Wrapper around a lockfile with unlock-on-drop semantics). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.futures-task]]
 criteria = "safe-to-deploy"
 user-id = 33035 # Taiki Endo (taiki-e)
@@ -381,6 +449,13 @@ user-id = 5059 # Artyom Pavlov (newpavlov)
 start = "2026-01-11"
 end = "2026-01-12"
 notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.getrandom]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-random/getrandom"
+start = "2026-06-17"
+end = "2026-06-18"
+notes = "ADR 0103 continuation: Trust the Rust Random maintainers for this exact getrandom publication. The official pinned README specifies OS-backed cryptographic entropy, platform backends and failure contracts. Their responsibility covers safe syscall/FFI buffer initialization and entropy failures under adversarial scheduling; OS RNG correctness remains an explicit high-impact dependency. The verified official repository identity is distinct from any earlier user publisher; this is a new bounded decision for deployed entropy generation, not an entropy proof. Package: getrandom 0.4.3 (A small cross-platform library for retrieving random data from system source). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.hashbrown]]
 criteria = "safe-to-deploy"
@@ -437,6 +512,17 @@ user-id = 359 # Sean McArthur (seanmonstar)
 start = "2025-03-03"
 end = "2025-03-04"
 notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hybrid-array]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hybrid-array"
+start = "2026-09-08"
+end = "2026-09-09"
+notes = """
+ADR 0103 continuation: Trust RustCrypto maintainers for hybrid-array in their dedicated official repository. Its pinned README describes the const-generic/typenum bridge used by cryptographic buffers. Product trust specifically includes array length/type relations, unsafe layout conversions, initialized ownership and zeroization-related trait implementations. typenum and algorithms remain separately accountable; membership in RustCrypto alone is not a source audit. Package: hybrid-array 0.4.15 (Hybrid typenum-based and const generic array types designed to provide the
+flexibility of typenum-based expressions while also allowing interoperability
+and a transition path to const generics
+). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."""
 
 [[trusted.hyper]]
 criteria = "safe-to-deploy"
@@ -508,12 +594,36 @@ start = "2026-07-06"
 end = "2026-07-07"
 notes = "ADR 0103: Only jobserver, reusing the ADR 0088 scope. Official Rust project build coordination package; deployment criterion covers inherited handle/FD ownership and bounded build-tool interaction. Shared account is not blanket authority: hashbrown, libm and lazy_static under this id are deliberately excluded from this local trust batch. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.js-sys]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = """
+ADR 0103 continuation: Trust the official Rust/Wasm binding maintainers for wasm-bindgen, macro-support and js-sys. The pinned README identifies the Rust and WebAssembly Working Group and links these packages; historical safe-to-deploy publisher trust in the pinned Mozilla/Wasmtime/ISRG sets establishes the product-use family, not this release or the new workflow identity. This decision explicitly trusts the current official repository identity for production generated ABI code, ownership/lifetimes and JS boundary conversions under adversarial values. It is not based on compile-only safety or on these packages being inactive on the local platform. Package: js-sys 0.3.107 (Bindings for all JS global objects and functions in all JS environments like
+Node.js and browsers, built on `#[wasm_bindgen]` using the `wasm-bindgen` crate.
+). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."""
+
+[[trusted.keccak]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/sponges"
+start = "2026-08-21"
+end = "2026-08-22"
+notes = "ADR 0103 continuation: Trust RustCrypto sponge-function maintainers for keccak, explicitly listed in the official pinned repository. Product trust includes permutation correctness, constants/round scheduling, SIMD lane correspondence and accelerated unsafe/intrinsic dispatch for attacker-controlled states; no claim of an independent cryptographic audit or validation of a higher-level hash construction. Package: keccak 0.2.2 (Pure Rust implementation of the Keccak sponge functions). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.libc]]
 criteria = "safe-to-deploy"
 trusted-publisher = "github:rust-lang/libc"
 start = "2026-10-16"
 end = "2026-10-17"
 notes = "ADR 0103: Only libc from the official Rust libc workflow. Rust platform-ABI maintainers are trusted for production layouts, constants and FFI signatures, including targets not executed locally. This does not certify unsafe call sites elsewhere or native system libraries. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.libm]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2026-01-24"
+end = "2026-01-25"
+notes = "ADR 0103 continuation: Trust rust-lang-owner only for this libm publication from the official rust-lang/compiler-builtins project. The pinned Wasmtime source already records safe-to-deploy trust for user 55123 specifically on libm through 2026-10-10; this precedent is not an independent source audit of this version. This bounded extension trusts Rust numerical-runtime maintainers for floating-point special values, platform arithmetic/bit representations, unsafe acceleration and rounding behavior in production. It does not authorize other packages published by the shared account or guarantee application numerical error bounds. Package: libm 0.2.16 (libm in pure Rust). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.linux-raw-sys]]
 criteria = "safe-to-deploy"
@@ -577,6 +687,13 @@ user-id = 539 # Josh Stone (cuviper)
 start = "2026-07-07"
 end = "2026-07-08"
 notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.oneshot-fused-workaround]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: oneshot-fused-workaround 0.8.1 (Fused wrapper for futures::channel::oneshot). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.p256]]
 criteria = "safe-to-deploy"
@@ -704,6 +821,13 @@ start = "2026-11-18"
 end = "2026-11-19"
 notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.retry-error]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: retry-error 0.14.1 (An error type for an operation that can fail more than once). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.rfc6979]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -725,12 +849,26 @@ start = "2026-07-07"
 end = "2026-07-08"
 notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.safelog]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: safelog 0.10.1 (Conditionally suppress confidential information from logs). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.same-file]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2020-01-11"
 end = "2020-01-12"
 notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.saturating-time]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: saturating-time 0.6.0 (A trait for limits and saturations on types inside std::time). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.scopeguard]]
 criteria = "safe-to-deploy"
@@ -843,6 +981,20 @@ user-id = 6741 # Alice Ryhl (Darksonn)
 start = "2026-01-31"
 end = "2026-02-01"
 notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.slotmap-careful]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: slotmap-careful 0.9.1 (Wrap the slotmap crate and prevent key reuse). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.smallvec]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:smallvec/smallvec"
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0103 continuation: Trust the official SmallVec maintainers for this one publication. The pinned README describes the same stack-to-heap vector project and links its Servo release history; the exact packaged VCS commit matches a successful run in smallvec/smallvec. Historical Mozilla safe-to-deploy trust names a human maintainer, not this repository identity: the latter is explicitly accepted here for allocation/layout, initialized elements, moves, drops and panic-safety under hostile lengths, beyond merely running a build. Package: smallvec 1.16.6 ('Small vector' optimization: store up to a small number of items on the stack). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.socket2]]
 criteria = "safe-to-deploy"
@@ -991,6 +1143,251 @@ start = "2026-11-04"
 end = "2026-11-05"
 notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
 
+[[trusted.tor-async-utils]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-async-utils 0.48.0 (Async/futures helpers for use with Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-basic-utils]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-basic-utils 0.48.0 (General helpers used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-bytes]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-bytes 0.48.0 (Helpers for encoding and decoding byte-orientted data, as used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-cell]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-cell 0.48.0 (Encode and decode Tor cells and messages). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-cert]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-cert 0.48.0 (Non-standard certificate formats used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-chanmgr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-chanmgr 0.48.0 (Manage a set of connections to the Tor network). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-checkable]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-checkable 0.48.0 (Types to ensure that signed or time-bound data is validated before use). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-circmgr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-circmgr 0.48.0 (Manage a set of anonymous circuits over the Tor network). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-config]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-config 0.48.0 (Low-level configuration for the Arti Tor implementation). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-config-path]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-config-path 0.48.0 (Low-level file path handling for configuration of the Arti Tor implementation). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-consdiff]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-consdiff 0.48.0 (Handle the consensus-diff format used in the Tor directory protocol). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-dirclient]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-dirclient 0.48.0 (Downloads specific Tor network directory objects over the Tor network). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-dircommon]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-dircommon 0.48.0 (Common primitives for the Tor directory specification). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-dirmgr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-dirmgr 0.48.0 (Bootstrap and update an accurate Tor network directory). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-error]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-error 0.48.0 (Provides the unified type-erased error type returned by many (esp. high-level) Tor APIs.). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-general-addr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-general-addr 0.48.0 (Generalized socket address type used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-guardmgr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-guardmgr 0.48.0 (Manage a set of guard relays for Tor network). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-hscrypto]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-hscrypto 0.48.0 (Basic onion service cryptography types used by Aerti). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-key-forge]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-key-forge 0.48.0 (Low level cryptography wrappers used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-keymgr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-keymgr 0.48.0 (Key management for the Arti Tor implementation). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-linkspec]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-linkspec 0.48.0 (Parts of the Tor protocol that indicate specific relays on the network). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-llcrypto]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-llcrypto 0.48.0 (Low level cryptography wrappers used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-log-ratelim]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-log-ratelim 0.48.0 (Facility for rate-limiting log messages in Arti). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-memquota]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-memquota 0.48.0 (Memory use tracking and quota utilities, used by Tor software). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-memquota-cost]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-memquota-cost 0.48.0 (Low-level memory tracking traits, for use by Arti). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-netdir]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-netdir 0.48.0 (Types to represent and use a Tor network directory). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-netdoc]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-netdoc 0.48.0 (Network document formats used with the Tor protocols.). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-persist]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-persist 0.48.0 (Persistent state for the Arti Tor implementation). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-proto]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-proto 0.48.0 (Asynchronous client-side implementation of the central Tor network protocols). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-protover]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-protover 0.48.0 (Implementation for Tor's subprotocol versioning). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-ptmgr]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-ptmgr 0.48.0 (Manage a set of pluggable transports to circumvent censorship). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-relay-selection]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-relay-selection 0.48.0 (Logic to select Tor relays for specific purposes). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-rtcompat]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-rtcompat 0.48.0 (Compatibility layer for asynchronous runtimes, used by Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-socksproto]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-socksproto 0.48.0 (Encode and decode the SOCKS protocol, as extended in Tor). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.tor-units]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the Tor Project Arti release maintainer for these 36 explicitly enumerated client/protocol packages from official Arti 2.8.0. Tor lists Gabi on its Arti Network Team; her official Tor key fingerprint matches the gabi-250 GitHub profile, crates.io maps that exact GitHub identity to user 31201, and the official release tag names every package/version and resolves to their packaged VCS commit. The pinned README supports general client usage. Trust includes adversarial Tor cells, certificates and directory parsing, cryptographic and memory/unsafe invariants, circuit isolation, filesystem keystores and concurrency, beyond safe compilation. It is maintainer trust, not an independent cryptographic/privacy proof or approval of experimental relay features. Package: tor-units 0.48.0 (Provides macros for types which are constrained within a range, ensuring invalid values are unrepresentable.). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
 [[trusted.tower]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
@@ -1011,6 +1408,29 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2025-06-10"
 end = "2025-06-11"
 notes = "ADR 0103: Only filetime and wasi. Rust/Cargo/Wasmtime systems maintainer; the pinned Bytecode Alliance/ISRG sets explicitly trust these package families for safe-to-deploy. Trust includes intended filesystem timestamp operations and ABI-correct WASI imports; neither API becomes an authorization boundary for callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.wasm-bindgen]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = """
+ADR 0103 continuation: Trust the official Rust/Wasm binding maintainers for wasm-bindgen, macro-support and js-sys. The pinned README identifies the Rust and WebAssembly Working Group and links these packages; historical safe-to-deploy publisher trust in the pinned Mozilla/Wasmtime/ISRG sets establishes the product-use family, not this release or the new workflow identity. This decision explicitly trusts the current official repository identity for production generated ABI code, ownership/lifetimes and JS boundary conversions under adversarial values. It is not based on compile-only safety or on these packages being inactive on the local platform. Package: wasm-bindgen 0.2.130 (Easy support for interacting between JS and Rust.
+). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."""
+
+[[trusted.wasm-bindgen-macro-support]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "ADR 0103 continuation: Trust the official Rust/Wasm binding maintainers for wasm-bindgen, macro-support and js-sys. The pinned README identifies the Rust and WebAssembly Working Group and links these packages; historical safe-to-deploy publisher trust in the pinned Mozilla/Wasmtime/ISRG sets establishes the product-use family, not this release or the new workflow identity. This decision explicitly trusts the current official repository identity for production generated ABI code, ownership/lifetimes and JS boundary conversions under adversarial values. It is not based on compile-only safety or on these packages being inactive on the local platform. Package: wasm-bindgen-macro-support 0.2.130 (Implementation APIs for the `#[wasm_bindgen]` attribute). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
+
+[[trusted.web-time-compat]]
+criteria = "safe-to-deploy"
+user-id = 31201 # Gabi Moldovan (gabi-250)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103 continuation: Trust the release maintainer for these nine explicitly enumerated auxiliary libraries from the official Arti 2.8.0 release: path/permission and lock checking, sensitive-log wrappers, futures, time arithmetic and slot ownership. Includes production behavior under hostile paths, text and scheduling and macro-generated code; not a guarantee of caller filesystem policy or secret-free logging. Package: web-time-compat 0.3.1 (Compatibility layer for web-time). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.windows-sys]]
 criteria = "safe-to-deploy"
@@ -1102,6 +1522,20 @@ user-id = 6743 # Ed Page (epage)
 start = "2026-11-05"
 end = "2026-11-06"
 notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.zerocopy]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:google/zerocopy"
+start = "2026-11-21"
+end = "2026-11-22"
+notes = """ADR 0103 continuation: Trust the Zerocopy maintainers in the verified google/zerocopy repository for zerocopy and its matching derive. The packaged Fuchsia-authored crate-level documentation defines checked byte conversion, layout, alignment and immutability contracts and links this repository. Product trust covers unsafe byte/layout validity, pointer provenance and emitted derive implementations on hostile bytes; the Google namespace or a successful release run alone is not a code audit. Both package VCS commits match the recorded publication run. Package: zerocopy 0.8.64 (Zerocopy makes zero-cost memory manipulation effortless. We write "unsafe" so you don't have to.). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."""
+
+[[trusted.zerocopy-derive]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:google/zerocopy"
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0103 continuation: Trust the Zerocopy maintainers in the verified google/zerocopy repository for zerocopy and its matching derive. The packaged Fuchsia-authored crate-level documentation defines checked byte conversion, layout, alignment and immutability contracts and links this repository. Product trust covers unsafe byte/layout validity, pointer provenance and emitted derive implementations on hostile bytes; the Google namespace or a successful release run alone is not a code audit. Both package VCS commits match the recorded publication run. Package: zerocopy-derive 0.8.64 (Custom derive for traits from the zerocopy crate). Exact uploader, archive/index/registry checksum, locked-version checks and identity evidence: review-2026-11-26-continuation.json. Historical one-day UTC window only. This is publisher trust, not a source audit by an agent or a human. Local path-fork modifications and callers remain separately reviewable."
 
 [[trusted.zeroize]]
 criteria = "safe-to-deploy"
