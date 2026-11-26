@@ -27,31 +27,46 @@ Workspace tests, clippy и leak tests остановились при сборк
 
 ## cargo-vet: граф root
 
-Задача 9, промежуточная партия от 4691e27 — 2026-11-26. Продуктовый
-**safe-to-deploy сохранён**. Изменён только store `supply-chain/root/` и эта
-документация; версии и все Cargo.lock сохранены, новых exemptions нет.
-[ADR 0102](adr/0102-root-dependency-audit-sources.md) фиксирует основания доверия
-для продукта; [JSON-отчёт](../supply-chain/root/review-2026-11-26.json) содержит
-каждый промежуточный замер, хеши входов, registry evidence и полный остаток.
+Задача 9, продолжение от `a05f078` — 2026-11-26: **107 → 88 пробелов**.
+Продуктовый **safe-to-deploy сохранён**. Изменены только store
+`supply-chain/root/`, этот раздел и [ADR 0102](adr/0102-root-dependency-audit-sources.md).
+Версии, все Cargo.lock и остальные графы сохранены; новых exemptions нет.
 
-Пробелы: **268 → 233** после четырёх immutable imports (Bytecode Alliance,
-ISRG, Zcash, Embark); **233 → 111** после 122 однодневных trusted entries
-для 15 подтверждённых user-id и 7 официальных workflows; **111 → 107** после
-четырёх исходных аудитов агента. bitflags, version_check, wasm-bindgen-shared
-и endi явно помечены «проверено агентом, не человеком», с SHA архивов и
-ограничениями. Начали с узлов с большим числом потребителей; незавершённые
-проверки typenum, generic-array, errno и native C/ASM не сертифицированы.
-Неиспользованная дополнительная запись доверия getrandom удалена без изменения
-остатка. Root gate и M6 остаются открытыми: **107 пробелов** требуют продолжения.
+Первая партия `89f3b08` дала **268 → 107**: четыре закреплённых импорта,
+122 узких доверия и четыре аудита агента. Её история сохранена в
+[первом отчёте](../supply-chain/root/review-2026-11-26.json).
+[Отчёт продолжения](../supply-chain/root/review-2026-11-26-continuation.json)
+содержит каждый новый замер, хеши входов, проверенные registry identities,
+обоснования доверия, SHA исходников и полный остаток по числу зависимых.
 
-Локально: `node scripts/vet-dependencies.mjs root` без обновления imports —
-failed, 107 gaps, входы неизменны; root `cargo deny check --hide-inclusion-graph`
-— exit 0 (advisories/bans/licenses/sources ok, предупреждения о дубликатах).
-Тесты vet wrapper — 3/3, расширения — 24/24; прямые source-review проверки:
-version_check 10, bitflags 2, schema wasm-bindgen-shared 1, endi 11 + no_std.
-Полные workspace tests, clippy и leak tests запускались, но завершились exit 101
-на сборке OpenSSL: имеющийся Git Perl не содержит `Locale::Maketext::Simple`.
-CI не запускался; пользовательское поведение программы не менялось.
+Для 21 собственного workspace-крейта `nw-*` явно задано
+`audit-as-crates-io=false`: **107 → 107**, аудитов собственных крейтов нет.
+Далее 15 однодневных trusted entries для пяти user-id и четырёх официальных
+repository identities дали **107 → 92**. Для каждой версии API crates.io,
+архив, sparse index и Cargo.lock сверены заново; основания относятся к
+production-инвариантам конкретного семейства. Новых imports нет; прежние pins
+сохранены. Дополнительное доверие getrandom 0.4.3 не дало покрытия в resolver
+и удалено: **92 → 92**, без ручного изменения publisher evidence.
+
+Четыре полных исходных аудита агента дали **92 → 91 → 90 → 89 → 88**:
+phf_shared 0.14.0, tower-service 0.3.3, tower-layer 0.3.3 и proc-macro-crate
+3.5.0. Каждый явно помечен «проверено агентом, не человеком», содержит SHA
+архива и ограничения, включая генерацию deployed-кода. Приоритизация началась
+с getrandom/typenum/generic-array/errno; неполная проверка их платформенных,
+арифметических и unsafe-контрактов не объявлена аудитом. Native C/ASM и
+llama.cpp/fork также остаются открытыми.
+
+Локально: финальный `node scripts/vet-dependencies.mjs root` без обновления
+imports — failed, **88 gaps**, входы неизменны; root
+`cargo deny check --hide-inclusion-graph` — exit 0,
+advisories/bans/licenses/sources ok (предупреждения о дубликатах и неиспользованных
+license exceptions). Прямой pinned rustc: 5 upstream-тестов phf_shared,
+1 тест tower-layer и 5 проверок
+[аудиторского стенда](../supply-chain/root/review-tests-2026-11-26.rs) прошли.
+У proc-macro-crate тесты не запускались; аудит исходный. Полные workspace tests,
+clippy, leak tests и тесты расширения в этой партии не запускались: изменения
+ограничены supply-chain и документацией. Cargo test/clippy и Git Perl не
+использовались. CI не запускался. Root gate и M6 остаются открытыми.
 
 
 ## cargo-vet: граф netd

@@ -50,6 +50,28 @@ or build script was added. This is a delta review, not an audit of the base or
 an independent human security review. Original 1.0.2 coverage is still required.
 """
 
+[[audits.phf_shared]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.14.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102), not an independent human audit.
+Published archive SHA-256: c6fd9027e2d9319be6349febd1db4e8d02aa544921200c9b777720ac34a3aa89. Verified against crates.io API, sparse index and Cargo.lock; reviewed source files matched the published archive.
+Read both manifests, full archive inventory and all three production source modules, including optional ptrhash/unicase/uncased branches and the complete fixed macro expansions. The only unsafe operation is reborrowing shared [u8]/[i8]/[bool] storage as shared [u8], preserving its lifetime and slice length: all three have one-byte size/alignment, bool has valid 0/1 initialized representation, and no write or padding read is introduced. PortableSipHasher fixes integer endianness and pointer-width conversion before delegating to the separately covered SipHasher. Displacement arithmetic deliberately wraps; lookup metadata is accessed with checked indexing. Empty/inconsistent or over-u32 metadata may panic or produce incorrect indices, so callers must supply the documented matching generated table and verify key equality; these helpers do not authenticate membership. Iteration and formatting are linear in caller input; primitive/string/char literals use Rust Debug escaping, and optional wrappers emit fixed constructor syntax around the escaped inner value. Custom PhfHash/FmtConst/formatters remain arbitrary caller code. A one-element tuple currently formats as a parenthesized expression without a comma; recorded as a code-generation limitation, not silently certified as exact round-tripping. Hashes with public fixed keys are not cryptographic authentication or secret storage. No build script, process/network/file-opening API or native payload. Five upstream std+ptrhash unit tests and five shared review checks passed on native Windows using pinned rustc, including all 256 i8 bit patterns, valid booleans, hostile Rust-literal text and malformed lookup metadata. Optional uncased/unicase runtime tests, Miri and cross-target testing were not run; those dependencies and consuming code generators require separate coverage.
+Dependencies require separate coverage.
+"""
+
+[[audits.proc-macro-crate]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "3.5.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102), not an independent human audit.
+Published archive SHA-256: e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f. Verified against crates.io API, sparse index and Cargo.lock; reviewed source files matched the published archive.
+Read both manifests, README, complete archive inventory, the entire library including its unit tests and the packaged integration test. This ordinary helper library does not itself emit or execute Rust tokens: it returns Itself or a crate-name String derived from Cargo TOML data. All dependency/target/workspace tables use safe typed TOML access and bounded iterator traversal. Name normalization only replaces hyphens; it is not a sanitizer for arbitrary identifiers or source code, so downstream generators must construct validated identifiers and treat malformed names as build errors. Ambient authority is limited to build-context environment variables, metadata/read_to_string of the package/workspace manifests and Command::new(CARGO) with fixed separate locate-project arguments and a single --manifest-path value. No shell interpolation, network calls, file writes, native code, unsafe blocks or build script. The Cargo executable/PATH, manifest paths and local build files are trusted build inputs, not service-request data; this helper is not suitable as an adversarial manifest sandbox. Cargo stdout becomes only a PathBuf, never a command; nonzero status/empty output can fall back to the input manifest, and mutex poisoning, stale mtime caches, ambiguous duplicate dependencies or invalid generated names can fail or misdirect a build rather than granting runtime authority. Application authorization must not rely on this cache. Filesystem path strings may appear in returned errors; callers control logging. TOML parsing/resource behavior and every downstream macro's emitted deployed code require separate coverage. No proc-macro-crate tests or whole-workspace tests were run in this documentation/supply-chain batch; the integration fixture's nested workspace is not included in the published archive. Source-only agent review, no independent human audit.
+Dependencies require separate coverage.
+"""
+
 [[audits.proc-macro2]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -81,6 +103,28 @@ AI delta source review, not an independent human audit. Both published archives 
 Base SHA-256: 3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7.
 Target SHA-256: 173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49.
 Reviewed all package differences and the surrounding DatetimeDeserializer implementation. The only executable change adds MapAccess::size_hint as Some(usize::from(date.is_some())). The Option is consumed by next_value_seed, so the hint is bounded to 0 or 1 and has no new allocation, I/O, unsafe code or state mutation. Production dependency constraints, features and build=false are unchanged. Other differences are packaging include paths, lints, release/docs/license attribution, VCS metadata and the package's own development lockfile. Dependencies and the previously audited base require their own audit paths.
+"""
+
+[[audits.tower-layer]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.3.3"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102), not an independent human audit.
+Published archive SHA-256: 121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e. Verified against crates.io API, sparse index and Cargo.lock; reviewed source files matched the published archive.
+Read both manifests, README, full archive inventory and all five source modules. No production dependencies, build script, native payload or unsafe code; forbid(unsafe_code) is active. Layer, reference forwarding, Identity and LayerFn wrap or return caller-owned values using ordinary Rust ownership. A LayerFn invokes the supplied Fn once; it does not parse or execute incoming text. Stack applies inner then outer. Every tuple implementation from arity zero through sixteen was checked against its associated Service chain; the first tuple member is outermost and recursion consumes the remaining tuple. Debug implementations only write to the caller's formatter and may call caller Debug code; arbitrary wrapped layers/closures remain caller code with their own authority. No network/file/process/env operations, hidden logging or dynamic code generation. One upstream unit test and five shared pinned-rustc review checks passed on native Windows, including identity and tuple arities zero, one, two and sixteen plus Stack/tuple ordering. Documentation examples describe caller-provided logging middleware and are not runtime logging in this crate. Doctests using external Tower dev crates and other target configurations were not run.
+Dependencies require separate coverage.
+"""
+
+[[audits.tower-service]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.3.3"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102), not an independent human audit.
+Published archive SHA-256: 8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3. Verified against crates.io API, sparse index and Cargo.lock; reviewed source files matched the published archive.
+Read the complete archive inventory, both manifests, README and the entire single source module, including readiness/cancellation documentation and forwarding implementations. Production code is a safe no_std Service trait plus forwarding for &mut S and Box<S>, with no production dependencies. Both methods forward exactly once to the same existing service and return its associated future/error unchanged; the adapters do not clone services, poll futures, reserve resources independently or introduce aliasing. Caller implementations must honor the documented readiness, cancellation, backpressure and drop contracts; this trait does not enforce authorization, open a connection or make arbitrary service implementations safe. forbid(unsafe_code), no build script, native payload, I/O, process/env access or generated deployed code. The direct pinned-rustc review harness passed readiness/call/future forwarding through Box<&mut S> without transferring the readiness state to a clone. No upstream doctests requiring the separate Tokio/HTTP/futures dev dependencies or cross-platform matrix were run. This certifies only this interface/adapter crate, not implementing middleware.
+Dependencies require separate coverage.
 """
 
 [[audits.version_check]]
@@ -189,6 +233,13 @@ start = "2026-04-14"
 end = "2026-04-15"
 notes = "ADR 0102. Trust the Tokio maintainer for production runtime, bytes/slab memory ownership, generated Tokio entry points, axum request handling and tokio-util integration in the named crates. The Tokio project maintains a production runtime and security reporting process covering concurrency and attacker-controlled network data. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.axum-core]]
+criteria = "safe-to-deploy"
+user-id = 6913 # Jonas Platte (jplatte)
+start = "2025-12-27"
+end = "2025-12-28"
+notes = "Trust the identified Axum maintainer for axum-core production extraction/response and request-body interface contracts, including safe composition over attacker-controlled HTTP data. Limited to this verified axum-core release and day, not arbitrary uploads or all applications. Routing authorization, size/time limits and error/body logging still belong to NymWrap and the other separately covered crates. Safe-to-deploy publisher trust, not a new source audit. Registry evidence: axum-core 0.5.6; archive SHA-256 08c78f31d7b1291f7ee735c1c6780ccde7785daae9a9206026862dab7d8792d1; https://crates.io/api/v1/crates/axum-core/0.5.6. ADR 0102 continuation."
+
 [[trusted.base64ct]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -251,6 +302,13 @@ user-id = 55123 # rust-lang-owner
 start = "2026-03-26"
 end = "2026-03-27"
 notes = "ADR 0102. Trust the official Rust project release account only for the enumerated jobserver, cmake, glob and hashbrown releases. Production toolchain integration and container memory safety are maintained by the corresponding Rust project repositories; this is explicit organizational trust for these packages, not trust in every package from a shared account. Build executables/search paths remain Cargo/user configuration. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.concurrent-queue]]
+criteria = "safe-to-deploy"
+user-id = 69526 # John Nunley (notgull)
+start = "2024-04-26"
+end = "2024-04-27"
+notes = "Trust the named smol maintainer for the verified concurrent-queue, futures-lite and piper releases: ownership/initialization across threads, atomic ordering, wakeups, cancellation and bounded pipe/queue behavior are these production async primitives' remit. Only these three package/date pairs, not arbitrary smol crates or uploads. Application backpressure/resource limits and caller-provided futures/I/O remain separate. Explicit safe-to-deploy publisher trust, not an independent concurrency/source audit. Registry evidence: concurrent-queue 2.5.0; archive SHA-256 4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973; https://crates.io/api/v1/crates/concurrent-queue/2.5.0. ADR 0102 continuation."
 
 [[trusted.cpufeatures]]
 criteria = "safe-to-deploy"
@@ -321,6 +379,13 @@ trusted-publisher = "github:rust-lang/flate2-rs"
 start = "2026-11-06"
 end = "2026-11-07"
 notes = "ADR 0102. Trust the official Rust project flate2 release process for production compression/decompression wrapper correctness and safe handling of attacker-controlled compressed bytes. This is narrow trust in the wrapper maintainers, preserving separate audits for each compression backend and caller limits on decompressed size. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.futures-lite]]
+criteria = "safe-to-deploy"
+user-id = 69526 # John Nunley (notgull)
+start = "2025-08-04"
+end = "2025-08-05"
+notes = "Trust the named smol maintainer for the verified concurrent-queue, futures-lite and piper releases: ownership/initialization across threads, atomic ordering, wakeups, cancellation and bounded pipe/queue behavior are these production async primitives' remit. Only these three package/date pairs, not arbitrary smol crates or uploads. Application backpressure/resource limits and caller-provided futures/I/O remain separate. Explicit safe-to-deploy publisher trust, not an independent concurrency/source audit. Registry evidence: futures-lite 2.6.1; archive SHA-256 f78e10609fe0e0b3f4157ffab1876319b5b0db102a2c60dc4626306dc46b44ad; https://crates.io/api/v1/crates/futures-lite/2.6.1. ADR 0102 continuation."
 
 [[trusted.futures-task]]
 criteria = "safe-to-deploy"
@@ -420,6 +485,13 @@ start = "2026-07-06"
 end = "2026-07-07"
 notes = "ADR 0102. Trust the official Rust project release account only for the enumerated jobserver, cmake, glob and hashbrown releases. Production toolchain integration and container memory safety are maintained by the corresponding Rust project repositories; this is explicit organizational trust for these packages, not trust in every package from a shared account. Build executables/search paths remain Cargo/user configuration. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.js-sys]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "Trust the official wasm-bindgen release identity for the runtime, macro/code generator and JS bindings from this repository. Its production remit includes generated Rust/JS ABI agreement, memory ownership across the Wasm boundary, exception handling and safe exported interfaces; do not infer safety merely because the compiler runs locally. Trust is limited to these four verified releases and their publication days. Imported JS, browser APIs, user-provided bindings and surrounding application policies require their own review; no independent ABI/security audit or workflow audit is claimed. Registry evidence: js-sys 0.3.107; archive SHA-256 8dc09d2154098bbf4ef54eab6b117a3c24cbbffe94046b16ee6d6d4510584d3a; https://crates.io/api/v1/crates/js-sys/0.3.107. ADR 0102 continuation."
+
 [[trusted.libc]]
 criteria = "safe-to-deploy"
 trusted-publisher = "github:rust-lang/libc"
@@ -504,6 +576,13 @@ start = "2026-07-07"
 end = "2026-07-08"
 notes = "ADR 0102. Trust the Rust/rust-num/rayon and indexmap maintainer for production arithmetic, collection invariants and build-time capability detection in the named crates. Input-driven arithmetic and container memory safety are part of their production maintainership, rather than treating an absence of I/O as proof. Numeric algorithms remain subject to documented overflow and size limits. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.once_cell]]
+criteria = "safe-to-deploy"
+user-id = 2699 # Alex Kladov (matklad)
+start = "2026-03-12"
+end = "2026-03-13"
+notes = "Trust the author-maintainer of once_cell for its production single-assignment/lazy initialization implementation: ownership, synchronization, panic/reentrancy and publication ordering are the explicit documented contracts of this library. Limited to once_cell and the verified historical release date. Caller initializer side effects and application deadlock policy remain the caller's responsibility; this is publisher trust for safe-to-deploy, not a new independent source audit. Registry evidence: once_cell 1.21.4; archive SHA-256 9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50; https://crates.io/api/v1/crates/once_cell/1.21.4. ADR 0102 continuation."
+
 [[trusted.parking_lot]]
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
@@ -532,6 +611,13 @@ start = "2026-11-19"
 end = "2026-11-20"
 notes = "ADR 0102. Trust the official taiki-e/pin-project-lite release for sound generated structural pin projection and Drop/Unpin constraints. These Rust pinning invariants are critical for memory safety in deployed async code, and are the focused purpose of the upstream project; this is not merely a safe build judgment. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.piper]]
+criteria = "safe-to-deploy"
+user-id = 69526 # John Nunley (notgull)
+start = "2026-02-28"
+end = "2026-03-01"
+notes = "Trust the named smol maintainer for the verified concurrent-queue, futures-lite and piper releases: ownership/initialization across threads, atomic ordering, wakeups, cancellation and bounded pipe/queue behavior are these production async primitives' remit. Only these three package/date pairs, not arbitrary smol crates or uploads. Application backpressure/resource limits and caller-provided futures/I/O remain separate. Explicit safe-to-deploy publisher trust, not an independent concurrency/source audit. Registry evidence: piper 0.2.5; archive SHA-256 c835479a4443ded371d6c535cbfd8d31ad92c5d23ae9770a61bc155e4992a3c1; https://crates.io/api/v1/crates/piper/0.2.5. ADR 0102 continuation."
+
 [[trusted.polling]]
 criteria = "safe-to-deploy"
 user-id = 33035 # Taiki Endo (taiki-e)
@@ -552,6 +638,13 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2025-08-19"
 end = "2025-08-20"
 notes = "ADR 0102. Trust the author-maintainer of Serde and its parser/derive infrastructure for production serialization and generated Rust: careful unsafe invariants, compatibility and adversarial parser handling are part of this maintainer role. Covers only the named serialization, syntax, formatting and macro crates, not arbitrary uploads. This is an explicit publisher trust decision for safe-to-deploy, not a source audit. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.rand]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-random/rand"
+start = "2026-08-25"
+end = "2026-08-26"
+notes = "Trust the official Rand project release identity for the verified rand release: distribution algorithms, unbiased range sampling, RNG state/thread ownership and explicit cryptographic versus noncryptographic generator contracts are the project's production domain. Limited to its verified publication day. This does not turn every RNG into a CSPRNG, certify seeding sources or transfer coverage to dependencies. Explicit safe-to-deploy publisher trust, not an independent cryptographic or workflow audit. Registry evidence: rand 0.8.8; archive SHA-256 e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c; https://crates.io/api/v1/crates/rand/0.8.8. ADR 0102 continuation."
 
 [[trusted.regex]]
 criteria = "safe-to-deploy"
@@ -601,6 +694,13 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2023-07-17"
 end = "2023-07-18"
 notes = "ADR 0102. Trust the parking_lot/hashbrown author-maintainer for production lock ownership, atomic state and RAII unwind invariants in parking_lot, parking_lot_core, lock_api and scopeguard. Concurrency memory safety and correct Drop behavior are core responsibilities of these runtime primitives. This is narrow maintainer trust, not a claim to have independently model-checked synchronization. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.secrecy]]
+criteria = "safe-to-deploy"
+user-id = 19631 # Tony Arcieri (iqlusion) (tony-iqlusion)
+start = "2024-10-09"
+end = "2024-10-10"
+notes = "Trust Tony Arcieri's separately verified iqlusion account for secrecy only, based on authorship and the project's explicit secret-container, redacted formatting, deliberate exposure, clone/serialization restrictions and zeroization contracts. Account id 19631 is not silently conflated with tarcieri id 267. These are production secret-handling invariants; OS memory locking, copies outside the container and application logging remain separate responsibilities. Only the verified historical release day; safe-to-deploy publisher trust, not an independent source audit. Registry evidence: secrecy 0.10.3; archive SHA-256 e891af845473308773346dc847b2c23ee78fe442e0472ac50e22a18a93d3ae5a; https://crates.io/api/v1/crates/secrecy/0.10.3. ADR 0102 continuation."
 
 [[trusted.serde]]
 criteria = "safe-to-deploy"
@@ -658,6 +758,13 @@ start = "2026-01-31"
 end = "2026-02-01"
 notes = "ADR 0102. Trust the Tokio maintainer for production runtime, bytes/slab memory ownership, generated Tokio entry points, axum request handling and tokio-util integration in the named crates. The Tokio project maintains a production runtime and security reporting process covering concurrency and attacker-controlled network data. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.smallvec]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:smallvec/smallvec"
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "Trust the official smallvec release identity for its production inline/heap vector implementation, whose maintainer remit includes allocation/layout, initialized element counts, move/drop/unwind and safe collection APIs. Only the verified smallvec release day is trusted; consumers' unsafe Array implementations and dependencies are separately covered. Explicit safe-to-deploy publisher trust, not a source or workflow audit. Registry evidence: smallvec 1.16.6; archive SHA-256 3244542535d5de959d90ec55d1b5ff0fd2bb7b1310223907d5f11932847f7b59; https://crates.io/api/v1/crates/smallvec/1.16.6. ADR 0102 continuation."
+
 [[trusted.socket2]]
 criteria = "safe-to-deploy"
 user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
@@ -678,6 +785,13 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2026-11-09"
 end = "2026-11-10"
 notes = "ADR 0102. Trust the author-maintainer of Serde and its parser/derive infrastructure for production serialization and generated Rust: careful unsafe invariants, compatibility and adversarial parser handling are part of this maintainer role. Covers only the named serialization, syntax, formatting and macro crates, not arbitrary uploads. This is an explicit publisher trust decision for safe-to-deploy, not a source audit. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.tempfile]]
+criteria = "safe-to-deploy"
+user-id = 280 # Steven Allen (Stebalien)
+start = "2025-09-23"
+end = "2025-09-24"
+notes = "Trust the tempfile maintainer for production temporary-file creation/ownership, platform permissions and race-aware lifetime/cleanup contracts, as documented by this project. Limited to the verified tempfile release day. Named temporary paths can be removed or replaced by external cleaners and have documented platform/environment limitations; callers must use suitable directories and handles for secrets. No certification of application path selection or storage encryption; explicit safe-to-deploy publisher trust, not a source audit. Registry evidence: tempfile 3.23.0; archive SHA-256 2d31c77bdf42a745371d260a26ca7163f1e0924b64afa0b688e61b5a9fa02f16; https://crates.io/api/v1/crates/tempfile/3.23.0. ADR 0102 continuation."
 
 [[trusted.thiserror]]
 criteria = "safe-to-deploy"
@@ -769,6 +883,27 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2025-06-10"
 end = "2025-06-11"
 notes = "ADR 0102. Trust a Rust/Cargo and Wasmtime maintainer for the wasi ABI definitions published for production WASI consumers. Limit this decision to wasi: OpenSSL vendored C and its build machinery are deferred rather than treating general toolchain experience as a native cryptography audit. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.wasm-bindgen]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "Trust the official wasm-bindgen release identity for the runtime, macro/code generator and JS bindings from this repository. Its production remit includes generated Rust/JS ABI agreement, memory ownership across the Wasm boundary, exception handling and safe exported interfaces; do not infer safety merely because the compiler runs locally. Trust is limited to these four verified releases and their publication days. Imported JS, browser APIs, user-provided bindings and surrounding application policies require their own review; no independent ABI/security audit or workflow audit is claimed. Registry evidence: wasm-bindgen 0.2.130; archive SHA-256 a0181c14ddd6c7b8b0b0132a5f1ea2f32be0d893cd3ea97b6e3b28886b8a3d1c; https://crates.io/api/v1/crates/wasm-bindgen/0.2.130. ADR 0102 continuation."
+
+[[trusted.wasm-bindgen-macro]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "Trust the official wasm-bindgen release identity for the runtime, macro/code generator and JS bindings from this repository. Its production remit includes generated Rust/JS ABI agreement, memory ownership across the Wasm boundary, exception handling and safe exported interfaces; do not infer safety merely because the compiler runs locally. Trust is limited to these four verified releases and their publication days. Imported JS, browser APIs, user-provided bindings and surrounding application policies require their own review; no independent ABI/security audit or workflow audit is claimed. Registry evidence: wasm-bindgen-macro 0.2.130; archive SHA-256 6e931a02a39abdbf66966fc35902b5ed58344750a70885bed4ebb3d8eaf28ed9; https://crates.io/api/v1/crates/wasm-bindgen-macro/0.2.130. ADR 0102 continuation."
+
+[[trusted.wasm-bindgen-macro-support]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "Trust the official wasm-bindgen release identity for the runtime, macro/code generator and JS bindings from this repository. Its production remit includes generated Rust/JS ABI agreement, memory ownership across the Wasm boundary, exception handling and safe exported interfaces; do not infer safety merely because the compiler runs locally. Trust is limited to these four verified releases and their publication days. Imported JS, browser APIs, user-provided bindings and surrounding application policies require their own review; no independent ABI/security audit or workflow audit is claimed. Registry evidence: wasm-bindgen-macro-support 0.2.130; archive SHA-256 2ca4b54280e455bd831e33a6b8e734baf432fe63fbc35c42ac14ce67a043a53a; https://crates.io/api/v1/crates/wasm-bindgen-macro-support/0.2.130. ADR 0102 continuation."
 
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"
@@ -937,6 +1072,20 @@ user-id = 6743 # Ed Page (epage)
 start = "2026-11-05"
 end = "2026-11-06"
 notes = "ADR 0102. Trust the Cargo/clap/TOML maintainer for production configuration parsing, serialization and parser-combinator handling of attacker-controlled text. The TOML project supplies the parser/serializer components used for Rust configuration; this covers parser safety and generated output, not only build/run behavior. Application schema/size/depth limits remain necessary. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.zerocopy]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:google/zerocopy"
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "Trust the official Google zerocopy release identity for this matched runtime/derive pair. The project's explicit production purpose is sound memory reinterpretation: documented trait/derive restrictions, alignment, validity and aliasing invariants, with stated soundness testing and vulnerability handling. This decision includes generated deployed implementations, not just build-time execution. Limited to these verified releases and dates; user unsafe trait implementations, external parsers and dependencies remain separate. Publisher trust, not an independent source or workflow audit. Registry evidence: zerocopy 0.8.64; archive SHA-256 ed43f3060383c64b000f3c630550aebdfa9d3b76d48de32390483dd2cc7e0865; https://crates.io/api/v1/crates/zerocopy/0.8.64. ADR 0102 continuation."
+
+[[trusted.zerocopy-derive]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:google/zerocopy"
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "Trust the official Google zerocopy release identity for this matched runtime/derive pair. The project's explicit production purpose is sound memory reinterpretation: documented trait/derive restrictions, alignment, validity and aliasing invariants, with stated soundness testing and vulnerability handling. This decision includes generated deployed implementations, not just build-time execution. Limited to these verified releases and dates; user unsafe trait implementations, external parsers and dependencies remain separate. Publisher trust, not an independent source or workflow audit. Registry evidence: zerocopy-derive 0.8.64; archive SHA-256 a5cbd820fe3e35fb38c83b6dc7e6b1618bc46e0cd10073ae94e8d52dc468d8b9; https://crates.io/api/v1/crates/zerocopy-derive/0.8.64. ADR 0102 continuation."
 
 [[trusted.zeroize]]
 criteria = "safe-to-deploy"
