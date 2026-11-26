@@ -232,6 +232,13 @@ done
 test -f "$fixture_root/ready-to-stop"
 if test "$mode" = obfs4; then
   sudo env GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" "$chutney_python" "$project_root/scripts/ci/pt-isolation.py" "$fixture_root" "$runner_uid"
+  # The namespace observer must run as root; hand only its sealed evidence back
+  # to the unprivileged fixture owner without broadening the 0600 mode.
+  bridge_evidence="$fixture_root/bridge-evidence.json"
+  test -f "$bridge_evidence" && test ! -L "$bridge_evidence"
+  test "$(stat -c '%a' -- "$bridge_evidence")" = 600
+  sudo chown --no-dereference "${runner_uid}:${runner_gid}" -- "$bridge_evidence"
+  test "$(stat -c '%u:%g:%a' -- "$bridge_evidence")" = "${runner_uid}:${runner_gid}:600"
   relay "$chutney_python" - "$fixture_root" <<'PY'
 import json,pathlib,socket,sys
 with socket.create_connection(('192.0.2.2',5004),timeout=5): pass

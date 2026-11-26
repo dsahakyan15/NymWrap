@@ -96,6 +96,14 @@ PT и не проверяемая клиентская граница: productio
 четвёртый authority имеет отдельную роль bridge authority. Три обычных authority
 сохраняют consensus, а номера exit/bridge/client 004/005/006 не меняются.
 
+Run 45775540765 подтвердил strict bridge-authority bootstrap, полную нагрузку и
+наблюдение PT isolation, но обнаружил границу владения evidence: root-only observer с
+`umask 077` создаёт `bridge-evidence.json` с режимом `0600`, а следующий шаг
+проверки намеренно возвращается к UID/GID runner. После проверки, что это
+обычный файл, а не symlink, CI явно передаёт его закреплённым UID/GID и
+проверяет результат. Режим `0600` не расширяется, сетевые и namespace-
+проверки не меняются.
+
 ## Границы
 
 Новый CI ещё не запускался, M3H открыт. Нативный macOS sandbox, Linux PT/pcap и
