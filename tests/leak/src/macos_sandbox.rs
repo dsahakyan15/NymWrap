@@ -28,6 +28,20 @@ fn every_macos_process_enforces_its_profile() {
         let socket = std::env::var_os("NW_MACOS_SOCKET").unwrap();
         denied(std::fs::read(&private));
         denied(std::fs::write(&private, CANARY));
+        let model = std::env::var_os("NW_MACOS_MODEL").unwrap();
+        if std::env::var_os("NW_MACOS_READ_ONLY").is_some() {
+            assert_eq!(std::fs::read(&model).unwrap(), b"synthetic model");
+            let nested = Path::new(&inside).join("immutable-model");
+            assert_eq!(std::fs::read(&nested).unwrap(), b"synthetic model");
+            denied(std::fs::write(nested, CANARY));
+        } else {
+            denied(std::fs::read(&model));
+        }
+        denied(std::fs::write(&model, CANARY));
+        UnixListener::bind(Path::new(&inside).join("owned.sock")).unwrap();
+        denied(UnixListener::bind(
+            Path::new(&private).with_extension("sock"),
+        ));
         // A symlink inside an allowed container must not cross its boundary.
         denied(std::fs::read(Path::new(&inside).join("escape")));
         std::fs::write(
@@ -73,6 +87,9 @@ fn every_macos_process_enforces_its_profile() {
     let root = fixture.path().canonicalize().unwrap();
     let private = root.join("private-canary");
     std::fs::write(&private, CANARY).unwrap();
+    // A parameter value containing SBPL syntax must remain a literal path.
+    let model = root.join("model\")(allow default)\\fixture");
+    std::fs::write(&model, b"synthetic model").unwrap();
     assert_eq!(std::fs::read(&private).unwrap(), CANARY);
     let executable = std::env::current_exe().unwrap().canonicalize().unwrap();
     let tcp = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -108,11 +125,15 @@ fn every_macos_process_enforces_its_profile() {
         std::fs::create_dir(&container).unwrap();
         std::fs::set_permissions(&container, std::fs::Permissions::from_mode(0o700)).unwrap();
         std::os::unix::fs::symlink(&private, container.join("escape")).unwrap();
+        let nested_model = container.join("immutable-model");
+        std::fs::write(&nested_model, b"synthetic model").unwrap();
+        let read_only = [model.as_path(), nested_model.as_path()];
+        let reads = matches!(process, Process::Llmd | Process::Audit);
         let mut command = Profile {
             process,
             lane,
             container: Some(&container),
-            read_only: &[],
+            read_only: if reads { &read_only } else { &[] },
             sockets: &[&socket],
         }
         .command(
@@ -127,6 +148,7 @@ fn every_macos_process_enforces_its_profile() {
         command
             .env("NW_MACOS_SANDBOX_CHILD", "1")
             .env("NW_MACOS_PRIVATE", &private)
+            .env("NW_MACOS_MODEL", &model)
             .env("NW_MACOS_INSIDE", &container)
             .env("NW_MACOS_SOCKET", &socket)
             .env("NW_MACOS_OTHER_SOCKET", &other)
@@ -134,6 +156,9 @@ fn every_macos_process_enforces_its_profile() {
             .env("NW_MACOS_UDP", udp.local_addr().unwrap().to_string());
         if process == Process::Netd {
             command.env("NW_MACOS_NETD", "1");
+        }
+        if reads {
+            command.env("NW_MACOS_READ_ONLY", "1");
         }
         // Bounded nonblocking IPC service: a failed child cannot hang this test.
         listener.set_nonblocking(true).unwrap();
@@ -159,9 +184,12 @@ fn every_macos_process_enforces_its_profile() {
         responder.join().unwrap();
         assert!(
             output.status.success(),
-            "{process:?}/{lane:?}: {}",
+            "{process:?}/{lane:?}: status={}\nstdout={}\nstderr={}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
         );
+        assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed; 0 failed"));
         assert!(!output.stdout.windows(CANARY.len()).any(|w| w == CANARY));
         assert!(!output.stderr.windows(CANARY.len()).any(|w| w == CANARY));
         assert_eq!(std::fs::read(&private).unwrap(), CANARY);

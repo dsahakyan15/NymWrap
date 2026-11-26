@@ -11,5 +11,5 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: cargo test -p nw-platform --test macos_probe --locked
-      - run: cargo test -p nw-leak-tests --test macos_sandbox --locked -- --nocapture
+      - run: cargo test -p nw-sandbox --test macos --locked -- --nocapture
       - run: cargo clippy -p nw-sandbox -p nw-platform --all-targets --locked -- -D warnings

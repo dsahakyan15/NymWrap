@@ -11,6 +11,14 @@
     (literal "/dev/urandom")
     (literal "/dev/random")
     (literal (param "PROGRAM")))
+; dyld's immutable runtime locations on current macOS (including Cryptex).
+; Reading code and mapping it executable are distinct Seatbelt operations.
+(allow file-read-data file-map-executable
+    (subpath "/System/Library")
+    (subpath "/usr/lib")
+    (subpath "/System/Cryptexes/OS")
+    (subpath "/System/Volumes/Preboot/Cryptexes/OS")
+    (literal (param "PROGRAM")))
 (allow file-write-data (literal "/dev/null"))
 ; Only the initial executable. No fork, arbitrary exec, Mach services, IOKit,
 ; location services, Wi-Fi services or access to the user's home is granted.

@@ -107,6 +107,9 @@ impl Profile<'_> {
             parameters.push(format!("CONTAINER={}", root.display()).into());
             profile
                 .push_str("\n(allow file-read-data file-write* (subpath (param \"CONTAINER\")))\n");
+            // Services can create their own private UNIX endpoint, never an IP
+            // listener or an endpoint in another process/lane's directory.
+            profile.push_str("(allow network-bind network-inbound (local unix-socket (subpath (param \"CONTAINER\"))))\n");
         }
         for (index, file) in self.read_only.iter().enumerate() {
             let file = existing_path(file)?;
@@ -115,7 +118,7 @@ impl Profile<'_> {
             }
             parameters.push(format!("READ_{index}={}", file.display()).into());
             profile.push_str(&format!(
-                "\n(allow file-read-data (literal (param \"READ_{index}\")))\n"
+                "\n(allow file-read-data (literal (param \"READ_{index}\")))\n(deny file-write* (literal (param \"READ_{index}\")))\n"
             ));
         }
         for (index, socket) in self.sockets.iter().enumerate() {
@@ -134,7 +137,7 @@ impl Profile<'_> {
                 "\n(allow network-outbound (remote unix-socket (literal (param \"SOCKET_{index}\"))))\n"
             ));
         }
-        if !self.sockets.is_empty() {
+        if container.is_some() || !self.sockets.is_empty() {
             profile.push_str("\n(allow system-socket (socket-domain AF_UNIX))\n");
         }
         let mut command = Command::new("/usr/bin/sandbox-exec");
