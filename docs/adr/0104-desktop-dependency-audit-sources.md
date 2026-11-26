@@ -5,7 +5,9 @@
 `safe-to-deploy`: он включает безопасность при недоверенном вводе и безопасность
 кода, создаваемого build dependencies/макросами. Политика fuzz `safe-to-run` из
 [ADR 0088](0088-fuzz-dependency-audit-sources.md) сюда не переносится. Версии,
-Cargo.lock, код приложения и stores остальных графов не меняются; exemptions нет.
+Cargo.lock, код приложения и stores остальных графов не меняются. Первые три
+прохода выполнены без exemptions; единственное исключение четвёртого прохода
+для недостижимого дефекта `dirs-sys` разобрано ниже, без ослабления CI gate.
 
 ## Закреплённые внешние проверки
 
@@ -326,3 +328,194 @@ Workspace tests, clippy и leak tests запускались, но остано�
 Все девять tracked Cargo.lock, desktop config.toml и stores остальных графов
 неизменны. Exemptions не добавлены, safe-to-deploy не ослаблен, M6/CI gate
 остаются открытыми.
+
+## Четвёртый проход от 2791eb5 — 2026-11-26
+
+Ветка `agent/vet-desktop-4`, только desktop. Исходные **89 пробелов**
+воспроизведены repository wrapper с locked imports. Добавлены **77 решений
+доверия 60 identities**, **два собственных аудита** и **одно поштучное
+deployment exemption**: **89 → 10 → 9**. Все новые записи помечены
+**«Проверено агентом, не человеком»**, содержат SHA-256 архива, прочитанный
+материал и границы проверки. Это промежуточный результат, не закрытие M6.
+
+[Отчёт четвёртого прохода](../../supply-chain/desktop/review-2026-11-26-desktop-4.json)
+сохраняет registry fields/SHA предыдущих exact-version ответов, проверку
+архивов против неизменного desktop lockfile и cached sparse index, upstream
+URL/SHA, решения для каждой версии, checkpoints/receipts и полный остаток.
+89 исходных ответов crates.io заново не скачивались; их свежесть не заявляется.
+`regenerate imports` независимо обновил publisher snapshots: identity и UTC-день
+каждой из 77 записей сверены с новым `imports.lock`. Изменились только эти
+snapshots; все шесть source pins и импортированные audit sections сохранены.
+Новые запросы кешировались в `target/desktop4/`; последовательные обращения,
+Retry-After/exponential backoff для 429/5xx, предел паузы 45 секунд.
+
+### Доверие публикаторам и собственные аудиты
+
+Каждая запись доверия ограничена именем пакета и историческим UTC-днём
+`[start,end)`, с точной версией текущего lockfile в notes. Это отдельное
+product-maintainer trust для `safe-to-deploy`, включая unsafe, недоверенный ввод,
+FFI и генерируемый production-код, **не построчный аудит этих 77 пакетов**.
+Сверены original manifest с immutable upstream (у widestring и dlopen2 различаются
+только LF/CRLF), авторы/repository и начальный README excerpt до 160 символов,
+где README упакован. Отсутствующий README не объявляется прочитанным.
+Для неоднозначных identities получены official release commits: например,
+Manishearth/displaydoc, hds/tracing, dralley/quick-xml, folkertdev/zlib-rs,
+pczarn/bit-vec, jplatte/axum-core, 197g/png, madsmtm/rust-windowing,
+adamreichold/rust-scraper. Author, committer, message, URL и SHA ответа — в отчёте.
+Имя crates.io account не заменялось догадкой из названия репозитория.
+
+Собственные аудиты выданы только после чтения production-кода:
+
+- `version-compare 0.2.1`: оба manifests, все шесть production-модулей;
+  повторяющиеся rustdoc/test bodies прочитаны выборочно, не выданы за полный
+  независимый аудит fixtures. Проверены UTF-8 boundaries, checked integer parsing,
+  GNU ordering, iterator exhaustion и bounds. Это best-effort comparison,
+  не SemVer и не валидатор минимальной безопасной версии. `set_manifest` не
+  перепарсивает parts; длинные численные строки могут требовать сверхлинейного
+  CPU из-за повторного `nth`. В desktop потребитель — build-time `system-deps`
+  с доверенными native-library metadata; произвольный удалённый ввод требует
+  отдельного ограничения длины. Прошли **30 upstream tests** и synthetic
+  probe с BMP Unicode scalars, overflow и bounds.
+- `foreign-types-macros 0.2.4`: оба manifests и все три полных source modules.
+  Рассмотрены generated ownership/NonNull/Drop/Clone/ToOwned/deref, явные
+  unsafe Send/Sync assertions и оба варианта `std`. Безопасность конкретной
+  foreign declaration зависит от её unsafe CType/drop/clone/lifetime contracts.
+  Synthetic integration test с `foreign-types 0.5.0` проверяет разные allocations
+  clone, mutable borrow, borrowed ToOwned и ровно один Drop каждой allocation.
+
+Исходники этих аудитов сверены с проверенными архивами. Стенд
+[review-tests-2026-11-26-desktop-4.mjs](../../supply-chain/desktop/review-tests-2026-11-26-desktop-4.mjs)
+воспроизводит проверки из cached sources; его файлы, executables и отдельный
+synthetic Cargo.lock создаются только в ignored `target/desktop4/`.
+Miri, sanitizers, timing и полная OS/feature matrix не заявляются.
+
+### portable-atomic 1.15.0: объяснение двух SHA
+
+Архив SHA-256
+`05c8b63e8d9609db387f0324918f81d68fe27748f084ef092fb35954d0539a85`.
+Тег `v1.15.0` разрешается в
+[`e4595528211f1d53b7f4d93e528ef84b491fc871`](https://github.com/taiki-e/portable-atomic/commit/e4595528211f1d53b7f4d93e528ef84b491fc871),
+то есть ровно archive `.cargo_vcs_info.json.git.sha1`. Его непосредственный
+родитель — registry trusted-publishing SHA
+`cb58081f88cd02681dbb32482acec7ae198850d5`. Diff — только `Cargo.toml`
+(`1.14.0` → `1.15.0`) и `CHANGELOG.md`; production-код между ними неизменен.
+
+Причина подтверждается прочитанным `.github/workflows/release.yml` и его
+[закреплённым reusable workflow](https://github.com/taiki-e/github-actions/blob/e6a1170cbd07eb898017958967912976fce18f2d/.github/workflows/rust-release.yml):
+он запускается на родителе, затем создаёт release commit/tag и выполняет
+`cargo publish` из нового commit. OIDC SHA описывает запуск workflow, а VCS SHA —
+упакованный release commit; совпадение этих двух SHA здесь не требуется.
+
+Все **66 опубликованных негenerated-файлов** побайтно совпали с git tree тега,
+включая `Cargo.toml.orig` против upstream `Cargo.toml`. Отдельно перечислены
+три Cargo-generated файла: normalized `Cargo.toml`, packaged `Cargo.lock`
+и `.cargo_vcs_info.json`; они не выдаются за побайтовые файлы git tree.
+Файл за файлом SHA и исключения сохранены в отчёте. После объяснения provenance
+добавлено однодневное доверие официальному `github:taiki-e/portable-atomic`
+для production atomic/assembly/memory-ordering scope. Независимый полный
+аудит atomics или доказательство soundness этим не заявляется.
+
+### Native-архивы
+
+`webview2-com-sys 0.39.1` опубликован **wravery (131438)**, а не Microsoft.
+Все **девять** DLL/LIB для arm64/x64/x86 совпали побайтно с official
+`wravery/webview2-rs` на archive commit
+`edc2caf886175ccaebe86078c9cfe1ae2a187328`, а затем — с
+**Microsoft.Web.WebView2 1.0.3800.47** из official NuGet feed.
+На [странице NuGet](https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.3800.47)
+проверены reserved prefix и owner Microsoft; прочитан nuspec с author Microsoft.
+SHA-256 `.nupkg`:
+`56c9f26bdd07916a2d1949fb58a5c7e434dfa1173577dca879206050c4e718db`.
+Пути, размеры и SHA всех binaries — в отчёте.
+**Инструкции бинарей построчно не проверены**, воспроизводимая сборка и
+криптографическая проверка NuGet signature chain не выполнялись; наличие
+`.signature.p7s` само по себе не объявляется проверенной подписью.
+
+Две DLL test fixtures `libloading` также совпали с immutable upstream;
+`system-deps/src/tests/lib/libteststatic.a` — пустой test fixture, не настоящая
+библиотека. Они не исполнялись и не линкуются в production. Уже покрытые до
+baseline official Microsoft windows/windows-targets решения не расширялись;
+новый построчный аудит их native binaries не заявляется.
+Оба исторических GNU winapi packages по-прежнему открыты: registry identity
+отсутствует, **1387 + 1416** import archives не привязаны этим проходом к
+подтверждённой official distribution. Они не объявлены публикациями Microsoft.
+
+### dirs-sys 0.5.0: достижимость и исключение
+
+Архив SHA-256
+`e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab`.
+Прочитаны оба manifests, полный `src/lib.rs` и `src/xdg_user_dirs.rs`.
+Две синтетические строки воспроизводят slice panic в опубликованном parser:
+
+```text
+XDG_DIR="/safe"
+XDG_DOWNLOAD_DIR="
+```
+
+У первого key prefix/suffix перекрываются: `key[4..key.len()-4]` получает
+`4..3`. Во втором value состоит из одного double quote: `value[1..len-1]`
+получает `1..0`. Это deterministic DoS/panic, не утверждение о memory corruption.
+Оба `catch_unwind` probes прошли именно воспроизведением ожидаемой паники.
+На Windows заменён **только** Unix `OsStringExt` import на ASCII-only shim;
+parser/slices сохранены. Native Unix runtime, реальный HOME и конфигурация
+пользователя не использовались.
+
+Проверено полное обратное дерево `dirs-sys` для `--target all`:
+`dirs 7.0.0` → Tauri, tauri-build и Wry. Дефект **недостижим в текущем
+проверенном deployment**, а не признан безопасным:
+
+1. В `app/` и `crates/` нет прямых вызовов dirs/dirs-sys или Tauri PathResolver.
+   Конфигурация ресурсов/окон не содержит `$DOWNLOAD` и подобных user-dir paths.
+   Build и обычная инициализация используют home/base directories без XDG parser.
+2. Tauri path plugin имеет `resolve_directory`, но единственная capability
+   `main` содержит `permissions: []`: разрешение
+   `core:path:allow-resolve-directory` не выдано.
+3. Обнаружен дополнительный Linux-путь Wry download callback. В Tauri
+   `from_config` поле `download_handler=None`, NymWrap не устанавливает
+   `on_download`; `tauri-runtime-wry` передаёт callbacks только для `Some`,
+   а Wry регистрирует обработчик только при наличии callback. Поэтому до
+   `dirs::download_dir()` этот путь сейчас не доходит.
+4. На Windows используется Known Folder API, на macOS этот XDG parser
+   не компилируется. Это дополнительное разделение платформ, не замена Linux-анализу.
+
+Hashes исходников и точные просмотренные участки Tauri/Wry, application config
+и main сохранены в отчёте. Добавлено **одно exemption только для 0.5.0** с этим
+обоснованием и ссылкой сюда. Safe-to-deploy audit не выдан. Решение обязательно
+пересмотреть до изменения capabilities, native path calls, download hooks,
+resource/window config или указанных версий зависимостей.
+
+### Требуют обновления
+
+По завершённому анализу этого прохода обязательная доступная версия для
+обновления **не установлена**. Проверен новый
+[`dirs-sys` registry response](https://crates.io/api/v1/crates/dirs-sys):
+latest/max остаётся **0.5.0**, исправленной опубликованной версии нет.
+Нельзя предлагать выдуманную `0.5.1`. При появлении исправления либо достижимости
+parser требуется отдельная задача на обновление/исправление с length checks
+до обоих slices; Cargo.lock здесь сохранён. Для девяти незавершённых проверок
+вопрос обязательных обновлений остаётся открытым.
+
+### Остаток и проверки
+
+Осталось **9 пробелов safe-to-deploy**: `dbus-secret-service 4.1.0`,
+`ordered-stream 0.2.0`, `recvmsg 1.0.0`, оба `serialize-to-javascript* 0.1.2`,
+`sqlcipher-src 420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2`,
+`vswhom 0.1.0` и оба `winapi-*-pc-windows-gnu 0.4.0`.
+В JSON у каждой версии сохранены точная причина и оставшаяся работа.
+Неполные чтения, отсутствие repository/publisher и нерешённые template/native
+вопросы не выданы за аудиты. Историческая source-проблема `ordered-stream`
+из root-прохода здесь независимо не воспроизведена и не сертифицирована.
+
+Финальный `node scripts/vet-dependencies.mjs desktop` с locked imports:
+**failed, 9 gaps**, входы неизменны. Дополнительно unchanged repository policy
+`successfulVet` отвергает **любое exemption**, включая новое dirs-sys: даже
+закрытие оставшихся девяти само по себе не сделает gate зелёным. Этот отказ
+не обходится изменением wrapper, criteria или импортов.
+Desktop `cargo-deny 0.22.0` — **exit 0**, advisories/bans/licenses/sources ok,
+при существующих duplicate/unmatched-exception warnings. Проверки стенда:
+30 upstream + 1 version probe + 2 panic reproductions + 1 macro integration.
+Workspace tests/clippy/leak tests и extension tests в этом проходе **не
+запускались**: пользователь ограничил проверку metadata/docs задачи vet и deny.
+Прошлые неудачные запуски не объявляются новыми зелёными результатами.
+Все tracked Cargo.lock, версии, production-код и stores других графов сохранены.
+CI не запускался; итог неполный, M6/gate открыты.

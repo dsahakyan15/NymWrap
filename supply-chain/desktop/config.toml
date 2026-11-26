@@ -21,3 +21,8 @@ url = "https://raw.githubusercontent.com/mozilla/supply-chain/0ecbc0c0e1ffa71c17
 
 [imports.zcash]
 url = "https://raw.githubusercontent.com/zcash/rust-ecosystem/ce132d7abdd52f2b3b0d55ed5dc9f152331535c2/supply-chain/audits.toml"
+
+[[exemptions.dirs-sys]]
+version = "0.5.0"
+criteria = "safe-to-deploy"
+notes = "Проверено агентом, не человеком. This is a deployment-specific exemption, NOT a safe-to-deploy source audit. Archive SHA-256 e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab. Malformed XDG_DIR key and one-quote XDG value reproduce slice panics in the exact published parser (ASCII OS-string shim on Windows; no native Unix runtime claimed). Current NymWrap does not call dirs/dirs-sys or Tauri PathResolver natively; main capability has permissions=[], including no core:path:allow-resolve-directory. Tauri from_config sets download_handler=None, NymWrap never installs on_download, tauri-runtime-wry forwards download hooks only for Some(handler), and Wry installs the Linux download-dir callback only when a hook is present. Remaining initialization/build calls use base/home directories and do not parse user-dirs.dirs. Re-evaluate before changing any native path call, Tauri capability, window/download handler, config resource path or these dependency versions. No fixed published dirs-sys version was available in the checked registry response (latest 0.5.0). Exact code paths, source hashes, synthetic reproductions and limits: docs/adr/0104-desktop-dependency-audit-sources.md#dirs-sys-050-достижимость-и-исключение and review-2026-11-26-desktop-4.json. The repository wrapper continues to reject exemptions; its gate is not weakened or declared green."
