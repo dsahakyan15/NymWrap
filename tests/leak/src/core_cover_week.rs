@@ -84,7 +84,7 @@ where
                     .unwrap()
                     .max(day * 86400);
                 assert!(at < (day + 1) * 86400);
-                let real = (slot + day as usize) % 2 == 0;
+                let real = (slot + day as usize).is_multiple_of(2);
                 assert!(workspace.take_traffic_slot(at - 1, real).unwrap().is_none());
                 let job = workspace.take_traffic_slot(at, real).unwrap().unwrap();
                 let usage = workspace.reserve_network_cost(3, at).unwrap();

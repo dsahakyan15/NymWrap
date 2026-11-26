@@ -6,6 +6,10 @@ import {fileURLToPath} from 'node:url';
 import {artifactHash} from './evaluation-artifacts.mjs';
 import {auditCoverWeek} from './cover-pcap-report.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),buckets=[2048,4096,8192,16384,32768];
+// tshark's textual PDML expands the fixed 100-request M3 capture far beyond
+// the raw pcap. Run 45753879448 produced 47,524,910 bytes; keep a finite ceiling
+// above that observed artifact while rejecting unexpectedly large dissections.
+const maxPdmlBytes=64*1024*1024;
 const synthetic=JSON.parse(await readFile(new URL('../tests/leak/fixtures/pcap-canaries.json',import.meta.url),'utf8'));
 const values=[...Object.values(synthetic.device),...Object.values(synthetic.detectors)];
 for(const path of [...values]){const component=/(?:[\\/]Users[\\/]|\/home\/)([^\\/]+)/i.exec(path);if(component)values.push(component[1]);}
@@ -39,7 +43,7 @@ function attributes(tag){
   return Object.fromEntries([...tag.matchAll(/\b([a-z_]+)="([^"<>]*)"/g)].map(match=>[match[1],match[2]]));
 }
 export function httpBodies(pdml){
-  if(typeof pdml!=='string'||Buffer.byteLength(pdml)>32*1024*1024||/<!DOCTYPE|<!ENTITY/i.test(pdml))throw Error('invalid_pcap_dissection');
+  if(typeof pdml!=='string'||Buffer.byteLength(pdml)>maxPdmlBytes||/<!DOCTYPE|<!ENTITY/i.test(pdml))throw Error('invalid_pcap_dissection');
   const records=[];
   for(const packet of pdml.match(/<packet>[\s\S]*?<\/packet>/g)??[]){
     const fields=[...packet.matchAll(/<field\b[^>]*>/g)].map(match=>attributes(match[0]));
@@ -112,7 +116,7 @@ export async function main(args=process.argv.slice(2)){
   if(args.length!==4||args[0]!=='--fixture'||args[2]!=='--out'||process.platform!=='linux'||process.env.GITHUB_ACTIONS!=='true')throw Error('isolated_ci_pcap_evidence_required');
   const fixture=await realpath(args[1]),temporary=await realpath(process.env.RUNNER_TEMP),output=resolve(args[3]);
   if((await lstat(args[1])).isSymbolicLink()||!fixture.startsWith(temporary+sep)||!output.startsWith(root+sep))throw Error('unsafe_pcap_evidence_directory');
-  const result=auditCapture({pdml:(await bounded(join(fixture,'provider.pdml'),32*1024*1024)).toString('utf8'),
+  const result=auditCapture({pdml:(await bounded(join(fixture,'provider.pdml'),maxPdmlBytes)).toString('utf8'),
     client:(await bounded(join(fixture,'client.tsv'),8*1024*1024)).toString('utf8'),
     provider:JSON.parse(await bounded(join(fixture,'provider-receipt.json'),1024*1024)),rust:JSON.parse(await bounded(join(fixture,'rust-result.json'),65536)),
     health:JSON.parse(await bounded(join(fixture,'health-after-stop.json'),65536)),

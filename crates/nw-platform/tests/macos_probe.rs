@@ -41,6 +41,8 @@ fn macos_probe_policy_is_offline_readonly_and_cannot_spawn() {
         .unwrap();
     assert!(
         output.status.success(),
-        "native macOS probe confinement failed"
+        "native macOS probe confinement failed (status: {}):\n{}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
     );
 }
