@@ -333,3 +333,155 @@ advisories/bans/licenses/sources ok, прежние предупреждения
 Workspace tests, clippy и leak tests вызваны, но все остановились (exit 1)
 на сборке OpenSSL: executable perl не найден. Инструменты не устанавливались.
 Root gate и M6 остаются открытыми; зелёная приёмка не заявляется.
+
+## Четвёртая партия от df9dcc3: 67 → 50
+
+2026-11-26, ветка `agent/vet-root-4`. Неизменный продуктовый критерий —
+**safe-to-deploy**. Добавлены **14 точных доверий публикаторам**, **один исходный
+аудит libloading 0.8.9** и **два поштучных exemptions** с анализом ниже.
+Все девять Cargo.lock, версии, исходные policy и шесть закреплённых импортов
+сохранены; другие графы и код приложения не менялись. Полные SHA архивов,
+просмотренных файлов, registry metadata, проверки и остаток — в
+[четвёртом отчёте](../../supply-chain/root/review-2026-11-26-batch-4.json).
+Записи явно помечены **«Проверено агентом, не человеком»**.
+
+### Проверенные публикации и импорты
+
+У всех 17 затронутых пар архив сверен с Cargo.lock и фактической записью
+локального sparse index; имеющиеся распакованные файлы побайтно совпали с
+архивом. Для доверий заново проверены exact-version crates.io API:
+checksum, дата, отсутствие yank и именно uploader id либо repository identity.
+Основные серии exact-version запросов последовательные, с паузами 1,3 с,
+кэшем в `target/root-review-4/` и ограниченным Retry-After/exponential backoff;
+дополнительные сверки latest также кэшировались. HTTP 429 в этой партии не было.
+
+| Identity | Точные версии и продуктовое основание доверия |
+|---|---|
+| newpavlov (5059), josephlr (39279), github:rust-random/getrandom | getrandom 0.2.17 / 0.3.4 / 0.4.3 соответственно: OS entropy, инициализация буфера, FFI и ошибки без небезопасного fallback. Прочитаны разделы README о платформах/ошибках и SECURITY; custom entropy source не получает доверия. |
+| dvdhrm (12177) | r-efi 5.3.0 и 6.0.0: автор/сопровождающий reference UEFI bindings, ABI/layout и явные unsafe-интерфейсы; прочитаны официальный README и AUTHORS. Качество firmware и вызовы клиентов не проверены. |
+| hds (172786) | tracing 0.1.44 и tracing-attributes 0.1.31: Tokio span/event dispatch, владение и generated instrumentation. Прочитаны README/CONTRIBUTING и metadata официального release-preparation commit с автором hds. Захват аргументов намеренный: отбор полей и отсутствие содержания в журналах остаются обязанностью приложения. |
+| kornelski (988) | security-framework 2.11.1 / 3.7.0 и security-framework-sys 2.17.0: сопровождающий Apple TLS/Keychain bindings, CF ownership и ABI. Прочитаны README, исходные manifests и release metadata. Badge looking-for-maintainer сохранён как ограничение: будущая поддержка не обещана. |
+| jrmuizel (5946), jdm (2396) | core-foundation 0.9.4 / 0.10.1: Mozilla/Servo publisher identities, явно названные в историческом аудите Bobby Holley; ownership/retain/release и native wrappers. Прочитаны README/manifests и metadata релиза 0.10.1. Это отдельное доверие точным публикациям, не продление старого wildcard. |
+| folkertdev (256011) | zlib-rs 0.6.8: автор официального release commit, сопровождение bounds/CPU dispatch и compression/decompression в Trifecta Tech Foundation. Прочитаны README/manifest, metadata релиза и описание проекта фонда; прежний аудит проекта не объявлен аудитом этой версии. Лимиты распаковки остаются у приложения. |
+| github:srijs/rust-crc32fast | crc32fast 1.5.5: официальный release identity, IEEE CRC, SIMD bounds/dispatch и описанный процесс fuzz/ASan. Прочитаны README и manifest. CRC не становится аутентификацией; независимого source/workflow audit нет. |
+
+Основания подтверждаются первичными
+[Tokio tracing](https://github.com/tokio-rs/tracing),
+[getrandom SECURITY](https://github.com/rust-random/getrandom/blob/master/SECURITY.md),
+[r-efi](https://github.com/r-efi/r-efi),
+[rust-security-framework](https://github.com/kornelski/rust-security-framework),
+[Servo Core Foundation](https://github.com/servo/core-foundation-rs),
+[Trifecta zlib-rs](https://trifectatech.org/projects/zlib-rs/) и
+[crc32fast](https://github.com/srijs/rust-crc32fast).
+Хеши прочитанных snapshots и точные API responses атрибутированы в JSON.
+У каждой записи только один пакет и исторические UTC-сутки `[день, следующий
+день)`; будущих релизов и широких периодов нет. Это решения доверия
+сопровождению production-инвариантов, а не заявление о прочтении всего кода
+этих 14 пакетов или о независимом человеческом аудите.
+
+`node scripts/vet-dependencies.mjs root --update-imports` штатно добавил
+publisher evidence в imports.lock. Ручного дописывания publisher evidence нет.
+Это устранило препятствие прошлых партий для getrandom. Замеры: **67 → 62 → 53**.
+Проверены также актуальные heads прежних шести команд и прямые Mozilla
+Cargo-vet/Firefox stores; дополнительные pins/imports не дали полезного
+покрытия и не оставлены. При очистке эксперимента после автоматической
+перестановки секций временно пострадали старые policy/import sections;
+config целиком восстановлен из HEAD и повторно проверен. Тот промежуточный
+результат не включён в итоговое уменьшение пробелов.
+
+### Исходный аудит libloading 0.8.9
+
+Прочитаны оба manifests, README и весь исполняемый production Rust, включая
+обе платформы, constants, symbol/type/error helpers. Changelog проверен
+полной построчной грамматикой: rustdoc и пустые modules, без исполняемого кода.
+SHA архива — `d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55`.
+
+Рассмотрены lifetime borrow Library → Symbol, Clone/Send/Sync, размерные
+проверки перед pointer casts, NUL-проверки имён символов, владение handles,
+однократное закрытие, dlerror и Windows system ABI/UTF-16/error-mode guard.
+Загрузка native initializers/finalizers намеренно требует unsafe-доказательства
+вызывающего. DLL search path, environment, сами DLL и клиенты не получают
+сертификата. Windows filename API допускает усечение по embedded NUL;
+проверка полного разрешённого пути остаётся у вызывающего. Сохранены
+документированные ограничения dlerror на старых платформах без TLS error state.
+Это исходный аудит реализации API, не аудит произвольного загружаемого кода.
+
+<a id="root-4-unreachable"></a>
+
+### Две воспроизведённые ошибки: достижимость и отдельные exemptions
+
+Для **async-broadcast 0.7.2** повторно воспроизведён рост очереди до 32 сообщений
+при capacity=0 и overflow=true. `set_capacity` разрешает ноль, `try_broadcast`
+сравнивает len с capacity на равенство, а pop из пустой очереди не удаляет
+сообщения. [crates.io API](https://crates.io/api/v1/crates/async-broadcast)
+показывает latest 0.7.2; текущий upstream src/lib.rs на
+`124e9a78a44f7e1fec07e106027cd78a54eb2860` побайтно совпадает с locked-исходником.
+Опубликованного исправления не подтверждено. **Safe-to-deploy audit не дан.**
+
+Для **zvariant_derive 4.2.0** повторно воспроизведена паника сгенерированного
+TryFrom<Value> для структуры из двух полей при входной Structure из одного.
+Проверен и [latest 5.15.1](https://crates.io/api/v1/crates/zvariant_derive/5.15.1):
+скачанный архив сверён с checksum API, src/lib.rs делегирует генерацию в
+zvariant_utils 4.2.0. Его опубликованный `src/derive/value.rs` всё ещё выдаёт
+`fields.remove(0)` без проверки арности; файл прочитан целиком.
+SHA helper-файла — `dcba0a356401d1f99d87dca1b1370d995f862754e59d5ae3dac07fe69404ab1a`.
+Новая версия не объявлена исправлением. **Safe-to-deploy audit не дан.**
+
+В root обе пары присутствуют через metadata-цепочку
+`keyring 3.6.3 → optional secret-service 4.0.0 → zbus 4.4.0`.
+Но workspace отключает default features keyring, а nw-vault/nw-cred включают
+на Linux **sync-secret-service → dbus-secret-service**, не async-secret-service.
+В keyring `src/secret_service.rs:92–98` эти импорты разделены cfg.
+На Windows/macOS используются native backends.
+
+Для каждой пары `cargo tree --locked --offline --target all -i <crate>
+-e normal,build,dev` не показывает активного пути, также с `--all-features`
+workspace. Из кода NymWrap в **текущем графе root ни один процесс** не достигает
+ошибок. Потенциальными потребителями при смене backend были бы credential
+операции nw-vault/nw-cred в `nymwrap`/`nymwrapd`; проверены их manifests и
+вызовы keyring. Вывод не распространяется на desktop/netd stores.
+
+По явному разрешению задачи добавлены ровно два отдельных exemptions,
+каждый для своей версии, с SHA архива, причиной, ссылкой на этот анализ и
+условиями пересмотра. Включение async backend, прямого пути или изменение
+features отменяет основание: новый saved harness отвергает непустое inverse
+tree. Эти исключения не сертифицируют остальной код пакетов. Вместе с
+аудитом libloading они дают **53 → 50**.
+
+### Требуют обновления
+
+Для двух воспроизведённых ошибок **обязательное обновление сейчас не
+установлено**: в root нет активного пути, а исправленная опубликованная версия
+не подтверждена. `zvariant_derive 5.15.1` сохраняет проблему и не предлагается
+как исправление. При включении async backend потребуется upstream repair
+либо согласованная владельцем замена/обновление цепочки. Cargo.lock не менялся.
+Непроверенный остаток не объявлен безопасным или не требующим обновлений.
+
+### Проверка и незавершённый остаток
+
+- Финальный `node scripts/vet-dependencies.mjs root`: **failed, 50 gaps**,
+  locked imports, четыре входа неизменны. Без exemptions покрыты 15 новых пар
+  (14 publisher decisions + один source audit), ещё две пары покрыты exemptions.
+  Wrapper требует ноль `vetted_with_exemptions` для полного pass; это условие
+  не менялось. Root gate и M6 остаются открытыми.
+- `cargo deny check --hide-inclusion-graph`: exit 0,
+  advisories/bans/licenses/sources ok; прежние предупреждения о дубликатах и
+  неиспользованных license exceptions.
+- [Стенд](../../supply-chain/root/review-tests-2026-11-26-batch-4.mjs):
+  четыре проверки отсутствия активного пути и **3/3** Rust tests в debug и
+  release (**6 результатов**). Включает оба воспроизведения и обращение к
+  уже загруженному kernel32: правильный ABI/PID, Symbol clone/borrow, отказ
+  внутреннему NUL имени символа. Unix, Miri и upstream feature matrix не запускались.
+- `cargo vet fmt` для root, rustfmt стенда, JSON/integrity checks и
+  `git diff --check`. Workspace tests, clippy, leak suite и расширение в этой
+  партии **не запускались** согласно разрешённому объёму supply-chain/docs;
+  Perl bootstrap не потребовался. CI и push не запускались.
+
+Все **50** оставшихся пар с группами и дальнейшей работой перечислены в JSON.
+Открыты typenum/generic-array/errno, signal-hook-registry, blocking,
+phf_generator, siphasher, interprocess, парсеры, unsafe-контейнеры,
+OpenSSL/SQLite/SQLCipher/native payload и llama-cpp-2 base/fork.
+У siphasher дочитаны обе реализации, но optional serde state contract ещё не
+закрыт. У zbus_names прочитана часть validators/conversions без полного
+чтения остальных modules; сертификата нет. Неизвестное не заменено
+массовыми exemptions или более слабым критерием.

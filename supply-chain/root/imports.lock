@@ -173,12 +173,31 @@ user-id = 69526
 user-login = "notgull"
 user-name = "John Nunley"
 
+[[publisher.core-foundation]]
+version = "0.9.4"
+when = "2023-11-30"
+user-id = 5946
+user-login = "jrmuizel"
+user-name = "Jeff Muizelaar"
+
+[[publisher.core-foundation]]
+version = "0.10.1"
+when = "2025-05-26"
+user-id = 2396
+user-login = "jdm"
+user-name = "Josh Bowman-Matthews"
+
 [[publisher.cpufeatures]]
 version = "0.2.17"
 when = "2025-01-25"
 user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
+
+[[publisher.crc32fast]]
+version = "1.5.5"
+when = "2026-11-10"
+trusted-publisher = "github:srijs/rust-crc32fast"
 
 [[publisher.crossbeam-utils]]
 version = "0.8.23"
@@ -259,6 +278,25 @@ when = "2026-08-11"
 user-id = 33035
 user-login = "taiki-e"
 user-name = "Taiki Endo"
+
+[[publisher.getrandom]]
+version = "0.2.17"
+when = "2026-01-11"
+user-id = 5059
+user-login = "newpavlov"
+user-name = "Artyom Pavlov"
+
+[[publisher.getrandom]]
+version = "0.3.4"
+when = "2025-10-14"
+user-id = 39279
+user-login = "josephlr"
+user-name = "Joe Richey"
+
+[[publisher.getrandom]]
+version = "0.4.3"
+when = "2026-06-17"
+trusted-publisher = "github:rust-random/getrandom"
 
 [[publisher.glob]]
 version = "0.3.4"
@@ -487,6 +525,20 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.r-efi]]
+version = "5.3.0"
+when = "2025-06-17"
+user-id = 12177
+user-login = "dvdhrm"
+user-name = "David Rheinsberg"
+
+[[publisher.r-efi]]
+version = "6.0.0"
+when = "2026-02-03"
+user-id = 12177
+user-login = "dvdhrm"
+user-name = "David Rheinsberg"
+
 [[publisher.rand]]
 version = "0.8.8"
 when = "2026-08-25"
@@ -547,6 +599,27 @@ when = "2024-10-09"
 user-id = 19631
 user-login = "tony-iqlusion"
 user-name = "Tony Arcieri (iqlusion)"
+
+[[publisher.security-framework]]
+version = "2.11.1"
+when = "2024-07-14"
+user-id = 988
+user-login = "kornelski"
+user-name = "Kornel"
+
+[[publisher.security-framework]]
+version = "3.7.0"
+when = "2026-02-20"
+user-id = 988
+user-login = "kornelski"
+user-name = "Kornel"
+
+[[publisher.security-framework-sys]]
+version = "2.17.0"
+when = "2026-02-20"
+user-id = 988
+user-login = "kornelski"
+user-name = "Kornel"
 
 [[publisher.serde]]
 version = "1.0.229"
@@ -704,6 +777,20 @@ when = "2026-01-12"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
+
+[[publisher.tracing]]
+version = "0.1.44"
+when = "2025-12-18"
+user-id = 172786
+user-login = "hds"
+user-name = "Hayden Stainsby"
+
+[[publisher.tracing-attributes]]
+version = "0.1.31"
+when = "2025-11-26"
+user-id = 172786
+user-login = "hds"
+user-name = "Hayden Stainsby"
 
 [[publisher.unicode-ident]]
 version = "1.0.27"
@@ -947,6 +1034,13 @@ trusted-publisher = "github:RustCrypto/utils"
 version = "1.5.0"
 when = "2026-06-12"
 trusted-publisher = "github:RustCrypto/utils"
+
+[[publisher.zlib-rs]]
+version = "0.6.8"
+when = "2026-09-15"
+user-id = 256011
+user-login = "folkertdev"
+user-name = "Folkert de Vries"
 
 [[publisher.zmij]]
 version = "1.0.23"

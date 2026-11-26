@@ -80,46 +80,52 @@ M6 и CI dependency-audits desktop остаются открытыми.
 
 ## cargo-vet: граф root
 
-Задача 9, третья партия от `61c17b5` — 2026-11-26: **88 → 67 пробелов**.
-Добавлен **21 исходный аудит агента** с неизменным **safe-to-deploy**.
-Версии, все Cargo.lock, policy, imports и остальные графы сохранены;
-новых exemptions и доверий публикаторам нет.
+Задача 9, четвёртая партия от `df9dcc3` — 2026-11-26: **67 → 50 пробелов**.
+Добавлены **14 точных доверий публикаторам**, **один исходный аудит libloading
+0.8.9** и **два поштучных exemptions** для доказанно неактивного backend.
+Критерий **safe-to-deploy**, версии, все девять Cargo.lock, исходные policy,
+шесть закреплённых импортов и остальные графы сохранены. Publisher metadata
+в imports.lock обновлена штатной командой, новых import sources нет.
 
-История: первая партия `89f3b08` дала **268 → 107**, вторая `9c2fc56` —
-**107 → 88**. Предыдущие отчёты сохранены.
-[Третий отчёт](../supply-chain/root/review-2026-11-26-batch-3.json) содержит
-инвентаризацию всех 88 крейтов по размеру/unsafe/build/proc-macro/FFI/ОС,
-SHA архивов и просмотренных файлов, режим чтения, замеры **88 → 72 → 67**
-и все оставшиеся 67 пар с критериями и дальнейшей работой.
+История: **268 → 107 → 88 → 67**; третья партия `55cbae9` добавила 21 исходный
+аудит. Предыдущие отчёты сохранены. [Четвёртый отчёт](../supply-chain/root/review-2026-11-26-batch-4.json)
+содержит точные API metadata, SHA архивов/просмотренных файлов, основания
+доверий, достижимость ошибок и полный остаток **50** пар с дальнейшей работой.
 Метод и ограничения продолжены в [ADR 0102](adr/0102-root-dependency-audit-sources.md).
 
-У каждой новой записи явно стоит «Проверено агентом, не человеком».
-Прочитаны manifests и production-код; у ordered-stream большие rustdoc-примеры
-не прочитаны целиком, а data tables web_atoms проверены строгим полным разбором
-(2231 entity и 1108 имён), без сверки каждого значения со стандартом HTML.
-Архивы проверены по Cargo.lock и cached sparse index, crates.io API не вызывался.
-В notes разобраны unsafe/FFI/SIMD, генерируемый код, escaping и полномочия build
-helpers. Явно сохранены ограничения memoffset на закреплённый Rust 1.100,
-локальные allocation leaks xdg-home и воспроизведённая ошибка position_hint
-ordered-stream; metadata hints не сертифицированы как граница безопасности.
+Каждая новая запись явно помечена «Проверено агентом, не человеком».
+Для доверий проверены uploader/workflow точной версии, checksum, отсутствие
+yank и исторические UTC-сутки; это не исходные аудиты этих 14 пакетов.
+Архивы всех 17 затронутых пар совпали с Cargo.lock и sparse index.
+API responses кэшировались в target/, запросы шли с паузами/backoff;
+HTTP 429 в этой партии не было. У libloading прочитан весь исполняемый Rust
+обеих платформ: lifetime/ownership, handles, ABI, NUL и loader contracts.
 
-Без аудита оставлены async-broadcast (рост очереди при capacity=0 + overflow)
-и zvariant_derive (паника TryFrom<Value> на короткой Structure), оба случая
-воспроизведены; remote reachability в NymWrap не установлена. blocking,
-phf_generator и частично прочитанный siphasher также остаются открытыми.
-Крупные реализации, getrandom/typenum/generic-array/errno, native C/ASM/FFI
-и llama-cpp-2 base/fork не получили неподтверждённых сертификатов.
+Ошибки async-broadcast 0.7.2 и zvariant_derive 4.2.0 повторно воспроизведены,
+**safe-to-deploy audits им не даны**. Root выбирает синхронный
+`keyring → dbus-secret-service`, а проблемная цепочка optional
+`secret-service → zbus` неактивна. Для обоих пакетов inverse cargo tree
+по всем targets пуст также с workspace --all-features: ни один текущий
+root-процесс не достигает ошибки. Каждое exemption содержит SHA, точную
+причину, ссылку на анализ и условия пересмотра при изменении features.
 
-Проверки: финальный `node scripts/vet-dependencies.mjs root` — failed,
-**67 gaps**, imports locked и входы неизменны. Root cargo-deny 0.22.0 — exit 0,
-advisories/bans/licenses/sources ok.
-[Аудиторский стенд](../supply-chain/root/review-tests-2026-11-26-batch-3.mjs)
-прошёл **11/11** в debug, release и ptrhash debug; wrapper — 3/3, расширение —
-24/24. Это не полный upstream/cross-platform/timing аудит.
-`cargo test --workspace --locked`, `cargo clippy -- -D warnings` и leak tests
-вызваны, но завершились exit 1 на сборке OpenSSL: executable perl не найден.
-Инструменты не устанавливались. Root vet fmt, rustfmt стенда и
-`git diff --check` выполнены. CI не запускался; root gate и M6 остаются открытыми.
+Раздел ADR «Требуют обновления»: для этих двух случаев обязательное обновление
+не установлено — активного пути нет, исправленной публикации не подтверждено.
+Latest async-broadcast остаётся 0.7.2, а latest zvariant_derive 5.15.1 через
+helper сохраняет remove(0) без проверки арности. Непроверенный остаток не
+объявлен безопасным: native/FFI, крупные парсеры и unsafe-контейнеры,
+typenum/generic-array/errno, blocking/phf_generator/siphasher,
+OpenSSL/SQLite/SQLCipher и llama-cpp-2 base/fork остаются открытыми.
+
+Проверки: `node scripts/vet-dependencies.mjs root` — **failed, 50 gaps**,
+locked imports и входы неизменны. Cargo-deny — exit 0,
+advisories/bans/licenses/sources ok. [Новый стенд](../supply-chain/root/review-tests-2026-11-26-batch-4.mjs)
+прошёл четыре проверки недостижимости и **3/3** Rust tests в debug и release.
+Root vet fmt, rustfmt и git diff --check выполнены. Workspace tests, clippy,
+leak suite и расширение **не запускались** согласно объёму supply-chain/docs;
+Perl bootstrap не потребовался. CI и push не запускались.
+Exemptions не являются аудитами; требование wrapper о нуле exemptions для
+полного pass сохранено. Root gate и M6 остаются открытыми.
 
 
 ## cargo-vet: граф netd
