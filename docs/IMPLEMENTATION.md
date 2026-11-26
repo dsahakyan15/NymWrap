@@ -172,9 +172,11 @@ Wrapper по-прежнему отвергает любые vetted_with_exemptio
 
 ## cargo-vet: граф netd
 
-2026-11-26, [ADR 0103](adr/0103-netd-dependency-audit-sources.md): **499 → 312 → 253 → 109 пробелов**
+2026-11-26, [ADR 0103](adr/0103-netd-dependency-audit-sources.md): **499 → 312 → 253 → 109 → 26 пробелов**
 для `daemons/nw-netd/Cargo.toml`. Критерий продукта `safe-to-deploy` сохранён;
-версии, все Cargo.lock, манифесты и остальные stores не менялись. Новых exemptions нет.
+версии, все Cargo.lock, манифесты и остальные stores не менялись.
+Четвёртая партия добавила 18 индивидуальных exemptions по недостижимости;
+неизменённый gate отвергает их отдельно от оставшихся пробелов.
 Результат промежуточный, M6 и dependency-audits netd остаются открытыми.
 
 Четыре импорта закреплены по commit: Bytecode Alliance, ISRG, Zcash, Embark.
@@ -271,6 +273,55 @@ backoff и кэшем в target/; HTTP 429 не наблюдался.
 leak-пакета остановлен, самостоятельный результат не заявляется. Финальные
 проверки использовали штатные bootstrap Perl/libclang и build-env.ps1;
 первые неуспешные попытки без инструментов отмечены в отчёте.
+
+Четвёртая партия от `037d027`, ветка `agent/vet-netd-4`: **109 → 60 → 38 → 28 → 26**.
+Все 109 exact-version публикаций заново проверены по crates.io, архиву,
+текущему sparse cache и netd lock. Добавлены **59 отдельных решений о доверии**
+на пакет/identity/исторические UTC-сутки, с current-owner и canonical original
+manifest evidence; это доверие сопровождению для safe-to-deploy, не исходный
+аудит. Новых imports нет: просмотр оставшихся трёх registry sources и новых
+HEAD audit-файлов прежних источников не дал подходящего покрытия.
+Полные build scripts native-семейств прочитаны; вложенный C/ASM не объявлен
+построчно проверенным. У ring подтверждён официальный uploader, но его 17
+Windows object files не пересобраны и не проверены по инструкциям.
+
+**Шесть исходных аудитов агента:** fluid-let, proc-macro-crate, dirs, getset,
+directories и nonany. У каждого — «проверено агентом, не человеком», SHA
+архива/прочитанных файлов и точная граница просмотра. Для directories
+прочитана вся реализация, документационные таблицы выборочно; dirs-sys
+остаётся отдельным пробелом. Прошли 8 исходных tests fluid-let, 13 library tests
+proc-macro-crate и 131072 синтетические u8/i8 value/niche пары nonany.
+
+**18 exemptions** записаны поштучно с точными командами и условиями отмены:
+android_system_properties, base64 0.23.1, bincode, bs58, iana-time-zone,
+num-bigint-dig, два schemars, spin и unty отсутствуют в обоих active
+`--target all` деревьях с normal/build/dev, с `--all-features` и без него.
+Два r-efi, три Redox-пакета, wasix и два winapi GNU import-пакета имеют пути
+только через неподдерживаемые backends: дополнительно проверены все шесть
+x86_64/aarch64 Linux/Windows-MSVC/macOS targets, по 12 пустых деревьев на версию.
+Для этих восьми all-target путь **есть**; платформенное исключение этого не
+скрывает. Все 2803 winapi `.a` совпали с официальным Git tree перед публикацией
+2018 года; API не сообщает исторический аккаунт uploader. Бинарного аудита нет.
+
+В разделе ADR **«Требуют обновления»** записаны воспроизведённые проблемы
+data-encoding (safe public field → invalid UTF-8 String), sanitize-filename
+(обрезание → результат не проходит собственную Windows-проверку),
+enum-ordinalize (shift expression → неверный ordinal) и dirs-sys (повреждённая
+XDG-строка → panic). У dirs-sys на Windows раскрыта единственная portability
+замена OsStringExt; нативный Linux запуск не заявляется. Достижимость пакетов
+подтверждена, triggering caller/эксплуатация из NymWrap не доказаны.
+Rdrand AArch64 flags/detection и educe union Debug оставлены как source-only
+препятствия без нативного UB/hardware repro. Исправляющие версии не подтверждены,
+доверие или фиктивные аудиты этим узлам не добавлены.
+
+Финальная проверка wrapper: **26 gaps**, inputs unchanged, красный gate;
+отдельно **18 exemptions**, которые gate также запрещает. cargo-deny netd
+зелёный по четырём категориям. Workspace tests: **169 passed / 16 ignored**,
+в том числе leak suites **33 passed / 1 ignored**; clippy с `-D warnings` —
+exit 0; расширение — **24/24**. Это локальные результаты, не CI.
+Источники, SHA, checkpoints, все исключения, воспроизведения и полный остаток —
+в [четвёртом отчёте](../supply-chain/netd/review-2026-11-26-fourth.json).
+Нулевой остаток не достигнут; M6 и netd dependency-audits остаются открытыми.
 
 ## Задача 9: M6 cargo-vet, только fuzz; локальный gate зелёный — 2026-11-26
 
