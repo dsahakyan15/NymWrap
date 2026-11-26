@@ -131,6 +131,34 @@ Linux — эталонная платформа для `paranoid`. На Windows 
 демонов внутри WSL2 с linux-песочницами; нативный режим Windows поддерживается
 в `standard` и `strict`.
 
+Опциональная агентская MicroVM (ADR 0105/0106) подключена отдельным Linux x86_64
+backend: `run --microvm /absolute/tools -- /guest/program`. Bwrap остаётся
+по умолчанию. Проверяются pinned SHA-256 VMM, ядра, BusyBox/musl и guest init;
+KVM/VMM недоступен или проверка не прошла — отказ без fallback. Гость без NIC,
+дисков, MMDS и host mounts. Единственный прикладной канал — guest Unix socket
+к фиксированному приватному shadow nw-api через virtio-vsock/host relay;
+ни core RPC, ни vault, ни cover-полоса гостю не передаются. stdout/stderr и
+код завершения идут по отдельным локальным vsock-каналам без записи логов.
+
+PID 1 нормализует `localhost`, user 1000:1000, UTC/C.UTF-8, `/home/user`,
+`/work`, machine-id и git identity; `/sys` и host services отсутствуют.
+Непривилегированный агент получает NNP. Проект копируется в RAM с ограничением
+64 MiB/4096 записей, без symlink/hardlink/special files и без writeback.
+Host paths/argv/config не попадают в гостевой command line или persistent
+файлы: используются sealed memfd и Zeroizing. Требуется выключенный swap на
+весь срок сессии, core dumps запрещены; hibernate администратором вне защиты.
+Piped `kernel.core_pattern` отклоняется, поскольку для такого crash helper
+ядро игнорирует RLIMIT_CORE; это условие тоже должно сохраняться всю сессию.
+Drop/PDEATHSIG завершают VMM, есть предел старта/сессии. Текущий guest runtime
+минимален (BusyBox и статические программы), stdin не подключён.
+
+У MicroVM отдельное ядро, но Firecracker/KVM и ядро хоста остаются доверенными.
+VMM работает от пользователя без root, наследует запрет IP-сокетов и NNP;
+jailer/полная файловая песочница самого VMM ещё не подключены. Поэтому VM escape
+в VMM не покрыт дополнительной файловой границей, а наличие этого backend не
+закрывает весь M6. Реальная проверка KVM, TCP/UDP/DNS denial и сокетного запроса
+обязательна в CI `linux-microvm`; локальный Windows-тест её не заменяет.
+
 Текущее сетевое разделение (ADR 0082): административный Linux launcher до Tokio
 создаёт пустой netns core, запускает retained netd в заранее подготовленном
 отдельном netns, сбрасывает UID/GID/groups и запрещает IP-сокеты core через

@@ -1,4 +1,5 @@
 //! Linux offline launcher. Unsupported platforms fail instead of launching unconfined.
+pub mod microvm;
 use std::{
     ffi::OsString,
     path::{Path, PathBuf},

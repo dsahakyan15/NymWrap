@@ -8,11 +8,18 @@ license.workspace = true
 thiserror.workspace = true
 nw-platform.workspace = true
 
-[target.'cfg(windows)'.dependencies]
+[target.'cfg(any(windows, all(target_os = "linux", target_arch = "x86_64")))'.dependencies]
 zeroize.workspace = true
+
+[target.'cfg(all(target_os = "linux", target_arch = "x86_64"))'.dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+zeroize.workspace = true
 
 [lints]
 workspace = true

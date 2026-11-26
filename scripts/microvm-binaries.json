@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "platform": "linux-x86_64",
+  "firecracker": "1.18.0",
+  "kernel": "6.18.54",
+  "rootfs": "alpine-minirootfs-3.24.4",
+  "archives": [
+    {
+      "name": "firecracker.tgz",
+      "url": "https://github.com/firecracker-microvm/firecracker/releases/download/v1.18.0/firecracker-v1.18.0-x86_64.tgz",
+      "sha256": "1ac8eec866dd5eea14efecf6323e22b23eea24054545338a5b34bc5bca6623cd",
+      "bytes": 7606252
+    },
+    {
+      "name": "rootfs.tar.gz",
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.4-x86_64.tar.gz",
+      "sha256": "cdaa38cb8de3537967ee5b6c9b6cd00cc962da2b018e6eea48696bb274923012",
+      "bytes": 3704088
+    }
+  ],
+  "files": [
+    {
+      "name": "firecracker",
+      "archive": "firecracker.tgz",
+      "member": "release-v1.18.0-x86_64/firecracker-v1.18.0-x86_64",
+      "sha256": "b33f46cd6d88834cf6a4f8d184f08f219809c636236bffd286d233a60602a2ba",
+      "bytes": 3921872
+    },
+    {
+      "name": "busybox",
+      "archive": "rootfs.tar.gz",
+      "member": "./bin/busybox",
+      "sha256": "01a989eb4d1d04b0d146c790ac536abd88f374ec74a2e110c58910b840d42045",
+      "bytes": 804616
+    },
+    {
+      "name": "musl",
+      "archive": "rootfs.tar.gz",
+      "member": "./lib/ld-musl-x86_64.so.1",
+      "sha256": "095b047c631447e4fa50401fa7ffce01f678587040d65ba18c574981dc630de5",
+      "bytes": 670312
+    },
+    {
+      "name": "vmlinux",
+      "url": "https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/20261014-be8fe2826184-0/x86_64/vmlinux-6.18.54",
+      "sha256": "f578f91afae7864feffbba200307e1096b037582a6172bf318dc64ae6afaf4b7",
+      "bytes": 27893008
+    },
+    {
+      "name": "guest-init",
+      "source": "scripts/microvm/guest-init.c",
+      "sha256": "7332ab052af064f39f28f56e09dee6ca75234e59f2e942dbee4636eb69d6dc16",
+      "bytes": 63888
+    }
+  ],
+  "compiler": {
+    "version": "0.15.2",
+    "platforms": {
+      "win32-x64": {
+        "archive": "zig-x86_64-windows-0.15.2.zip",
+        "url": "https://ziglang.org/download/0.15.2/zig-x86_64-windows-0.15.2.zip",
+        "sha256": "3a0ed1e8799a2f8ce2a6e6290a9ff22e6906f8227865911fb7ddedc3cc14cb0c",
+        "directory": "zig-x86_64-windows-0.15.2",
+        "bytes": 92614574
+      },
+      "linux-x64": {
+        "archive": "zig-x86_64-linux-0.15.2.tar.xz",
+        "url": "https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz",
+        "sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239",
+        "directory": "zig-x86_64-linux-0.15.2",
+        "bytes": 53733924
+      }
+    }
+  }
+}

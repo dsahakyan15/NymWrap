@@ -118,6 +118,29 @@ jobs:
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - run: cargo test -p nw-leak-tests --locked
       - run: cargo test -p nw-core --example core-cover-egress --locked
+  linux-microvm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CARGO_BUILD_JOBS: '4'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: sudo apt-get update && sudo apt-get install -y cmake clang libclang-dev pkg-config libssl-dev libdbus-1-dev acl
+      - name: Require usable KVM; keep guest RAM off disk
+        run: |
+          test -c /dev/kvm
+          sudo setfacl -m u:"$(id -un)":rw /dev/kvm
+          sudo swapoff -a
+          sudo sysctl -w kernel.core_pattern=core
+          test -r /dev/kvm && test -w /dev/kvm
+      - run: node scripts/fetch-microvm.mjs --prepare
+      - name: Real guest identity, TCP UDP DNS denial and private API canary
+        run: cargo test -p nw-leak-tests --test microvm --locked -- --ignored --nocapture
+        env:
+          NW_MICROVM_TOOLS: ${{ github.workspace }}/target/tools/microvm
   linux-isolation-vm:
     runs-on: windows-latest
     timeout-minutes: 15
