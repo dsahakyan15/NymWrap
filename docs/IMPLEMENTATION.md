@@ -7,6 +7,30 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Задача 8 — macOS App Sandbox
+
+Добавлены встроенные deny-default Seatbelt-профили и macOS launcher `nw-sandbox`
+для core, API, модели, netd, Drift host, импорта и UI (ADR 0094). Только netd
+получает исходящий IP; геолокация/Wi-Fi capabilities не выдаются. Каталог процесса
+и полоса задаются явно, файлы модели/импорта и клиентские IPC — точным allowlist.
+`sysctl-read` ограничен CPU/runtime и версией ОС, имя узла закрыто отдельным тестом.
+Профиль `nw-probe` и исправленная самопроверка ADR 0085 сохранены без изменений.
+
+Это `sandbox-exec` для CLI без Apple Developer identity, не App Store bundle.
+Отказ механизма прекращает запуск. Автоматическое подключение всех production
+демонов к launcher, GUI/Keychain и полный Tor bootstrap в новом профиле ещё не
+проверены; изоляция обычного desktop и закрытие M6 не заявляются.
+
+Нативный workflow `macos-sandbox` проверяет роли отдельными процессами: точный
+`PermissionDenied` сети и внешней канарейки, symlink, разрешённый контейнер/IPC,
+положительную TCP/UDP-доставку только netd; существующий macOS probe обязателен.
+Нативный [CI run 45809571144](https://github.com/dsahakyan15/NymWrap/actions/runs/45809571144)
+для `77baf62` зелёный: probe — 1 тест, новый suite — 3 теста (внутри 9
+комбинаций роли/полосы), Clippy platform/sandbox с `-D warnings`. В CI нет skip
+при недоступности механизма. Для dyld разрешены только публичные runtime-пути,
+их исполняемое отображение и чтение самого каталога `/`, без рекурсивного гранта.
+Внешних зависимостей нет; Windows/Linux-песочницы не изменены.
+
 ## Исправления по находкам cargo-vet
 
 Linux keyring в графах root/desktop переведён на crypto-openssl + vendored

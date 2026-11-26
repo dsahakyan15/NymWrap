@@ -1,0 +1,3 @@
+; nw-api, nymwrapd, nw-llmd, nw-drift-host, nw-audit-worker and UI.
+; AF_UNIX permissions, when needed, name individual endpoints in the launcher.
+; No IP network operation is allowed, including loopback TCP and UDP.

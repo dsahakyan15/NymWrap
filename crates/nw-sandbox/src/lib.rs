@@ -1,4 +1,6 @@
-//! Linux offline launcher. Unsupported platforms fail instead of launching unconfined.
+//! OS sandbox launchers. Unsupported mechanisms fail instead of launching unconfined.
+#[cfg(target_os = "macos")]
+pub mod macos;
 pub mod microvm;
 use std::{
     ffi::OsString,

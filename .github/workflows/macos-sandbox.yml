@@ -1,0 +1,32 @@
+name: macos-sandbox
+on: [push, pull_request]
+permissions:
+  contents: read
+env:
+  CARGO_BUILD_JOBS: '4'
+jobs:
+  seatbelt:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: cargo test -p nw-platform --test macos_probe --locked
+      - run: cargo test -p nw-sandbox --test macos --locked -- --nocapture
+      - name: Diagnose native startup failure
+        if: failure()
+        shell: bash
+        run: |
+          /usr/bin/log show --last 2m --style compact --predicate 'eventMessage CONTAINS "Sandbox:"' || true
+          python3 - <<'PY'
+          import json, pathlib, time
+          for path in pathlib.Path.home().joinpath('Library/Logs/DiagnosticReports').glob('*.ips'):
+              if path.stat().st_mtime < time.time() - 180:
+                  continue
+              text = path.read_text(errors='replace')
+              try:
+                  report = json.loads(text.split('\n', 1)[1])
+              except (ValueError, IndexError):
+                  continue
+              print(path.name, report.get('termination'), report.get('asi'))
+          PY
+      - run: cargo clippy -p nw-sandbox -p nw-platform --all-targets --locked -- -D warnings

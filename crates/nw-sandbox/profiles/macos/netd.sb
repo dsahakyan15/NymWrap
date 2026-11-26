@@ -1,0 +1,5 @@
+; Only nw-netd. The transport and leakcheck remain mandatory application policy.
+; This is not a Tor-only firewall or permission to use a direct fallback.
+(allow network-outbound (remote ip))
+(allow network-bind (local ip))
+(allow system-socket (socket-domain AF_INET) (socket-domain AF_INET6))
