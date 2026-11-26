@@ -4,11 +4,23 @@
 [cargo-vet]
 version = "0.10"
 
+[imports.bytecode-alliance]
+url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/1499ce8728f5f1b7fae0db88e1417991b01cfc13/supply-chain/audits.toml"
+
+[imports.embark-studios]
+url = "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/732513edfd9172f4eda358b2d0cefc6cad1585ee/audits.toml"
+
 [imports.google]
 url = "https://raw.githubusercontent.com/google/supply-chain/640a51eb32e2f47d7ee8017a128485f7e1ce6780/audits.toml"
 
+[imports.isrg]
+url = "https://raw.githubusercontent.com/divviup/libprio-rs/7549f3c7dffe96d3a6e6fb214007911cdec3e8e6/supply-chain/audits.toml"
+
 [imports.mozilla]
 url = "https://raw.githubusercontent.com/mozilla/supply-chain/0ecbc0c0e1ffa71c171eca7e5f065adf35a46d08/audits.toml"
+
+[imports.zcash]
+url = "https://raw.githubusercontent.com/zcash/rust-ecosystem/ce132d7abdd52f2b3b0d55ed5dc9f152331535c2/supply-chain/audits.toml"
 
 [policy.llama-cpp-2]
 audit-as-crates-io = true

@@ -7,6 +7,35 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## cargo-vet: граф root
+
+Задача 9, промежуточная партия от 4691e27 — 2026-11-26. Продуктовый
+**safe-to-deploy сохранён**. Изменён только store `supply-chain/root/` и эта
+документация; версии и все Cargo.lock сохранены, новых exemptions нет.
+[ADR 0102](adr/0102-root-dependency-audit-sources.md) фиксирует основания доверия
+для продукта; [JSON-отчёт](../supply-chain/root/review-2026-11-26.json) содержит
+каждый промежуточный замер, хеши входов, registry evidence и полный остаток.
+
+Пробелы: **268 → 233** после четырёх immutable imports (Bytecode Alliance,
+ISRG, Zcash, Embark); **233 → 111** после 122 однодневных trusted entries
+для 15 подтверждённых user-id и 7 официальных workflows; **111 → 107** после
+четырёх исходных аудитов агента. bitflags, version_check, wasm-bindgen-shared
+и endi явно помечены «проверено агентом, не человеком», с SHA архивов и
+ограничениями. Начали с узлов с большим числом потребителей; незавершённые
+проверки typenum, generic-array, errno и native C/ASM не сертифицированы.
+Неиспользованная дополнительная запись доверия getrandom удалена без изменения
+остатка. Root gate и M6 остаются открытыми: **107 пробелов** требуют продолжения.
+
+Локально: `node scripts/vet-dependencies.mjs root` без обновления imports —
+failed, 107 gaps, входы неизменны; root `cargo deny check --hide-inclusion-graph`
+— exit 0 (advisories/bans/licenses/sources ok, предупреждения о дубликатах).
+Тесты vet wrapper — 3/3, расширения — 24/24; прямые source-review проверки:
+version_check 10, bitflags 2, schema wasm-bindgen-shared 1, endi 11 + no_std.
+Полные workspace tests, clippy и leak tests запускались, но завершились exit 101
+на сборке OpenSSL: имеющийся Git Perl не содержит `Locale::Maketext::Simple`.
+CI не запускался; пользовательское поведение программы не менялось.
+
+
 ## Задача 9: M6 cargo-vet, только fuzz; промежуточный результат — 2026-11-26
 
 Продолжение от `a120a5f`: **193 → 79 пробелов**. Изменён только store
