@@ -13,6 +13,17 @@ use std::{
 };
 
 const CANARY: &[u8] = b"SYNTHETIC_MACOS_CONTAINER_CANARY_83921";
+const PROFILES: [(Process, Lane); 9] = [
+    (Process::Core, Lane::Shadow),
+    (Process::Core, Lane::Cover),
+    (Process::Api, Lane::Shadow),
+    (Process::Llmd, Lane::Shadow),
+    (Process::DriftHost, Lane::Cover),
+    (Process::Audit, Lane::Shadow),
+    (Process::Ui, Lane::Shadow),
+    (Process::Ui, Lane::Cover),
+    (Process::Netd, Lane::Shadow),
+];
 fn denied<T: std::fmt::Debug>(result: std::io::Result<T>) {
     assert_eq!(
         result.unwrap_err().kind(),
@@ -110,17 +121,7 @@ fn every_macos_process_enforces_its_profile() {
     std::fs::set_permissions(&socket, std::fs::Permissions::from_mode(0o600)).unwrap();
     let other = root.join("other.sock");
     let _other = UnixListener::bind(&other).unwrap();
-    for (process, lane) in [
-        (Process::Core, Lane::Shadow),
-        (Process::Core, Lane::Cover),
-        (Process::Api, Lane::Shadow),
-        (Process::Llmd, Lane::Shadow),
-        (Process::DriftHost, Lane::Cover),
-        (Process::Audit, Lane::Shadow),
-        (Process::Ui, Lane::Shadow),
-        (Process::Ui, Lane::Cover),
-        (Process::Netd, Lane::Shadow),
-    ] {
+    for (process, lane) in PROFILES {
         let container = root.join(format!("{process:?}-{lane:?}"));
         std::fs::create_dir(&container).unwrap();
         std::fs::set_permissions(&container, std::fs::Permissions::from_mode(0o700)).unwrap();
@@ -231,4 +232,44 @@ fn invalid_macos_authority_is_rejected_before_spawn() {
     let read_only = [executable.as_path()];
     profile.read_only = &read_only;
     assert!(profile.command(&executable, &[]).is_err());
+}
+
+#[test]
+fn profiles_allow_cpu_discovery_but_deny_host_identifier_sysctls() {
+    let executable = Path::new("/usr/sbin/sysctl").canonicalize().unwrap();
+    for (process, lane) in PROFILES {
+        let profile = Profile {
+            process,
+            lane,
+            container: None,
+            read_only: &[],
+            sockets: &[],
+        };
+        let cpu = profile
+            .command(&executable, &["-n".into(), "hw.ncpu".into()])
+            .unwrap()
+            .output()
+            .unwrap();
+        assert!(
+            cpu.status.success(),
+            "{process:?}/{lane:?}: CPU discovery unavailable"
+        );
+        assert!(
+            std::str::from_utf8(&cpu.stdout)
+                .unwrap()
+                .trim()
+                .parse::<u32>()
+                .unwrap()
+                > 0
+        );
+        let host = profile
+            .command(&executable, &["-n".into(), "kern.hostname".into()])
+            .unwrap()
+            .output()
+            .unwrap();
+        assert!(!host.status.success());
+        assert!(host.stdout.is_empty());
+        let error = String::from_utf8_lossy(&host.stderr);
+        assert!(error.contains("Operation not permitted") || error.contains("Permission denied"));
+    }
 }

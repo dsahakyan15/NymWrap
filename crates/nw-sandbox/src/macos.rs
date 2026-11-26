@@ -1,4 +1,4 @@
-//! Deny-default Seatbelt launcher for unsigned/ad-hoc signed executables (ADR 0094).
+//! Deny-default Seatbelt launcher without an Apple Developer identity (ADR 0094).
 //! The trusted coordinator chooses one lane, one private container and exact IPC
 //! endpoints. No entitlement, shell, caller-supplied SBPL or unsandboxed retry.
 use crate::SandboxError;

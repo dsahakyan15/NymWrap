@@ -13,9 +13,10 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 для core, API, модели, netd, Drift host, импорта и UI (ADR 0094). Только netd
 получает исходящий IP; геолокация/Wi-Fi capabilities не выдаются. Каталог процесса
 и полоса задаются явно, файлы модели/импорта и клиентские IPC — точным allowlist.
+`sysctl-read` ограничен CPU/runtime и версией ОС, имя узла закрыто отдельным тестом.
 Профиль `nw-probe` и исправленная самопроверка ADR 0085 сохранены без изменений.
 
-Это `sandbox-exec` для unsigned/ad-hoc CLI, не Apple Developer/App Store bundle.
+Это `sandbox-exec` для CLI без Apple Developer identity, не App Store bundle.
 Отказ механизма прекращает запуск. Автоматическое подключение всех production
 демонов к launcher, GUI/Keychain и полный Tor bootstrap в новом профиле ещё не
 проверены; изоляция обычного desktop и закрытие M6 не заявляются.

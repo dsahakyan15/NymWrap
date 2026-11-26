@@ -7,8 +7,9 @@
 У проекта нет Apple Developer identity. Не считаем наличие plist, ad-hoc подписи
 или `com.apple.security.app-sandbox` доказательством ограничения самостоятельно
 запущенного CLI. Используем `/usr/bin/sandbox-exec` с deny-default Seatbelt:
-это работающий механизм для unsigned/ad-hoc бинарников, а не подписанный App
-Sandbox bundle. `sandbox-exec` устарел; его исчезновение или отказ политики
+это механизм для CLI без Apple Developer identity, а не подписанный App
+Sandbox bundle. CI проверяет локальную arm64-сборку. `sandbox-exec` устарел;
+его исчезновение или отказ политики
 завершает запуск, без повторного exec исходного бинарника.
 
 `nw-sandbox::macos::Profile` и одноимённый CLI встраивают SBPL из репозитория.
@@ -18,6 +19,9 @@ shadow, core/UI запускаются отдельным экземпляром
 Одна роль `nw-netd` получает исходящий IP и bind, без IP listen/inbound.
 Это не Tor-only firewall: leakcheck, разрешённый транспорт и fail-closed
 остаются обязательны. Доступ к геолокации, Wi-Fi, IOKit и Mach-службам не выдаётся.
+`sysctl-read` ограничен allowlist CPU/runtime и версии ОС: имя узла, сетевой
+инвентарь и аргументы чужих процессов не выдаются. Отдельный native-тест требует
+успех чтения `hw.ncpu` и отказа `kern.hostname` для каждой роли и полосы.
 
 По умолчанию доступны только чтение публичных системных библиотек, метаданных,
 timezone, случайных устройств и собственного executable. Дополнительные права:
