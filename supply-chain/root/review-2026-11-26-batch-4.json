@@ -1,0 +1,2393 @@
+{
+  "schema_version": 1,
+  "scope": "root",
+  "manifest": "Cargo.toml",
+  "date": "2026-11-26",
+  "source_commit": "df9dcc37c3d3e8e1335d9efb4357d4789884f9af",
+  "branch": "agent/vet-root-4",
+  "execution": "Local Windows x86_64; проверено агентом, не человеком; implementation sub-agent, no further delegation; no push.",
+  "status": "incomplete",
+  "required_product_criteria": "safe-to-deploy (unchanged)",
+  "gaps_before": 67,
+  "gaps_after": 50,
+  "method": "Exact historical publisher trust first, then source audit. Main exact-version registry API series cached below target/root-review-4 with serial requests, 1.3s spacing and bounded exponential/Retry-After backoff; additional latest checks were also serial and cached. No HTTP 429 occurred. All 17 affected archive SHA-256 values matched Cargo.lock and actual cached sparse-index entries; present unpacked source files matched their archive bytes. No dependency version or Cargo.lock changed. New trust is not a source audit. No new import source or imported audit set was retained.",
+  "initial_receipt": {
+    "version": 1,
+    "scope": "root",
+    "tool_version": "0.10.4",
+    "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+    "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+    "exit_code": 4294967295,
+    "locked_imports": true,
+    "refreshed_imports": false,
+    "input_hashes": {
+      "cargo_lock": "6a8b1f7bd79c70be14f94ba7430e80e427a0683a30db804660dcf22ed70c595a",
+      "config": "4cd364ea07bdfd15c935af4e142c0f62c0a5a1c86f74f698e25e63d4d228bf64",
+      "audits": "bb8695915bf4bd372c9e0a39e2f2743e80530705e04289c74eec904b65fc6dec",
+      "imports": "4ca6f9146137999a1656c5c20612d7868a662ca85efa9055ae9528f2657bd4dd"
+    },
+    "inputs_unchanged": true,
+    "status": "failed",
+    "evidence": {
+      "commit": null,
+      "run": null,
+      "attempt": null
+    }
+  },
+  "checkpoints": [
+    {
+      "gaps": 67,
+      "state": "Original locked baseline"
+    },
+    {
+      "gaps": 62,
+      "state": "Five exact getrandom/r-efi publisher entries, imports refreshed normally"
+    },
+    {
+      "gaps": 53,
+      "state": "Fourteen exact publisher entries with original config/policy/imports restored and normal refresh"
+    },
+    {
+      "gaps": 50,
+      "state": "One libloading source audit and two separately justified unreachable-code exemptions"
+    }
+  ],
+  "new_agent_audits": [
+    {
+      "name": "libloading",
+      "version": "0.8.9",
+      "criteria": "safe-to-deploy",
+      "who": "NymWrap source review (Codex agent; not human)",
+      "authorship": "Проверено агентом, не человеком",
+      "archive_sha256": "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55",
+      "locked_checksum": "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55",
+      "sparse_index_cksum": "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55",
+      "inventory": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "2c2a09896cf605d801de7c91dc9c99904e92c46aa4ec8d7963f67a12bd33f93b"
+        },
+        {
+          "path": ".github/workflows/libloading.yml",
+          "bytes": 4377,
+          "sha256": "46df13bc0dc7c70e42bd818084fd4a3f5b8ecb74cb9b45cc585542952f96ac54"
+        },
+        {
+          "path": ".gitignore",
+          "bytes": 22,
+          "sha256": "d1f04f6e26b032947281447fede322031f61a24a6dc3cf72221f238411393d0c"
+        },
+        {
+          "path": "Cargo.lock",
+          "bytes": 1257,
+          "sha256": "516b49980abf75390492d18d669219adfce3b87dbabf5186b68d260ae2225c8c"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 1985,
+          "sha256": "c70a979f3e8987bcf85b377d310b895b4bbeae29f6b0a28735cf48230087d5e2"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1158,
+          "sha256": "a3ba7155546bbf086806c8afe512a63af09288d2afd3b26e781d4f999534eb03"
+        },
+        {
+          "path": "LICENSE",
+          "bytes": 736,
+          "sha256": "b29f8b01452350c20dd1af16ef83b598fea3053578ccc1c7a0ef40e57be2620f"
+        },
+        {
+          "path": "README.mkd",
+          "bytes": 662,
+          "sha256": "707e1cae9fa4b691ce5cb8a3976573158fc60b67cb89948f8f5d51c5908bd0a8"
+        },
+        {
+          "path": "src/changelog.rs",
+          "bytes": 16630,
+          "sha256": "e3683b87d485ac6369349b9bbd7b04957664b8fdbc2fee845a4c5e56ce226036"
+        },
+        {
+          "path": "src/error.rs",
+          "bytes": 5111,
+          "sha256": "24dbe0edbe6e0c3635168cc8548a32ef8c9eb939a3f6b976d48e7b7c29d752de"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 2731,
+          "sha256": "f54281f105189a23f88464b1ad02c5d5073a873e5b5736d59a03d94cb485a861"
+        },
+        {
+          "path": "src/os/mod.rs",
+          "bytes": 909,
+          "sha256": "6c59ef8c1120953ae6b6c32f27766c643ca90d85075c49c3545d2fe1ed82cedd"
+        },
+        {
+          "path": "src/os/unix/consts.rs",
+          "bytes": 8513,
+          "sha256": "61a73d876c19ec0542c1ca32d43eddb3b9991761d05d79351ac831dc88900b2e"
+        },
+        {
+          "path": "src/os/unix/mod.rs",
+          "bytes": 20069,
+          "sha256": "d080b693c0a235917d6fb462ff7ef39c344883b00d8f741b18dee184538e3530"
+        },
+        {
+          "path": "src/os/windows/mod.rs",
+          "bytes": 26346,
+          "sha256": "bce75443921d24734fe6ebc38f4b0c5ffb6303db643c88dd54779c93014f2b38"
+        },
+        {
+          "path": "src/safe.rs",
+          "bytes": 11747,
+          "sha256": "c91c743162488495b28a9735c20c5b9fb6ea3f06fe936cd3d19ba4d1ddb2707c"
+        },
+        {
+          "path": "src/test_helpers.rs",
+          "bytes": 747,
+          "sha256": "201403e143e5b3204864124cd38067cf8813d5273dc1a9099288a9dc4bdd15b6"
+        },
+        {
+          "path": "src/util.rs",
+          "bytes": 1050,
+          "sha256": "0b6dcfb9eafff2d87966460ef6b1b99980f888813037e787ed92deee602f8c2b"
+        },
+        {
+          "path": "tests/constants.rs",
+          "bytes": 458,
+          "sha256": "4778c062605ed22238c1bed16de4c076d0857282f090f36e6d985dafb7b4544d"
+        },
+        {
+          "path": "tests/functions.rs",
+          "bytes": 8982,
+          "sha256": "bfe07fc286693235b12e9e04d8d079722b320871722baf3867bcf20dfb69cc43"
+        },
+        {
+          "path": "tests/library_filename.rs",
+          "bytes": 495,
+          "sha256": "5f43ce556e7631a63fd5c1466c82afa8bc3fbc5613210ce185227b40431b81db"
+        },
+        {
+          "path": "tests/markers.rs",
+          "bytes": 1995,
+          "sha256": "0ebc8f807b92e39452d35732988012cdca7ce96231c57eaac9c3f4217225ad39"
+        },
+        {
+          "path": "tests/nagisa32.dll",
+          "bytes": 3072,
+          "sha256": "5c69b2bd9c8a6ad04165c221075fc9fade1dd66ca697399ace528a5a62328e36"
+        },
+        {
+          "path": "tests/nagisa64.dll",
+          "bytes": 2560,
+          "sha256": "e20b95e3036f3289421abd100760874d4f455afd33c3b5b64fec56b191f7d477"
+        },
+        {
+          "path": "tests/windows.rs",
+          "bytes": 2189,
+          "sha256": "d47752de5ce18b304697a957f430351a91b0188a80a881d6558d601df69f4036"
+        }
+      ],
+      "reviewed_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 1985,
+          "sha256": "c70a979f3e8987bcf85b377d310b895b4bbeae29f6b0a28735cf48230087d5e2"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1158,
+          "sha256": "a3ba7155546bbf086806c8afe512a63af09288d2afd3b26e781d4f999534eb03"
+        },
+        {
+          "path": "README.mkd",
+          "bytes": 662,
+          "sha256": "707e1cae9fa4b691ce5cb8a3976573158fc60b67cb89948f8f5d51c5908bd0a8"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 2731,
+          "sha256": "f54281f105189a23f88464b1ad02c5d5073a873e5b5736d59a03d94cb485a861"
+        },
+        {
+          "path": "src/safe.rs",
+          "bytes": 11747,
+          "sha256": "c91c743162488495b28a9735c20c5b9fb6ea3f06fe936cd3d19ba4d1ddb2707c"
+        },
+        {
+          "path": "src/util.rs",
+          "bytes": 1050,
+          "sha256": "0b6dcfb9eafff2d87966460ef6b1b99980f888813037e787ed92deee602f8c2b"
+        },
+        {
+          "path": "src/error.rs",
+          "bytes": 5111,
+          "sha256": "24dbe0edbe6e0c3635168cc8548a32ef8c9eb939a3f6b976d48e7b7c29d752de"
+        },
+        {
+          "path": "src/os/mod.rs",
+          "bytes": 909,
+          "sha256": "6c59ef8c1120953ae6b6c32f27766c643ca90d85075c49c3545d2fe1ed82cedd"
+        },
+        {
+          "path": "src/os/unix/mod.rs",
+          "bytes": 20069,
+          "sha256": "d080b693c0a235917d6fb462ff7ef39c344883b00d8f741b18dee184538e3530"
+        },
+        {
+          "path": "src/os/unix/consts.rs",
+          "bytes": 8513,
+          "sha256": "61a73d876c19ec0542c1ca32d43eddb3b9991761d05d79351ac831dc88900b2e"
+        },
+        {
+          "path": "src/os/windows/mod.rs",
+          "bytes": 26346,
+          "sha256": "bce75443921d24734fe6ebc38f4b0c5ffb6303db643c88dd54779c93014f2b38"
+        }
+      ],
+      "machine_checked_files": [
+        {
+          "path": "src/changelog.rs",
+          "bytes": 16630,
+          "sha256": "e3683b87d485ac6369349b9bbd7b04957664b8fdbc2fee845a4c5e56ce226036",
+          "method": "Every line is empty, rustdoc, or an empty public module declaration; no executable Rust"
+        }
+      ],
+      "notes": "Read both manifests, README and all executable production Rust, including Unix and Windows implementations, exact platform constants, symbol/type helpers and errors. The changelog module was validated as documentation plus empty modules; historical prose is not a reviewed implementation. Unsafe library loading explicitly executes caller-selected native initializers/finalizers; symbol lookup and raw-handle conversion require correct ABI/type, ownership and lifetime proofs. The safe Symbol wrapper carries a borrow of its Library and clones preserve that borrow; pointer-sized type checks precede casts, and Send/Sync bounds on symbols follow T. C symbol names reject internal NUL and retain backing strings across FFI. Unix library acquisition checks null handles, dlerror is copied before another call, and close forgets ownership after a single close attempt. dlerror on older non-thread-local implementations retains documented concurrency limits; this is not a portability proof for nonconforming loaders. Windows acquires owning module references, uses explicit system ABI and checked success values, and reads only the reported initialized UTF-16 filename range. Its thread-local error-mode guard restores state on drop. Windows library filenames permit embedded-NUL truncation, so a caller must validate exact paths before using them as an allowlist boundary. Default loader search paths and environment are trusted local build/runtime configuration, not a sandbox for untrusted DLL names. No build script, bundled native payload, network API, telemetry or independent loading occurs without an explicit caller request. Loader/OS correctness, loaded libraries, their destructors and downstream use of unsafe APIs remain separate. Windows review checks exercise a preloaded system module and symbol lifetime/ABI handling; Unix and cross-target runtime tests were not run."
+    }
+  ],
+  "new_trusted_entries": [
+    {
+      "name": "getrandom",
+      "version": "0.2.17",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 5059,
+        "login": "newpavlov",
+        "name": "Artyom Pavlov",
+        "avatar": "https://avatars.githubusercontent.com/u/329626?v=4",
+        "url": "https://github.com/newpavlov",
+        "github_username_matches": true,
+        "created_at": "2010-07-12T13:48:27Z"
+      },
+      "start": "2026-01-11",
+      "end": "2026-01-12",
+      "archive_sha256": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0",
+      "api_url": "https://crates.io/api/v1/crates/getrandom/0.2.17",
+      "api_sha256": "bab21ae65ddb9af1ef57d002dbbd21812e6ec7647a7895bf31a16e5bd6e9800b",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust newpavlov (already accepted for RustCrypto in ADR 0102) for this rust-random maintenance release: OS entropy retrieval, initialization/error handling, platform ABI and no insecure fallback are production security responsibilities, not merely build behavior. Read upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS; no complete implementation review claimed. Published archive SHA-256 ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0, matched exact crates.io version API, Cargo.lock and cached sparse-index evidence from batch 3. One-day historical window [start,end), no future releases or unrelated crates. Dependencies and custom entropy backends remain separate. ADR 0102, fourth batch; evidence in review-2026-11-26-batch-4.json.",
+      "sparse_index_path": "ge/tr/getrandom",
+      "sparse_index_cksum": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-01-11T21:09:53.669788Z",
+        "yanked": false,
+        "checksum": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0",
+        "published_by": {
+          "id": 5059,
+          "login": "newpavlov",
+          "name": "Artyom Pavlov",
+          "avatar": "https://avatars.githubusercontent.com/u/329626?v=4",
+          "url": "https://github.com/newpavlov",
+          "github_username_matches": true,
+          "created_at": "2010-07-12T13:48:27Z"
+        },
+        "trustpub_data": null
+      },
+      "read": "Upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS. No implementation audit.",
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "fd2b1c20ac76771233208d762a77f301fe47646ff0dcfcdfc414fcffbf2b88fc"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 2823,
+          "sha256": "032d84ffe843860402ec2339ae4179be20fd6f432109e595a3fa83be54893ec7"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 2467,
+          "sha256": "850cb9e629142ded23e40a80943fc19b559b09931bb71df35cef2ae7f6152c14"
+        }
+      ]
+    },
+    {
+      "name": "getrandom",
+      "version": "0.3.4",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 39279,
+        "login": "josephlr",
+        "name": "Joe Richey",
+        "avatar": "https://avatars.githubusercontent.com/u/5506060?v=4",
+        "url": "https://github.com/josephlr",
+        "github_username_matches": true,
+        "created_at": "2013-09-21T04:37:34Z"
+      },
+      "start": "2025-10-14",
+      "end": "2025-10-15",
+      "archive_sha256": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd",
+      "api_url": "https://crates.io/api/v1/crates/getrandom/0.3.4",
+      "api_sha256": "9c510e29c5fb8fa9f65379e49aeb4b2607cbff25f0f161dad6376e10e39e5762",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Joseph Richey (josephlr), upstream getrandom maintainer and r-efi contributor listed by its official AUTHORS, for production OS-entropy retrieval and initialized-buffer/error contracts. Read upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS; no complete implementation review claimed. Published archive SHA-256 899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd, matched exact crates.io version API, Cargo.lock and cached sparse-index evidence from batch 3. One-day historical window [start,end), no future releases or unrelated crates. Dependencies and custom entropy backends remain separate. ADR 0102, fourth batch; evidence in review-2026-11-26-batch-4.json.",
+      "sparse_index_path": "ge/tr/getrandom",
+      "sparse_index_cksum": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2025-10-14T17:47:36.464125Z",
+        "yanked": false,
+        "checksum": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd",
+        "published_by": {
+          "id": 39279,
+          "login": "josephlr",
+          "name": "Joe Richey",
+          "avatar": "https://avatars.githubusercontent.com/u/5506060?v=4",
+          "url": "https://github.com/josephlr",
+          "github_username_matches": true,
+          "created_at": "2013-09-21T04:37:34Z"
+        },
+        "trustpub_data": null
+      },
+      "read": "Upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS. No implementation audit.",
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "9930208af94a68f65edfe7acb4b4f967c9aaa8bdf8f8e5bb5806539207f9f039"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 4271,
+          "sha256": "5fd1d61c342777480822b8f8259a7bd8cbf6c2486a3d389b2d5b235f667a7952"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 4247,
+          "sha256": "4b13c332865245a22cb5fef091e02547ef792a0aa7291dcf2d9c07ae783f19b0"
+        }
+      ]
+    },
+    {
+      "name": "getrandom",
+      "version": "0.4.3",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "provider": "github",
+        "repository": "rust-random/getrandom",
+        "run_id": "27709261998",
+        "sha": "5e7cd5733536844a9856dc7259bd4696bbe5e3ae"
+      },
+      "start": "2026-06-17",
+      "end": "2026-06-18",
+      "archive_sha256": "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099",
+      "api_url": "https://crates.io/api/v1/crates/getrandom/0.4.3",
+      "api_sha256": "9ce21bf37f1665420b28f57a8cc5a9a8335b04d57ce4b182efce59296d177d99",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the official rust-random/getrandom release identity for production entropy retrieval, fail-on-error and initialized-buffer/FFI contracts. Registry workflow metadata identifies this exact historical release; no independent workflow audit claimed. Read upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS; no complete implementation review claimed. Published archive SHA-256 300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099, matched exact crates.io version API, Cargo.lock and cached sparse-index evidence from batch 3. One-day historical window [start,end), no future releases or unrelated crates. Dependencies and custom entropy backends remain separate. ADR 0102, fourth batch; evidence in review-2026-11-26-batch-4.json.",
+      "sparse_index_path": "ge/tr/getrandom",
+      "sparse_index_cksum": "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-06-17T18:01:59.979552Z",
+        "yanked": false,
+        "checksum": "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099",
+        "published_by": null,
+        "trustpub_data": {
+          "provider": "github",
+          "repository": "rust-random/getrandom",
+          "run_id": "27709261998",
+          "sha": "5e7cd5733536844a9856dc7259bd4696bbe5e3ae"
+        }
+      },
+      "read": "Upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS. No implementation audit.",
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "14b81d3c44670e34376d60d06a5e24a78548bb3ad32be81e6ecee66a36de096d"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 4847,
+          "sha256": "4f107fe4ceacee71d0068cfbbc69554b3d8523a1fcbb99b17e9fa0d008961ff9"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 5062,
+          "sha256": "eebe7c6d086d3f40c2fa79f8784b00c36dc501e49b2757a1caa97e7fa4dbacf7"
+        }
+      ]
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 12177,
+        "login": "dvdhrm",
+        "name": "David Rheinsberg",
+        "avatar": "https://avatars.githubusercontent.com/u/623857?v=4",
+        "url": "https://github.com/dvdhrm",
+        "github_username_matches": true,
+        "created_at": "2011-02-17T19:19:14Z"
+      },
+      "start": "2025-06-17",
+      "end": "2025-06-18",
+      "archive_sha256": "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f",
+      "api_url": "https://crates.io/api/v1/crates/r-efi/5.3.0",
+      "api_sha256": "c2dd78226c014aa68b6728857506f5d9b8bbd39d031460c6028a57c85f28e955",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust David Rheinsberg (dvdhrm), author/maintainer of the r-efi reference protocol binding project, for production UEFI ABI/layout/constants and explicitly unsafe firmware interfaces. Firmware quality, UEFI entropy and unsafe callers remain separate. Read upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS; no complete implementation review claimed. Published archive SHA-256 69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f, matched exact crates.io version API, Cargo.lock and cached sparse-index evidence from batch 3. One-day historical window [start,end), no future releases or unrelated crates. Dependencies and custom entropy backends remain separate. ADR 0102, fourth batch; evidence in review-2026-11-26-batch-4.json.",
+      "sparse_index_path": "r-/ef/r-efi",
+      "sparse_index_cksum": "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2025-06-17T09:12:38.227277Z",
+        "yanked": false,
+        "checksum": "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f",
+        "published_by": {
+          "id": 12177,
+          "login": "dvdhrm",
+          "name": "David Rheinsberg",
+          "avatar": "https://avatars.githubusercontent.com/u/623857?v=4",
+          "url": "https://github.com/dvdhrm",
+          "github_username_matches": true,
+          "created_at": "2011-02-17T19:19:14Z"
+        },
+        "trustpub_data": null
+      },
+      "read": "Upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS. No implementation audit.",
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "50e0c72ee0164f182d7b5db0213cdb1626bad950f2443b05d006c28c7f0641b5"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 1582,
+          "sha256": "dba000c0173b09b1e3b69afa42a715b5ab64355e6502ce6d9d1767c7845cf402"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1226,
+          "sha256": "57b6d9b9a1b6524f6b4dcc1dd24970ac03e6959786a6cfedaec9ba52878b4d3e"
+        }
+      ]
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 12177,
+        "login": "dvdhrm",
+        "name": "David Rheinsberg",
+        "avatar": "https://avatars.githubusercontent.com/u/623857?v=4",
+        "url": "https://github.com/dvdhrm",
+        "github_username_matches": true,
+        "created_at": "2011-02-17T19:19:14Z"
+      },
+      "start": "2026-02-03",
+      "end": "2026-02-04",
+      "archive_sha256": "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf",
+      "api_url": "https://crates.io/api/v1/crates/r-efi/6.0.0",
+      "api_sha256": "c791d0a09cc5736dd36e043405246a34aadb0682cbe0f17a5ef76013176e3a7d",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust David Rheinsberg (dvdhrm), author/maintainer of the r-efi reference protocol binding project, for production UEFI ABI/layout/constants and explicitly unsafe firmware interfaces. Firmware quality, UEFI entropy and unsafe callers remain separate. Read upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS; no complete implementation review claimed. Published archive SHA-256 f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf, matched exact crates.io version API, Cargo.lock and cached sparse-index evidence from batch 3. One-day historical window [start,end), no future releases or unrelated crates. Dependencies and custom entropy backends remain separate. ADR 0102, fourth batch; evidence in review-2026-11-26-batch-4.json.",
+      "sparse_index_path": "r-/ef/r-efi",
+      "sparse_index_cksum": "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-02-03T09:53:46.251122Z",
+        "yanked": false,
+        "checksum": "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf",
+        "published_by": {
+          "id": 12177,
+          "login": "dvdhrm",
+          "name": "David Rheinsberg",
+          "avatar": "https://avatars.githubusercontent.com/u/623857?v=4",
+          "url": "https://github.com/dvdhrm",
+          "github_username_matches": true,
+          "created_at": "2011-02-17T19:19:14Z"
+        },
+        "trustpub_data": null
+      },
+      "read": "Upstream README purpose/platform/error-handling sections, getrandom SECURITY policy and r-efi AUTHORS. No implementation audit.",
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "d8d0d853429b028d5e3c7b969f7c6b77b04e17486c57fac0759eb8083a359f3f"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 1548,
+          "sha256": "a021f9fb0645cc5de5770cf7f41594c1deff4b388eca933b289752aa52666829"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1107,
+          "sha256": "b8e89c393831c2161b6d390bd40422910ac34f02903ad39edd85ec38d4513fef"
+        }
+      ]
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 172786,
+        "login": "hds",
+        "name": "Hayden Stainsby",
+        "avatar": "https://avatars.githubusercontent.com/u/89589?v=4",
+        "url": "https://github.com/hds",
+        "github_username_matches": true,
+        "created_at": "2009-05-28T15:55:02Z"
+      },
+      "start": "2025-12-18",
+      "end": "2025-12-19",
+      "archive_sha256": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "api_url": "https://crates.io/api/v1/crates/tracing/0.1.44",
+      "api_sha256": "82e278039f7978bf6ac22ef7b2ae602fe3e4bf840a147c69751af5fec39e6334",
+      "read": "Tokio tracing README and CONTRIBUTING sections on subscribers, async spans, review and tests; official release-preparation commit metadata",
+      "reason": "Trust hds, the publisher and author of the official Tokio tracing 0.1.44 preparation commit, for production span/event dispatch, unwind and ownership behavior. The project requires review and tests for code changes. Instrumentation deliberately exposes fields to configured subscribers; NymWrap must keep secrets out of events, and instrumentation is not a redaction or telemetry policy.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust hds, the publisher and author of the official Tokio tracing 0.1.44 preparation commit, for production span/event dispatch, unwind and ownership behavior. The project requires review and tests for code changes. Instrumentation deliberately exposes fields to configured subscribers; NymWrap must keep secrets out of events, and instrumentation is not a redaction or telemetry policy. Read: Tokio tracing README and CONTRIBUTING sections on subscribers, async spans, review and tests; official release-preparation commit metadata. Published archive SHA-256 63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "tr/ac/tracing",
+      "sparse_index_cksum": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2025-12-18T14:26:12.360139Z",
+        "yanked": false,
+        "checksum": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+        "published_by": {
+          "id": 172786,
+          "login": "hds",
+          "name": "Hayden Stainsby",
+          "avatar": "https://avatars.githubusercontent.com/u/89589?v=4",
+          "url": "https://github.com/hds",
+          "github_username_matches": true,
+          "created_at": "2009-05-28T15:55:02Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 101,
+          "sha256": "e3812fbb3fb259f00c279faa9a044355113802daac267ab6e8dffcfd659cdc8e"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 4847,
+          "sha256": "b7e201be4f3872fe25da1fa45aa404c8751a661755d4883fdbb5c0c558303e6d"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 2630,
+          "sha256": "7f2718d2c04f52efa187ef4f5ae54aec9169d9309edf6815e5d7127872f131cc"
+        }
+      ]
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 172786,
+        "login": "hds",
+        "name": "Hayden Stainsby",
+        "avatar": "https://avatars.githubusercontent.com/u/89589?v=4",
+        "url": "https://github.com/hds",
+        "github_username_matches": true,
+        "created_at": "2009-05-28T15:55:02Z"
+      },
+      "start": "2025-11-26",
+      "end": "2025-11-27",
+      "archive_sha256": "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da",
+      "api_url": "https://crates.io/api/v1/crates/tracing-attributes/0.1.31",
+      "api_sha256": "d17220399ab8611971ae6556e46dcf467f039ad319e86fefecc0589e4ac1f7ea",
+      "read": "Tokio tracing README/CONTRIBUTING and published package manifest metadata; tracing release-preparation metadata",
+      "reason": "Trust the same verified Tokio tracing release maintainer hds for production #[instrument] expansion, including async polling and argument capture. Generated code is part of this trust decision, not only macro-host execution. Arguments are logged by design unless skipped; caller field selection and subscriber policy remain separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the same verified Tokio tracing release maintainer hds for production #[instrument] expansion, including async polling and argument capture. Generated code is part of this trust decision, not only macro-host execution. Arguments are logged by design unless skipped; caller field selection and subscriber policy remain separate. Read: Tokio tracing README/CONTRIBUTING and published package manifest metadata; tracing release-preparation metadata. Published archive SHA-256 7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "tr/ac/tracing-attributes",
+      "sparse_index_cksum": "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2025-11-26T11:23:01.809940Z",
+        "yanked": false,
+        "checksum": "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da",
+        "published_by": {
+          "id": 172786,
+          "login": "hds",
+          "name": "Hayden Stainsby",
+          "avatar": "https://avatars.githubusercontent.com/u/89589?v=4",
+          "url": "https://github.com/hds",
+          "github_username_matches": true,
+          "created_at": "2009-05-28T15:55:02Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 112,
+          "sha256": "f33f55c286f8bc75004ef4ece15f342d157a8bfeac98784492c2f5b3efd7c161"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 2836,
+          "sha256": "646214905e4c61a54c111ba9b16834c692fda2969be6f2cdb190a910ab1f2a51"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1559,
+          "sha256": "f48e7f46d8576494136169e62925a03e2e80870db6479f0e1b8bd148622a0fcf"
+        }
+      ]
+    },
+    {
+      "name": "security-framework",
+      "version": "2.11.1",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 988,
+        "login": "kornelski",
+        "name": "Kornel",
+        "avatar": "https://avatars.githubusercontent.com/u/72159?v=4",
+        "url": "https://github.com/kornelski",
+        "github_username_matches": true,
+        "created_at": "2009-04-09T14:50:19Z"
+      },
+      "start": "2024-07-14",
+      "end": "2024-07-15",
+      "archive_sha256": "897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02",
+      "api_url": "https://crates.io/api/v1/crates/security-framework/2.11.1",
+      "api_sha256": "5f283c60191903dce813c894a6c3c3d74f5307d1c810cdb934515d83117d990a",
+      "read": "Official rust-security-framework README, package manifest metadata and official release commit metadata",
+      "reason": "Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework TLS/Keychain bindings, CF ownership and OS-error handling. This is trust in the maintainer of these security APIs; OS implementations, entitlement policy and unsafe callers are separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework TLS/Keychain bindings, CF ownership and OS-error handling. This is trust in the maintainer of these security APIs; OS implementations, entitlement policy and unsafe callers are separate. Read: Official rust-security-framework README, package manifest metadata and official release commit metadata. Published archive SHA-256 897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "se/cu/security-framework",
+      "sparse_index_cksum": "897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2024-07-14T13:04:24.799065Z",
+        "yanked": false,
+        "checksum": "897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02",
+        "published_by": {
+          "id": 988,
+          "login": "kornelski",
+          "name": "Kornel",
+          "avatar": "https://avatars.githubusercontent.com/u/72159?v=4",
+          "url": "https://github.com/kornelski",
+          "github_username_matches": true,
+          "created_at": "2009-04-09T14:50:19Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 112,
+          "sha256": "5ba29ac954a8e2dd3b16e211103037755d159f0d7e2f8bb958d62fd0c4494492"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 3235,
+          "sha256": "96a684776f6ab35074bb253762c6af929dcf848468dbac604f1058a517fdc6ba"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 2051,
+          "sha256": "4e1640edea7b50fe2dd5b9beaa90dbfb3a7dcc9e4d8203e22b0594d650cc9b02"
+        }
+      ]
+    },
+    {
+      "name": "security-framework",
+      "version": "3.7.0",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 988,
+        "login": "kornelski",
+        "name": "Kornel",
+        "avatar": "https://avatars.githubusercontent.com/u/72159?v=4",
+        "url": "https://github.com/kornelski",
+        "github_username_matches": true,
+        "created_at": "2009-04-09T14:50:19Z"
+      },
+      "start": "2026-02-20",
+      "end": "2026-02-21",
+      "archive_sha256": "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d",
+      "api_url": "https://crates.io/api/v1/crates/security-framework/3.7.0",
+      "api_sha256": "c21f686205ef79cdf60cc037dfc9e4cbdb8a0ca836aa25839bffead0aa422b83",
+      "read": "Official rust-security-framework README, package manifest metadata and official 3.7.0 release commit metadata",
+      "reason": "Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework TLS/Keychain bindings, CF ownership and OS-error handling. This is trust in the maintainer of these security APIs; OS implementations, entitlement policy and unsafe callers are separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework TLS/Keychain bindings, CF ownership and OS-error handling. This is trust in the maintainer of these security APIs; OS implementations, entitlement policy and unsafe callers are separate. Read: Official rust-security-framework README, package manifest metadata and official 3.7.0 release commit metadata. Published archive SHA-256 b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "se/cu/security-framework",
+      "sparse_index_cksum": "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-02-20T00:28:54.024219Z",
+        "yanked": false,
+        "checksum": "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d",
+        "published_by": {
+          "id": 988,
+          "login": "kornelski",
+          "name": "Kornel",
+          "avatar": "https://avatars.githubusercontent.com/u/72159?v=4",
+          "url": "https://github.com/kornelski",
+          "github_username_matches": true,
+          "created_at": "2009-04-09T14:50:19Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 112,
+          "sha256": "a6f3270ca5c1d35093967811fa900f6eeea475255ce2fe3c09cf8b18e821d34d"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 3231,
+          "sha256": "499f371131655dac4bb1ab105e04594ce1e28c5a8df9a0a42e7222e44bd03b5e"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1862,
+          "sha256": "b5404abd794091fa139034a165fdf8fcaa0871088b79213b36eae718f8e17b68"
+        }
+      ]
+    },
+    {
+      "name": "security-framework-sys",
+      "version": "2.17.0",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 988,
+        "login": "kornelski",
+        "name": "Kornel",
+        "avatar": "https://avatars.githubusercontent.com/u/72159?v=4",
+        "url": "https://github.com/kornelski",
+        "github_username_matches": true,
+        "created_at": "2009-04-09T14:50:19Z"
+      },
+      "start": "2026-02-20",
+      "end": "2026-02-21",
+      "archive_sha256": "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3",
+      "api_url": "https://crates.io/api/v1/crates/security-framework-sys/2.17.0",
+      "api_sha256": "eef67ba50763a0a4b6d232e719a9c0b02bf8c2fe9d81026ec36f54837d7a0c3c",
+      "read": "Official rust-security-framework README, package manifest metadata and official 3.7.0 release commit metadata",
+      "reason": "Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework ABI signatures/constants/layout. Safe wrapper invariants, unsafe caller preconditions, OS implementations and entitlement policy remain separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework ABI signatures/constants/layout. Safe wrapper invariants, unsafe caller preconditions, OS implementations and entitlement policy remain separate. Read: Official rust-security-framework README, package manifest metadata and official 3.7.0 release commit metadata. Published archive SHA-256 6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "se/cu/security-framework-sys",
+      "sparse_index_cksum": "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-02-20T00:27:26.362406Z",
+        "yanked": false,
+        "checksum": "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3",
+        "published_by": {
+          "id": 988,
+          "login": "kornelski",
+          "name": "Kornel",
+          "avatar": "https://avatars.githubusercontent.com/u/72159?v=4",
+          "url": "https://github.com/kornelski",
+          "github_username_matches": true,
+          "created_at": "2009-04-09T14:50:19Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 116,
+          "sha256": "1ca3798ed784d33ece91b0272c0c29dc097ef07c724cda22af2e33816c3c4d36"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 2273,
+          "sha256": "31ed22a642ddd5228bc7330ff08a4d4ba504b542e8e3320ec6a6e90d867077f8"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1149,
+          "sha256": "09a287f7f71af2536594d6534ef26ad48cf7a9046750139aff26e4ceb35fbb11"
+        }
+      ]
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.9.4",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 5946,
+        "login": "jrmuizel",
+        "name": "Jeff Muizelaar",
+        "avatar": "https://avatars.githubusercontent.com/u/332653?v=4",
+        "url": "https://github.com/jrmuizel",
+        "github_username_matches": true,
+        "created_at": "2010-07-15T04:53:10Z"
+      },
+      "start": "2023-11-30",
+      "end": "2023-12-01",
+      "archive_sha256": "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f",
+      "api_url": "https://crates.io/api/v1/crates/core-foundation/0.9.4",
+      "api_sha256": "8e13122bbec633a3fe3c68e2ab80bea85be0e1d9d65886a600e8686f79a71be0",
+      "read": "Official Servo core-foundation-rs README, package manifest metadata and named historical Bobby Holley Mozilla Firefox wildcard-audit rationale",
+      "reason": "Trust Jeff Muizelaar (jrmuizel), the Mozilla/Servo Core Foundation publisher explicitly identified by the existing Bobby Holley Firefox audit, for production Core Foundation ownership, retain/release and type/layout wrapper invariants. This exact release is a new narrow trust decision, not an extension of the old expired Firefox wildcard audit. Apple APIs and unsafe caller proofs remain separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Jeff Muizelaar (jrmuizel), the Mozilla/Servo Core Foundation publisher explicitly identified by the existing Bobby Holley Firefox audit, for production Core Foundation ownership, retain/release and type/layout wrapper invariants. This exact release is a new narrow trust decision, not an extension of the old expired Firefox wildcard audit. Apple APIs and unsafe caller proofs remain separate. Read: Official Servo core-foundation-rs README, package manifest metadata and named historical Bobby Holley Mozilla Firefox wildcard-audit rationale. Published archive SHA-256 91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "co/re/core-foundation",
+      "sparse_index_cksum": "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2023-11-30T16:04:49.362965Z",
+        "yanked": false,
+        "checksum": "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f",
+        "published_by": {
+          "id": 5946,
+          "login": "jrmuizel",
+          "name": "Jeff Muizelaar",
+          "avatar": "https://avatars.githubusercontent.com/u/332653?v=4",
+          "url": "https://github.com/jrmuizel",
+          "github_username_matches": true,
+          "created_at": "2010-07-15T04:53:10Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 109,
+          "sha256": "e7f8c0031ba0f38b1a30c0397979e2ec8844df71f65bc32c4243b2030e749f89"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 1427,
+          "sha256": "2e85272c5cffb75aadcbb83d8ca1a619af3ccb9d810c1e07349f3b618fa05b7e"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1050,
+          "sha256": "972230506a09b01fa3881d8c09f7a3b8c73bc821f77f36e2590d5a0bd5688fa8"
+        }
+      ]
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 2396,
+        "login": "jdm",
+        "name": "Josh Bowman-Matthews",
+        "avatar": "https://avatars.githubusercontent.com/u/27658?v=4",
+        "url": "https://github.com/jdm",
+        "github_username_matches": true,
+        "created_at": "2008-10-05T18:56:00Z"
+      },
+      "start": "2025-05-26",
+      "end": "2025-05-27",
+      "archive_sha256": "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6",
+      "api_url": "https://crates.io/api/v1/crates/core-foundation/0.10.1",
+      "api_sha256": "b1e686651e2f81ffdf17ed89d74c47fd8afcb0473e383a953513214745f44c66",
+      "read": "Official Servo core-foundation-rs README, package manifest metadata, 0.10.1 release commit metadata and named historical Bobby Holley Firefox wildcard-audit rationale",
+      "reason": "Trust Josh Matthews (jdm), the Mozilla/Servo Core Foundation publisher explicitly identified by the existing Bobby Holley Firefox audit, for production Core Foundation ownership, retain/release and type/layout wrapper invariants. This exact release is a new narrow trust decision, not an extension of the old expired Firefox wildcard audit. Apple APIs and unsafe caller proofs remain separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Josh Matthews (jdm), the Mozilla/Servo Core Foundation publisher explicitly identified by the existing Bobby Holley Firefox audit, for production Core Foundation ownership, retain/release and type/layout wrapper invariants. This exact release is a new narrow trust decision, not an extension of the old expired Firefox wildcard audit. Apple APIs and unsafe caller proofs remain separate. Read: Official Servo core-foundation-rs README, package manifest metadata, 0.10.1 release commit metadata and named historical Bobby Holley Firefox wildcard-audit rationale. Published archive SHA-256 b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "co/re/core-foundation",
+      "sparse_index_cksum": "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2025-05-26T12:40:41.787847Z",
+        "yanked": false,
+        "checksum": "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6",
+        "published_by": {
+          "id": 2396,
+          "login": "jdm",
+          "name": "Josh Bowman-Matthews",
+          "avatar": "https://avatars.githubusercontent.com/u/27658?v=4",
+          "url": "https://github.com/jdm",
+          "github_username_matches": true,
+          "created_at": "2008-10-05T18:56:00Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 109,
+          "sha256": "230be4b3ebb08a06d943a7afdf5698c72133b2da29c473c7a61bedfb69bce0fa"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 2059,
+          "sha256": "65f064f3f8fbd225e38ebf5de9cb46335df82ce617a5a693024242d5e9273e25"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 863,
+          "sha256": "a6b745618d9a482e035a11849a26dff8a27b39889335704c46fd62c17c3740ff"
+        }
+      ]
+    },
+    {
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "id": 256011,
+        "login": "folkertdev",
+        "name": "Folkert de Vries",
+        "avatar": "https://avatars.githubusercontent.com/u/7949978?v=4",
+        "url": "https://github.com/folkertdev",
+        "github_username_matches": true,
+        "created_at": "2014-06-21T11:14:21Z"
+      },
+      "start": "2026-09-15",
+      "end": "2026-09-16",
+      "archive_sha256": "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112",
+      "api_url": "https://crates.io/api/v1/crates/zlib-rs/0.6.8",
+      "api_sha256": "b35575dba848cb79d5279c21f6b123a65368718023ebc8a5355584a4ec6b79a6",
+      "read": "Official zlib-rs README, 0.6.8 release commit metadata and Trifecta project/Prossimo project descriptions",
+      "reason": "Trust Folkert de Vries (folkertdev), the exact publisher and official release-commit author, for Trifecta Tech Foundation zlib-rs production compression/decompression, buffer bounds and CPU dispatch. The foundation is responsible for this memory-safety project, originally commissioned by ISRG/Prossimo. Prior audit history supports maintainer trust, not an independent audit of this release. Decompression size/CPU budgets and C API caller preconditions remain separate.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Folkert de Vries (folkertdev), the exact publisher and official release-commit author, for Trifecta Tech Foundation zlib-rs production compression/decompression, buffer bounds and CPU dispatch. The foundation is responsible for this memory-safety project, originally commissioned by ISRG/Prossimo. Prior audit history supports maintainer trust, not an independent audit of this release. Decompression size/CPU budgets and C API caller preconditions remain separate. Read: Official zlib-rs README, 0.6.8 release commit metadata and Trifecta project/Prossimo project descriptions. Published archive SHA-256 b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "zl/ib/zlib-rs",
+      "sparse_index_cksum": "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-09-15T13:10:00.283903Z",
+        "yanked": false,
+        "checksum": "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112",
+        "published_by": {
+          "id": 256011,
+          "login": "folkertdev",
+          "name": "Folkert de Vries",
+          "avatar": "https://avatars.githubusercontent.com/u/7949978?v=4",
+          "url": "https://github.com/folkertdev",
+          "github_username_matches": true,
+          "created_at": "2014-06-21T11:14:21Z"
+        },
+        "trustpub_data": null
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 101,
+          "sha256": "ced9649de3ab976dba30abf4e7c5e60638f3b2c67e26d2a9f2dc64bcd04d5933"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 1664,
+          "sha256": "85e89ef7d52508403f921caba72bb16545815e928083b6ab4ffecb8bf65c96b6"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1335,
+          "sha256": "23d9784faacbe6aa6295f4de54f5cf75d0401f9e2e468676f5975d00962931ac"
+        }
+      ]
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.5",
+      "criteria": "safe-to-deploy",
+      "identity": {
+        "provider": "github",
+        "repository": "srijs/rust-crc32fast",
+        "run_id": "42750757733",
+        "sha": "8a93d2a70c00ab3e72beda42014b18fad8e496ea"
+      },
+      "start": "2026-11-10",
+      "end": "2026-11-11",
+      "archive_sha256": "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64",
+      "api_url": "https://crates.io/api/v1/crates/crc32fast/1.5.5",
+      "api_sha256": "48b7b6a08b6a8fc20d15f82fa206dd134623bf4198367bc3e60f07c29c269b83",
+      "read": "Official rust-crc32fast README, including CPU-feature selection, no_std limits and memory-safety testing policy; published package manifest metadata",
+      "reason": "Trust the official srijs/rust-crc32fast release identity for production IEEE CRC implementation, bounded SIMD loads and CPU dispatch. Upstream documents fuzzing and address-sanitizer testing as part of its memory-safety process. CRC is not cryptographic authentication. Registry workflow metadata identifies the historical release; no independent workflow/source audit claimed.",
+      "notes": "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the official srijs/rust-crc32fast release identity for production IEEE CRC implementation, bounded SIMD loads and CPU dispatch. Upstream documents fuzzing and address-sanitizer testing as part of its memory-safety process. CRC is not cryptographic authentication. Registry workflow metadata identifies the historical release; no independent workflow/source audit claimed. Read: Official rust-crc32fast README, including CPU-feature selection, no_std limits and memory-safety testing policy; published package manifest metadata. Published archive SHA-256 2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate.",
+      "sparse_index_path": "cr/c3/crc32fast",
+      "sparse_index_cksum": "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true,
+      "publication": {
+        "created_at": "2026-11-10T03:41:10.884830Z",
+        "yanked": false,
+        "checksum": "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64",
+        "published_by": null,
+        "trustpub_data": {
+          "provider": "github",
+          "repository": "srijs/rust-crc32fast",
+          "run_id": "42750757733",
+          "sha": "8a93d2a70c00ab3e72beda42014b18fad8e496ea"
+        }
+      },
+      "manifest_metadata_files": [
+        {
+          "path": ".cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "de06ab1c4d07eaea799678327faa11ddb9dcc15ccfaea625ae203bd736211d5c"
+        },
+        {
+          "path": "Cargo.toml",
+          "bytes": 1560,
+          "sha256": "61b32397b1009cd5a6ef202f14ac6f9556e4de7f6bcf524bba0bfe0f6d5c7f7b"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 933,
+          "sha256": "50b2883f8d322c6c8707c2e313ecfb44d86b6a690c35fc9e83bbc160f412a2ad"
+        }
+      ]
+    }
+  ],
+  "new_imports": [],
+  "new_exemptions": [
+    {
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "criteria": "safe-to-deploy",
+      "archive_sha256": "435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532",
+      "notes": "Проверено агентом, не человеком. set_capacity(0) with overflow=true allows the queue to exceed capacity. Reproduced in the synthetic review harness. No safe-to-deploy audit granted. Exact archive SHA-256 435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532. Root-only non-reachability exception: these packages are reachable in Cargo metadata through keyring 3.6.3 -> optional secret-service 4.0.0 -> zbus 4.4.0, but root selects sync-secret-service -> dbus-secret-service, never async-secret-service. cargo tree --locked --offline --target all -e normal,build,dev -i async-broadcast, with and without --all-features, has no active path. Therefore no current NymWrap process executes this code. Enabling the asynchronous backend, adding a direct dependency or changing keyring features invalidates this exception and requires renewed review. No fixed published release was confirmed: latest checked code retains the problematic operation. Analysis and exact sources: docs/adr/0102-root-dependency-audit-sources.md#root-4-unreachable; evidence in supply-chain/root/review-2026-11-26-batch-4.json. This exception does not audit the rest of the crate."
+    },
+    {
+      "name": "zvariant_derive",
+      "version": "4.2.0",
+      "criteria": "safe-to-deploy",
+      "archive_sha256": "73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449",
+      "notes": "Проверено агентом, не человеком. Generated TryFrom<Value> for named structs panics on a short Structure through fields.remove(0). Reproduced in the synthetic review harness. No safe-to-deploy audit granted. Exact archive SHA-256 73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449. Root-only non-reachability exception: these packages are reachable in Cargo metadata through keyring 3.6.3 -> optional secret-service 4.0.0 -> zbus 4.4.0, but root selects sync-secret-service -> dbus-secret-service, never async-secret-service. cargo tree --locked --offline --target all -e normal,build,dev -i zvariant_derive, with and without --all-features, has no active path. Therefore no current NymWrap process executes this code. Enabling the asynchronous backend, adding a direct dependency or changing keyring features invalidates this exception and requires renewed review. No fixed published release was confirmed: latest checked code retains the problematic operation. Analysis and exact sources: docs/adr/0102-root-dependency-audit-sources.md#root-4-unreachable; evidence in supply-chain/root/review-2026-11-26-batch-4.json. This exception does not audit the rest of the crate."
+    }
+  ],
+  "policy_changes": [],
+  "examined_import_candidates": [
+    {
+      "name": "google",
+      "repo": "google/supply-chain",
+      "sha": "640a51eb32e2f47d7ee8017a128485f7e1ce6780",
+      "url": "https://raw.githubusercontent.com/google/supply-chain/640a51eb32e2f47d7ee8017a128485f7e1ce6780/audits.toml",
+      "sha256": "3d933832eb671c4c470ccead30df5ab4321a62f7848115206adf282a50ddb0ea",
+      "targeted_matches": [],
+      "retained": false
+    },
+    {
+      "name": "mozilla",
+      "repo": "mozilla/supply-chain",
+      "sha": "0ecbc0c0e1ffa71c171eca7e5f065adf35a46d08",
+      "url": "https://raw.githubusercontent.com/mozilla/supply-chain/0ecbc0c0e1ffa71c171eca7e5f065adf35a46d08/audits.toml",
+      "sha256": "e8f5a30769071e154f4504ed82c1db8c0de905f9fc943ec4d06862f70a2803b9",
+      "targeted_matches": [
+        {
+          "name": "getrandom",
+          "version": "0.2.17",
+          "block": "[[audits.getrandom]]\nwho = \"Alex Franchuk <afranchuk@mozilla.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.2.15 -> 0.2.17\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla/cargo-vet/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "r-efi",
+          "version": "6.0.0",
+          "block": "[[audits.r-efi]]\nwho = \"Alex Franchuk <afranchuk@mozilla.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"5.2.0 -> 6.0.0\"\nnotes = \"Mechanical changes replacing a macro with the inline value (and marking functions as unsafe).\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla/cargo-vet/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "getrandom",
+          "version": "0.4.3",
+          "block": "[[audits.getrandom]]\nwho = \"Alex Franchuk <afranchuk@mozilla.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.4.2 -> 0.4.3\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla/cargo-vet/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "nix",
+          "version": "0.29.0",
+          "block": "[[audits.nix]]\nwho = \"Alex Franchuk <afranchuk@mozilla.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.28.0 -> 0.29.0\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "nix",
+          "version": "0.29.0",
+          "block": "[[audits.nix]]\nwho = \"Gabriele Svelto <gsvelto@mozilla.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.29.0 -> 0.30.1\"\nnotes = \"Some new wrappers, support for minor platforms and lots of work around type safety that reduces the unsafe surafce.\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "core-foundation",
+          "version": "0.9.4",
+          "block": "[[audits.core-foundation]]\nwho = \"Teodor Tanasoaia <ttanasoaia@mozilla.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.9.3 -> 0.9.4\"\nnotes = \"I've reviewed every source contribution that was neither authored nor reviewed by Mozilla.\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "core-foundation",
+          "version": "0.9.4",
+          "block": "[[audits.core-foundation]]\nwho = \"Erich Gubler <erichdongubler@gmail.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.9.4 -> 0.10.0\"\naggregated-from = \"https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml\"\n\n"
+        }
+      ],
+      "retained": false
+    },
+    {
+      "name": "bytecode-alliance",
+      "repo": "bytecodealliance/wasmtime",
+      "sha": "b738a89287bb78e51c06ac9624014bbda3c1429f",
+      "url": "https://raw.githubusercontent.com/bytecodealliance/wasmtime/b738a89287bb78e51c06ac9624014bbda3c1429f/supply-chain/audits.toml",
+      "sha256": "ca060b5d12f716b4e4f661b77220db1fe799719b1a3cef548f40b369460b70c1",
+      "targeted_matches": [],
+      "retained": false
+    },
+    {
+      "name": "isrg",
+      "repo": "divviup/libprio-rs",
+      "sha": "9d36f2fb5759aa2382cedf5a703f1d52413c1177",
+      "url": "https://raw.githubusercontent.com/divviup/libprio-rs/9d36f2fb5759aa2382cedf5a703f1d52413c1177/supply-chain/audits.toml",
+      "sha256": "c57a1843c5b22c0a1ab12eb25944e3c2a4b5f98beecb529ed3c6fd3f0bd40fc9",
+      "targeted_matches": [
+        {
+          "name": "getrandom",
+          "version": "0.3.4",
+          "block": "[[audits.getrandom]]\nwho = \"David Cook <dcook@divviup.org>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.3.3 -> 0.3.4\"\n\n"
+        },
+        {
+          "name": "getrandom",
+          "version": "0.3.4",
+          "block": "[[audits.getrandom]]\nwho = \"David Cook <dcook@divviup.org>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.3.4 -> 0.4.0\"\n\n"
+        }
+      ],
+      "retained": false
+    },
+    {
+      "name": "zcash",
+      "repo": "zcash/rust-ecosystem",
+      "sha": "ce132d7abdd52f2b3b0d55ed5dc9f152331535c2",
+      "url": "https://raw.githubusercontent.com/zcash/rust-ecosystem/ce132d7abdd52f2b3b0d55ed5dc9f152331535c2/supply-chain/audits.toml",
+      "sha256": "f7e0db3983d4553588d1c96d95b59f4eb9acf04d076ceb1a31eaa543e3afa6c6",
+      "targeted_matches": [
+        {
+          "name": "generic-array",
+          "version": "0.14.7",
+          "block": "[[audits.generic-array]]\nwho = \"Sean Bowe <ewillbefull@gmail.com>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.14.6 -> 0.14.7\"\naggregated-from = \"https://raw.githubusercontent.com/zcash/zcash/master/qa/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "generic-array",
+          "version": "0.14.7",
+          "block": "[[audits.generic-array]]\nwho = \"Jack Grigg <jack@electriccoin.co>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"0.14.7 -> 0.14.9\"\nnotes = \"Change to build script is to add a deprecation warning behind a Rust version check.\"\naggregated-from = \"https://raw.githubusercontent.com/zcash/wallet/main/supply-chain/audits.toml\"\n\n"
+        },
+        {
+          "name": "r-efi",
+          "version": "5.3.0",
+          "block": "[[audits.r-efi]]\nwho = \"Jack Grigg <jack@electriccoin.co>\"\ncriteria = \"safe-to-deploy\"\ndelta = \"5.2.0 -> 5.3.0\"\naggregated-from = \"https://raw.githubusercontent.com/zcash/wallet/main/supply-chain/audits.toml\"\n\n"
+        }
+      ],
+      "retained": false
+    },
+    {
+      "name": "embark-studios",
+      "repo": "EmbarkStudios/rust-ecosystem",
+      "sha": "bc9f6c527108a8b79b74d44121aed574e7b5e526",
+      "url": "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/bc9f6c527108a8b79b74d44121aed574e7b5e526/audits.toml",
+      "sha256": "c8d3cd352b3b8528e131054be3701357ec26495b1db7148896503a1c42ab9418",
+      "targeted_matches": [],
+      "retained": false
+    }
+  ],
+  "additional_import_candidates": [
+    {
+      "name": "mozilla-vet",
+      "repo": "mozilla/cargo-vet",
+      "sha": "a9bde85910409be3d2d61e6f6ff6ba7a521f0412",
+      "url": "https://raw.githubusercontent.com/mozilla/cargo-vet/a9bde85910409be3d2d61e6f6ff6ba7a521f0412/supply-chain/audits.toml",
+      "sha256": "f46300486f42d4adb28b2b951ce1c32ec7d1f45e705373206dacf22e4838e3a2",
+      "bytes": 25690,
+      "relevant_blocks_read_scope": "Targeted publisher/wildcard records and candidate delta summaries; no extra import retained",
+      "retained": false
+    },
+    {
+      "name": "mozilla-firefox",
+      "repo": "mozilla-firefox/firefox",
+      "sha": "d6a56d53ca03b2bcbb2c431277377438fb37df1f",
+      "url": "https://raw.githubusercontent.com/mozilla-firefox/firefox/d6a56d53ca03b2bcbb2c431277377438fb37df1f/supply-chain/audits.toml",
+      "sha256": "d61d87e7f09f3cf28ebb46d3e984a71c5a74f951361dbf669625336020b957ec",
+      "bytes": 275672,
+      "relevant_blocks_read_scope": "Targeted publisher/wildcard records and candidate delta summaries; no extra import retained",
+      "retained": false
+    }
+  ],
+  "discarded_experiment": {
+    "description": "Temporary direct Mozilla imports and newer Bytecode/ISRG pins gave no additional useful coverage. cargo-vet formatting reordered config sections; a cleanup by string truncation temporarily removed original Zcash/policy sections. Restored the entire original config from HEAD, refreshed normally and checked all original policy/import sections. The invalid intermediate 59-gap result was discarded.",
+    "final_original_policy_and_imports_preserved": true
+  },
+  "publisher_evidence": [
+    {
+      "cache_file": "target/root-review-4/source-core-foundation-readme.txt",
+      "sha256": "b0b5385da99cf74bc8755a6bdb7f72522e0dff1830205155030c97725dec9e82",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/servo/core-foundation-rs/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-crc32fast-readme.txt",
+      "sha256": "4fe16bff332c3c450bbad7147ba886ef664385e66b289b27c804693e239584fd",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/srijs/rust-crc32fast/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-getrandom-Cargo.toml.txt",
+      "sha256": "38af7dcdd073db7b107b845582cf68f92e1f620d5db7d36b1d9c2daa2d84ffd4",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/rust-random/getrandom/HEAD/Cargo.toml"
+    },
+    {
+      "cache_file": "target/root-review-4/source-getrandom-readme.txt",
+      "sha256": "6ea6df52a102be4fc28ff5717d35b3374e3fe3430103d18bd681a2fd9ccf3f3f",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/rust-random/getrandom/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-getrandom-security.txt",
+      "sha256": "816ea79f8c7937888ab5a972a1efb270c4bada028b448953a195359fe11d526e",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/rust-random/getrandom/HEAD/SECURITY.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-itertools-CONTRIBUTING.md.txt",
+      "sha256": "d5787d0fd4df15481e2e09a37234ac5dec22c007c890826991f633d890efa29e",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/rust-itertools/itertools/HEAD/CONTRIBUTING.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-itertools-readme.txt",
+      "sha256": "b05ce16c04a2e8ad346540e4c3b2ffa5c6b6795797ebc27adfeca8c0f5a1f969",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/rust-itertools/itertools/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-r-efi-AUTHORS.txt",
+      "sha256": "cfb1806058da831762bbfd08d2f44da0f4cba49339e0782d8985ed84d42de75e",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/r-efi/r-efi/HEAD/AUTHORS"
+    },
+    {
+      "cache_file": "target/root-review-4/source-r-efi-readme.txt",
+      "sha256": "420f65fec3ba2e89d49da51b222d2881d26959037a7b7d3794143db4bd4627b1",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/r-efi/r-efi/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-security-framework-readme.txt",
+      "sha256": "ff1d022f35ff76531a361ad421ba7ee61ce186dc6516f72fc819ec4b2a5567a4",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/kornelski/rust-security-framework/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-tracing-.github-CODEOWNERS.txt",
+      "sha256": "378a7800f11b6f0fe10eb01c14151ee14ad2f2fd3042e53130e5be067a7e74db",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/tokio-rs/tracing/HEAD/.github/CODEOWNERS"
+    },
+    {
+      "cache_file": "target/root-review-4/source-tracing-CONTRIBUTING.md.txt",
+      "sha256": "01fd56cfcce666bc367ffa68b687d1d809c5252f21a21243e18ee64a11488abc",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/tokio-rs/tracing/HEAD/CONTRIBUTING.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-tracing-readme.txt",
+      "sha256": "8b6c2b43117a6db38a930553d9a6ab0bea7d09ccd1f5a5d622473594e294d755",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/tokio-rs/tracing/HEAD/README.md"
+    },
+    {
+      "cache_file": "target/root-review-4/source-zlib-rs-readme.txt",
+      "sha256": "3b58df8005e7700cd3f28908b7feb674a193e58b63959c2061dc5e55c27f364e",
+      "status": 200,
+      "read_mode": "Project descriptions, listed contract/release-policy sections only; not a complete code or workflow audit",
+      "url": "https://raw.githubusercontent.com/trifectatechfoundation/zlib-rs/HEAD/README.md"
+    }
+  ],
+  "archive_checks": [
+    {
+      "name": "getrandom",
+      "version": "0.2.17",
+      "archive_sha256": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0",
+      "sparse_index_path": "ge/tr/getrandom",
+      "sparse_index_cksum": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "getrandom",
+      "version": "0.3.4",
+      "archive_sha256": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd",
+      "sparse_index_path": "ge/tr/getrandom",
+      "sparse_index_cksum": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "getrandom",
+      "version": "0.4.3",
+      "archive_sha256": "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099",
+      "sparse_index_path": "ge/tr/getrandom",
+      "sparse_index_cksum": "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "archive_sha256": "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f",
+      "sparse_index_path": "r-/ef/r-efi",
+      "sparse_index_cksum": "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "archive_sha256": "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf",
+      "sparse_index_path": "r-/ef/r-efi",
+      "sparse_index_cksum": "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "archive_sha256": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "sparse_index_path": "tr/ac/tracing",
+      "sparse_index_cksum": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "archive_sha256": "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da",
+      "sparse_index_path": "tr/ac/tracing-attributes",
+      "sparse_index_cksum": "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "security-framework",
+      "version": "2.11.1",
+      "archive_sha256": "897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02",
+      "sparse_index_path": "se/cu/security-framework",
+      "sparse_index_cksum": "897b2245f0b511c87893af39b033e5ca9cce68824c4d7e7630b5a1d339658d02",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "security-framework",
+      "version": "3.7.0",
+      "archive_sha256": "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d",
+      "sparse_index_path": "se/cu/security-framework",
+      "sparse_index_cksum": "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "security-framework-sys",
+      "version": "2.17.0",
+      "archive_sha256": "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3",
+      "sparse_index_path": "se/cu/security-framework-sys",
+      "sparse_index_cksum": "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.9.4",
+      "archive_sha256": "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f",
+      "sparse_index_path": "co/re/core-foundation",
+      "sparse_index_cksum": "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "archive_sha256": "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6",
+      "sparse_index_path": "co/re/core-foundation",
+      "sparse_index_cksum": "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "archive_sha256": "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112",
+      "sparse_index_path": "zl/ib/zlib-rs",
+      "sparse_index_cksum": "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.5",
+      "archive_sha256": "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64",
+      "sparse_index_path": "cr/c3/crc32fast",
+      "sparse_index_cksum": "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "libloading",
+      "version": "0.8.9",
+      "archive_sha256": "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55",
+      "sparse_index_path": "li/bl/libloading",
+      "sparse_index_cksum": "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "archive_sha256": "435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532",
+      "sparse_index_path": "as/yn/async-broadcast",
+      "sparse_index_cksum": "435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    },
+    {
+      "name": "zvariant_derive",
+      "version": "4.2.0",
+      "archive_sha256": "73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449",
+      "sparse_index_path": "zv/ar/zvariant_derive",
+      "sparse_index_cksum": "73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449",
+      "cached_index_yanked": false,
+      "unpacked_present_files_match": true
+    }
+  ],
+  "reachability": {
+    "scope": "Root selected features and normal/build/dev edges across all targets, with and without workspace --all-features; not other stores or arbitrary future feature sets",
+    "commands": [
+      {
+        "command": [
+          "cargo",
+          "tree",
+          "--locked",
+          "--offline",
+          "--target",
+          "all",
+          "-i",
+          "async-broadcast",
+          "-e",
+          "normal,build,dev"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+      },
+      {
+        "command": [
+          "cargo",
+          "tree",
+          "--locked",
+          "--offline",
+          "--target",
+          "all",
+          "-i",
+          "async-broadcast",
+          "-e",
+          "normal,build,dev",
+          "--all-features"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+      },
+      {
+        "command": [
+          "cargo",
+          "tree",
+          "--locked",
+          "--offline",
+          "--target",
+          "all",
+          "-i",
+          "zvariant_derive",
+          "-e",
+          "normal,build,dev"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+      },
+      {
+        "command": [
+          "cargo",
+          "tree",
+          "--locked",
+          "--offline",
+          "--target",
+          "all",
+          "-i",
+          "zvariant_derive",
+          "-e",
+          "normal,build,dev",
+          "--all-features"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+      }
+    ],
+    "source_files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "ca01f45f0f49926fc516568e8638533631505c92795aa77e670b8b3f31092224",
+        "scope": "root feature selection, credential call sites and process ownership only"
+      },
+      {
+        "path": "crates/nw-cred/Cargo.toml",
+        "sha256": "449395f4956d6806c6b49fa915b9469c4a1fdb6066f6cd8bd200bafe7e976781",
+        "scope": "root feature selection, credential call sites and process ownership only"
+      },
+      {
+        "path": "crates/nw-vault/Cargo.toml",
+        "sha256": "e1fe5a3f58080831e5914352afb020bbd91f79bf0223747e8d50eff81e497c29",
+        "scope": "root feature selection, credential call sites and process ownership only"
+      },
+      {
+        "path": "crates/nw-cred/src/os.rs",
+        "sha256": "b1194902bc03ff028789a03dee7f1ade70372bdd6214a4ce329f1384a67dc788",
+        "scope": "root feature selection, credential call sites and process ownership only"
+      },
+      {
+        "path": "crates/nw-vault/src/os_secret.rs",
+        "sha256": "1260814ccb38749729d24dcbda04c1c8d0e3f69e3debfd96d3f33fb7c496954c",
+        "scope": "root feature selection, credential call sites and process ownership only"
+      },
+      {
+        "path": "crates/nw-core/Cargo.toml",
+        "sha256": "115d765d4d9d69978fa653424b1da9325ae0e3abdb546b67558662babfe49e0c",
+        "scope": "root feature selection, credential call sites and process ownership only"
+      },
+      {
+        "package": "keyring",
+        "version": "3.6.3",
+        "path": "Cargo.toml",
+        "sha256": "ecebaa095f7181b35d774b34f60fdfe387b1ba5eefe667cbdcad1d01d6bede64",
+        "scope": "dependency/feature declarations only"
+      },
+      {
+        "package": "keyring",
+        "version": "3.6.3",
+        "path": "src/lib.rs",
+        "sha256": "dfa7fa25141b5cfa6d6000fa753bcdd956679dabc7c55293d0b9ebd5f9eaa8fc",
+        "scope": "documented backend selection and cfg snippets"
+      },
+      {
+        "package": "keyring",
+        "version": "3.6.3",
+        "path": "src/secret_service.rs",
+        "sha256": "1f3e0dab29e3805e2e2c17a17e3504997128444f50cd15b29e921bb3562b0d19",
+        "scope": "backend import cfg only"
+      },
+      {
+        "package": "zbus",
+        "version": "4.4.0",
+        "path": "Cargo.toml",
+        "sha256": "21cc691feced92ea598ee9d9cfe13e9733cbc6d2b57b2cea8e9d792340eb5b87",
+        "scope": "dependency/feature declarations only"
+      },
+      {
+        "package": "secret-service",
+        "version": "4.0.0",
+        "path": "Cargo.toml",
+        "sha256": "cfc4e1092d28c8f2c21a1f0e9390de0caa315df87975990f2ecc8fab042ee9e6",
+        "scope": "dependency/feature declarations only"
+      }
+    ],
+    "affected_processes": "None currently. The potential path would be root nw-vault/nw-cred OS credential access from nymwrap/nymwrapd, but keyring uses the synchronous dbus-secret-service backend; async secret-service -> zbus is inactive.",
+    "invalidated_by": "Enabling keyring async-secret-service, adding a direct path, or changing manifests/features requires renewed review; saved harness rejects nonempty inverse trees.",
+    "findings": [
+      {
+        "name": "async-broadcast",
+        "version": "0.7.2",
+        "problem": "capacity=0 plus overflow lets queue grow beyond configured capacity",
+        "root_reachable": false,
+        "fixed_version": null,
+        "latest_checked": "0.7.2",
+        "latest_api_sha256": "b122580d5ef56387d6abcf519080b6775e48c9a74e48e9ef879eeeca7cf771ef",
+        "latest_primary_source": "https://raw.githubusercontent.com/smol-rs/async-broadcast/124e9a78a44f7e1fec07e106027cd78a54eb2860/src/lib.rs",
+        "latest_source_sha256": "aa5c57e7b5630ddb6662dc4c7efe35c29557f6d13d5b3844c424f14152cdcd23",
+        "assessment": "Latest published release is the locked affected release; current upstream source is byte-identical. No published fix confirmed; no audit."
+      },
+      {
+        "name": "zvariant_derive",
+        "version": "4.2.0",
+        "problem": "Generated named-struct TryFrom<Value> removes fields without checking arity and panics on a short Structure",
+        "root_reachable": false,
+        "fixed_version": null,
+        "latest_checked": "5.15.1",
+        "latest_archive_sha256": "ef2672456ba1cb54b5eaec136e63135b3c7495fb938e53b28a62e633496d486d",
+        "latest_implementation_dependency": "zvariant_utils 4.2.0",
+        "helper_archive_sha256": "bad0294361a320b694a328460dc73add56c306150f5cb6bfafc44446120008a3",
+        "helper_reviewed_file": "src/derive/value.rs",
+        "helper_file_sha256": "dcba0a356401d1f99d87dca1b1370d995f862754e59d5ae3dac07fe69404ab1a",
+        "assessment": "Latest macro delegates to zvariant_utils::derive::expand_value_derive; its named-struct branch still emits fields.remove(0) without an arity check. No fixed published version confirmed, no audit. Initial lookup of old source path returned 404 after upstream restructuring; checked the released archives instead."
+      }
+    ]
+  },
+  "requires_update": [],
+  "requires_update_note": "Neither reproduced issue has a current root execution path or a confirmed fixed published release. No version recommendation is invented. If the async backend becomes active, stop relying on the exemption and require an upstream repair or owner-approved dependency replacement/update.",
+  "validation": {
+    "cargo_vet": {
+      "command": "node scripts/vet-dependencies.mjs root",
+      "status": "failed",
+      "gaps": 50,
+      "locked_imports": true,
+      "inputs_unchanged": true
+    },
+    "cargo_deny": {
+      "command": "cargo deny check --hide-inclusion-graph",
+      "exit_code": 0,
+      "version": "cargo-deny 0.22.0",
+      "result": "advisories ok, bans ok, licenses ok, sources ok"
+    },
+    "source_tests": {
+      "command": "node supply-chain/root/review-tests-2026-11-26-batch-4.mjs",
+      "runs": [
+        {
+          "command": [
+            "cargo",
+            "test",
+            "--offline",
+            "--manifest-path",
+            "[worktree]\\target\\root-review-4-tests\\Cargo.toml",
+            "--lib"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "stdout": "\nrunning 3 tests\ntest loaded_system_symbol_keeps_its_library_borrow_and_calls_the_right_abi ... ok\ntest reproduced_broadcast_capacity_bug_stays_unaudited ... ok\ntest reproduced_short_structure_bug_stays_unaudited ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n",
+          "log": "target\\root-review-4-tests\\debug.log"
+        },
+        {
+          "command": [
+            "cargo",
+            "test",
+            "--offline",
+            "--manifest-path",
+            "[worktree]\\target\\root-review-4-tests\\Cargo.toml",
+            "--lib",
+            "--release"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "stdout": "\nrunning 3 tests\ntest loaded_system_symbol_keeps_its_library_borrow_and_calls_the_right_abi ... ok\ntest reproduced_broadcast_capacity_bug_stays_unaudited ... ok\ntest reproduced_short_structure_bug_stays_unaudited ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n",
+          "log": "target\\root-review-4-tests\\release.log"
+        }
+      ],
+      "reachability_checks": 4,
+      "limits": "3/3 checks in debug and release (6 test results), 4 inverse-tree checks; no upstream suite, Miri, Unix runtime/ABI matrix or CI."
+    },
+    "workspace_tests": "Not invoked: task explicitly permits cargo-vet and cargo-deny for supply-chain/docs-only work. Full workspace tests, clippy, leak suite and extension suite not run; no Perl bootstrap needed or used."
+  },
+  "lockfiles": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "6a8b1f7bd79c70be14f94ba7430e80e427a0683a30db804660dcf22ed70c595a",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "app/src-tauri/Cargo.lock",
+      "sha256": "a2eeed10d769a05ff0a9c7843708ec86c58d5cb08cf24a93d2236eaa38041e17",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "daemons/nw-netd/Cargo.lock",
+      "sha256": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "sha256": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "vendor/llama-cpp-2/Cargo.lock",
+      "sha256": "447c65774c376341f2aad059bd96258dfd9f24787cc009c17b6b9465c1e7b3c3",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "vendor/rustls/Cargo.lock",
+      "sha256": "8fb66853b333f7bb99c0d1c0cfcecf15d1a08940f09c7ce26eb3626af81ee6fa",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "vendor/tor-key-forge/Cargo.lock",
+      "sha256": "0133558f1d8066b3e79376d356c24b099482a65462b0c8d5799477c311a2bed0",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "vendor/tor-llcrypto/Cargo.lock",
+      "sha256": "7177c761c926b44e00ab58258fa4af594cd94cbf975b2b118b5b66d748f0cccd",
+      "unchanged_from_head": true
+    },
+    {
+      "path": "vendor/tor-ptmgr/Cargo.lock",
+      "sha256": "40b783709a0ea5cc3c7c714629ce35de08753eaa9d26f4b70a9ea20ea9fd4c7f",
+      "unchanged_from_head": true
+    }
+  ],
+  "remaining": [
+    {
+      "name": "blocking",
+      "version": "1.7.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 9,
+      "production_lines": 1063,
+      "group": "capability-indicators",
+      "next_action": "Read both manifests and the entire library including tests. Persistent thread::Builder::spawn failure can repeat inside grow_pool while holding the executor mutex; queued work is unbounded. No failure-injection run or exploitability claim; no audit pending resource/failure analysis."
+    },
+    {
+      "name": "clang-sys",
+      "version": "1.9.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 4,
+      "production_lines": 4350,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "dbus-secret-service",
+      "version": "4.1.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 6,
+      "production_lines": 2356,
+      "group": "larger-safe-rust",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "derive_more-impl",
+      "version": "2.1.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 7,
+      "production_lines": 12459,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "ego-tree",
+      "version": "0.11.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 1911,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "errno",
+      "version": "0.3.15",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 34,
+      "production_lines": 489,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "event-listener",
+      "version": "5.4.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 15,
+      "production_lines": 2740,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "generic-array",
+      "version": "0.14.7",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 38,
+      "production_lines": 2062,
+      "group": "build-script",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 12,
+      "production_lines": 1449,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "html5ever",
+      "version": "0.40.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 8771,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "interprocess",
+      "version": "2.4.9",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 9,
+      "production_lines": 13737,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "itertools",
+      "version": "0.13.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 4,
+      "production_lines": 13797,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "keyring",
+      "version": "3.6.3",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 4309,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "libdbus-sys",
+      "version": "0.2.7",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 4776,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "libsqlite3-sys",
+      "version": "0.40.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 6,
+      "production_lines": 28606,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "llama-cpp-2",
+      "version": "0.1.161",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 1,
+      "production_lines": 9356,
+      "group": "native-or-ffi",
+      "next_action": "Published base, local fork delta and native implementation still require separate review."
+    },
+    {
+      "name": "llama-cpp-sys-2",
+      "version": "0.1.161",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 2,
+      "production_lines": 1995,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "matchit",
+      "version": "0.8.4",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 10,
+      "production_lines": 1735,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "minimal-lexical",
+      "version": "0.2.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 6,
+      "production_lines": 5431,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "nix",
+      "version": "0.29.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 32627,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "nix",
+      "version": "0.32.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 35983,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "openssl",
+      "version": "0.10.82",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 7,
+      "production_lines": 35482,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "openssl-src",
+      "version": "300.6.1+3.6.3",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 12,
+      "production_lines": 66501,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "openssl-sys",
+      "version": "0.9.118",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 11,
+      "production_lines": 10661,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "phf_generator",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 14,
+      "production_lines": 482,
+      "group": "small-safe-rust",
+      "next_action": "Read both manifests and all production code including ptrhash and packaged binary. Unbounded seed search, duplicate keys and inconsistent caller hashes can hang; no resource/input-contract waiver or audit added."
+    },
+    {
+      "name": "ppv-lite86",
+      "version": "0.2.21",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 12,
+      "production_lines": 3850,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "quick-xml",
+      "version": "0.42.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 16,
+      "production_lines": 35317,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "recvmsg",
+      "version": "1.0.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 10,
+      "production_lines": 3455,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "redox_syscall",
+      "version": "0.5.18",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 11,
+      "production_lines": 4693,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "rsqlite-vfs",
+      "version": "0.2.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 7,
+      "production_lines": 4485,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "rusqlite",
+      "version": "0.43.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 22996,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "scraper",
+      "version": "0.29.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 4,
+      "production_lines": 2287,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "secret-service",
+      "version": "4.0.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 6,
+      "production_lines": 3015,
+      "group": "larger-safe-rust",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "selectors",
+      "version": "0.41.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 9000,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "servo_arc",
+      "version": "0.5.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 6,
+      "production_lines": 1211,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "signal-hook-registry",
+      "version": "1.4.8",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 23,
+      "production_lines": 1276,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "siphasher",
+      "version": "1.0.4",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 17,
+      "production_lines": 1800,
+      "group": "unsafe-or-contract",
+      "next_action": "Both manifests, README and all executable 64/128-bit/common code read across batches. Freshly constructed state keeps ntail within 0..7; optional derived deserialization does not validate that private state. No full optional-feature/state-contract or cross-endian validation; no audit and no confirmed UB claim."
+    },
+    {
+      "name": "sqlcipher-src",
+      "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 446,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "sqlite-wasm-rs",
+      "version": "0.6.3",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 6,
+      "production_lines": 12968,
+      "group": "native-or-ffi",
+      "next_action": "Complete Rust/build review plus native payload/ABI review required."
+    },
+    {
+      "name": "string_cache",
+      "version": "0.11.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 923,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "tendril",
+      "version": "0.5.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 7,
+      "production_lines": 4472,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "typed-path",
+      "version": "0.13.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 5,
+      "production_lines": 20274,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 39,
+      "production_lines": 19368,
+      "group": "larger-safe-rust",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "uds_windows",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 2036,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "widestring",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 10,
+      "production_lines": 15017,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "zbus",
+      "version": "4.4.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 7,
+      "production_lines": 17830,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "zbus_macros",
+      "version": "4.4.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 3473,
+      "group": "proc-macro",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "zbus_names",
+      "version": "3.0.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 8,
+      "production_lines": 2719,
+      "group": "larger-safe-rust",
+      "next_action": "Read both manifests, root/utils/error/member/property/unique executable code with large rustdoc examples omitted. Property-name validation only enforces nonempty/<=255, unique-name parser permits boundary forms, and derived Value conversions need contract analysis. Remaining four modules not fully read; no audit or runtime reproduction claimed."
+    },
+    {
+      "name": "zip",
+      "version": "9.8.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 4,
+      "production_lines": 27666,
+      "group": "native-or-ffi",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    },
+    {
+      "name": "zvariant",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "transitive_dependents": 9,
+      "production_lines": 13739,
+      "group": "unsafe-or-contract",
+      "next_action": "Only inventoried in this batch; complete source and unsafe/capability review still required."
+    }
+  ],
+  "remaining_summary": {
+    "capability-indicators": 1,
+    "native-or-ffi": 24,
+    "larger-safe-rust": 4,
+    "unsafe-or-contract": 18,
+    "build-script": 1,
+    "small-safe-rust": 1,
+    "proc-macro": 1
+  },
+  "stop_reason": "Finite single-agent audit batch. Fourteen narrow publisher decisions, one source audit and two individually justified exemptions reduce 67 to 50 failures. Native C/ASM/FFI, large parsers/unsafe containers, local llama fork and unresolved code contracts were not certified to reach green. The complete residual is above; root dependency gate and M6 remain open.",
+  "release_gate_note": "Exemptions are not audits. scripts/vet-dependencies.mjs also requires zero vetted_with_exemptions for a passing all-covered result; no gate code was relaxed.",
+  "final_receipt": {
+    "version": 1,
+    "scope": "root",
+    "tool_version": "0.10.4",
+    "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+    "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+    "exit_code": 4294967295,
+    "locked_imports": true,
+    "refreshed_imports": false,
+    "input_hashes": {
+      "cargo_lock": "6a8b1f7bd79c70be14f94ba7430e80e427a0683a30db804660dcf22ed70c595a",
+      "config": "adb0b308ee9943e4b3e0f99742c307df5ff904bf68dfa0203fada72e68252654",
+      "audits": "7e8c2dc96227a9ee49824b392ceb8406e6ba45b6dd15e0274f80c4fccd984b5a",
+      "imports": "63ae6b15741aa6424f1b9e35a11a0ec08ec4a44c033810054f678e4cf71626c1"
+    },
+    "inputs_unchanged": true,
+    "status": "failed",
+    "evidence": {
+      "commit": null,
+      "run": null,
+      "attempt": null
+    }
+  },
+  "trusted_release_commit_evidence": [
+    {
+      "name": "tracing",
+      "url": "https://github.com/tokio-rs/tracing/commit/2d55f6faf9be83e7e4634129fb96813241aac2b8",
+      "sha": "2d55f6faf9be83e7e4634129fb96813241aac2b8",
+      "author": "hds",
+      "committer": "web-flow",
+      "message": "chore: prepare tracing 0.1.44 (#3439)\n\n# 0.1.44 (December 18, 2025)\n\n### Fixed\n\n- Fix `record_all` panic ([#3432])\n\n### Changed\n\n- `tracing-core`: updated to 0.1.36 ([#3440])\n\n[#3432]: https://github.com/tokio-rs/tracing/pull/3432\n[#3440]: https://github.com/tokio-rs/tracing/pull/3440",
+      "metadata_sha256": "084d134aea05c6d18c6552b97d877bc69effcbcd2a247aa78a19492449ed32d1"
+    },
+    {
+      "name": "core-foundation",
+      "url": "https://github.com/servo/core-foundation-rs/commit/548b65cd3046bb46fc5cebb9f39e7bfd56eaeaa2",
+      "sha": "548b65cd3046bb46fc5cebb9f39e7bfd56eaeaa2",
+      "author": "tmandry",
+      "committer": "web-flow",
+      "message": "Bump core-foundation to 0.10.1 (#706)\n\nSigned-off-by: Tyler Mandry <tmandry@gmail.com>",
+      "metadata_sha256": "948f65376bbf2a591a6d7c152a755d99c2f56c736f3897e9230ff355be873d3e"
+    },
+    {
+      "name": "security-framework",
+      "url": "https://github.com/kornelski/rust-security-framework/commit/5f6e65114b77d5bc161d2b099cad09f2a67609d2",
+      "sha": "5f6e65114b77d5bc161d2b099cad09f2a67609d2",
+      "author": "kornelski",
+      "committer": "kornelski",
+      "message": "Bump",
+      "metadata_sha256": "4d9bcdc792c09fcd7c881a22e1103b198bef52c0181311784c6352faad16d8e9"
+    },
+    {
+      "name": "zlib-rs",
+      "url": "https://github.com/trifectatechfoundation/zlib-rs/commit/0254e07204884bfc902d6ebb68c8b703d0ea49cf",
+      "sha": "0254e07204884bfc902d6ebb68c8b703d0ea49cf",
+      "author": "folkertdev",
+      "committer": "folkertdev",
+      "message": "release version 0.6.8",
+      "metadata_sha256": "71d6cab3f998341bb3e39e560db77284145bd210ed2c687c6e5995b0a7883a51"
+    }
+  ],
+  "integrity_checks": {
+    "scope_allowlist_checked": true,
+    "other_graphs_unchanged": true,
+    "all_nine_cargo_lockfiles_unchanged": true,
+    "dependency_versions_unchanged": true,
+    "original_policy_and_import_config_unchanged": true,
+    "original_audits_and_trust_unchanged": true,
+    "original_imports_lock_entries_preserved": true,
+    "no_new_import_sources": true,
+    "product_criteria_unchanged": true,
+    "new_audits": 1,
+    "new_trusted_entries": 14,
+    "new_exemptions": 2,
+    "all_new_records_label_agent_not_human": true,
+    "all_17_archives_match_lock_and_actual_sparse_index": true,
+    "unpacked_present_sources_match": true,
+    "implementation_other_sections_unchanged": true,
+    "adr_historical_prefix_unchanged": true,
+    "final_receipt_matches_all_four_inputs": true,
+    "git_diff_check_passed": true
+  }
+}

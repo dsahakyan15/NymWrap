@@ -88,3 +88,13 @@ audit-as-crates-io = false
 
 [policy.nw-vault]
 audit-as-crates-io = false
+
+[[exemptions.async-broadcast]]
+version = "0.7.2"
+criteria = "safe-to-deploy"
+notes = "Проверено агентом, не человеком. set_capacity(0) with overflow=true allows the queue to exceed capacity. Reproduced in the synthetic review harness. No safe-to-deploy audit granted. Exact archive SHA-256 435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532. Root-only non-reachability exception: these packages are reachable in Cargo metadata through keyring 3.6.3 -> optional secret-service 4.0.0 -> zbus 4.4.0, but root selects sync-secret-service -> dbus-secret-service, never async-secret-service. cargo tree --locked --offline --target all -e normal,build,dev -i async-broadcast, with and without --all-features, has no active path. Therefore no current NymWrap process executes this code. Enabling the asynchronous backend, adding a direct dependency or changing keyring features invalidates this exception and requires renewed review. No fixed published release was confirmed: latest checked code retains the problematic operation. Analysis and exact sources: docs/adr/0102-root-dependency-audit-sources.md#root-4-unreachable; evidence in supply-chain/root/review-2026-11-26-batch-4.json. This exception does not audit the rest of the crate."
+
+[[exemptions.zvariant_derive]]
+version = "4.2.0"
+criteria = "safe-to-deploy"
+notes = "Проверено агентом, не человеком. Generated TryFrom<Value> for named structs panics on a short Structure through fields.remove(0). Reproduced in the synthetic review harness. No safe-to-deploy audit granted. Exact archive SHA-256 73e2ba546bda683a90652bac4a279bc146adad1386f25379cf73200d2002c449. Root-only non-reachability exception: these packages are reachable in Cargo metadata through keyring 3.6.3 -> optional secret-service 4.0.0 -> zbus 4.4.0, but root selects sync-secret-service -> dbus-secret-service, never async-secret-service. cargo tree --locked --offline --target all -e normal,build,dev -i zvariant_derive, with and without --all-features, has no active path. Therefore no current NymWrap process executes this code. Enabling the asynchronous backend, adding a direct dependency or changing keyring features invalidates this exception and requires renewed review. No fixed published release was confirmed: latest checked code retains the problematic operation. Analysis and exact sources: docs/adr/0102-root-dependency-audit-sources.md#root-4-unreachable; evidence in supply-chain/root/review-2026-11-26-batch-4.json. This exception does not audit the rest of the crate."
