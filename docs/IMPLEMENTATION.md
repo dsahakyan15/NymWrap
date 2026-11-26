@@ -80,46 +80,46 @@ M6 и CI dependency-audits desktop остаются открытыми.
 
 ## cargo-vet: граф root
 
-Задача 9, продолжение от `a05f078` — 2026-11-26: **107 → 88 пробелов**.
-Продуктовый **safe-to-deploy сохранён**. Изменены только store
-`supply-chain/root/`, этот раздел и [ADR 0102](adr/0102-root-dependency-audit-sources.md).
-Версии, все Cargo.lock и остальные графы сохранены; новых exemptions нет.
+Задача 9, третья партия от `61c17b5` — 2026-11-26: **88 → 67 пробелов**.
+Добавлен **21 исходный аудит агента** с неизменным **safe-to-deploy**.
+Версии, все Cargo.lock, policy, imports и остальные графы сохранены;
+новых exemptions и доверий публикаторам нет.
 
-Первая партия `89f3b08` дала **268 → 107**: четыре закреплённых импорта,
-122 узких доверия и четыре аудита агента. Её история сохранена в
-[первом отчёте](../supply-chain/root/review-2026-11-26.json).
-[Отчёт продолжения](../supply-chain/root/review-2026-11-26-continuation.json)
-содержит каждый новый замер, хеши входов, проверенные registry identities,
-обоснования доверия, SHA исходников и полный остаток по числу зависимых.
+История: первая партия `89f3b08` дала **268 → 107**, вторая `9c2fc56` —
+**107 → 88**. Предыдущие отчёты сохранены.
+[Третий отчёт](../supply-chain/root/review-2026-11-26-batch-3.json) содержит
+инвентаризацию всех 88 крейтов по размеру/unsafe/build/proc-macro/FFI/ОС,
+SHA архивов и просмотренных файлов, режим чтения, замеры **88 → 72 → 67**
+и все оставшиеся 67 пар с критериями и дальнейшей работой.
+Метод и ограничения продолжены в [ADR 0102](adr/0102-root-dependency-audit-sources.md).
 
-Для 21 собственного workspace-крейта `nw-*` явно задано
-`audit-as-crates-io=false`: **107 → 107**, аудитов собственных крейтов нет.
-Далее 15 однодневных trusted entries для пяти user-id и четырёх официальных
-repository identities дали **107 → 92**. Для каждой версии API crates.io,
-архив, sparse index и Cargo.lock сверены заново; основания относятся к
-production-инвариантам конкретного семейства. Новых imports нет; прежние pins
-сохранены. Дополнительное доверие getrandom 0.4.3 не дало покрытия в resolver
-и удалено: **92 → 92**, без ручного изменения publisher evidence.
+У каждой новой записи явно стоит «Проверено агентом, не человеком».
+Прочитаны manifests и production-код; у ordered-stream большие rustdoc-примеры
+не прочитаны целиком, а data tables web_atoms проверены строгим полным разбором
+(2231 entity и 1108 имён), без сверки каждого значения со стандартом HTML.
+Архивы проверены по Cargo.lock и cached sparse index, crates.io API не вызывался.
+В notes разобраны unsafe/FFI/SIMD, генерируемый код, escaping и полномочия build
+helpers. Явно сохранены ограничения memoffset на закреплённый Rust 1.100,
+локальные allocation leaks xdg-home и воспроизведённая ошибка position_hint
+ordered-stream; metadata hints не сертифицированы как граница безопасности.
 
-Четыре полных исходных аудита агента дали **92 → 91 → 90 → 89 → 88**:
-phf_shared 0.14.0, tower-service 0.3.3, tower-layer 0.3.3 и proc-macro-crate
-3.5.0. Каждый явно помечен «проверено агентом, не человеком», содержит SHA
-архива и ограничения, включая генерацию deployed-кода. Приоритизация началась
-с getrandom/typenum/generic-array/errno; неполная проверка их платформенных,
-арифметических и unsafe-контрактов не объявлена аудитом. Native C/ASM и
-llama.cpp/fork также остаются открытыми.
+Без аудита оставлены async-broadcast (рост очереди при capacity=0 + overflow)
+и zvariant_derive (паника TryFrom<Value> на короткой Structure), оба случая
+воспроизведены; remote reachability в NymWrap не установлена. blocking,
+phf_generator и частично прочитанный siphasher также остаются открытыми.
+Крупные реализации, getrandom/typenum/generic-array/errno, native C/ASM/FFI
+и llama-cpp-2 base/fork не получили неподтверждённых сертификатов.
 
-Локально: финальный `node scripts/vet-dependencies.mjs root` без обновления
-imports — failed, **88 gaps**, входы неизменны; root
-`cargo deny check --hide-inclusion-graph` — exit 0,
-advisories/bans/licenses/sources ok (предупреждения о дубликатах и неиспользованных
-license exceptions). Прямой pinned rustc: 5 upstream-тестов phf_shared,
-1 тест tower-layer и 5 проверок
-[аудиторского стенда](../supply-chain/root/review-tests-2026-11-26.rs) прошли.
-У proc-macro-crate тесты не запускались; аудит исходный. Полные workspace tests,
-clippy, leak tests и тесты расширения в этой партии не запускались: изменения
-ограничены supply-chain и документацией. Cargo test/clippy и Git Perl не
-использовались. CI не запускался. Root gate и M6 остаются открытыми.
+Проверки: финальный `node scripts/vet-dependencies.mjs root` — failed,
+**67 gaps**, imports locked и входы неизменны. Root cargo-deny 0.22.0 — exit 0,
+advisories/bans/licenses/sources ok.
+[Аудиторский стенд](../supply-chain/root/review-tests-2026-11-26-batch-3.mjs)
+прошёл **11/11** в debug, release и ptrhash debug; wrapper — 3/3, расширение —
+24/24. Это не полный upstream/cross-platform/timing аудит.
+`cargo test --workspace --locked`, `cargo clippy -- -D warnings` и leak tests
+вызваны, но завершились exit 1 на сборке OpenSSL: executable perl не найден.
+Инструменты не устанавливались. Root vet fmt, rustfmt стенда и
+`git diff --check` выполнены. CI не запускался; root gate и M6 остаются открытыми.
 
 
 ## cargo-vet: граф netd
