@@ -1,0 +1,2441 @@
+{
+  "schema_version": 1,
+  "scope": "fuzz",
+  "manifest": "fuzz/Cargo.toml",
+  "date": "2026-11-26",
+  "source_commit": "a120a5f4f70d4d8a11e774ac8c48d0cd7feea86f",
+  "execution": "local Windows x86_64; not CI",
+  "status": "incomplete",
+  "command": "node scripts/vet-dependencies.mjs fuzz",
+  "checkpoints": [
+    {
+      "stage": "continuation_baseline",
+      "gaps": 193,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "16e48dbcd23942c32c33b1fde9e7485dd32fa3389694a907f7bb4e3c3059e9d4",
+        "imports": "2b1365cd805c94166cd0cb7c336f7cd15961cbf0c52f97f4d88f44d272561591"
+      }
+    },
+    {
+      "stage": "trusted_publisher_dtolnay",
+      "gaps": 180,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "d47b45d6714f9cbba1e8f5360b68882478e8d7e84aae4029ed544f1d3c6cb2fe",
+        "imports": "594ced7d908f20a40aaa7d1fd6b1c097bb65f353f25fe1d81752a36ac977e4fc"
+      }
+    },
+    {
+      "stage": "trusted_publisher_alexcrichton",
+      "gaps": 178,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "50aedb56e51104d6bfa57368ef0185f94e1a8380eb16947e8482711dcda049fc",
+        "imports": "5f680b03839bad67bd65bec12f017b4b704bde74049b0c202ba499785efe4dc9"
+      }
+    },
+    {
+      "stage": "trusted_publisher_tarcieri",
+      "gaps": 169,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "bb9965ba29ec1c074bde4d95af21256883a6948dca32db7bc66b7db1aac363ca",
+        "imports": "9c2d3b48670c5b72669bd036f19b28852d72fe1c711cdf2ac291728b9c51cc4f"
+      }
+    },
+    {
+      "stage": "trusted_publisher_newpavlov",
+      "gaps": 166,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "da983e7d2e4d010e7ade267824b1ef10b1907cf0783543fbae3080764fb064a8",
+        "imports": "8ce59307d81529fd5ebccabd30fd74050a919eb875542131e988d8884d95c7a3"
+      }
+    },
+    {
+      "stage": "trusted_publisher_taiki-e",
+      "gaps": 158,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "8ce842bd441b9c1778ff85c4a95afdbc5c0fff310c53c69ef7d5254a1b166e4f",
+        "imports": "a710bb72d9b663aace5dd73a7709a07751eaf6e8677880d635ac447eaeeadbf4"
+      }
+    },
+    {
+      "stage": "trusted_publisher_seanmonstar",
+      "gaps": 150,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "e70f0ca5807ce11dc82bd5fe2250d460e5c6ffd77afb67c01267769e8879c6bb",
+        "imports": "98d5e873501336f49e342a35e78d57d4d64120aaa21534a7d26604cb7b47c80e"
+      }
+    },
+    {
+      "stage": "trusted_publisher_Darksonn",
+      "gaps": 145,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "913eaaee8f6841d089e82d7672c8f86dcf787e1183b502394ebc23f82f1abfa8",
+        "imports": "73d98c412ec54717a229422b287cac6656e3f7d80da6feb9da441749c505d80b"
+      }
+    },
+    {
+      "stage": "trusted_publisher_BurntSushi",
+      "gaps": 140,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "364f65944c672111a140ebe306572f0aec424429ab59f3c351335d376925b0d9",
+        "imports": "ec616f4c5cf4fa85d47daece5eb5bfc88acd6b783cd0bd2f0efbbdb38e339bc5"
+      }
+    },
+    {
+      "stage": "trusted_publisher_cuviper",
+      "gaps": 134,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "d3a7bb7ef5ff8854455b933f20ea00ac788b2aaaef28718460cf1c4ba062a8ec",
+        "imports": "4753470159d29026da056ae3110df0f8cdfc06a1dfb911d42fefe90a7770749e"
+      }
+    },
+    {
+      "stage": "trusted_publisher_kennykerr",
+      "gaps": 112,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "d997c6689945714a98316ec32ba275b7cb788f2adb0f97c0ffca6f52c998de38",
+        "imports": "e91fa09eb5ab430f41d594931f64f49f5c55bc80a01ca68cb533f894dbc12b23"
+      }
+    },
+    {
+      "stage": "trusted_publisher_epage",
+      "gaps": 107,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "bb87fa7e5b9a94ccbb0b71ed69e5c7f41b866a1717848fd318a0c29b455d3c2c",
+        "imports": "b4e94b72adbd628665ad0ea2ef33e7e8cc3204f2b08ebecb4ec879948357c366"
+      }
+    },
+    {
+      "stage": "trusted_publisher_Amanieu",
+      "gaps": 104,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "a33af41b95fb5a7050ae5d5089a43d22406c43827933075615f29572d6f300e8",
+        "imports": "27679899f516172d4c7f23a6aaee00fb7114f860c6d79467118eaaaa8ee7489c"
+      }
+    },
+    {
+      "stage": "trusted_publisher_sunfishcode",
+      "gaps": 102,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "eb741d1d7bdb6ed3d5aaea1ab8ee7dc35d300a4b059af8e06b86d1731e6c90ff",
+        "imports": "613a84dd5600254bc60da7460871df74ae76257b4a882d48a8994468a3b96295"
+      }
+    },
+    {
+      "stage": "trusted_publisher_fitzgen",
+      "gaps": 100,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "30e41ed67c264fe368981a5152d54dd0bbd63d837310a1c4d2cdc54ad081659a",
+        "imports": "d5b51f62b7bf5a64da7bdc0e699939a18ff17a7c2dc4d990c629efdec57f8975"
+      }
+    },
+    {
+      "stage": "trusted_publisher_rust-lang-owner",
+      "gaps": 99,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "9942e6f326eb4c4acd8fa7153f20773ddec8b995e4fcd27814abf724a6ecb2f9",
+        "imports": "8a499457f6ccaab955808f545872ec232b30c10762074455149cc6c950e9fe45"
+      }
+    },
+    {
+      "stage": "trusted_publisher_Thomasdezeeuw",
+      "gaps": 97,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "4c30555cefdbc47e0a4e6dbe51e7c9ce5bb90004fddaba25dc987a7f38ac9730",
+        "imports": "a0d1bb9dc24a9b3390069bdf159459df7ca9c9f562a33d032b5bf4f65fa33909"
+      }
+    },
+    {
+      "stage": "trusted_workflow_rust-lang/cc-rs",
+      "gaps": 95,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "a104b643df261677401f416c808bc51c8e8aec9126f94748815d90997e115a75",
+        "imports": "84429e7a63e4e375a6cab56cdad6fe331ce0648c960a18d5f6f89e90f689e18f"
+      }
+    },
+    {
+      "stage": "trusted_workflow_rust-lang/flate2-rs",
+      "gaps": 94,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "8821f4faef1332f145e089755a9fc78e7beac3cc3cf9daecad942bbc4bf3cfe1",
+        "imports": "6caf37dca196ab5eeb3fa028589fdac436f24b0c686be5d24af3e4bf47bc7173"
+      }
+    },
+    {
+      "stage": "trusted_workflow_rust-lang/hashbrown",
+      "gaps": 93,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "8c644e6d1adcd3167ca29bcfc7640b2c6b89da0d88a5179e69c44c4c37f5e204",
+        "imports": "6094027a043741683079249cb156f69a3385ec8ff0f5bad0748b6c1d517b2e3b"
+      }
+    },
+    {
+      "stage": "trusted_workflow_rust-lang/libc",
+      "gaps": 92,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "73a13020ceea7e17ada72d4eeca01d56c158799e43fb19218e36abdf048f5e59",
+        "imports": "47eb82fae9351fe13e01051879d8f7212b2cc7d716c1f3cd955a6639fb6887c5"
+      }
+    },
+    {
+      "stage": "trusted_workflow_rust-lang/log",
+      "gaps": 91,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "48299d295448c69d57fce015a6ec4719f51783bd5db666e36b0f7c8a6e99c627",
+        "imports": "db036497bb312a96356e84f71d357e5363e12d92b04c1dac72fdbea336dfe473"
+      }
+    },
+    {
+      "stage": "trusted_workflow_RustCrypto/hashes",
+      "gaps": 90,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "4d91b57d54fa0c3a612b5b03e9a7ec18328235e37548e285e0b52b3f1c4c1068",
+        "imports": "3beaefe077662a53b44f13c72ad3045481b52c42e914b6e86ad5c0573a344bd9"
+      }
+    },
+    {
+      "stage": "trusted_workflow_RustCrypto/utils",
+      "gaps": 88,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "25dfbc32282a3114e12c024a071cce914748e1fe1cae5cd70dd5e0b42e28eb65",
+        "imports": "c987ea6f86a2563226aeb18b32695e0c6ba41027ba57c70953b378832e1c3357"
+      }
+    },
+    {
+      "stage": "trusted_workflow_taiki-e/pin-project-lite",
+      "gaps": 87,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "4a42270a9143abed72c23651fd8fee1360e1e77a99aa20313c579c7dba425522",
+        "imports": "ecc3ce5eb1e3b29c70d60c61a086438244bde53092efb6bc5e33f7cb52373b35"
+      }
+    },
+    {
+      "stage": "added_embark_import",
+      "gaps": 87,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "4a42270a9143abed72c23651fd8fee1360e1e77a99aa20313c579c7dba425522",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_version_check",
+      "gaps": 86,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "bb72808695c589f73cdf311ce90d3348b809cca18985b7ab919f7eb5eef9ed71",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_bitflags",
+      "gaps": 85,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "bc44583fe004221ce3c6e611e551bf0be0b2362e28ee8f903ea793d714953533",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_wasm-bindgen-shared",
+      "gaps": 84,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "c44e40aebbea62b17428b7582084c3398a6f293b6e135752c18c630e43d7c9a6",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_errno",
+      "gaps": 83,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "85360406d7e898d4d432bd194e35012ae16bd1cdca3bfea1a472c50ba4167775",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_phf_shared",
+      "gaps": 82,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "3c0f1f0608ddd1d9c6da3faa2871b6234d68a75108656dacdddd695a2a8fe7a0",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_phf_generator",
+      "gaps": 81,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "a3059f106a94a43d259b284669217f77dc7d1dfaf3b7cff64abb30adb0a33fb7",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_proc-macro-crate",
+      "gaps": 80,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "fe8f47b865f27694949aeba1cc4a22867c18d80166b35845036ac20845cf78f3",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "agent_audit_memoffset",
+      "gaps": 79,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "492f0937a72f551ef6b199acfa97370cfbaca6c4f2cea506a6435474fdcba345",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    },
+    {
+      "stage": "final_locked_check",
+      "gaps": 79,
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+        "audits": "492f0937a72f551ef6b199acfa97370cfbaca6c4f2cea506a6435474fdcba345",
+        "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+      }
+    }
+  ],
+  "trusted_publishers": [
+    {
+      "login": "dtolnay",
+      "user_id": 3618,
+      "rationale": "Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates.",
+      "source": "https://github.com/dtolnay",
+      "closed_gaps": 13,
+      "packages": [
+        {
+          "name": "async-trait",
+          "version": "0.1.92",
+          "published_at": "2026-08-08T07:10:35.376083Z",
+          "archive_sha256": "82f6aeea286b8eb4dd3431a1be1b59d290ace00f5bfd8e2a159bc2a05e2c1667",
+          "registry_url": "https://crates.io/api/v1/crates/async-trait",
+          "registry_response_sha256": "0d26eee3cb5d585e5cf54634ac821118ae4838548743894212a92101ef8b238c"
+        },
+        {
+          "name": "dtoa",
+          "version": "1.0.11",
+          "published_at": "2025-12-27T06:45:26.518961Z",
+          "archive_sha256": "4c3cf4824e2d5f025c7b531afcb2325364084a16806f6d47fbc1f5fbd9960590",
+          "registry_url": "https://crates.io/api/v1/crates/dtoa",
+          "registry_response_sha256": "15b0410bb899dcb33f0cf016d84575c5b0506bca969aab9092cd7d2bdf766593"
+        },
+        {
+          "name": "itoa",
+          "version": "1.0.19",
+          "published_at": "2026-11-09T01:42:29.996457Z",
+          "archive_sha256": "3bd1574e617a9a6c1f8f8181bd7e841e1f20e4277607ef28945765188d6284d4",
+          "registry_url": "https://crates.io/api/v1/crates/itoa",
+          "registry_response_sha256": "5a68cce28c2749bdfcee970290f84ec0c7afd261ba1d2b139652c04b55c00814"
+        },
+        {
+          "name": "rustversion",
+          "version": "1.0.23",
+          "published_at": "2026-07-07T02:10:26.015429Z",
+          "archive_sha256": "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f",
+          "registry_url": "https://crates.io/api/v1/crates/rustversion",
+          "registry_response_sha256": "910bcc83d111b20f183503f61d2d4983ef31bf067d0cebda192440cf5bd9ff7a"
+        },
+        {
+          "name": "serde_derive",
+          "version": "1.0.229",
+          "published_at": "2026-07-18T23:05:07.504375Z",
+          "archive_sha256": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348",
+          "registry_url": "https://crates.io/api/v1/crates/serde_derive",
+          "registry_response_sha256": "95090c30c27bda3d31a580cf14bca2d80effae4a427688d91685815a26cc7ffa"
+        },
+        {
+          "name": "serde_json",
+          "version": "1.0.154",
+          "published_at": "2026-10-11T15:31:46.076577Z",
+          "archive_sha256": "e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6",
+          "registry_url": "https://crates.io/api/v1/crates/serde_json",
+          "registry_response_sha256": "a46a8e0b634618debdfbcef319dc1e7ce29d5542b41558934b90f8a5bf2c142e"
+        },
+        {
+          "name": "serde_path_to_error",
+          "version": "0.1.20",
+          "published_at": "2025-09-15T15:05:54.817744Z",
+          "archive_sha256": "10a9ff822e371bb5403e391ecd83e182e0e77ba7f6fe0160b795797109d1b457",
+          "registry_url": "https://crates.io/api/v1/crates/serde_path_to_error",
+          "registry_response_sha256": "70020292570aaf3501bd663837260abd774080dbe87174faeacef2c9db0f5500"
+        },
+        {
+          "name": "syn",
+          "version": "2.0.119",
+          "published_at": "2026-07-15T00:23:48.828241Z",
+          "archive_sha256": "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297",
+          "registry_url": "https://crates.io/api/v1/crates/syn",
+          "registry_response_sha256": "ccad95143b07aaac9bec064d7459960eaac07ff21b2808b5ef3d298594e7f35c"
+        },
+        {
+          "name": "syn",
+          "version": "3.0.10",
+          "published_at": "2026-11-09T05:53:12.392384Z",
+          "archive_sha256": "4ae9ccbea3a7b0b09443036490c8f34a8b1b760fd345e5c0dae0aac718faea79",
+          "registry_url": "https://crates.io/api/v1/crates/syn",
+          "registry_response_sha256": "ccad95143b07aaac9bec064d7459960eaac07ff21b2808b5ef3d298594e7f35c"
+        },
+        {
+          "name": "thiserror",
+          "version": "2.0.21",
+          "published_at": "2026-09-23T20:24:07.771104Z",
+          "archive_sha256": "09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e",
+          "registry_url": "https://crates.io/api/v1/crates/thiserror",
+          "registry_response_sha256": "d6863c9f26d0a4d1b95b6376ca180d3a77cc4668caad5f6165f4ba296fcffcb7"
+        },
+        {
+          "name": "thiserror-impl",
+          "version": "2.0.21",
+          "published_at": "2026-09-23T20:24:05.038819Z",
+          "archive_sha256": "fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524",
+          "registry_url": "https://crates.io/api/v1/crates/thiserror-impl",
+          "registry_response_sha256": "ef806f4eacec4c66eafd1443c7fbbfb93fe983c58edf4876a0873e2693a1db50"
+        },
+        {
+          "name": "unicode-ident",
+          "version": "1.0.27",
+          "published_at": "2026-10-12T04:20:27.796258Z",
+          "archive_sha256": "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563",
+          "registry_url": "https://crates.io/api/v1/crates/unicode-ident",
+          "registry_response_sha256": "d4ee3159134f76fc26dd176a577648691b84e25bafbb7b1b93b4e3cbad65fc6a"
+        },
+        {
+          "name": "zmij",
+          "version": "1.0.23",
+          "published_at": "2026-07-13T12:58:53.705886Z",
+          "archive_sha256": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b",
+          "registry_url": "https://crates.io/api/v1/crates/zmij",
+          "registry_response_sha256": "721cd35c71aec0ef98693e7d8f79e6785478a247e0bf3d87aca82cfb14e1c792"
+        }
+      ]
+    },
+    {
+      "login": "alexcrichton",
+      "user_id": 1,
+      "rationale": "Long-standing Rust/Cargo and Wasmtime maintainer; publishes native build/toolchain and WASI infrastructure.",
+      "source": "https://github.com/alexcrichton",
+      "closed_gaps": 2,
+      "packages": [
+        {
+          "name": "openssl-src",
+          "version": "300.6.1+3.6.3",
+          "published_at": "2026-06-09T14:26:26.688753Z",
+          "archive_sha256": "46eb8fb9fb3b61ce1c0f8a026c4c1a0714d3a9e138e7fbde78753ce2babc3846",
+          "registry_url": "https://crates.io/api/v1/crates/openssl-src",
+          "registry_response_sha256": "d4a3ddf465fc826cb2a33d281236ef76ad9b2a896c7c539aa2f465ae5742aedb"
+        },
+        {
+          "name": "wasi",
+          "version": "0.11.1+wasi-snapshot-preview1",
+          "published_at": "2025-06-10T14:23:45.376914Z",
+          "archive_sha256": "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b",
+          "registry_url": "https://crates.io/api/v1/crates/wasi",
+          "registry_response_sha256": "129ad4cd639f36a06020d1f2876a7a091ecb299738ff61f027145bcba5e9ac4f"
+        }
+      ]
+    },
+    {
+      "login": "tarcieri",
+      "user_id": 267,
+      "rationale": "RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates.",
+      "source": "https://github.com/RustCrypto#project-leads",
+      "closed_gaps": 9,
+      "packages": [
+        {
+          "name": "aead",
+          "version": "0.5.2",
+          "published_at": "2023-04-02T15:42:58.294718Z",
+          "archive_sha256": "d122413f284cf2d62fb1b7db97e02edb8cda96d769b16e443a4f6195e35662b0",
+          "registry_url": "https://crates.io/api/v1/crates/aead",
+          "registry_response_sha256": "3cbc2efc3b9ac0471d4090f879645802bc3b2bdc12a32110dbf0cc37a4f1a9fe"
+        },
+        {
+          "name": "aes",
+          "version": "0.8.4",
+          "published_at": "2024-02-13T15:55:26.335296Z",
+          "archive_sha256": "b169f7a6d4742236a0a00c541b845991d0ac43e546831af1249753ab4c3aa3a0",
+          "registry_url": "https://crates.io/api/v1/crates/aes",
+          "registry_response_sha256": "1d78a3407305f353ecdc1c213871782fea99934716823d4cfbab74b37f8188fc"
+        },
+        {
+          "name": "argon2",
+          "version": "0.5.3",
+          "published_at": "2024-01-20T19:21:51.661198Z",
+          "archive_sha256": "3c3610892ee6e0cbce8ae2700349fcf8f98adb0dbfbee85aec3c9179d29cc072",
+          "registry_url": "https://crates.io/api/v1/crates/argon2",
+          "registry_response_sha256": "899d2e850a2927c5247d5c39705b511aae665a469d180987957cf024d6f06e06"
+        },
+        {
+          "name": "base64ct",
+          "version": "1.8.3",
+          "published_at": "2026-01-12T04:41:30.672776Z",
+          "archive_sha256": "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06",
+          "registry_url": "https://crates.io/api/v1/crates/base64ct",
+          "registry_response_sha256": "6f1a2fcb466dfb323027bfe61f2e35e571fd76f0a6a1c9a4f8ce39caaa4104f2"
+        },
+        {
+          "name": "chacha20",
+          "version": "0.9.1",
+          "published_at": "2023-04-01T20:12:19.932795Z",
+          "archive_sha256": "c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818",
+          "registry_url": "https://crates.io/api/v1/crates/chacha20",
+          "registry_response_sha256": "a2843946c47fbee474748d55ec55551f47e1abfb910bbaa1a232a0a2d6144c37"
+        },
+        {
+          "name": "chacha20poly1305",
+          "version": "0.10.1",
+          "published_at": "2022-08-10T03:37:43.851637Z",
+          "archive_sha256": "10cd79432192d1c0f4e1a0fef9527696cc039165d729fb41b3f4f4f354c2dc35",
+          "registry_url": "https://crates.io/api/v1/crates/chacha20poly1305",
+          "registry_response_sha256": "6078a425595ad99e12dc08496415f5d08f5a21d5b1d40f3c4f261dc0e309ce43"
+        },
+        {
+          "name": "digest",
+          "version": "0.10.7",
+          "published_at": "2023-05-19T17:11:30.893794Z",
+          "archive_sha256": "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292",
+          "registry_url": "https://crates.io/api/v1/crates/digest",
+          "registry_response_sha256": "ebaec67a7ce215844bd3b1c71ed95fc8a3deae29cd55eaa8b5d503f722c349af"
+        },
+        {
+          "name": "password-hash",
+          "version": "0.5.0",
+          "published_at": "2023-03-04T23:21:39.806293Z",
+          "archive_sha256": "346f04948ba92c43e8469c1ee6736c7563d71012b17d40745260fe106aac2166",
+          "registry_url": "https://crates.io/api/v1/crates/password-hash",
+          "registry_response_sha256": "2bfeb8045723708ae1d04c93cd105743bd42f899015d97dd699efe52115c3608"
+        },
+        {
+          "name": "poly1305",
+          "version": "0.8.0",
+          "published_at": "2022-07-31T18:21:15.565372Z",
+          "archive_sha256": "8159bd90725d2df49889a078b54f4f79e87f1f8a8444194cdca81d38f5393abf",
+          "registry_url": "https://crates.io/api/v1/crates/poly1305",
+          "registry_response_sha256": "3dd5d0d8e03df1fb0cece5227953e87585e20acfe62fd1cbba60b9222230a856"
+        }
+      ]
+    },
+    {
+      "login": "newpavlov",
+      "user_id": 5059,
+      "rationale": "RustCrypto project lead; maintains the widely used hash, cipher and KDF crate families.",
+      "source": "https://github.com/RustCrypto#project-leads",
+      "closed_gaps": 3,
+      "packages": [
+        {
+          "name": "blake2",
+          "version": "0.10.6",
+          "published_at": "2022-12-16T20:38:42.298223Z",
+          "archive_sha256": "46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe",
+          "registry_url": "https://crates.io/api/v1/crates/blake2",
+          "registry_response_sha256": "a6482cf213bb9d85ee19f6da6b78e277cf6c91500047f772b6ca13b36d18d02d"
+        },
+        {
+          "name": "cbc",
+          "version": "0.1.2",
+          "published_at": "2022-03-24T13:46:59.874582Z",
+          "archive_sha256": "26b52a9543ae338f279b96b0b9fed9c8093744685043739079ce85cd58f289a6",
+          "registry_url": "https://crates.io/api/v1/crates/cbc",
+          "registry_response_sha256": "8173a8c258e60b107ce2b74d9edd1566011ca5fcac92d526167ad758d5bee0cc"
+        },
+        {
+          "name": "hkdf",
+          "version": "0.12.4",
+          "published_at": "2023-12-13T13:35:31.185347Z",
+          "archive_sha256": "7b5f8eb2ad728638ea2c7d47a21db23b7b58a72ed6a38256b8a1849f15fbbdf7",
+          "registry_url": "https://crates.io/api/v1/crates/hkdf",
+          "registry_response_sha256": "8dc70e82adec0c3702b300b0a0bf0046c7522a98231ad5a260f025a5c38eff15"
+        }
+      ]
+    },
+    {
+      "login": "taiki-e",
+      "user_id": 33035,
+      "rationale": "Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates.",
+      "source": "https://github.com/taiki-e",
+      "closed_gaps": 8,
+      "packages": [
+        {
+          "name": "async-channel",
+          "version": "2.5.0",
+          "published_at": "2025-07-06T07:06:07.101546Z",
+          "archive_sha256": "924ed96dd52d1b75e9c1a3e6275715fd320f5f9439fb5a4a11fa51f4221158d2",
+          "registry_url": "https://crates.io/api/v1/crates/async-channel",
+          "registry_response_sha256": "bed58eabf5fa4b444fd0e02d4068dfe189b2ef8bb44ad795f1eba3d927865144"
+        },
+        {
+          "name": "async-io",
+          "version": "2.6.0",
+          "published_at": "2025-09-14T14:03:50.201510Z",
+          "archive_sha256": "456b8a8feb6f42d237746d4b3e9a178494627745c3c56c6ea55d92ba50d026fc",
+          "registry_url": "https://crates.io/api/v1/crates/async-io",
+          "registry_response_sha256": "a297d855fd070b1b47040223b8e4b88c5c5609df32d26eb701a7c1bb8b1ead33"
+        },
+        {
+          "name": "async-lock",
+          "version": "3.5.0",
+          "published_at": "2026-11-02T17:09:41.933032Z",
+          "archive_sha256": "0876700b0d007ad25d5508865a4259c3af9af6d296bf663a0d586d0bc3369f6f",
+          "registry_url": "https://crates.io/api/v1/crates/async-lock",
+          "registry_response_sha256": "04fad8095d293b732761379007ec3be6410fdc2bc7a38f8ec011b567e68f6b81"
+        },
+        {
+          "name": "async-process",
+          "version": "2.5.0",
+          "published_at": "2025-09-14T14:11:17.759362Z",
+          "archive_sha256": "fc50921ec0055cdd8a16de48773bfeec5c972598674347252c0399676be7da75",
+          "registry_url": "https://crates.io/api/v1/crates/async-process",
+          "registry_response_sha256": "c102ef17d63f02b226d546ae9a410e8f4db616ae007a50ae12e6ca27c1ef3027"
+        },
+        {
+          "name": "async-signal",
+          "version": "0.2.14",
+          "published_at": "2026-04-07T11:50:26.817406Z",
+          "archive_sha256": "52b5aaafa020cf5053a01f2a60e8ff5dccf550f0f77ec54a4e47285ac2bab485",
+          "registry_url": "https://crates.io/api/v1/crates/async-signal",
+          "registry_response_sha256": "fb0a75457ecfaf1524bf5263c24d4971f954de2d4d51f1ae1da882fe893cc010"
+        },
+        {
+          "name": "event-listener-strategy",
+          "version": "0.5.4",
+          "published_at": "2025-03-27T17:31:33.741698Z",
+          "archive_sha256": "8be9f3dfaaffdae2972880079a491a1a8bb7cbed0b8dd7a347f668b4150a3b93",
+          "registry_url": "https://crates.io/api/v1/crates/event-listener-strategy",
+          "registry_response_sha256": "428aa91cc0600b07c4382d7fbb7799a86ef51756c96e71a9a5232d1325451f1d"
+        },
+        {
+          "name": "fastrand",
+          "version": "2.5.0",
+          "published_at": "2026-07-19T12:40:53.683020Z",
+          "archive_sha256": "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223",
+          "registry_url": "https://crates.io/api/v1/crates/fastrand",
+          "registry_response_sha256": "ab34de4baac11a7c7d0c60233f4e2cbe78253028970c78d50dc6451799b9b21d"
+        },
+        {
+          "name": "polling",
+          "version": "3.11.0",
+          "published_at": "2025-09-14T14:00:51.946852Z",
+          "archive_sha256": "5d0e4f59085d47d8241c88ead0f274e8a0cb551f3625263c05eb8dd897c34218",
+          "registry_url": "https://crates.io/api/v1/crates/polling",
+          "registry_response_sha256": "1798363412d747aa48a7cff69c47f781b724e26ed4fd895ccef1981413b829a7"
+        }
+      ]
+    },
+    {
+      "login": "seanmonstar",
+      "user_id": 359,
+      "rationale": "Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families.",
+      "source": "https://github.com/seanmonstar",
+      "closed_gaps": 8,
+      "packages": [
+        {
+          "name": "http",
+          "version": "1.5.0",
+          "published_at": "2026-07-29T14:57:21.755258Z",
+          "archive_sha256": "918d3568bebf352712bc2ef3d46a8bcf1a75b373be6539de198e9105cbbf9ce0",
+          "registry_url": "https://crates.io/api/v1/crates/http",
+          "registry_response_sha256": "adc3bec360e9063567419ddb4fdf970c652006f2af4fea1a2ddb4f138a4d1bc7"
+        },
+        {
+          "name": "http-body",
+          "version": "1.1.0",
+          "published_at": "2026-07-13T17:25:06.475903Z",
+          "archive_sha256": "ca2a8f2913ee65f60facd6a5905613afaa448497a0230cc41ce022d93290bc2c",
+          "registry_url": "https://crates.io/api/v1/crates/http-body",
+          "registry_response_sha256": "bfc0973caf9c12683245c2f494ea654ad2d23fb71b9fa1e6d41d562d0c3d3009"
+        },
+        {
+          "name": "http-body-util",
+          "version": "0.1.5",
+          "published_at": "2026-08-12T15:22:21.622138Z",
+          "archive_sha256": "23169fe34a5fbcdd3f3862e78fb9b6fccd5f02a6dc6f732547005d45631ce71c",
+          "registry_url": "https://crates.io/api/v1/crates/http-body-util",
+          "registry_response_sha256": "6f19d7a0c4374c7922e7e3d65e2ff2ab89cf93b8052c221f7bd3b735ea2b42c3"
+        },
+        {
+          "name": "httparse",
+          "version": "1.10.1",
+          "published_at": "2025-03-03T14:44:09.975762Z",
+          "archive_sha256": "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87",
+          "registry_url": "https://crates.io/api/v1/crates/httparse",
+          "registry_response_sha256": "e4a75e1dd8209d1ec1b9e0566bd44540529a3d37bd588e2871374a18e84684ce"
+        },
+        {
+          "name": "hyper",
+          "version": "1.12.0",
+          "published_at": "2026-10-06T15:57:18.927904Z",
+          "archive_sha256": "2c3e324da4c95177d6291d4c8730197c0d1822f8a9766814a4a44fa5ab797c9c",
+          "registry_url": "https://crates.io/api/v1/crates/hyper",
+          "registry_response_sha256": "26efa80b49919dff2961af5a4bbc937d27df7b76a2c340e81c1c0efe9b05c0a1"
+        },
+        {
+          "name": "hyper-util",
+          "version": "0.1.21",
+          "published_at": "2026-09-24T17:47:59.783880Z",
+          "archive_sha256": "ddc03d96684f9226b8a787cdb71488417b53ab5ea8fdb1dac946cb9431cc8bff",
+          "registry_url": "https://crates.io/api/v1/crates/hyper-util",
+          "registry_response_sha256": "ef58225d1efe595b6890dfb6c58e5024c8a82e9472bf9c13c739d5bc5cb4a8bb"
+        },
+        {
+          "name": "mime",
+          "version": "0.3.18",
+          "published_at": "2026-11-05T13:59:51.417009Z",
+          "archive_sha256": "d5848f5a9e8117cf94f2f90faac24a87ff81600ff8628c1e3deaab572e76bfa1",
+          "registry_url": "https://crates.io/api/v1/crates/mime",
+          "registry_response_sha256": "97710f006331632ee44dcf549fd2333ac7f80090528b4ddc24dfb8ced60598fb"
+        },
+        {
+          "name": "tower",
+          "version": "0.5.3",
+          "published_at": "2026-01-12T18:43:05.227461Z",
+          "archive_sha256": "ebe5ef63511595f1344e2d5cfa636d973292adc0eec1f0ad45fae9f0851ab1d4",
+          "registry_url": "https://crates.io/api/v1/crates/tower",
+          "registry_response_sha256": "c68d010338fe8ea9aa6061321e5ef950d8af4518c7aebdc96cf4e592004d7b91"
+        }
+      ]
+    },
+    {
+      "login": "Darksonn",
+      "user_id": 6741,
+      "rationale": "Tokio maintainer Alice Ryhl; publishes Tokio, bytes, slab and axum infrastructure.",
+      "source": "https://github.com/Darksonn",
+      "closed_gaps": 5,
+      "packages": [
+        {
+          "name": "axum",
+          "version": "0.8.9",
+          "published_at": "2026-04-14T07:55:20.258398Z",
+          "archive_sha256": "31b698c5f9a010f6573133b09e0de5408834d0c82f8d7475a89fc1867a71cd90",
+          "registry_url": "https://crates.io/api/v1/crates/axum",
+          "registry_response_sha256": "ca6e4a954e4dd544f5bea64489608249d3fd728abb20d4a8b7ec3ddf869e51b5"
+        },
+        {
+          "name": "bytes",
+          "version": "1.12.2",
+          "published_at": "2026-11-17T20:58:59.774443Z",
+          "archive_sha256": "776dfebd015e2d8732c684a2c71003674ccb49457b539b9e82151ba38e96dd7c",
+          "registry_url": "https://crates.io/api/v1/crates/bytes",
+          "registry_response_sha256": "13dd85b6aebe992ced2734d9feed51ee87aa5dd108685c06d0a9501c67a748f3"
+        },
+        {
+          "name": "slab",
+          "version": "0.4.12",
+          "published_at": "2026-01-31T12:59:22.609198Z",
+          "archive_sha256": "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5",
+          "registry_url": "https://crates.io/api/v1/crates/slab",
+          "registry_response_sha256": "372e2ef99bc1e620ad3ff326b4b6e431fa57110ca25c511f2e52bf2312f7e9a1"
+        },
+        {
+          "name": "tokio",
+          "version": "1.54.1",
+          "published_at": "2026-10-21T21:05:43.950213Z",
+          "archive_sha256": "b52fd3255258d26fac7264ab5a76b53c13367136dc011d3d6ad4f8ed070396a3",
+          "registry_url": "https://crates.io/api/v1/crates/tokio",
+          "registry_response_sha256": "bc80f16d6f30c8ab613a1f835127358d6c74d4d9bb98e790cf9de40aaefe6e45"
+        },
+        {
+          "name": "tokio-macros",
+          "version": "2.7.2",
+          "published_at": "2026-07-29T13:15:27.042096Z",
+          "archive_sha256": "78773a2a397f451582ce068015985c33193cf6dea8b74d2a639fe457b2f07b0e",
+          "registry_url": "https://crates.io/api/v1/crates/tokio-macros",
+          "registry_response_sha256": "1608ca9af3f4b7e97fe9963dca8abb43fe776113fdda3c00d92ec3cd1bea8379"
+        }
+      ]
+    },
+    {
+      "login": "BurntSushi",
+      "user_id": 189,
+      "rationale": "Maintains regex, regex-automata, memchr, aho-corasick and ripgrep.",
+      "source": "https://github.com/BurntSushi",
+      "closed_gaps": 5,
+      "packages": [
+        {
+          "name": "aho-corasick",
+          "version": "1.1.5",
+          "published_at": "2026-08-03T11:44:11.111398Z",
+          "archive_sha256": "c982642fa9e8606056828ee9a8505737230110bb1099153c79efe865c59d12ba",
+          "registry_url": "https://crates.io/api/v1/crates/aho-corasick",
+          "registry_response_sha256": "edc9a82198993bb52e2a5679564bafb126d8a566897705cbd4f2d748fc6c9f9f"
+        },
+        {
+          "name": "memchr",
+          "version": "2.8.3",
+          "published_at": "2026-07-08T00:49:54.408285Z",
+          "archive_sha256": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98",
+          "registry_url": "https://crates.io/api/v1/crates/memchr",
+          "registry_response_sha256": "1cf779a1d6f36e9d7c94af5328224bf866a4a957a99a4c49180811d9a26a87d4"
+        },
+        {
+          "name": "regex",
+          "version": "1.12.2",
+          "published_at": "2025-10-13T14:38:36.033630Z",
+          "archive_sha256": "843bc0191f75f3e22651ae5f1e72939ab2f72a4bc30fa80a066bd66edefc24d4",
+          "registry_url": "https://crates.io/api/v1/crates/regex",
+          "registry_response_sha256": "a57cf15d8f80b5107b13d7bba6aeb1792fb3e26dd65c4d3588d30e4772eb9e08"
+        },
+        {
+          "name": "regex-automata",
+          "version": "0.4.19",
+          "published_at": "2026-11-18T02:53:07.296344Z",
+          "archive_sha256": "41d60ef07df457506a0a1a2073112eb4aae5733dbd2813c3da77d1b0fd441158",
+          "registry_url": "https://crates.io/api/v1/crates/regex-automata",
+          "registry_response_sha256": "d00816b7ed63777b5ac16ea572b5f835c84a62376a284e107ce279cdfe6b16e6"
+        },
+        {
+          "name": "regex-syntax",
+          "version": "0.8.12",
+          "published_at": "2026-11-18T02:52:58.698549Z",
+          "archive_sha256": "d902046e6a28a1e4c3cab97258a0ce11e994903f01c2d97a9447a0b3df85f4f6",
+          "registry_url": "https://crates.io/api/v1/crates/regex-syntax",
+          "registry_response_sha256": "10058b94f6907cf4e2f4de4f10669b2225787a10bcf4b9bcafa5bf94f61ef07e"
+        }
+      ]
+    },
+    {
+      "login": "cuviper",
+      "user_id": 539,
+      "rationale": "Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg.",
+      "source": "https://github.com/cuviper",
+      "closed_gaps": 6,
+      "packages": [
+        {
+          "name": "autocfg",
+          "version": "1.5.1",
+          "published_at": "2026-05-22T11:03:04.576867Z",
+          "archive_sha256": "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53",
+          "registry_url": "https://crates.io/api/v1/crates/autocfg",
+          "registry_response_sha256": "59649132f2ed8d0e6e19a12f565950c78a23d9fbdfe926a2e6f288ed1a499f1c"
+        },
+        {
+          "name": "indexmap",
+          "version": "2.14.2",
+          "published_at": "2026-09-05T01:53:48.019655Z",
+          "archive_sha256": "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855",
+          "registry_url": "https://crates.io/api/v1/crates/indexmap",
+          "registry_response_sha256": "79e764b704dd1fb5850b89191b2460ac767e0256392c45a87b20e07a7eb945a9"
+        },
+        {
+          "name": "num-bigint",
+          "version": "0.4.8",
+          "published_at": "2026-07-05T01:20:47.603095Z",
+          "archive_sha256": "c89e69e7e0f03bea5ef08013795c25018e101932225a656383bd384495ecc367",
+          "registry_url": "https://crates.io/api/v1/crates/num-bigint",
+          "registry_response_sha256": "cd6480a80f612e96ba1b22f1415e354ae783752fa27409027e7ec8d44222c11f"
+        },
+        {
+          "name": "num-complex",
+          "version": "0.4.6",
+          "published_at": "2024-05-07T23:51:24.022830Z",
+          "archive_sha256": "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495",
+          "registry_url": "https://crates.io/api/v1/crates/num-complex",
+          "registry_response_sha256": "907b326404a7b163df1c70d0746e0dcd252d6d6b4d7ba6a2b9ae4498d54c09df"
+        },
+        {
+          "name": "num-integer",
+          "version": "0.1.47",
+          "published_at": "2026-08-12T00:11:57.840357Z",
+          "archive_sha256": "7ce2d95d4b3734dc35aa2f45e1aa22cd416814592a4f9d9205e11affd5b8e10b",
+          "registry_url": "https://crates.io/api/v1/crates/num-integer",
+          "registry_response_sha256": "b2852f54686e7513d0fa121d4d04bed9e75b22fb0972c6dfbc0bf7111a15abfd"
+        },
+        {
+          "name": "num-iter",
+          "version": "0.1.46",
+          "published_at": "2026-07-07T19:51:46.163752Z",
+          "archive_sha256": "c92800bd69a1eac91786bcfe9da64a897eb72911b8dc3095decbd07429e8048b",
+          "registry_url": "https://crates.io/api/v1/crates/num-iter",
+          "registry_response_sha256": "56aa0a68e831a343a28fa5611139aa519e71d46f80e355791f306e28e0523a19"
+        }
+      ]
+    },
+    {
+      "login": "kennykerr",
+      "user_id": 64539,
+      "rationale": "Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families.",
+      "source": "https://github.com/microsoft/windows-rs",
+      "closed_gaps": 22,
+      "packages": [
+        {
+          "name": "windows-sys",
+          "version": "0.52.0",
+          "published_at": "2023-11-15T18:55:55.748059Z",
+          "archive_sha256": "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d",
+          "registry_url": "https://crates.io/api/v1/crates/windows-sys",
+          "registry_response_sha256": "f35b47f60db550a33d81e17e11c114eb43e430f83e096cb04f2134ae7e719ce9"
+        },
+        {
+          "name": "windows-sys",
+          "version": "0.59.0",
+          "published_at": "2024-07-30T15:26:17.224105Z",
+          "archive_sha256": "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b",
+          "registry_url": "https://crates.io/api/v1/crates/windows-sys",
+          "registry_response_sha256": "f35b47f60db550a33d81e17e11c114eb43e430f83e096cb04f2134ae7e719ce9"
+        },
+        {
+          "name": "windows-sys",
+          "version": "0.60.2",
+          "published_at": "2025-06-12T18:59:32.492403Z",
+          "archive_sha256": "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb",
+          "registry_url": "https://crates.io/api/v1/crates/windows-sys",
+          "registry_response_sha256": "f35b47f60db550a33d81e17e11c114eb43e430f83e096cb04f2134ae7e719ce9"
+        },
+        {
+          "name": "windows-sys",
+          "version": "0.61.2",
+          "published_at": "2025-10-06T19:18:30.163595Z",
+          "archive_sha256": "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc",
+          "registry_url": "https://crates.io/api/v1/crates/windows-sys",
+          "registry_response_sha256": "f35b47f60db550a33d81e17e11c114eb43e430f83e096cb04f2134ae7e719ce9"
+        },
+        {
+          "name": "windows-targets",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:44:18.100049Z",
+          "archive_sha256": "9b724f72796e036ab90c1021d4780d4d3d648aca59e491e6b98e725b84e99973",
+          "registry_url": "https://crates.io/api/v1/crates/windows-targets",
+          "registry_response_sha256": "b7689dda0cef489d453f82f55b88bb5c70b5c91e230a827b16e26a3dcceb68eb"
+        },
+        {
+          "name": "windows-targets",
+          "version": "0.53.5",
+          "published_at": "2025-10-06T19:18:45.726277Z",
+          "archive_sha256": "4945f9f551b88e0d65f3db0bc25c33b8acea4d9e41163edf90dcd0b19f9069f3",
+          "registry_url": "https://crates.io/api/v1/crates/windows-targets",
+          "registry_response_sha256": "b7689dda0cef489d453f82f55b88bb5c70b5c91e230a827b16e26a3dcceb68eb"
+        },
+        {
+          "name": "windows_aarch64_gnullvm",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:43:36.557711Z",
+          "archive_sha256": "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3",
+          "registry_url": "https://crates.io/api/v1/crates/windows_aarch64_gnullvm",
+          "registry_response_sha256": "a8ffe596f4c941552f9a91b1feefaa8d0b4ea98079a1d0504cf546ccdaa6acac"
+        },
+        {
+          "name": "windows_aarch64_gnullvm",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:33:29.033577Z",
+          "archive_sha256": "a9d8416fa8b42f5c947f8482c43e7d89e73a173cead56d044f6a56104a6d1b53",
+          "registry_url": "https://crates.io/api/v1/crates/windows_aarch64_gnullvm",
+          "registry_response_sha256": "a8ffe596f4c941552f9a91b1feefaa8d0b4ea98079a1d0504cf546ccdaa6acac"
+        },
+        {
+          "name": "windows_aarch64_msvc",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:43:40.566034Z",
+          "archive_sha256": "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469",
+          "registry_url": "https://crates.io/api/v1/crates/windows_aarch64_msvc",
+          "registry_response_sha256": "82753b3a10491342019620cbfc8d199776a83da856d6f77fc207738eb46d4907"
+        },
+        {
+          "name": "windows_aarch64_msvc",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:33:33.380608Z",
+          "archive_sha256": "b9d782e804c2f632e395708e99a94275910eb9100b2114651e04744e9b125006",
+          "registry_url": "https://crates.io/api/v1/crates/windows_aarch64_msvc",
+          "registry_response_sha256": "82753b3a10491342019620cbfc8d199776a83da856d6f77fc207738eb46d4907"
+        },
+        {
+          "name": "windows_i686_gnu",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:43:46.438870Z",
+          "archive_sha256": "8e9b5ad5ab802e97eb8e295ac6720e509ee4c243f69d781394014ebfe8bbfa0b",
+          "registry_url": "https://crates.io/api/v1/crates/windows_i686_gnu",
+          "registry_response_sha256": "7196fb92ecb58610785c973721dc83d7552ded6eebcd8229eac9ddef8a71710e"
+        },
+        {
+          "name": "windows_i686_gnu",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:33:40.576678Z",
+          "archive_sha256": "960e6da069d81e09becb0ca57a65220ddff016ff2d6af6a223cf372a506593a3",
+          "registry_url": "https://crates.io/api/v1/crates/windows_i686_gnu",
+          "registry_response_sha256": "7196fb92ecb58610785c973721dc83d7552ded6eebcd8229eac9ddef8a71710e"
+        },
+        {
+          "name": "windows_i686_gnullvm",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:43:50.092560Z",
+          "archive_sha256": "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66",
+          "registry_url": "https://crates.io/api/v1/crates/windows_i686_gnullvm",
+          "registry_response_sha256": "2024de0f9645435bf02c6b937bade636f94aa4a4230626128572adb58439c725"
+        },
+        {
+          "name": "windows_i686_gnullvm",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:33:44.926477Z",
+          "archive_sha256": "fa7359d10048f68ab8b09fa71c3daccfb0e9b559aed648a8f95469c27057180c",
+          "registry_url": "https://crates.io/api/v1/crates/windows_i686_gnullvm",
+          "registry_response_sha256": "2024de0f9645435bf02c6b937bade636f94aa4a4230626128572adb58439c725"
+        },
+        {
+          "name": "windows_i686_msvc",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:43:54.897517Z",
+          "archive_sha256": "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66",
+          "registry_url": "https://crates.io/api/v1/crates/windows_i686_msvc",
+          "registry_response_sha256": "e0b89441ce86297d962d0b3bdbde28ad7bd9239b1776bb4b8ce8fc87d6973986"
+        },
+        {
+          "name": "windows_i686_msvc",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:33:49.033999Z",
+          "archive_sha256": "1e7ac75179f18232fe9c285163565a57ef8d3c89254a30685b57d83a38d326c2",
+          "registry_url": "https://crates.io/api/v1/crates/windows_i686_msvc",
+          "registry_response_sha256": "e0b89441ce86297d962d0b3bdbde28ad7bd9239b1776bb4b8ce8fc87d6973986"
+        },
+        {
+          "name": "windows_x86_64_gnu",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:43:58.189149Z",
+          "archive_sha256": "147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78",
+          "registry_url": "https://crates.io/api/v1/crates/windows_x86_64_gnu",
+          "registry_response_sha256": "68d787bacc86d9169fefe448a6211c633f0287eeaed943192da810eadd98426f"
+        },
+        {
+          "name": "windows_x86_64_gnu",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:33:55.996108Z",
+          "archive_sha256": "9c3842cdd74a865a8066ab39c8a7a473c0778a3f29370b5fd6b4b9aa7df4a499",
+          "registry_url": "https://crates.io/api/v1/crates/windows_x86_64_gnu",
+          "registry_response_sha256": "68d787bacc86d9169fefe448a6211c633f0287eeaed943192da810eadd98426f"
+        },
+        {
+          "name": "windows_x86_64_gnullvm",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:44:03.184321Z",
+          "archive_sha256": "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d",
+          "registry_url": "https://crates.io/api/v1/crates/windows_x86_64_gnullvm",
+          "registry_response_sha256": "7e09900ed56238af8f16a3c74535a5029582df434164e36460e349bf1124b6ec"
+        },
+        {
+          "name": "windows_x86_64_gnullvm",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:34:01.241547Z",
+          "archive_sha256": "0ffa179e2d07eee8ad8f57493436566c7cc30ac536a3379fdf008f47f6bb7ae1",
+          "registry_url": "https://crates.io/api/v1/crates/windows_x86_64_gnullvm",
+          "registry_response_sha256": "7e09900ed56238af8f16a3c74535a5029582df434164e36460e349bf1124b6ec"
+        },
+        {
+          "name": "windows_x86_64_msvc",
+          "version": "0.52.6",
+          "published_at": "2024-07-03T19:44:07.225369Z",
+          "archive_sha256": "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec",
+          "registry_url": "https://crates.io/api/v1/crates/windows_x86_64_msvc",
+          "registry_response_sha256": "76bd095dff514bd452cbbe48148b187f2a102424b3c5d03d55fba435d90aba1b"
+        },
+        {
+          "name": "windows_x86_64_msvc",
+          "version": "0.53.1",
+          "published_at": "2025-10-06T17:34:07.266605Z",
+          "archive_sha256": "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650",
+          "registry_url": "https://crates.io/api/v1/crates/windows_x86_64_msvc",
+          "registry_response_sha256": "76bd095dff514bd452cbbe48148b187f2a102424b3c5d03d55fba435d90aba1b"
+        }
+      ]
+    },
+    {
+      "login": "epage",
+      "user_id": 6743,
+      "rationale": "Rust Cargo/clap maintainer; maintains widely used TOML, winnow and command-line parsing crates.",
+      "source": "https://github.com/epage",
+      "closed_gaps": 5,
+      "packages": [
+        {
+          "name": "toml",
+          "version": "1.2.2+spec-1.1.0",
+          "published_at": "2026-11-21T04:25:29.572866Z",
+          "archive_sha256": "5426cb1b964690d913f6c5c1a1ae0b42f428ec506bb4d452876d7a209c9bca3b",
+          "registry_url": "https://crates.io/api/v1/crates/toml",
+          "registry_response_sha256": "b9200b6cecd66a6a9e075209cbdea7515437260bdd8a6567ea06c698de335e21"
+        },
+        {
+          "name": "toml_edit",
+          "version": "0.25.20+spec-1.1.0",
+          "published_at": "2026-11-21T04:25:30.328716Z",
+          "archive_sha256": "e76360e201d6dbd6583e17795ba71a88f47365a9139c8450a7979c32303b8e73",
+          "registry_url": "https://crates.io/api/v1/crates/toml_edit",
+          "registry_response_sha256": "3954bbe137932a851699e4742a43c5fbedb6a9915569600d96659e5fa3a0c30a"
+        },
+        {
+          "name": "toml_parser",
+          "version": "1.1.6+spec-1.1.0",
+          "published_at": "2026-11-21T04:25:27.860803Z",
+          "archive_sha256": "e6769c452d71ba30696c6b37770c439a9cc9110f47f7d5cdbeda79840ef5ea31",
+          "registry_url": "https://crates.io/api/v1/crates/toml_parser",
+          "registry_response_sha256": "2060e1535972e1145a00c59f2c419bb0e71cbb11044e71931617a5eb6655dddc"
+        },
+        {
+          "name": "toml_writer",
+          "version": "1.2.0+spec-1.1.0",
+          "published_at": "2026-11-04T01:31:04.345652Z",
+          "archive_sha256": "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a",
+          "registry_url": "https://crates.io/api/v1/crates/toml_writer",
+          "registry_response_sha256": "41d2c6cc607a800e27ab3e8073d0722c631a898c9f0e821ab12bc2f8dac90f67"
+        },
+        {
+          "name": "winnow",
+          "version": "1.0.5",
+          "published_at": "2026-11-05T01:18:41.061954Z",
+          "archive_sha256": "8c3b93199df0ab874cdf0c6a94f0a0dc3423fe41f1cafb62b8bd7b1deb277aef",
+          "registry_url": "https://crates.io/api/v1/crates/winnow",
+          "registry_response_sha256": "5429a228e4286453646bf9fd81979f6280d9be2b12860e114d4a4ae92efff185"
+        }
+      ]
+    },
+    {
+      "login": "Amanieu",
+      "user_id": 2915,
+      "rationale": "Maintains parking_lot, lock_api, hashbrown and synchronization infrastructure used across the Rust ecosystem.",
+      "source": "https://github.com/Amanieu",
+      "closed_gaps": 3,
+      "packages": [
+        {
+          "name": "lock_api",
+          "version": "0.4.14",
+          "published_at": "2025-10-03T23:33:12.850087Z",
+          "archive_sha256": "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965",
+          "registry_url": "https://crates.io/api/v1/crates/lock_api",
+          "registry_response_sha256": "f990976747dd23e6812046a70fbcc2bef2503ddf73154f8240ff389ac2ef0e4e"
+        },
+        {
+          "name": "parking_lot",
+          "version": "0.12.5",
+          "published_at": "2025-10-03T23:34:14.078935Z",
+          "archive_sha256": "93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a",
+          "registry_url": "https://crates.io/api/v1/crates/parking_lot",
+          "registry_response_sha256": "058af9dd7778cdaf8d1d317d082f7e4ee1a7eeeb2b9f050259354f507e985aad"
+        },
+        {
+          "name": "parking_lot_core",
+          "version": "0.9.12",
+          "published_at": "2025-10-03T23:33:43.164426Z",
+          "archive_sha256": "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1",
+          "registry_url": "https://crates.io/api/v1/crates/parking_lot_core",
+          "registry_response_sha256": "c2a059952276bd24e7dd45361fa86ebf687f404025bc144b4d591915123be8b3"
+        }
+      ]
+    },
+    {
+      "login": "sunfishcode",
+      "user_id": 6825,
+      "rationale": "Maintains rustix, linux-raw-sys, cap-std and WASI/Bytecode Alliance infrastructure.",
+      "source": "https://github.com/sunfishcode",
+      "closed_gaps": 2,
+      "packages": [
+        {
+          "name": "linux-raw-sys",
+          "version": "0.12.1",
+          "published_at": "2025-12-23T00:00:07.059646Z",
+          "archive_sha256": "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53",
+          "registry_url": "https://crates.io/api/v1/crates/linux-raw-sys",
+          "registry_response_sha256": "6d39d57b28fc4c324b5117b4a87c10421259f6646ca7467a3a771eca102550af"
+        },
+        {
+          "name": "rustix",
+          "version": "1.1.6",
+          "published_at": "2026-10-27T00:49:03.146056Z",
+          "archive_sha256": "e5e76742e5294153d4dde1207dbec5bdd81eef6fabdc0d2118babadabfd858aa",
+          "registry_url": "https://crates.io/api/v1/crates/rustix",
+          "registry_response_sha256": "86fa21732a640e0b3b3a9c7ae0b99f245c2109cd4b39875e3e300bc999e27ce2"
+        }
+      ]
+    },
+    {
+      "login": "fitzgen",
+      "user_id": 696,
+      "rationale": "Wasmtime/Bytecode Alliance maintainer; maintains arbitrary, libfuzzer-sys and bumpalo fuzzing/allocation infrastructure.",
+      "source": "https://github.com/fitzgen",
+      "closed_gaps": 2,
+      "packages": [
+        {
+          "name": "arbitrary",
+          "version": "1.5.0",
+          "published_at": "2026-10-06T23:00:58.853193Z",
+          "archive_sha256": "3bc62ac97cc33321f50863d514c3bc38a453947a8f9e781137e47c7401020aed",
+          "registry_url": "https://crates.io/api/v1/crates/arbitrary",
+          "registry_response_sha256": "cae6dec6f1677125a902ddb5f78123835c9f85222b054b3d2c8382f82d0c0d4a"
+        },
+        {
+          "name": "libfuzzer-sys",
+          "version": "0.4.13",
+          "published_at": "2026-06-04T18:55:34.718132Z",
+          "archive_sha256": "a9fd2f41a1cba099f79a0b6b6c35656cf7c03351a7bae8ff0f28f25270f929d2",
+          "registry_url": "https://crates.io/api/v1/crates/libfuzzer-sys",
+          "registry_response_sha256": "f35928bdfcc24986908efde8b871c6ad73ae97fbd33a352dc3450a882d3b8d90"
+        }
+      ]
+    },
+    {
+      "login": "rust-lang-owner",
+      "user_id": 55123,
+      "rationale": "Rust project shared release account for Rust-owned toolchain crates; trust restricted here to registry-confirmed jobserver release.",
+      "source": "https://github.com/rust-lang/jobserver-rs",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "jobserver",
+          "version": "0.1.35",
+          "published_at": "2026-07-06T01:43:15.155394Z",
+          "archive_sha256": "1c00acbd29eabad4a2392fa0e921c874934dbbf4194312ad20f04a0ed67a3cb3",
+          "registry_url": "https://crates.io/api/v1/crates/jobserver",
+          "registry_response_sha256": "75395a873a73abb6672d87ac5db6e64807ced3111cd1513dda0e44fe0a6599f0"
+        }
+      ]
+    },
+    {
+      "login": "Thomasdezeeuw",
+      "user_id": 6025,
+      "rationale": "Tokio Mio maintainer; maintains widely used Mio/socket2 OS networking infrastructure.",
+      "source": "https://github.com/tokio-rs/mio",
+      "closed_gaps": 2,
+      "packages": [
+        {
+          "name": "mio",
+          "version": "1.2.5",
+          "published_at": "2026-11-13T17:07:23.414067Z",
+          "archive_sha256": "20521a903f02b0a573cd6840e9d0a5a0cc043d361fe924092cd70f8556cc9c4a",
+          "registry_url": "https://crates.io/api/v1/crates/mio",
+          "registry_response_sha256": "8eec9bf769b033dc838682f44ed7de459bb9c721b22a12bcccdc9dd7e87013d6"
+        },
+        {
+          "name": "socket2",
+          "version": "0.6.5",
+          "published_at": "2026-07-13T19:45:58.436336Z",
+          "archive_sha256": "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4",
+          "registry_url": "https://crates.io/api/v1/crates/socket2",
+          "registry_response_sha256": "7c610f7aeecf77e1b36199351045ffb65705a602c396bde869c15048c62a2938"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:rust-lang/cc-rs",
+      "rationale": "Rust project native C/C++ build infrastructure (cc and find-msvc-tools); crates.io records publication by the official repository workflow.",
+      "source": "https://github.com/rust-lang/cc-rs",
+      "closed_gaps": 2,
+      "packages": [
+        {
+          "name": "cc",
+          "version": "1.11.3",
+          "published_at": "2026-11-20T11:48:48.875598Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "rust-lang/cc-rs",
+            "run_id": "44730573932",
+            "sha": "c548c664cb6d71692959c1bd98959adc52ef7da7"
+          },
+          "archive_sha256": "02f0e023adb368345ce0ca6cdfc0f24a06554468d0e8503e14a0841de79bfa69",
+          "registry_url": "https://crates.io/api/v1/crates/cc",
+          "registry_response_sha256": "f2addbc3223acb903c3e3fd1c3837421a690ed3406d5ad5ec4504010b8d0bf11"
+        },
+        {
+          "name": "find-msvc-tools",
+          "version": "0.1.15",
+          "published_at": "2026-10-19T07:39:37.580908Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "rust-lang/cc-rs",
+            "run_id": "39217366179",
+            "sha": "ffbb10da608f715ed69a4561c4cbdca7c6fbbba6"
+          },
+          "archive_sha256": "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48",
+          "registry_url": "https://crates.io/api/v1/crates/find-msvc-tools",
+          "registry_response_sha256": "ccd4794b57605a56769e41244177ff40116438d4c4a9de3782dc69cad4da2694"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:rust-lang/flate2-rs",
+      "rationale": "Rust project compression library; official repository release workflow, not an inferred human uploader.",
+      "source": "https://github.com/rust-lang/flate2-rs",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "flate2",
+          "version": "1.1.11",
+          "published_at": "2026-11-06T09:20:41.620132Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "rust-lang/flate2-rs",
+            "run_id": "42194278107",
+            "sha": "e3a3423a16facde6218ed18fd68c0cdd5df68545"
+          },
+          "archive_sha256": "626d4928326b646e70f65ed36fc7cf9f206bdb68a0019ee7c6b4709da4e084c4",
+          "registry_url": "https://crates.io/api/v1/crates/flate2",
+          "registry_response_sha256": "4cd5b67c527bfb9fd76eaee66f6d2d3eb76de20ef721e8580c695ec86acb6855"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:rust-lang/hashbrown",
+      "rationale": "Rust project hash table implementation used by standard-library/collection infrastructure; official repository release workflow.",
+      "source": "https://github.com/rust-lang/hashbrown",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "hashbrown",
+          "version": "0.17.2",
+          "published_at": "2026-11-22T01:08:02.018306Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "rust-lang/hashbrown",
+            "run_id": "44969966159",
+            "sha": "8fa9464e0dacf09c485ba6e73eb66e4f6c06e874"
+          },
+          "archive_sha256": "735eaa21a6a5ffb2e84362faaeb90c05ba8e19797ca30428478cb6ea3a4921bc",
+          "registry_url": "https://crates.io/api/v1/crates/hashbrown",
+          "registry_response_sha256": "6270a5bc87335b1b6a6779d3d9aef816708359950ebcdd14cdb7e1c6bdd36798"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:rust-lang/libc",
+      "rationale": "Rust project platform bindings maintained for the Rust ecosystem; official repository release workflow.",
+      "source": "https://github.com/rust-lang/libc",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "libc",
+          "version": "0.2.191",
+          "published_at": "2026-10-16T22:56:46.041660Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "rust-lang/libc",
+            "run_id": "38978648039",
+            "sha": "ccc2ff4aaab962f7fde7b8edda7379c045b1ca12"
+          },
+          "archive_sha256": "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a",
+          "registry_url": "https://crates.io/api/v1/crates/libc",
+          "registry_response_sha256": "e517be63644a02a9a5353843bfa2f871460657ab0327fafd1b303d0d4a3f0c43"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:rust-lang/log",
+      "rationale": "Rust project logging facade maintained for the Rust ecosystem; official repository release workflow.",
+      "source": "https://github.com/rust-lang/log",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "log",
+          "version": "0.4.35",
+          "published_at": "2026-10-30T21:36:19.748360Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "rust-lang/log",
+            "run_id": "41132243978",
+            "sha": "75fcb86da1cce3b9476c58c911482ec43ec235f4"
+          },
+          "archive_sha256": "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c",
+          "registry_url": "https://crates.io/api/v1/crates/log",
+          "registry_response_sha256": "7edd012d2fcb4b636bc1cb07b60047111fedd8b3214fc0dab0b826c4f27671b2"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:RustCrypto/hashes",
+      "rationale": "RustCrypto project leads and maintainers of the hash crate family; official repository release workflow.",
+      "source": "https://github.com/RustCrypto/hashes",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "sha1",
+          "version": "0.10.7",
+          "published_at": "2026-07-10T14:30:11.575923Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "RustCrypto/hashes",
+            "run_id": "29100033896",
+            "sha": "0b32162344ab2bbc3749889370927ae49137d4ae"
+          },
+          "archive_sha256": "a978451301f4db1d02937a4ab3ccce137717b81826e79b7d49ffe3244a13c3b8",
+          "registry_url": "https://crates.io/api/v1/crates/sha1",
+          "registry_response_sha256": "962c735d2ec690121bc9e2ad290917d87372a3913e164d9a5238ded0eb61954d"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:RustCrypto/utils",
+      "rationale": "RustCrypto project leads and maintainers of the cryptographic utility crate family; official repository release workflow.",
+      "source": "https://github.com/RustCrypto/utils",
+      "closed_gaps": 2,
+      "packages": [
+        {
+          "name": "zeroize",
+          "version": "1.9.2",
+          "published_at": "2026-11-17T14:47:39.506189Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "RustCrypto/utils",
+            "run_id": "44106433886",
+            "sha": "c66481d9952cb8f363e7140c7122e3d238581ca6"
+          },
+          "archive_sha256": "85ccff8a4805aba1eaa4cd4afcd49f7557dd2cf5fd79ffc37f8959466effc5aa",
+          "registry_url": "https://crates.io/api/v1/crates/zeroize",
+          "registry_response_sha256": "c717d23658438ad100336dd572df748973e1ae608ad7cd29b59e0d5050e59a7c"
+        },
+        {
+          "name": "zeroize_derive",
+          "version": "1.5.0",
+          "published_at": "2026-06-12T18:21:55.086967Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "RustCrypto/utils",
+            "run_id": "27434707674",
+            "sha": "1ea42bb68f560a2909c856b20aa3c62901f6305c"
+          },
+          "archive_sha256": "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328",
+          "registry_url": "https://crates.io/api/v1/crates/zeroize_derive",
+          "registry_response_sha256": "4cd37f5a2cf39ab5619d712937f274fac50b0359f5de46c4223ca414680f790d"
+        }
+      ]
+    },
+    {
+      "trusted_publisher": "github:taiki-e/pin-project-lite",
+      "rationale": "Taiki Endo, already approved above for pinning/async infrastructure; official repository release workflow.",
+      "source": "https://github.com/taiki-e/pin-project-lite",
+      "closed_gaps": 1,
+      "packages": [
+        {
+          "name": "pin-project-lite",
+          "version": "0.2.18",
+          "published_at": "2026-11-19T16:48:32.689240Z",
+          "trustpub_data": {
+            "provider": "github",
+            "repository": "taiki-e/pin-project-lite",
+            "run_id": "44569802937",
+            "sha": "1c2b2512b2e871f2bc3a220a76b94bdea76765f3"
+          },
+          "archive_sha256": "c938015719552d665fd0553b90d96cd7ff58e83e4c061ca99e6bb78865a72752",
+          "registry_url": "https://crates.io/api/v1/crates/pin-project-lite",
+          "registry_response_sha256": "9e37b27253ad640d195dd4f82de180bc3c32a06a7a6899b2e96e24ccc6939364"
+        }
+      ]
+    }
+  ],
+  "new_imports": [
+    {
+      "name": "embark-studios",
+      "repo": "EmbarkStudios/rust-ecosystem",
+      "commit": "732513edfd9172f4eda358b2d0cefc6cad1585ee",
+      "url": "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/732513edfd9172f4eda358b2d0cefc6cad1585ee/audits.toml",
+      "sha256": "c8d3cd352b3b8528e131054be3701357ec26495b1db7148896503a1c42ab9418",
+      "rationale": "Embark maintains cargo-deny and Rust application/tooling infrastructure; directly trust this pinned set of attributed dependency reviews with original criteria, without inheriting its imports or exemptions.",
+      "closed_gaps": 0
+    }
+  ],
+  "new_agent_audits": [
+    {
+      "name": "version_check",
+      "version": "0.9.5",
+      "notes": "Read package inventory, both manifests and all four source modules. Expected build-time authority is invoking the toolchain compiler selected by RUSTC (or rustc on PATH) with fixed --verbose --version arguments, without a shell, and reading RUSTFLAGS/CARGO_ENCODED_RUSTFLAGS to check allowed compiler features. This assumes the caller's toolchain/environment is trusted, as Cargo itself does; output capture has no timeout/size limit. Other code parses and compares bounded integer version/date components and channel strings. Test-only filesystem access reads excluded static fixtures, not application data. No dependencies, own build script, unsafe code, network, installation, writes or autonomous work. This scoped safe-to-run review does not certify arbitrary hostile compiler executables, malformed version parsing or production security.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a",
+      "closed_gaps": 1
+    },
+    {
+      "name": "bitflags",
+      "version": "2.13.2",
+      "notes": "Read package inventory, both manifests and every production module, including complete macro templates, parser, iterators, traits and optional serde/arbitrary/bytemuck integrations. No build script or native code. Generated code implements primitive bit operations, transparent storage, finite flag lookup/iteration and formatting to caller-provided fmt::Write/serde destinations. Parser consumes input split by | and returns errors for empty/unknown/invalid hex flags. Macro recursion consumes supplied syntax; user expressions/attributes remain the caller's Rust code. Optional bytemuck unsafe marker impls require the underlying primitive Pod/Zeroable type and transparent internal wrapper; no executable unsafe blocks were found. No file/environment/socket/process APIs, constructors or background tasks. Resource use scales with caller input/iterators; this is not an audit of arbitrary caller traits or production parser correctness.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06",
+      "closed_gaps": 1
+    },
+    {
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.130",
+      "notes": "Read package inventory, both manifests, build.rs and all four source modules. Build script reads only two fixed schema source files relative to CARGO_MANIFEST_DIR, hashes their text and emits Cargo env/rerun directives; it also executes git rev-parse HEAD with fixed arguments and no shell to derive a version suffix. This is expected local build metadata access under a trusted Cargo/git environment; it writes no files and makes no network requests. Runtime code is no_std+alloc: finite schema macro data, identifier validation via unicode-ident, string construction/escaping and a byte-wise module hash. It stores JS/source text as data and does not evaluate it. No unsafe code, runtime I/O, installation or autonomous tasks. Tests only compare a fixed schema hash. Dependencies and downstream code generators require separate coverage.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "3b1f9c3798725016c6ee5f2f57869ec0831e8bbc0ab0310a86e787e97f41389e",
+      "closed_gaps": 1
+    },
+    {
+      "name": "errno",
+      "version": "0.3.15",
+      "notes": "Read package inventory, both manifests and all six source modules, including Unix, Windows, WASI, Hermit and unsupported-target branches. Expected authority is reading/writing the current thread's OS error slot and obtaining a system error description. Unix/WASI use strerror_r into a fixed 1024-byte stack buffer, errno-location FFI and UTF-8 valid-prefix conversion, relying on the OS/libc string contract. Windows uses GetLastError/SetLastError and FormatMessageW with FROM_SYSTEM|IGNORE_INSERTS into fixed stack buffers; decoded UTF-16 is copied into a bounded UTF-8 buffer. Hermit stubs return fixed values; unsupported targets fail compilation. Unsafe operations are limited to these OS buffer/pointer/string interfaces; no build script, file/socket access, process execution, installation or background work. This source review does not independently verify every platform's libc/Win32 ABI or replace native-platform tests.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776",
+      "closed_gaps": 1
+    },
+    {
+      "name": "phf_shared",
+      "version": "0.14.0",
+      "notes": "Read package inventory, both manifests and all three production source modules including optional ptrhash and unicase/uncased implementations. Code computes keyed hashes and table indexes, borrows caller values, and formats constants only to a supplied Formatter. PortableSipHasher delegates integer writes after endian normalization. The only unsafe block reborrows slices of one-byte u8/i8/bool as bytes with the same length/alignment and lifetime; it performs no writes. Empty/malformed caller-provided displacement/pilot/remap tables can panic and are not certified for hostile production input. Iteration is over caller data; no own build script, native code, constructors, environment, filesystem, sockets, processes or autonomous work. SipHash implementation and downstream generators require separate coverage.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "c6fd9027e2d9319be6349febd1db4e8d02aa544921200c9b777720ac34a3aa89",
+      "closed_gaps": 1
+    },
+    {
+      "name": "phf_generator",
+      "version": "0.14.0",
+      "notes": "Read package inventory, both manifests, both production library modules and the gen_hash_test binary. Generation uses a fixed-seed in-memory fastrand generator, caller-provided hash callbacks, bucket/displacement search and caller-sized vectors. Optional ptrhash retries random seeds with bounded pilot searches and in-memory relocation; it does not obtain OS entropy. No unsafe code, build script, filesystem, environment, network, subprocesses or installation. Generation assumes a finite set of distinct build-time keys: duplicate/adversarial keys or callbacks can cause unbounded retry/CPU use, and oversized tables can panic or exhaust memory. Safe-to-run here covers controlled local build inputs, not hostile runtime key sets. The explicit benchmark binary generates one million strings only when the user runs it; it is not started during dependency builds. No cryptographic or production denial-of-service guarantee is claimed.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100",
+      "closed_gaps": 1
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "3.5.0",
+      "notes": "Read package inventory, both manifests and the complete production library. Explicit crate_name calls read CARGO_MANIFEST_DIR/Cargo.toml and the workspace manifest located by Cargo, cache their modification timestamps in a Mutex/BTreeMap and parse TOML dependency names, treating TOML as data. Workspace discovery invokes the CARGO environment executable with fixed locate-project --workspace --message-format=plain and a single --manifest-path argument, without a shell. Returned paths and executable are trusted Cargo build-environment inputs; file and command output reads are not size/time bounded. No unsafe code, own build script, network, writes, installation or background tasks. This covers expected build metadata inspection, not arbitrary hostile Cargo executables or manifests chosen by an attacker outside the controlled fuzz build. toml_edit requires separate coverage.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f",
+      "closed_gaps": 1
+    },
+    {
+      "name": "memoffset",
+      "version": "0.9.1",
+      "notes": "Read package inventory, both manifests, build.rs and all four source modules including the complete macro templates. The build script only invokes autocfg compiler-version probes for fixed versions and emits fixed cfg names. With NymWrap's pinned Rust 1.100, offset_of variants delegate to core::mem::offset_of!, raw-field address creation uses addr_of!, and other macros perform layout/size calculations on caller-supplied Rust types. Legacy compiler branches using MaybeUninit/alignment pointers, address subtraction/offset_from and reference formation were inspected; they are not a certification of old compiler provenance/packed-field behavior. Caller base expressions are evaluated outside injected unsafe blocks and raw field macros require the documented valid base/type preconditions. No native code, filesystem/network access, installation, unrelated subprocesses or background tasks; compiler/environment authority belongs to the separately covered autocfg build dependency. No production memory-safety guarantee for arbitrary caller pointers is claimed.",
+      "kind": "full",
+      "criteria": "safe-to-run",
+      "archive_sha256": "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a",
+      "closed_gaps": 1
+    }
+  ],
+  "new_exemptions": 0,
+  "cargo_lock_changed": false,
+  "import_candidates_not_added": [
+    {
+      "name": "fermyon",
+      "repo": "fermyon/spin",
+      "commit": "eb8239756e85d3c1bfd4d9e4b94bb4f6a0bb4fe4",
+      "url": "https://raw.githubusercontent.com/fermyon/spin/eb8239756e85d3c1bfd4d9e4b94bb4f6a0bb4fe4/supply-chain/audits.toml",
+      "sha256": "68ff32b3e44588892c92fd71ca995238cb1136c7289754da73b31e6010d3c0b4",
+      "reason": "Small historical Wasmtime/plotting set with no additional coverage for remaining fuzz packages."
+    },
+    {
+      "name": "actix",
+      "repo": "actix/supply-chain",
+      "commit": "321d5fa8d86645999606d54f8a19e032bb396808",
+      "url": "https://raw.githubusercontent.com/actix/supply-chain/321d5fa8d86645999606d54f8a19e032bb396808/audits.toml",
+      "sha256": "38f9b9a5bbcfa1829248920276ebe641d3aa4b87fb0c031d8e28a1befec0dd83",
+      "reason": "Only Actix-family wildcard audits, no crates in this fuzz graph."
+    }
+  ],
+  "tool_version": "0.10.4",
+  "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+  "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+  "new_trust_summary": {
+    "user_ids": 16,
+    "workflow_identities": 8,
+    "closed_gaps": 106,
+    "criteria": "safe-to-run",
+    "future_publications_trusted": false,
+    "date_semantics": "start inclusive, end exclusive (UTC); end is the day after the latest confirmed locked publication"
+  },
+  "new_audit_summary": {
+    "full": 8,
+    "delta": 0,
+    "closed_gaps": 8,
+    "criteria": "safe-to-run",
+    "independent_human_audit": false,
+    "crate_specific_tests_run": false
+  },
+  "source_review_prioritization": {
+    "method": "Prioritized reverse-dependency fanout in complete all-features fuzz graph; direct and transitive user counts are retained for remaining packages.",
+    "graph_sha256": "2c74b7d8b9f1903ee331da5b78f163e80ba856c9ffad989a96328defaeab49d6",
+    "graph_command": "cargo vet dump-graph --manifest-path fuzz/Cargo.toml --store-path supply-chain/fuzz --locked --frozen --output-format json",
+    "deferred": [
+      {
+        "name": "typenum",
+        "version": "1.20.1",
+        "reason": "Inventory and manifests inspected, but arithmetic/operator modules and extensive generated source not sufficiently reviewed; no audit recorded."
+      },
+      {
+        "name": "wasm-bindgen-macro-support",
+        "version": "0.2.130",
+        "reason": "Large procedural generator and downstream JS/Wasm code generation need a separate substantive review; no blanket trust in further workflow identities."
+      },
+      {
+        "name": "smallvec",
+        "version": "1.16.6",
+        "reason": "Unsafe storage/lifetime implementation needs substantive review; no audit recorded."
+      }
+    ],
+    "notes": "Native C/ASM and large libraries in the remaining list were not certified from API searches or inventories alone. Trust was not broadened to unfamiliar publishers to force a green gate."
+  },
+  "remaining": [
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 36
+    },
+    {
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 27
+    },
+    {
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 26
+    },
+    {
+      "name": "wasm-bindgen",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 25
+    },
+    {
+      "name": "js-sys",
+      "version": "0.3.107",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 24
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 24
+    },
+    {
+      "name": "smallvec",
+      "version": "1.16.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 5,
+      "transitive_users": 21
+    },
+    {
+      "name": "siphasher",
+      "version": "1.0.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 16
+    },
+    {
+      "name": "event-listener",
+      "version": "5.4.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 5,
+      "transitive_users": 14
+    },
+    {
+      "name": "concurrent-queue",
+      "version": "2.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 3,
+      "transitive_users": 13
+    },
+    {
+      "name": "quick-xml",
+      "version": "0.42.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 13
+    },
+    {
+      "name": "zerocopy-derive",
+      "version": "0.8.64",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 13
+    },
+    {
+      "name": "zerocopy",
+      "version": "0.8.64",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 12
+    },
+    {
+      "name": "futures-lite",
+      "version": "2.6.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 3,
+      "transitive_users": 11
+    },
+    {
+      "name": "zvariant_utils",
+      "version": "2.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 11
+    },
+    {
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 11
+    },
+    {
+      "name": "openssl-sys",
+      "version": "0.9.118",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 10
+    },
+    {
+      "name": "enumflags2_derive",
+      "version": "0.7.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 10
+    },
+    {
+      "name": "phf_macros",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 10
+    },
+    {
+      "name": "redox_syscall",
+      "version": "0.5.18",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 10
+    },
+    {
+      "name": "rand",
+      "version": "0.8.8",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 7,
+      "transitive_users": 9
+    },
+    {
+      "name": "enumflags2",
+      "version": "0.7.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 9
+    },
+    {
+      "name": "phf",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 9
+    },
+    {
+      "name": "piper",
+      "version": "0.2.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 9
+    },
+    {
+      "name": "zvariant_derive",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 9
+    },
+    {
+      "name": "zvariant",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 8
+    },
+    {
+      "name": "blocking",
+      "version": "1.7.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 8
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 8
+    },
+    {
+      "name": "security-framework-sys",
+      "version": "2.17.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 7
+    },
+    {
+      "name": "sqlcipher-src",
+      "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 7
+    },
+    {
+      "name": "widestring",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 7
+    },
+    {
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "async-recursion",
+      "version": "1.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "axum-core",
+      "version": "0.5.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "doctest-file",
+      "version": "1.1.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "libdbus-sys",
+      "version": "0.2.7",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "matchit",
+      "version": "0.8.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "nix",
+      "version": "0.29.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "ordered-stream",
+      "version": "0.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "phf_codegen",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "recvmsg",
+      "version": "1.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "string_cache",
+      "version": "0.11.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "string_cache_codegen",
+      "version": "0.11.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "uds_windows",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "zbus_macros",
+      "version": "4.4.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "zbus_names",
+      "version": "3.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 7
+    },
+    {
+      "name": "openssl",
+      "version": "0.10.82",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 6
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.9.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "derive_more-impl",
+      "version": "2.1.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "dtoa-short",
+      "version": "0.3.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "interprocess",
+      "version": "2.4.9",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "rsqlite-vfs",
+      "version": "0.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "tendril",
+      "version": "0.5.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "web_atoms",
+      "version": "0.3.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "zbus",
+      "version": "4.4.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 6
+    },
+    {
+      "name": "dbus-secret-service",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "derive_more",
+      "version": "2.1.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "libsqlite3-sys",
+      "version": "0.40.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "markup5ever",
+      "version": "0.40.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "rustc-hash",
+      "version": "2.1.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "secret-service",
+      "version": "4.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "security-framework",
+      "version": "2.11.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "security-framework",
+      "version": "3.7.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "servo_arc",
+      "version": "0.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "sqlite-wasm-rs",
+      "version": "0.6.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 5
+    },
+    {
+      "name": "rusqlite",
+      "version": "0.43.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 3,
+      "transitive_users": 4
+    },
+    {
+      "name": "keyring",
+      "version": "3.6.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 4
+    },
+    {
+      "name": "constant_time_eq",
+      "version": "0.6.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "ego-tree",
+      "version": "0.11.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "html5ever",
+      "version": "0.40.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "nix",
+      "version": "0.32.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "selectors",
+      "version": "0.41.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "typed-path",
+      "version": "0.13.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 4
+    },
+    {
+      "name": "zip",
+      "version": "9.8.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 2,
+      "transitive_users": 3
+    },
+    {
+      "name": "scraper",
+      "version": "0.29.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ],
+      "direct_users": 1,
+      "transitive_users": 3
+    }
+  ],
+  "final_exit_code": 4294967295,
+  "final_inputs_unchanged": true,
+  "final_receipt": {
+    "version": 1,
+    "scope": "fuzz",
+    "tool_version": "0.10.4",
+    "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+    "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+    "exit_code": 4294967295,
+    "locked_imports": true,
+    "refreshed_imports": false,
+    "input_hashes": {
+      "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+      "config": "fefe0f3b50ae6138f94c06143dfb0b6d0b1e826f3ca119a0a578f780df36cefe",
+      "audits": "492f0937a72f551ef6b199acfa97370cfbaca6c4f2cea506a6435474fdcba345",
+      "imports": "886b2ce80e3abf40297b7f46616c302bcc0ac0ba6b5019650411582a12d0555c"
+    },
+    "inputs_unchanged": true,
+    "status": "failed",
+    "evidence": {
+      "commit": null,
+      "run": null,
+      "attempt": null
+    }
+  },
+  "validation": {
+    "cargo_deny": {
+      "command": "cargo deny --manifest-path fuzz/Cargo.toml --all-features check --hide-inclusion-graph",
+      "version": "0.22.0",
+      "exit_code": 0,
+      "result": "advisories ok, bans ok, licenses ok, sources ok; duplicate warnings",
+      "log": "target/vet/fuzz-task9/continuation/deny.log",
+      "log_sha256": "ffa9dc7b7aebdef28929c8b451f9e9871c85f2a058de9aecd12b33e68f75cb6d"
+    },
+    "cargo_vet": {
+      "command": "node scripts/vet-dependencies.mjs fuzz",
+      "result": "failed",
+      "gaps": 79,
+      "json": "target/vet/fuzz.json",
+      "receipt": "target/vet/fuzz.receipt.json",
+      "stderr": "target/vet/fuzz.stderr.log",
+      "report_sha256": "33e7b4644089d5f0c06d20ae56a0caa5fcba5f4e21a685ed73e181b94253c17a"
+    },
+    "git_diff_check": "passed",
+    "full_tests": "Not run in this continuation: supply-chain/docs-only changes, explicitly permitted by task. Previous tests belong to a120a5f."
+  },
+  "lockfiles": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "6a8b1f7bd79c70be14f94ba7430e80e427a0683a30db804660dcf22ed70c595a",
+      "unchanged": true
+    },
+    {
+      "path": "app/src-tauri/Cargo.lock",
+      "sha256": "a2eeed10d769a05ff0a9c7843708ec86c58d5cb08cf24a93d2236eaa38041e17",
+      "unchanged": true
+    },
+    {
+      "path": "daemons/nw-netd/Cargo.lock",
+      "sha256": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+      "unchanged": true
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "sha256": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/llama-cpp-2/Cargo.lock",
+      "sha256": "447c65774c376341f2aad059bd96258dfd9f24787cc009c17b6b9465c1e7b3c3",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/rustls/Cargo.lock",
+      "sha256": "8fb66853b333f7bb99c0d1c0cfcecf15d1a08940f09c7ce26eb3626af81ee6fa",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/tor-key-forge/Cargo.lock",
+      "sha256": "0133558f1d8066b3e79376d356c24b099482a65462b0c8d5799477c311a2bed0",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/tor-llcrypto/Cargo.lock",
+      "sha256": "7177c761c926b44e00ab58258fa4af594cd94cbf975b2b118b5b66d748f0cccd",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/tor-ptmgr/Cargo.lock",
+      "sha256": "40b783709a0ea5cc3c7c714629ce35de08753eaa9d26f4b70a9ea20ea9fd4c7f",
+      "unchanged": true
+    }
+  ],
+  "integrity_checks": {
+    "trusted_entries": 93,
+    "all_trusted_entries_have_registry_evidence": true,
+    "exact_locked_publications_verified": 106,
+    "all_checkpoint_lock_hashes_equal": true,
+    "all_tracked_cargo_locks_unchanged": true,
+    "other_graphs_unchanged": true
+  }
+}

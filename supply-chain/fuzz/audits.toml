@@ -1,6 +1,17 @@
 
 # cargo-vet audits file
 
+[[audits.bitflags]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "2.13.2"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06.
+Read package inventory, both manifests and every production module, including complete macro templates, parser, iterators, traits and optional serde/arbitrary/bytemuck integrations. No build script or native code. Generated code implements primitive bit operations, transparent storage, finite flag lookup/iteration and formatting to caller-provided fmt::Write/serde destinations. Parser consumes input split by | and returns errors for empty/unknown/invalid hex flags. Macro recursion consumes supplied syntax; user expressions/attributes remain the caller's Rust code. Optional bytemuck unsafe marker impls require the underlying primitive Pod/Zeroable type and transparent internal wrapper; no executable unsafe blocks were found. No file/environment/socket/process APIs, constructors or background tasks. Resource use scales with caller input/iterators; this is not an audit of arbitrary caller traits or production parser correctness.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
 [[audits.block-padding]]
 who = "NymWrap automated source review (Codex agent)"
 criteria = "safe-to-run"
@@ -87,6 +98,28 @@ or build script was added. This is a delta review, not an audit of the base or
 an independent human security review. Original 1.0.2 coverage is still required.
 """
 
+[[audits.errno]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.3.15"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776.
+Read package inventory, both manifests and all six source modules, including Unix, Windows, WASI, Hermit and unsupported-target branches. Expected authority is reading/writing the current thread's OS error slot and obtaining a system error description. Unix/WASI use strerror_r into a fixed 1024-byte stack buffer, errno-location FFI and UTF-8 valid-prefix conversion, relying on the OS/libc string contract. Windows uses GetLastError/SetLastError and FormatMessageW with FROM_SYSTEM|IGNORE_INSERTS into fixed stack buffers; decoded UTF-16 is copied into a bounded UTF-8 buffer. Hermit stubs return fixed values; unsupported targets fail compilation. Unsafe operations are limited to these OS buffer/pointer/string interfaces; no build script, file/socket access, process execution, installation or background work. This source review does not independently verify every platform's libc/Win32 ABI or replace native-platform tests.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.memoffset]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.9.1"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a.
+Read package inventory, both manifests, build.rs and all four source modules including the complete macro templates. The build script only invokes autocfg compiler-version probes for fixed versions and emits fixed cfg names. With NymWrap's pinned Rust 1.100, offset_of variants delegate to core::mem::offset_of!, raw-field address creation uses addr_of!, and other macros perform layout/size calculations on caller-supplied Rust types. Legacy compiler branches using MaybeUninit/alignment pointers, address subtraction/offset_from and reference formation were inspected; they are not a certification of old compiler provenance/packed-field behavior. Caller base expressions are evaluated outside injected unsafe blocks and raw field macros require the documented valid base/type preconditions. No native code, filesystem/network access, installation, unrelated subprocesses or background tasks; compiler/environment authority belongs to the separately covered autocfg build dependency. No production memory-safety guarantee for arbitrary caller pointers is claimed.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
 [[audits.new_debug_unreachable]]
 who = "NymWrap automated source review (Codex agent)"
 criteria = "safe-to-run"
@@ -106,6 +139,39 @@ notes = """
 Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
 Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23.
 Read inventory, normalized manifest, feature forwarding and complete executable library source. This no_std facade contains re-exports and module declarations for numeric dependencies only; no functions, initializers, unsafe operations, build script, native code or ambient authority. Its rand/serde/std features forward to numeric dependencies requiring separate audits; the facade itself performs no I/O, execution or autonomous work.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.phf_generator]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.14.0"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100.
+Read package inventory, both manifests, both production library modules and the gen_hash_test binary. Generation uses a fixed-seed in-memory fastrand generator, caller-provided hash callbacks, bucket/displacement search and caller-sized vectors. Optional ptrhash retries random seeds with bounded pilot searches and in-memory relocation; it does not obtain OS entropy. No unsafe code, build script, filesystem, environment, network, subprocesses or installation. Generation assumes a finite set of distinct build-time keys: duplicate/adversarial keys or callbacks can cause unbounded retry/CPU use, and oversized tables can panic or exhaust memory. Safe-to-run here covers controlled local build inputs, not hostile runtime key sets. The explicit benchmark binary generates one million strings only when the user runs it; it is not started during dependency builds. No cryptographic or production denial-of-service guarantee is claimed.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.phf_shared]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.14.0"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: c6fd9027e2d9319be6349febd1db4e8d02aa544921200c9b777720ac34a3aa89.
+Read package inventory, both manifests and all three production source modules including optional ptrhash and unicase/uncased implementations. Code computes keyed hashes and table indexes, borrows caller values, and formats constants only to a supplied Formatter. PortableSipHasher delegates integer writes after endian normalization. The only unsafe block reborrows slices of one-byte u8/i8/bool as bytes with the same length/alignment and lifetime; it performs no writes. Empty/malformed caller-provided displacement/pilot/remap tables can panic and are not certified for hostile production input. Iteration is over caller data; no own build script, native code, constructors, environment, filesystem, sockets, processes or autonomous work. SipHash implementation and downstream generators require separate coverage.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.proc-macro-crate]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "3.5.0"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f.
+Read package inventory, both manifests and the complete production library. Explicit crate_name calls read CARGO_MANIFEST_DIR/Cargo.toml and the workspace manifest located by Cargo, cache their modification timestamps in a Mutex/BTreeMap and parse TOML dependency names, treating TOML as data. Workspace discovery invokes the CARGO environment executable with fixed locate-project --workspace --message-format=plain and a single --manifest-path argument, without a shell. Returned paths and executable are trusted Cargo build-environment inputs; file and command output reads are not size/time bounded. No unsafe code, own build script, network, writes, installation or background tasks. This covers expected build metadata inspection, not arbitrary hostile Cargo executables or manifests chosen by an attacker outside the controlled fuzz build. toml_edit requires separate coverage.
 Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
 """
 
@@ -238,6 +304,28 @@ Read package inventory, normalized manifest and all five library modules. Layer,
 Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
 """
 
+[[audits.version_check]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.9.5"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a.
+Read package inventory, both manifests and all four source modules. Expected build-time authority is invoking the toolchain compiler selected by RUSTC (or rustc on PATH) with fixed --verbose --version arguments, without a shell, and reading RUSTFLAGS/CARGO_ENCODED_RUSTFLAGS to check allowed compiler features. This assumes the caller's toolchain/environment is trusted, as Cargo itself does; output capture has no timeout/size limit. Other code parses and compares bounded integer version/date components and channel strings. Test-only filesystem access reads excluded static fixtures, not application data. No dependencies, own build script, unsafe code, network, installation, writes or autonomous work. This scoped safe-to-run review does not certify arbitrary hostile compiler executables, malformed version parsing or production security.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.wasm-bindgen-shared]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.2.130"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 3b1f9c3798725016c6ee5f2f57869ec0831e8bbc0ab0310a86e787e97f41389e.
+Read package inventory, both manifests, build.rs and all four source modules. Build script reads only two fixed schema source files relative to CARGO_MANIFEST_DIR, hashes their text and emits Cargo env/rerun directives; it also executes git rev-parse HEAD with fixed arguments and no shell to derive a version suffix. This is expected local build metadata access under a trusted Cargo/git environment; it writes no files and makes no network requests. Runtime code is no_std+alloc: finite schema macro data, identifier validation via unicode-ident, string construction/escaping and a byte-wise module hash. It stores JS/source text as data and does not evaluate it. No unsafe code, runtime I/O, installation or autonomous tasks. Tests only compare a fixed schema hash. Dependencies and downstream code generators require separate coverage.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
 [[audits.xdg-home]]
 who = "NymWrap automated source review (Codex agent)"
 criteria = "safe-to-run"
@@ -248,3 +336,654 @@ Published archive read offline from the Cargo cache; SHA-256 verified against th
 Read both manifests and complete library, including Unix/Windows cfg branches and the unit test. Authority is the documented HOME environment read or OS home-directory lookup: geteuid/getpwuid_r with a fixed local buffer and checked return/result pointers; SHGetKnownFolderPath with the fixed Profile identifier and no flags/token. Conversion copies the returned string before normal-path CoTaskMemFree. Invalid UTF-16 can leak that allocation via early return, without reading file contents or initiating application network activity. OS NSS configuration is outside this crate. The unit test changes HOME only in its own process. No build script, arbitrary file reads/writes, command execution or device reconfiguration.
 Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
 """
+
+[[trusted.aead]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-02"
+end = "2023-04-03"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.aes]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-02-13"
+end = "2024-02-14"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.aho-corasick]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-08-03"
+end = "2026-08-04"
+notes = "ADR 0088: BurntSushi; Maintains regex, regex-automata, memchr, aho-corasick and ripgrep. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.arbitrary]]
+criteria = "safe-to-run"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2026-10-06"
+end = "2026-10-07"
+notes = "ADR 0088: fitzgen; Wasmtime/Bytecode Alliance maintainer; maintains arbitrary, libfuzzer-sys and bumpalo fuzzing/allocation infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.argon2]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-01-20"
+end = "2024-01-21"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.async-channel]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-07-06"
+end = "2025-07-07"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.async-io]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.async-lock]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-11-02"
+end = "2026-11-03"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.async-process]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.async-signal]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-04-07"
+end = "2026-04-08"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.async-trait]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-08-08"
+end = "2026-08-09"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.autocfg]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-05-22"
+end = "2026-05-23"
+notes = "ADR 0088: cuviper; Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.axum]]
+criteria = "safe-to-run"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-04-14"
+end = "2026-04-15"
+notes = "ADR 0088: Darksonn; Tokio maintainer Alice Ryhl; publishes Tokio, bytes, slab and axum infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.base64ct]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2026-01-12"
+end = "2026-01-13"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.blake2]]
+criteria = "safe-to-run"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2022-12-16"
+end = "2022-12-17"
+notes = "ADR 0088: newpavlov; RustCrypto project lead; maintains the widely used hash, cipher and KDF crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.bytes]]
+criteria = "safe-to-run"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-11-17"
+end = "2026-11-18"
+notes = "ADR 0088: Darksonn; Tokio maintainer Alice Ryhl; publishes Tokio, bytes, slab and axum infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.cbc]]
+criteria = "safe-to-run"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2022-03-24"
+end = "2022-03-25"
+notes = "ADR 0088: newpavlov; RustCrypto project lead; maintains the widely used hash, cipher and KDF crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.cc]]
+criteria = "safe-to-run"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2026-11-20"
+end = "2026-11-21"
+notes = "ADR 0088: Rust project native C/C++ build infrastructure (cc and find-msvc-tools); crates.io records publication by the official repository workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.chacha20]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-01"
+end = "2023-04-02"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.chacha20poly1305]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-08-10"
+end = "2022-08-11"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.digest]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-05-19"
+end = "2023-05-20"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.dtoa]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-12-27"
+end = "2025-12-28"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.event-listener-strategy]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-03-27"
+end = "2025-03-28"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.fastrand]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-07-19"
+end = "2026-07-20"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.find-msvc-tools]]
+criteria = "safe-to-run"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2026-10-19"
+end = "2026-10-20"
+notes = "ADR 0088: Rust project native C/C++ build infrastructure (cc and find-msvc-tools); crates.io records publication by the official repository workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.flate2]]
+criteria = "safe-to-run"
+trusted-publisher = "github:rust-lang/flate2-rs"
+start = "2026-11-06"
+end = "2026-11-07"
+notes = "ADR 0088: Rust project compression library; official repository release workflow, not an inferred human uploader. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.hashbrown]]
+criteria = "safe-to-run"
+trusted-publisher = "github:rust-lang/hashbrown"
+start = "2026-11-22"
+end = "2026-11-23"
+notes = "ADR 0088: Rust project hash table implementation used by standard-library/collection infrastructure; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.hkdf]]
+criteria = "safe-to-run"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2023-12-13"
+end = "2023-12-14"
+notes = "ADR 0088: newpavlov; RustCrypto project lead; maintains the widely used hash, cipher and KDF crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.http]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.http-body]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.http-body-util]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-08-12"
+end = "2026-08-13"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.httparse]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2025-03-03"
+end = "2025-03-04"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.hyper]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-10-06"
+end = "2026-10-07"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.hyper-util]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-09-24"
+end = "2026-09-25"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.indexmap]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-09-05"
+end = "2026-09-06"
+notes = "ADR 0088: cuviper; Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.itoa]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-11-09"
+end = "2026-11-10"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.jobserver]]
+criteria = "safe-to-run"
+user-id = 55123 # rust-lang-owner
+start = "2026-07-06"
+end = "2026-07-07"
+notes = "ADR 0088: rust-lang-owner; Rust project shared release account for Rust-owned toolchain crates; trust restricted here to registry-confirmed jobserver release. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.libc]]
+criteria = "safe-to-run"
+trusted-publisher = "github:rust-lang/libc"
+start = "2026-10-16"
+end = "2026-10-17"
+notes = "ADR 0088: Rust project platform bindings maintained for the Rust ecosystem; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.libfuzzer-sys]]
+criteria = "safe-to-run"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2026-06-04"
+end = "2026-06-05"
+notes = "ADR 0088: fitzgen; Wasmtime/Bytecode Alliance maintainer; maintains arbitrary, libfuzzer-sys and bumpalo fuzzing/allocation infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.linux-raw-sys]]
+criteria = "safe-to-run"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2025-12-23"
+end = "2025-12-24"
+notes = "ADR 0088: sunfishcode; Maintains rustix, linux-raw-sys, cap-std and WASI/Bytecode Alliance infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.lock_api]]
+criteria = "safe-to-run"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0088: Amanieu; Maintains parking_lot, lock_api, hashbrown and synchronization infrastructure used across the Rust ecosystem. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.log]]
+criteria = "safe-to-run"
+trusted-publisher = "github:rust-lang/log"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "ADR 0088: Rust project logging facade maintained for the Rust ecosystem; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.memchr]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-07-08"
+end = "2026-07-09"
+notes = "ADR 0088: BurntSushi; Maintains regex, regex-automata, memchr, aho-corasick and ripgrep. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.mime]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-11-05"
+end = "2026-11-06"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.mio]]
+criteria = "safe-to-run"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2026-11-13"
+end = "2026-11-14"
+notes = "ADR 0088: Thomasdezeeuw; Tokio Mio maintainer; maintains widely used Mio/socket2 OS networking infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.num-bigint]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-07-05"
+end = "2026-07-06"
+notes = "ADR 0088: cuviper; Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.num-complex]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2024-05-07"
+end = "2024-05-08"
+notes = "ADR 0088: cuviper; Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.num-integer]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-08-12"
+end = "2026-08-13"
+notes = "ADR 0088: cuviper; Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.num-iter]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-07-07"
+end = "2026-07-08"
+notes = "ADR 0088: cuviper; Rust compiler/library/release team member; maintains rayon, rust-num, indexmap and autocfg. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.openssl-src]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2026-06-09"
+end = "2026-06-10"
+notes = "ADR 0088: alexcrichton; Long-standing Rust/Cargo and Wasmtime maintainer; publishes native build/toolchain and WASI infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.parking_lot]]
+criteria = "safe-to-run"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0088: Amanieu; Maintains parking_lot, lock_api, hashbrown and synchronization infrastructure used across the Rust ecosystem. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.parking_lot_core]]
+criteria = "safe-to-run"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0088: Amanieu; Maintains parking_lot, lock_api, hashbrown and synchronization infrastructure used across the Rust ecosystem. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.password-hash]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-03-04"
+end = "2023-03-05"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.pin-project-lite]]
+criteria = "safe-to-run"
+trusted-publisher = "github:taiki-e/pin-project-lite"
+start = "2026-11-19"
+end = "2026-11-20"
+notes = "ADR 0088: Taiki Endo, already approved above for pinning/async infrastructure; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.polling]]
+criteria = "safe-to-run"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0088: taiki-e; Maintains pin-project, portable-atomic, futures/smol infrastructure and many widely used Rust tooling crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.poly1305]]
+criteria = "safe-to-run"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-07-31"
+end = "2022-08-01"
+notes = "ADR 0088: tarcieri; RustCrypto project lead; maintains widely used AEAD, cipher, password hash and encoding crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.regex]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2025-10-13"
+end = "2025-10-14"
+notes = "ADR 0088: BurntSushi; Maintains regex, regex-automata, memchr, aho-corasick and ripgrep. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.regex-automata]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0088: BurntSushi; Maintains regex, regex-automata, memchr, aho-corasick and ripgrep. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.regex-syntax]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0088: BurntSushi; Maintains regex, regex-automata, memchr, aho-corasick and ripgrep. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.rustix]]
+criteria = "safe-to-run"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2026-10-27"
+end = "2026-10-28"
+notes = "ADR 0088: sunfishcode; Maintains rustix, linux-raw-sys, cap-std and WASI/Bytecode Alliance infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.rustversion]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-07"
+end = "2026-07-08"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.serde_derive]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-18"
+end = "2026-07-19"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.serde_json]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-11"
+end = "2026-10-12"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.serde_path_to_error]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-09-15"
+end = "2025-09-16"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.sha1]]
+criteria = "safe-to-run"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-07-10"
+end = "2026-07-11"
+notes = "ADR 0088: RustCrypto project leads and maintainers of the hash crate family; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.slab]]
+criteria = "safe-to-run"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-01-31"
+end = "2026-02-01"
+notes = "ADR 0088: Darksonn; Tokio maintainer Alice Ryhl; publishes Tokio, bytes, slab and axum infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.socket2]]
+criteria = "safe-to-run"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0088: Thomasdezeeuw; Tokio Mio maintainer; maintains widely used Mio/socket2 OS networking infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.syn]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-15"
+end = "2026-11-10"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.thiserror]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-09-23"
+end = "2026-09-24"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-09-23"
+end = "2026-09-24"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.tokio]]
+criteria = "safe-to-run"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-10-21"
+end = "2026-10-22"
+notes = "ADR 0088: Darksonn; Tokio maintainer Alice Ryhl; publishes Tokio, bytes, slab and axum infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.tokio-macros]]
+criteria = "safe-to-run"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "ADR 0088: Darksonn; Tokio maintainer Alice Ryhl; publishes Tokio, bytes, slab and axum infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.toml]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0088: epage; Rust Cargo/clap maintainer; maintains widely used TOML, winnow and command-line parsing crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.toml_edit]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0088: epage; Rust Cargo/clap maintainer; maintains widely used TOML, winnow and command-line parsing crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.toml_parser]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0088: epage; Rust Cargo/clap maintainer; maintains widely used TOML, winnow and command-line parsing crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.toml_writer]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0088: epage; Rust Cargo/clap maintainer; maintains widely used TOML, winnow and command-line parsing crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.tower]]
+criteria = "safe-to-run"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-01-12"
+end = "2026-01-13"
+notes = "ADR 0088: seanmonstar; Hyper founder and Tokio/Tower ecosystem maintainer; publishes the HTTP, body, Hyper and Tower families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.unicode-ident]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-12"
+end = "2026-10-13"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.wasi]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2025-06-10"
+end = "2025-06-11"
+notes = "ADR 0088: alexcrichton; Long-standing Rust/Cargo and Wasmtime maintainer; publishes native build/toolchain and WASI infrastructure. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-11-15"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows-targets]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_i686_gnullvm]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-run"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2025-10-07"
+notes = "ADR 0088: kennykerr; Microsoft windows-rs maintainer; publishes the widely used Windows bindings and target library crate families. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.winnow]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-05"
+end = "2026-11-06"
+notes = "ADR 0088: epage; Rust Cargo/clap maintainer; maintains widely used TOML, winnow and command-line parsing crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."
+
+[[trusted.zeroize]]
+criteria = "safe-to-run"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-11-17"
+end = "2026-11-18"
+notes = "ADR 0088: RustCrypto project leads and maintainers of the cryptographic utility crate family; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.zeroize_derive]]
+criteria = "safe-to-run"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-12"
+end = "2026-06-13"
+notes = "ADR 0088: RustCrypto project leads and maintainers of the cryptographic utility crate family; official repository release workflow. Registry trustpub_data, sparse index and archive SHA-256 verified for this locked release. Historical [start, end) window. Evidence in review-2026-11-26-continuation.json."
+
+[[trusted.zmij]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0088: dtolnay; Maintains serde, syn, proc-macro2, quote, thiserror and related widely used macro/serialization crates. Exact locked publication(s) checked against crates.io API, sparse index and archive SHA-256; evidence in review-2026-11-26-continuation.json. Historical publication window [start, end); no future releases trusted."

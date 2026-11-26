@@ -9,6 +9,9 @@ version = "0.10"
 [imports.bytecode-alliance]
 url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/1499ce8728f5f1b7fae0db88e1417991b01cfc13/supply-chain/audits.toml"
 
+[imports.embark-studios]
+url = "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/732513edfd9172f4eda358b2d0cefc6cad1585ee/audits.toml"
+
 [imports.google]
 url = "https://raw.githubusercontent.com/google/supply-chain/640a51eb32e2f47d7ee8017a128485f7e1ce6780/audits.toml"
 
