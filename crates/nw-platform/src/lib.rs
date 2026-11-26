@@ -119,10 +119,10 @@ pub fn create_private_directory_all(path: &std::path::Path) -> io::Result<()> {
         return Err(io::Error::other("invalid_private_directory"));
     }
     for ancestor in path.ancestors() {
-        if let Ok(meta) = std::fs::symlink_metadata(ancestor) {
-            if !meta.is_dir() || meta.file_type().is_symlink() {
-                return Err(io::Error::other("invalid_private_directory"));
-            }
+        if let Ok(meta) = std::fs::symlink_metadata(ancestor)
+            && (!meta.is_dir() || meta.file_type().is_symlink())
+        {
+            return Err(io::Error::other("invalid_private_directory"));
         }
     }
     std::fs::DirBuilder::new()

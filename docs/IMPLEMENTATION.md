@@ -17,7 +17,8 @@ host (ADR 0092): Windows LPAC/Job Object, Linux bwrap/двухэтапный sec
 Локально на Windows прошли cargo test --workspace --locked, clippy для всех
 targets с -D warnings, nw-leak-tests, npm test в extension/app, actual-тесты
 трёх профилей, LPAC/владельца объектов, core/API RPC и обеих GGUF-моделей.
-Linux bwrap/seccomp и production netns проверяются в CI ветки agent/task-7.
+Linux-target clippy для platform/sandbox/llm/drift-host тоже прошёл; реальные
+bwrap/seccomp и production netns проверяются в CI ветки agent/task-7.
 
 M6 открыт: core требует отдельного брокера ключей и запуска (дизайн ADR 0093,
 без реализации; миграция доменных ключей и сетевая граница ещё не доказаны); общие профили
