@@ -231,25 +231,116 @@ die-with-parent ограничивают lifetime; общая crash-lifetime д�
 
 ## 9. Чек-лист укрепления (критерий закрытия M6)
 
+Сверка на 2026-11-26 для `7bc1ca3`: M6 **не закрыт**. Галочки ниже означают
+зелёный CI для указанного теста и области, не готовность всей системы.
+Полная таблица доказательств и причин открытых пунктов —
+[IMPLEMENTATION: итоговая сверка](IMPLEMENTATION.md#итоговая-сверка--2026-11-26).
+
 - [ ] Каждый процесс запускается только через `nw-sandbox` с профилем из репозитория.
+  Частично: [core Windows][tm-core-windows]/[Linux][tm-core-linux] проверяют
+  отдельные workers, [Seatbelt][tm-seatbelt] — launcher. Полная изоляция core,
+  брокер ключей/запуска, общие
+  netd/stdio-профили и подключение launcher к macOS desktop не завершены
+  ([ADR 0092](adr/0092-leaf-daemon-sandbox-profiles.md),
+  [0093](adr/0093-core-key-and-launch-broker.md),
+  [0094](adr/0094-macos-seatbelt-process-profiles.md)).
+  [MicroVM CI][tm-microvm] зелёный, но backend opt-in и без jailer
+  ([ADR 0105](adr/0105-opt-in-shadow-agent-microvm.md),
+  [0106](adr/0106-pinned-microvm-tools.md)).
 - [ ] Тест: процессы, кроме `nw-netd`, не могут открыть внешний сокет.
-  Проверки профилей API/модели/cover host добавлены в ADR 0092. Core, netd и
-  переходник запуска остаются открытой частью критерия; наличие тестов workers
-  не закрывает весь пункт.
-  Для macOS добавлен обязательный CI `macos-sandbox`: все роли/полосы launcher
-  проверяются по `PermissionDenied` TCP/UDP IPv4/IPv6 и внешней файловой канарейки;
-  netd имеет положительную TCP/UDP-доставку, probe проверяется отдельно по ADR 0085.
-  Это не закрывает пункт для обычного desktop без интеграции launcher.
-- [ ] Тест: остановка транспорта → ни одного байта мимо него.
-- [ ] Тест: канарейки не появляются в захвате трафика ни в одном из 6 кодирований.
-- [ ] Тест: файлы данных не содержат открытого текста тестовых промптов.
+  Частично: [tor-pcap][tm-pcap] подтверждает Linux core netns,
+  [core Windows][tm-core-windows]/[Linux][tm-core-linux] — API/модель/cover host,
+  [Seatbelt][tm-seatbelt] — роли launcher с отрицательным TCP/UDP IPv4/IPv6
+  контролем и положительной доставкой только у netd. Windows core не изолирован,
+  брокер ADR 0093 не реализован; macOS desktop не использует launcher автоматически
+  (ADR 0094). Проверка workers не закрывает весь пункт.
+- [x] Тест: остановка транспорта → ни одного байта мимо него.
+  [tor-pcap (tor)][tm-pcap] и [tor-pcap (obfs4)][tm-pcap-obfs4]: явный отказ при
+  остановке, провайдер остаётся жив, ноль direct-provider/DNS packets. Область —
+  Linux production launcher и локальная синтетическая Tor-сеть.
+- [x] Тест: канарейки не появляются в захвате трафика ни в одном из 6 кодирований.
+  [core Linux][tm-core-linux]: 100 канареек/6 форм после модели;
+  [network Linux][tm-network-linux]: `every_pcap_canary_and_encoding_is_vetoed_after_a_model_reintroduction`;
+  [tor-pcap][tm-pcap]: независимая проверка захвата ОС. Это не доказательство
+  смысловой несвязываемости; отрицательная оценка linkcheck остаётся открытой.
+- [x] Тест: файлы данных не содержат открытого текста тестовых промптов.
+  [core Linux][tm-core-linux]: `domain_files_never_contain_plaintext` и
+  `persists_reopens_expires_and_shreds_without_plaintext`, синтетические данные.
 - [ ] Core dump запрещены, ключи в `mlock`, проверено тестом.
-- [ ] IPC отвергает сообщение с чужой полосой.
+  Частично: [core Linux][tm-core-linux]/[Windows][tm-core-windows]/[macOS][tm-core-macos]
+  проверяют `keys_are_locked_and_independent_drops_retain_other_locks`.
+  Запрет дампов реализован в `harden_process`, но отдельного CI-теста запрета
+  дампа всех production-процессов/его содержимого нет.
+  [ADR 0003](adr/0003-os-security-boundary.md).
+- [x] IPC отвергает сообщение с чужой полосой.
+  [core Linux][tm-core-linux]: `private_roundtrip_rejects_foreign_lane_and_oversize`,
+  `rejects_forged_lane_version_unknown_fields_and_oversize`, процессный RPC suite.
 - [ ] `cargo-deny` и `cargo-vet` зелёные, SBOM приложен к релизу.
+  Частично: [cargo-deny][tm-deny], [source SBOM][tm-sbom] и [vet fuzz][tm-vet-fuzz]
+  зелёные; [root][tm-vet-root] — 7, [netd][tm-vet-netd] — 20,
+  [desktop][tm-vet-desktop] — 5 пробелов, все три jobs красные.
+  Поштучные exemptions по недостижимости также запрещены gate
+  [ADR 0073](adr/0073-locked-dependency-audit-gates.md); решения владельца нет.
+  Native/FFI review и находки:
+  [ADR 0102](adr/0102-root-dependency-audit-sources.md),
+  [0103](adr/0103-netd-dependency-audit-sources.md),
+  [0104](adr/0104-desktop-dependency-audit-sources.md),
+  [0109](adr/0109-secret-service-openssl.md),
+  [0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md).
+  SBOM доступен в CI/неподписанном кандидате, подписанного релиза ещё нет.
 - [ ] Релиз подписан ключом выпуска (ADR 0080), сборка воспроизводима на двух машинах.
+  Частично: [clean-linux-a][tm-repro-a], [clean-linux-b][tm-repro-b] и
+  [compare][tm-repro-compare] зелёные на том же SHA, `identical=true`.
+  Только Linux x86_64; первый выпуск не подписан. Локальная пересборка,
+  сравнение и подпись владельцем остаются по
+  [ADR 0080](adr/0080-release-signing-with-tauri-signer.md),
+  [0098](adr/0098-reproducible-linux-release.md),
+  [0099](adr/0099-owner-signed-release-handoff.md).
 - [ ] Фаззинг импортеров и IPC — 24 часа без падений.
-- [ ] UI: CSP запрещает inline-скрипты и внешние источники.
-- [ ] Тест: синтетические секреты устройства и значения всех детекторов жёстких данных не появляются в захвате трафика.
-- [ ] Golden-тест: заголовки и ClientHello одинаковы на всех ОС CI.
-- [ ] Тест: агент в песочнице видит только нормализованное окружение (SPEC §4.9.5).
+  Идёт, падений пока нет по опубликованным jobs на 2026-11-26 15:43 UTC:
+  [run 45813366602](https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602),
+  SHA `916a5e8`, `in_progress`. Текущие сегменты ещё без полных логов/итога.
+  Ориентир окончания — 2026-11-27 около 13:30 UTC. Нужны все 18 receipts и
+  зелёная итоговая проверка; это 6×4 ч с перезапусками на каждую цель,
+  не суточная кампания финального SHA. [ADR 0096](adr/0096-task10-hosted-fuzz-campaign.md).
+- [x] UI: CSP запрещает inline-скрипты и внешние источники.
+  [frontends][tm-frontends]: `local UI has restrictive CSP and no network or content persistence`;
+  [desktop][tm-desktop]: сборка Tauri. Не закрывает находки зависимостей ADR 0110.
+- [x] Тест: синтетические секреты устройства и значения всех детекторов жёстких данных не появляются в захвате трафика.
+  [tor-pcap (tor)][tm-pcap]/[obfs4][tm-pcap-obfs4]: 9 Device-источников,
+  7 детекторов, `canary_leaks=0`. Неполный probe реальной машины остаётся неполным.
+- [x] Golden-тест: заголовки и ClientHello одинаковы на всех ОС CI.
+  [protocol-golden][tm-golden] сравнивает реальные Windows/Linux/macOS artifacts;
+  TLS random/key share исключены согласно SPEC.
+- [x] Тест: агент в песочнице видит только нормализованное окружение (SPEC §4.9.5).
+  Linux bwrap: [core Linux][tm-core-linux], явно запущенный actual-agent test;
+  opt-in Firecracker: [linux-microvm][tm-microvm], настоящий KVM guest.
+  Эти проверки не относятся ко всему desktop или агентам других ОС.
 - [ ] Ни один процесс NymWrap не имеет capability геолокации или Wi-Fi.
+  Частично: [core Windows][tm-core-windows], [Seatbelt][tm-seatbelt],
+  [core Linux][tm-core-linux] подтверждают отдельные профили/агента.
+  Полный набор production-процессов не изолирован/не проверен:
+  [ADR 0085](adr/0085-explicit-device-coverage-and-isolated-pt.md),
+  [0093](adr/0093-core-key-and-launch-broker.md),
+  [0094](adr/0094-macos-seatbelt-process-profiles.md).
+
+[tm-core-linux]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953562
+[tm-core-windows]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953774
+[tm-core-macos]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953652
+[tm-pcap]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953475
+[tm-pcap-obfs4]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953962
+[tm-network-linux]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954256
+[tm-microvm]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953491
+[tm-seatbelt]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190016/job/139989954901
+[tm-deny]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953922
+[tm-sbom]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953837
+[tm-vet-fuzz]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953767
+[tm-vet-root]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953578
+[tm-vet-netd]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954068
+[tm-vet-desktop]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954007
+[tm-repro-a]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/139989954637
+[tm-repro-b]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/139989955276
+[tm-repro-compare]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/140000018889
+[tm-frontends]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954013
+[tm-desktop]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953905
+[tm-golden]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139992783857

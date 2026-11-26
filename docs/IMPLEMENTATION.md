@@ -7,6 +7,134 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Итоговая сверка — 2026-11-26
+
+Проверено по исходникам, workflow и `gh run view --json jobs` 2026-11-26,
+15:43–15:49 UTC. Ревизия реализации — `7bc1ca317c5a6f4547ff8a74956a2291c79829fd`.
+[Финальный CI][ci-final] завершён с `failure`: все jobs зелёные, кроме
+`dependency-audits` root/desktop/netd. Отдельные зелёные jobs ниже подтверждают
+только свой критерий. Локальные прогоны, наличие workflow и тесты на фикстурах
+не заменяют CI, испытание настоящих аккаунтов или изоляцию всего desktop.
+Разделы ниже этой сверки — история работ; прежние числа пробелов и обещания
+будущих проверок не являются итоговым статусом.
+
+**SPEC §9 — каждый критерий приёмки.** M0, M1, M2 (Linux), M3, M3H, M4 и M5
+закрыты по перечисленным критериям; M6 и M7 частичны. Это не подтверждение
+эффективности всей защиты: отдельная приёмка Shield/linkcheck по SPEC §4.1.1
+**не выполнена**. В [отчёте задачи 5](evaluations/shield-linkcheck-task5/REPORT.md)
+модельный top-1 приватного отправленного held-out — **5/39 (12,82%) против
+случайного 1/64 (1,5625%)**; есть `invalid_attacker` и 24 неизмеренных разговора.
+Это отрицательное локальное исследование, не зелёный CI. Основания и ограничения:
+[ADR 0086](adr/0086-one-pass-shield-held-out.md),
+[ADR 0087](adr/0087-preserve-one-pass-after-runtime-failure.md).
+
+| Пункт SPEC §9 | Статус | Доказательство | Что осталось |
+|---|---|---|---|
+| M0: 100 канареек не проходят leakcheck | выполнено | [core Linux][ci-core-linux]: `one_hundred_canaries_never_cross_the_last_model_boundary`, `one_hundred_canaries_stay_out_of_authenticated_egress_bodies` | Критерий закрыт на синтетических данных; смысловая несвязываемость им не измеряется. |
+| M0: rehydrate восстанавливает значения | выполнено | [core Linux][ci-core-linux]: тот же тест 100 канареек проверяет точное восстановление; `roundtrip_preserves_spelling_case_and_unicode` | Текущий локальный backend — embedded llama.cpp, [ADR 0004](adr/0004-embedded-llama-worker.md), без импорта кода урока. |
+| M1: OpenAI-клиент через Unix socket и локальная модель L0 | выполнено | [core Linux][ci-core-linux]: `private_socket_openai_request`, процессный `rpc_process actual_`, явный запуск `nw-llmd actual_` с закреплёнными моделями | Реальный OS keyring не подтверждён штатными `ignored` тестами; это отдельная граница, не результат socket-теста. |
+| M1: поиск открытого текста в файлах данных даёт 0 | выполнено | [core Linux][ci-core-linux]: `domain_files_never_contain_plaintext`, `persists_reopens_expires_and_shreds_without_plaintext` | Проверены синтетические доменные файлы/SQLCipher; не весь диск ОС, swap или сторонние копии. |
+| M2: core в своём namespace не открывает внешний сокет | выполнено (Linux) | [tor-pcap (tor)][ci-pcap-tor]: `production_daemon_namespace_integration=true`; [linux-isolation-vm][ci-isolation] | Нужен заранее подготовленный администратором netns; обычный Linux desktop без него только L0. Полная файловая изоляция — M6, [ADR 0082](adr/0082-production-linux-network-namespace-launch.md). |
+| M2: остановка Tor → ошибка, без прямой отправки | выполнено (Linux) | [tor-pcap (tor)][ci-pcap-tor], [tor-pcap (obfs4)][ci-pcap-obfs4]: `transport_stop_failed_closed=true`, `direct_provider_packets=0`, `dns_packets=0` | Локальная Chutney-сеть и тестовый провайдер; не проверка публичной Tor-сети. |
+| M2: два разговора — две цепочки | выполнено | [tor-pcap (tor)][ci-pcap-tor]: `different_circuits=true` | Не обещает защиту от корреляции времени при сговоре наблюдателей. |
+| M3: в захвате выхода netd длины только в корзинах | выполнено | [tor-pcap (tor)][ci-pcap-tor], [tor-pcap (obfs4)][ci-pcap-obfs4]: 100 HTTP-запросов, все пять корзин, 84 real/decoy запроса M3 | `full_core_pipeline=false`: захват не включает весь модельный/credential конвейер. [ADR 0084](adr/0084-seven-day-core-cover-packet-evidence.md). |
+| M3: бюджет за семь симулированных дней не превышен | выполнено | [tor-pcap (tor)][ci-pcap-tor]: 4 сценария Poisson/Constant × лимит запросов/расхода, 28 scenario/day, 56 отказов сверх бюджета, `restart_accounting=true` | Это виртуальные часы; `wall_clock_packet_cadence_verified=false`. Физический постоянный ритм не заявляется. |
+| M3H: все виды Device и детекторы отсутствуют в захвате netd | выполнено | [tor-pcap (tor)][ci-pcap-tor], [tor-pcap (obfs4)][ci-pcap-obfs4]: 9 Device-источников, GEO/MAC/IMEI/USER_PATH/TZ/DATETIME/GUID, `canary_leaks=0` | Не означает полноту сбора на машине владельца: неизвестный источник при включённой защите закрывает отправку, [ADR 0085](adr/0085-explicit-device-coverage-and-isolated-pt.md). |
+| M3H: HTTP и ClientHello совпадают Windows/Linux | выполнено | [protocol-golden][ci-golden] сравнивает реальные artifacts [network Windows][ci-network-windows], [Linux][ci-network-linux], [macOS][ci-network-macos] | TLS random/key share исключены по критерию; общий отпечаток выделяет NymWrap среди других клиентов. |
+| M3H: нормализованное окружение агента, нет /sys, D-Bus и настоящего .gitconfig | выполнено (Linux) | [core Linux][ci-core-linux]: явно запущен `actual_agent_sees_only_http_socket_and_cannot_open_external_sockets`; [linux-microvm][ci-microvm]: настоящий KVM guest | Linux bwrap и opt-in MicroVM; это не изоляция всего desktop, Windows/WSL2 агенты не подтверждены. [ADR 0105](adr/0105-opt-in-shadow-agent-microvm.md), [0106](adr/0106-pinned-microvm-tools.md). |
+| M3H: вложение получает отказ | выполнено | [core Linux][ci-core-linux]: `openai_shapes_and_unknown_fields`, проверки API отвергают вложения/неподдерживаемые поля | Очиститель метаданных вложений не реализован; вложения остаются запрещены. |
+| M4: импорт Takeout даёт одну и ту же сводку | выполнено | [core Linux][ci-core-linux]: `takeout_is_deterministic_and_hostile_titles_are_data` | Синтетический Takeout; не обещание совместимости с любым будущим экспортом. |
+| M4: шаблоны удаления генерируются без сети | выполнено | [core Linux][ci-core-linux]: `service_guides_are_offline_distinct_and_use_only_official_sources`, `strongest_first_neutral_retained_and_approval_bound` | Фактическое удаление и исчезновение данных проверяет владелец; обучение модели этим не отменяется. |
+| M5: математика совпадает с anti.py selftest | выполнено | [drift-math-parity][ci-math]: `scripts/drift-math-parity.py`, [ADR 0101](adr/0101-drift-reference-parity.md) | Это проверка математики; не измерение изменения реального профиля сервиса. |
+| M5: расширение останавливается на CAPTCHA | выполнено | [frontends][ci-frontends]: CAPTCHA/login tests; [extension-browser Linux][ci-browser-linux] и [Windows][ci-browser-windows]: реальные браузеры на синтетических страницах | Живые аккаунты не проверены. [ADR 0100](adr/0100-local-drift-adapters.md), [чек-лист владельца](ACCOUNT_ADAPTER_CHECKLIST.md). |
+| M6: THREAT_MODEL §9 выполнен полностью | частично | Постатейная сверка во второй таблице; зелёные [core Linux][ci-core-linux], [Windows][ci-core-windows], [macOS][ci-core-macos], [Seatbelt][ci-seatbelt], [MicroVM][ci-microvm] | Общая изоляция, проверка дампов, зависимости, подписанный выпуск и 24 ч фаззинга не закрыты. [ADR 0093](adr/0093-core-key-and-launch-broker.md), [0094](adr/0094-macos-seatbelt-process-profiles.md), [0073](adr/0073-locked-dependency-audit-gates.md), [0099](adr/0099-owner-signed-release-handoff.md), [0096](adr/0096-task10-hosted-fuzz-campaign.md). |
+| M7: флаги и явная экспериментальная маркировка | выполнено (ограждение эксперимента) | [core Linux][ci-core-linux]: `experimental_unavailable_upstream_never_offers_l1_l2_approval_or_blocks_l0`; [network Linux][ci-network-linux]: `--all-features ... zkapi`; [frontends][ci-frontends] | Эти jobs подтверждают запреты и синтетический протокол, а не рабочую защиту. |
+| M7: Nym-транспорт и zkAPI-адаптер | частично | [ADR 0107](adr/0107-experimental-zkapi-client.md), [ADR 0108](adr/0108-nym-sdk-qualification.md); зелёная синтетика [network Linux][ci-network-linux] | zkAPI только за флагом, production connector закрыт, upstream не развёрнут; Nym — недоступный интерфейс без SDK/mixnet. Реального L1/L2 нет. Paranoid только L0/отказ, [ADR 0090](adr/0090-paranoid-slotted-dispatch.md). |
+
+**THREAT_MODEL §9 — нумерация по порядку чек-листа.** Галочка в исходном
+чек-листе ставится только для полностью подтверждённой формулировки теста
+в указанной области; частично выполненный составной пункт остаётся пустым.
+
+| Пункт THREAT_MODEL §9 | Статус | Доказательство | Что осталось |
+|---|---|---|---|
+| 1. Каждый процесс только через nw-sandbox | частично | [core Linux][ci-core-linux], [core Windows][ci-core-windows]: workers; [Seatbelt][ci-seatbelt]: роли launcher; [MicroVM][ci-microvm]: агент | Полная изоляция core и брокер ключей/запуска не реализованы по [ADR 0093](adr/0093-core-key-and-launch-broker.md), общие netd/stdio-профили не завершены ([0092](adr/0092-leaf-daemon-sandbox-profiles.md)); Seatbelt не интегрирован в desktop ([0094](adr/0094-macos-seatbelt-process-profiles.md)); MicroVM opt-in, без jailer ([0105](adr/0105-opt-in-shadow-agent-microvm.md), [0106](adr/0106-pinned-microvm-tools.md)). |
+| 2. Все процессы, кроме netd, не открывают внешний сокет | частично | [tor-pcap][ci-pcap-tor]: core Linux netns; [core Linux][ci-core-linux]/[Windows][ci-core-windows]: отдельные workers; [Seatbelt][ci-seatbelt]: launcher | Не весь production desktop: Windows core/netd вне AppContainer, брокера нет; macOS launcher не подключён. [ADR 0093](adr/0093-core-key-and-launch-broker.md), [0094](adr/0094-macos-seatbelt-process-profiles.md). |
+| 3. Остановка транспорта — ни байта мимо | выполнено (Linux-сценарий) | [tor-pcap (tor)][ci-pcap-tor], [tor-pcap (obfs4)][ci-pcap-obfs4]: явный отказ, живой provider, 0 direct/DNS | Общая изоляция других ОС остаётся пунктом 2. |
+| 4. Канарейки отсутствуют в захвате во всех шести кодированиях | выполнено | [core Linux][ci-core-linux]: 100 канареек/6 форм после модели; [network Linux][ci-network-linux]: `every_pcap_canary_and_encoding_is_vetoed_after_a_model_reintroduction`; [tor-pcap][ci-pcap-tor]: независимый OS pcap oracle | Синтетические канарейки; смысловую утечку фактов это не исключает. |
+| 5. В файлах данных нет открытого текста тестовых промптов | выполнено | [core Linux][ci-core-linux]: `domain_files_never_contain_plaintext`, SQLCipher reopen/shred tests | Область — файлы данных приложения, не все файлы ОС. |
+| 6. Core dump запрещены, ключи mlock, проверено тестом | частично | [core Linux][ci-core-linux], [Windows][ci-core-windows], [macOS][ci-core-macos]: `keys_are_locked_and_independent_drops_retain_other_locks`; код `harden_process` | Нет отдельного CI-доказательства запрета/отсутствия дампа всех production-процессов и его содержимого. Наличие RLIMIT_CORE/PR_SET_DUMPABLE/WER в коде этого не заменяет. [ADR 0003](adr/0003-os-security-boundary.md). |
+| 7. IPC отвергает чужую полосу | выполнено | [core Linux][ci-core-linux]: `private_roundtrip_rejects_foreign_lane_and_oversize`, `rejects_forged_lane_version_unknown_fields_and_oversize`, процессный RPC suite | Проверка протокола не закрывает общую OS-изоляцию пункта 1. |
+| 8. cargo-deny + cargo-vet зелёные, SBOM в релизе | частично | [dependencies][ci-deny] и [sbom][ci-sbom] зелёные; [vet fuzz][ci-vet-fuzz] зелёный, 0 пробелов. [vet root][ci-vet-root] — 7, [netd][ci-vet-netd] — 20, [desktop][ci-vet-desktop] — 5 пробелов, все три красные | Поштучные exemptions не разрешены gate по [ADR 0073](adr/0073-locked-dependency-audit-gates.md), решение владельца не принято. Остались native C/C++/ASM/FFI (OpenSSL, SQLCipher/SQLite, llama.cpp, libdbus и другие) и находки: [0102](adr/0102-root-dependency-audit-sources.md), [0103](adr/0103-netd-dependency-audit-sources.md), [0104](adr/0104-desktop-dependency-audit-sources.md), [0109](adr/0109-secret-service-openssl.md), [0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md). Source SBOM есть в CI/неподписанном кандидате, опубликованного подписанного релиза нет. |
+| 9. Подписанный релиз и воспроизводимость на двух машинах | частично | На том же SHA зелёные [clean-linux-a][ci-repro-a], [clean-linux-b][ci-repro-b], [compare][ci-repro-compare]: `identical=true`; [frontends][ci-frontends] проверяет механизм подписи | Только Linux x86_64 и два независимых hosted runner. Первый выпуск ещё не подписан; владелец должен локально пересобрать, сравнить, подписать и проверить полный набор. [ADR 0080](adr/0080-release-signing-with-tauri-signer.md), [0098](adr/0098-reproducible-linux-release.md), [0099](adr/0099-owner-signed-release-handoff.md). |
+| 10. Импортеры и IPC: 24 ч фаззинга без падений | частично — идёт, падений пока нет | Проверка 2026-11-26 15:43 UTC: [run 45813366602][ci-fuzz24], SHA `916a5e8`, `in_progress`; build трёх целей зелёный, [audit_import segment0][ci-fuzz-audit] и [ipc_frames segment0][ci-fuzz-ipc] ещё идут | По опубликованным jobs падений нет; полные логи текущих сегментов и итог ещё недоступны. Ориентир окончания — 2026-11-27 около 13:30 UTC, не гарантия. Нужны все 18 receipts и зелёный итог; это 6×4 ч с перезапусками каждой цели и более ранний SHA, не суточная проверка `7bc1ca3`. [ADR 0096](adr/0096-task10-hosted-fuzz-campaign.md). |
+| 11. CSP запрещает inline-скрипты/внешние источники | выполнено | [frontends][ci-frontends]: `local UI has restrictive CSP and no network or content persistence`; [desktop][ci-desktop]: сборка с Tauri CSP | CSP не является полным аудитом Tauri/JS зависимостей; находки остаются в пункте 8, [ADR 0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md). |
+| 12. Все Device/детекторы отсутствуют в трафике | выполнено | [tor-pcap (tor)][ci-pcap-tor], [tor-pcap (obfs4)][ci-pcap-obfs4]: все 9 источников и 7 детекторов, ноль канареек | Приёмка M3H на синтетике; неполный probe на настоящем устройстве не становится полным. |
+| 13. HTTP/ClientHello одинаковы на всех ОС CI | выполнено | [protocol-golden][ci-golden]: сравнение artifacts [Windows][ci-network-windows], [Linux][ci-network-linux], [macOS][ci-network-macos] | Только нормализованные поля, кроме TLS random/key share. |
+| 14. Агент видит только нормализованное окружение | выполнено (Linux) | [core Linux][ci-core-linux]: явный bwrap actual-agent test; [linux-microvm][ci-microvm]: настоящий KVM, identity/network/API checks | Подтверждены эти два backend, не весь desktop/все ОС; opt-in VM без jailer. [ADR 0105](adr/0105-opt-in-shadow-agent-microvm.md). |
+| 15. Ни у одного процесса нет location/Wi-Fi capability | частично | [core Windows][ci-core-windows]: LPAC/probe без capabilities; [Seatbelt][ci-seatbelt]: deny-default роли; [core Linux][ci-core-linux]: агент без /sys/D-Bus | Для всех production-процессов единой проверенной границы нет: core/брокер и интеграция desktop открыты. Неизвестные данные Wi-Fi не разрешают расширять права. [ADR 0085](adr/0085-explicit-device-coverage-and-isolated-pt.md), [0093](adr/0093-core-key-and-launch-broker.md), [0094](adr/0094-macos-seatbelt-process-profiles.md). |
+
+**Решения владельца**
+
+- Решить, сохраняется ли абсолютный запрет exemptions ADR 0073 или допустимы
+  проверяемые поштучные исключения с условиями отмены. Решение пока не принято;
+  сами записи недостижимости не являются аудитом и не делают gate зелёным.
+- По ADR 0102/0103/0104/0109/0110 определить дальнейший native/FFI review,
+  исправления/обновления и review локальных forks. Известные дефекты нельзя
+  считать исправленными административным принятием риска.
+- Согласовать жизненный цикл доменных ключей и границы брокера ADR 0093;
+  определить объём следующей работы по полной изоляции desktop, интеграции
+  macOS launcher и jailer VMM. Текущая сверка не разрешает ослаблять инварианты.
+- После окончания фаззинга проверить итог и сохранить manifests/receipts до
+  истечения retention (итог — 7 дней); решить, нужен ли повтор на более новом
+  коде. Приёмку отрицательного linkcheck не объявлять успешной: для новой оценки
+  нужны новый development и ещё не просмотренный held-out (ADR 0086/0087).
+- Перед первым выпуском выполнить свою пересборку/сравнение, локально подписать
+  набор и заново проверить скачанные assets по ADR 0080/0099. Ключ остаётся у
+  владельца; эта задача не подписывает и не публикует релиз.
+- Самостоятельно пройти [ACCOUNT_ADAPTER_CHECKLIST.md](ACCOUNT_ADAPTER_CHECKLIST.md)
+  на своих аккаунтах и записать фактические результаты без личного содержания.
+  Синтетические браузерные тесты не подтверждают живые сервисы; гарантии удаления
+  данных обучения или изменения профиля не получены.
+
+Проверка этой правки документации **локально** 2026-11-26: `cargo test --workspace
+--locked`, `cargo clippy --workspace --all-targets --all-features --locked -- -D
+warnings`, `cargo test -p nw-leak-tests --locked` и `npm test --prefix extension`
+завершились с exit 0; в расширении 32 теста. Штатные `ignored` тесты этим запуском
+не подтверждены. Проверены структура двух таблиц, все 15 пунктов чек-листа,
+относительные ссылки, соответствие CI job URLs и `git diff --check`.
+Эти локальные результаты не меняют красный итог CI и открытые критерии выше.
+
+[ci-final]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411
+[ci-core-linux]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953562
+[ci-core-windows]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953774
+[ci-core-macos]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953652
+[ci-pcap-tor]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953475
+[ci-pcap-obfs4]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953962
+[ci-isolation]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953605
+[ci-microvm]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953491
+[ci-golden]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139992783857
+[ci-network-linux]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954256
+[ci-network-windows]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953812
+[ci-network-macos]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953779
+[ci-frontends]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954013
+[ci-desktop]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953905
+[ci-math]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953974
+[ci-browser-linux]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954130
+[ci-browser-windows]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954017
+[ci-deny]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953922
+[ci-sbom]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953837
+[ci-vet-fuzz]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953767
+[ci-vet-root]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989953578
+[ci-vet-netd]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954068
+[ci-vet-desktop]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843189411/job/139989954007
+[ci-seatbelt]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190016/job/139989954901
+[ci-repro-a]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/139989954637
+[ci-repro-b]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/139989955276
+[ci-repro-compare]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/140000018889
+[ci-fuzz24]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602
+[ci-fuzz-audit]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602/job/139895321700
+[ci-fuzz-ipc]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602/job/139895321678
+
 ## Стабилизация CI
 
 Артефакты [run 45819931965](https://github.com/dsahakyan15/NymWrap/actions/runs/45819931965)
@@ -251,7 +379,9 @@ preflight в 24 часа не входит. Это 24 часа с перезап
 Статус на 2026-11-26: preflight [run 45810869006](https://github.com/dsahakyan15/NymWrap/actions/runs/45810869006)
 зелёный (три цели собраны). Суточная кампания запущена на main 916a5e8:
 [run 45813366602](https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602).
-Кампания и пункт M6 пока не закрыты; run ID и результаты будут внесены после запуска.
+На 2026-11-26 15:43 UTC кампания идёт, падений по опубликованным jobs пока нет;
+итог не получен. Ориентир окончания — 2026-11-27 около 13:30 UTC. Кампания и пункт
+M6 не закрыты; подробности и границы доказательства — в итоговой сверке выше.
 
 ## cargo-vet: граф desktop
 
