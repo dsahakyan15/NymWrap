@@ -1,7 +1,9 @@
 import { NativeBridge } from "./native.js";
 import { readMirrorPage } from "./capture.js";
 import { MirrorScheduler, MIRROR_ALARM, MIRROR_ORIGINS } from "./mirror_schedule.js";
-import { SearchExecutor, searchOrigins } from "./execution.js";
+import { SearchExecutor, searchOrigins, type ExecutionHooks } from "./execution.js";
+import { LocalExecutor, LOCAL_ORIGINS } from "./local_execution.js";
+import { localPageStep, localTarget } from "./local_page.js";
 import { searchPageStep } from "./search_page.js";
 import { task as validateTask } from "./protocol.js";
 
@@ -15,11 +17,11 @@ declare const chrome: {
   alarms: { get(name: string): Promise<unknown>; create(name: string, options: { periodInMinutes: number }): Promise<void>; clear(name: string): Promise<boolean>; onAlarm: { addListener(fn: (alarm: { name: string }) => void): void } };
   storage: { local: { get(key: string): Promise<Record<string, unknown>>; set(value: Record<string, unknown>): Promise<void> } };
   permissions: { contains(value: { origins: string[] }): Promise<boolean>; onRemoved: { addListener(fn: () => void): void } };
-  tabs: { query(value: { url: string[] }): Promise<{ id?: number; url?: string; incognito?: boolean }[]>;get(id:number):Promise<{status?:string;url?:string}>;create(value:{url:string;active:boolean}):Promise<{id?:number}>;update(id:number,value:{url:string}):Promise<unknown> };
+  tabs: { query(value: { url: string[] }): Promise<{ id?: number; url?: string; incognito?: boolean }[]>;get(id:number):Promise<{status?:string;url?:string}>;create(value:{url:string;active:boolean}):Promise<{id?:number}>;update(id:number,value:{url:string}):Promise<unknown>;remove(id:number):Promise<void> };
   scripting: { executeScript<T,A extends unknown[]>(value: { target: { tabId: number }; func: (...args:A) => T;args?:A }): Promise<{ result?: T }[]> };
 };
 let executionCode="idle";
-const executor=new SearchExecutor({
+const executionHooks:ExecutionHooks={
   bridge:()=>{const bridge=new NativeBridge();bridge.connect();return bridge;},
   permitted:service=>chrome.permissions.contains({origins:searchOrigins(service)}),
   create:async url=>{const tab=await chrome.tabs.create({url,active:true});if(tab.id===undefined)throw Error("execution_interrupted");return tab.id;},
@@ -43,6 +45,18 @@ const executor=new SearchExecutor({
   }),
   now:()=>Date.now(),random:()=>crypto.getRandomValues(new Uint32Array(1))[0]!/4294967296,
   eventId:()=>crypto.randomUUID().replaceAll("-",""),
+};
+const executor=new SearchExecutor(executionHooks);
+const localExecutor=new LocalExecutor({
+  ...executionHooks,
+  permitted:()=>chrome.permissions.contains({origins:LOCAL_ORIGINS}),
+  close:id=>chrome.tabs.remove(id),
+  step:async(id,step)=>{
+    const tab=await chrome.tabs.get(id);
+    const mutating=step.letter!==undefined||step.phase==="submit"||step.phase==="play";
+    if(tab.status!=="complete"||!tab.url||tab.url==="about:blank")return {state:mutating&&step.phase!=="play"?"unsupported":"loading"};
+    return (await chrome.scripting.executeScript({target:{tabId:id},func:localPageStep,args:[step]}))[0]?.result??{state:"unsupported"};
+  },
 });
 const KEY = "mirror-schedule-v1";
 const scheduler = new MirrorScheduler({
@@ -67,7 +81,7 @@ chrome.runtime.onInstalled.addListener(() => safely(reconcile()));
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === MIRROR_ALARM) safely(scheduler.tick().finally(reconcile));
 });
-chrome.permissions.onRemoved.addListener(() => {executor.cancel();safely((async () => {
+chrome.permissions.onRemoved.addListener(() => {executor.cancel();localExecutor.cancel();safely((async () => {
   if (!await chrome.permissions.contains({ origins: MIRROR_ORIGINS })) {
     await scheduler.configure(false, "permission_required"); await reconcile();
   }
@@ -76,12 +90,22 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL("popup.html")) return false;
   if (!message || typeof message !== "object" || Array.isArray(message)) return false;
   const v = message as Record<string, unknown>;
-  if(v.kind==="execution_status"&&Object.keys(v).length===1){respond({running:executor.running,code:executionCode});return false;}
-  if(v.kind==="execution_cancel"&&Object.keys(v).length===1){executor.cancel();respond({cancelled:true});return false;}
+  if(v.kind==="execution_status"&&Object.keys(v).length===1){respond({running:executor.running||localExecutor.running,code:executionCode});return false;}
+  if(v.kind==="execution_cancel"&&Object.keys(v).length===1){executor.cancel();localExecutor.cancel();respond({cancelled:true});return false;}
+  if(v.kind==="execute_local"&&Object.keys(v).length===3&&typeof v.target==="string"){
+    try{
+      const task=validateTask(v.task);localTarget(v.target,task.service);
+      if(executor.running||localExecutor.running)throw Error("request_in_progress");
+      executionCode="running";
+      void localExecutor.run(task,v.target).then(()=>{executionCode="completed";},()=>{executionCode="execution_interrupted";});
+      respond({started:true});
+    }catch{respond({error:"local_fixture_required"});}
+    return false;
+  }
   if(v.kind==="execute_search"&&Object.keys(v).length===2){
     try{
       const task=validateTask(v.task);searchOrigins(task.service);
-      if(executor.running||Array.from(task.text).length>512)throw Error("request_in_progress");
+      if(executor.running||localExecutor.running||Array.from(task.text).length>512)throw Error("request_in_progress");
       executionCode="running";
       void executor.run(task).then(()=>{executionCode="completed";},error=>{executionCode=error instanceof Error&&/^[a-z_]{1,64}$/.test(error.message)?error.message:"execution_interrupted";});
       respond({started:true});

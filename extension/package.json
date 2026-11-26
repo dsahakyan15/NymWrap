@@ -11,7 +11,7 @@
     "firefox:install": "node scripts/install-firefox.mjs",
     "probe:public:firefox": "npm run build && node scripts/probe-public-firefox.mjs",
     "test:native:firefox": "npm run build && cargo build --manifest-path ../Cargo.toml -p nw-core --example native_browser_fixture --release --locked && node --test tests/native/firefox.test.mjs",
-    "test:browser": "npm run build && node --test tests/browser/*.test.mjs"
+    "test:browser": "npm run build && node --test --test-concurrency=1 tests/browser/*.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.65.1",

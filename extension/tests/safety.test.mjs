@@ -25,7 +25,7 @@ test("hostile titles remain data; site access is optional and limited to cover s
   assert.ok(!script.includes("innerHTML")); assert.ok(script.includes("item.textContent = title"));
   const manifest = JSON.parse(await readFile(new URL("../manifest.json", import.meta.url), "utf8"));
   assert.deepEqual(manifest.permissions, ["activeTab", "scripting", "nativeMessaging", "alarms", "storage"]);
-  assert.deepEqual(manifest.optional_host_permissions, ["https://www.youtube.com/*", "https://youtube.com/*", "https://www.google.com/*"]);
+  assert.deepEqual(manifest.optional_host_permissions, ["https://www.youtube.com/*", "https://youtube.com/*", "https://www.google.com/*", "https://127.0.0.1/*"]);
   assert.equal(manifest.host_permissions, undefined); assert.equal(manifest.content_scripts, undefined);
   const chrome=JSON.parse(await readFile(new URL('../dist/manifest.json',import.meta.url),'utf8'));
   const firefox=JSON.parse(await readFile(new URL('../dist-firefox/manifest.json',import.meta.url),'utf8'));

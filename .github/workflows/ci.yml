@@ -148,6 +148,18 @@ jobs:
       - run: npm ci && npm test
         working-directory: app
       - run: node --test scripts/tests/*.test.mjs
+  drift-math-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: true
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12.16'
+      - run: python scripts/drift-math-parity.py
+        env:
+          CARGO_BUILD_JOBS: '4'
   extension-browser:
     strategy:
       matrix:
@@ -171,6 +183,12 @@ jobs:
         working-directory: extension
       - run: npm run test:browser
         working-directory: extension
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: drift-synthetic-browser-${{ runner.os }}
+          path: target/browser-tests/reports/*.json
+          if-no-files-found: warn
   sbom:
     runs-on: ubuntu-latest
     steps:

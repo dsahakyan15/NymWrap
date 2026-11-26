@@ -12,6 +12,7 @@ import {Marionette} from './helpers/marionette.mjs';
 import {syntheticNativeHost} from './helpers/synthetic-native.mjs';
 import {fixtureCertificate} from './helpers/certificate.mjs';
 import {extensionDigest} from './helpers/artifact.mjs';
+import {localFixtures,localScenarios} from './helpers/local-fixtures.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../../..');
 const binary=resolve(root,'target/tools/privacy-browser/firefox-160.0.1/core/firefox.exe');
 const action={plan_hash:'a'.repeat(64),stage:1,day:1,action_index:0,service:'google',text:'synthetic garden'};
@@ -21,7 +22,7 @@ async function until(read,predicate,timeout=30000){const end=Date.now()+timeout;
 const escape=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 async function freePort(){const s=net.createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const port=s.address().port;await new Promise(r=>s.close(r));return port;}
 
-test('stock Firefox MV3 executes fixed searches and stops at challenges on loopback HTTPS',{timeout:180000,skip:process.platform!=='win32'?'stock Firefox integration is currently verified on Windows':false},async t=>{
+test('stock Firefox MV3 executes fixed searches and stops at challenges on loopback HTTPS',{timeout:360000,skip:process.platform!=='win32'?'stock Firefox integration is currently verified on Windows':false},async t=>{
   await mkdir(resolve(root,'target/browser-tests'),{recursive:true});
   const base=resolve(root,'target/browser-tests'),fixture=await mkdtemp(join(base,'firefox-'));
   const extension=join(fixture,'extension'),profile=join(fixture,'profile');let child,client,proxy,tls;
@@ -45,7 +46,9 @@ test('stock Firefox MV3 executes fixed searches and stops at challenges on loopb
     await writeFile(join(extension,'probe.html'),'<!doctype html><meta charset="utf-8"><title>Synthetic Firefox probe</title>');
     await writeFile(join(extension,'popup.html'),(await readFile(join(extension,'popup.html'),'utf8')).replace('<script type="module" src="popup.js">','<script src="synthetic-popup.js"></script><script type="module" src="popup.js">'));
     await writeFile(join(extension,'synthetic-popup.js'),`chrome.runtime.connectNative=()=>{let live=true;const receivers=[],disconnects=[];return {onMessage:{addListener:f=>receivers.push(f)},onDisconnect:{addListener:f=>disconnects.push(f)},disconnect(){if(live){live=false;for(const f of disconnects)f();}},postMessage(packet){chrome.runtime.sendMessage({kind:'synthetic_native_bridge',command:packet.command}).then(result=>{if(live)for(const f of receivers)f({version:1,id:packet.id,result});});}};};`);
+    const local=localFixtures();
     tls=httpsServer(await fixtureCertificate(),(req,res)=>{
+      if(local.handler(req,res))return;
       const host=req.headers.host;if(!['www.google.com','www.youtube.com','youtube.com'].includes(host)){res.writeHead(403);res.end();return;}
       if(req.method==='POST'&&req.url==='/synthetic-input'){
         let data='';req.on('data',b=>{data+=b;if(data.length>4096)req.destroy();});req.on('end',()=>{inputs.push(JSON.parse(data));res.writeHead(204);res.end();});return;
@@ -57,15 +60,15 @@ test('stock Firefox MV3 executes fixed searches and stops at challenges on loopb
     });
     proxy=httpServer((req,res)=>{res.writeHead(403);res.end();});
     proxy.on('connect',(req,socket,head)=>{
-      if(!['www.google.com:443','www.youtube.com:443','youtube.com:443'].includes(req.url)){socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');return;}
+      if(!['www.google.com:443','www.youtube.com:443','youtube.com:443','127.0.0.1:443'].includes(req.url)){socket.end('HTTP/1.1 403 Forbidden\r\n\r\n');return;}
       socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');if(head.length)socket.unshift(head);tls.emit('connection',socket);
     });
     await new Promise(r=>proxy.listen(0,'127.0.0.1',r));const port=await freePort();
-    const prefs={'marionette.port':port,'browser.shell.checkDefaultBrowser':false,'browser.startup.homepage':'about:blank','datareporting.healthreport.uploadEnabled':false,'datareporting.policy.dataSubmissionEnabled':false,'toolkit.telemetry.enabled':false,'app.update.disabledForTesting':true,'network.proxy.type':1,'network.proxy.http':'127.0.0.1','network.proxy.http_port':proxy.address().port,'network.proxy.ssl':'127.0.0.1','network.proxy.ssl_port':proxy.address().port,'network.proxy.no_proxies_on':'','network.captive-portal-service.enabled':false,'network.connectivity-service.enabled':false};
+    const prefs={'marionette.port':port,'browser.shell.checkDefaultBrowser':false,'browser.startup.homepage':'about:blank','datareporting.healthreport.uploadEnabled':false,'datareporting.policy.dataSubmissionEnabled':false,'toolkit.telemetry.enabled':false,'app.update.disabledForTesting':true,'network.proxy.type':1,'network.proxy.http':'127.0.0.1','network.proxy.http_port':proxy.address().port,'network.proxy.ssl':'127.0.0.1','network.proxy.ssl_port':proxy.address().port,'network.proxy.no_proxies_on':'','network.proxy.allow_hijacking_localhost':true,'network.captive-portal-service.enabled':false,'network.connectivity-service.enabled':false};
     await writeFile(join(profile,'user.js'),Object.entries(prefs).map(([k,v])=>`user_pref(${JSON.stringify(k)},${JSON.stringify(v)});`).join('\n'));
     child=spawn(binary,['-headless','-no-remote','-profile',profile,'-marionette','about:blank'],{cwd:fixture,windowsHide:true,stdio:'ignore',env:{...process.env,MOZ_CRASHREPORTER_DISABLE:'1',MOZ_REMOTE_ALLOW_SYSTEM_ACCESS:'1'}});
     client=await Marionette.connect(port);const session=await client.call('WebDriver:NewSession',{acceptInsecureCerts:true});assert.equal(session.capabilities.browserName,'firefox');
-    await client.call('Addon:Install',{path:extension,temporary:true});
+    await client.call('Addon:Install',{path:extension,temporary:true},60000);
     let extensionUrl;
     await until(async()=>{
       const response=await client.call('WebDriver:GetWindowHandles');const handles=response.value??response;
@@ -105,8 +108,13 @@ test('stock Firefox MV3 executes fixed searches and stops at challenges on loopb
         const stop=state.commands.find(c=>c.kind==='safety_stop');assert.ok(stop,JSON.stringify({events:state.events,commands:state.commands,kind}));assert.equal(stop.reason,kind);assert.deepEqual(Object.keys(stop).sort(),['event_id','kind','reason']);
       }
     });
-    if(passed!==3)throw Error('incomplete_firefox_scenarios');
-    await writeFile(reportPath,JSON.stringify({status:'passed',browser:'Firefox '+session.capabilities.browserVersion,checked_at:new Date().toISOString(),extension_sha256:artifact,scope:'stock Firefox; temporary MV3; synthetic loopback HTTPS; fake native core; no user profile',scenarios:['google','youtube','alarm','captcha','login','xss_storage']},null,2));
+    challenge='';
+    await localScenarios({scenario,control,until,origin:'https://127.0.0.1',fixture:local.state,
+      status:()=>client.asyncScript('const done=arguments[arguments.length-1];chrome.runtime.sendMessage({kind:"execution_status"}).then(done);'),
+      execute:(task,target)=>client.asyncScript('const done=arguments[arguments.length-1];chrome.runtime.sendMessage(arguments[0]).then(done);',[{kind:'execute_local',task,target}]),
+    });
+    if(passed!==8)throw Error('incomplete_firefox_scenarios');
+    await writeFile(reportPath,JSON.stringify({status:'passed',browser:'Firefox '+session.capabilities.browserVersion,checked_at:new Date().toISOString(),extension_sha256:artifact,scope:'stock Firefox; temporary MV3; synthetic loopback HTTPS; fake native core; no user profile',scenarios:['google','youtube','alarm','captcha','login','xss_storage','local_video','local_ai_layouts','ai_opt_in','local_login','late_safety_stop','hostile_video']},null,2));
   }finally{
     if(client){try{await client.call('Marionette:Quit',{flags:['eForceQuit']},5000);}catch{}client.close();}
     if(child&&child.exitCode===null){await Promise.race([new Promise(r=>child.once('exit',r)),wait(3000)]);if(child.exitCode===null)child.kill();}

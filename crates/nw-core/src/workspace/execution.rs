@@ -25,10 +25,10 @@ fn same(a: &DriftTask, b: &DriftTask) -> bool {
 impl Workspace {
     fn search_execution_policy(&self, task: &DriftTask) -> Result<(), WorkspaceError> {
         if !matches!(self.config.drift.mode, crate::config::DriftMode::Extension)
-            || !matches!(
+            || (!matches!(
                 task.service,
                 nw_proto::Service::Google | nw_proto::Service::Youtube
-            )
+            ) && !self.config.drift.allow_ai_web_automation)
             || task.text.chars().count() > 512
         {
             return Err(WorkspaceError::Policy);

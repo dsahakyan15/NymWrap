@@ -24,7 +24,7 @@ export class Marionette {
   }
   call(command,parameters={},timeout=30000){
     if(this.pending)throw Error('marionette_request_in_progress');const id=++this.id;
-    return new Promise((accept,reject)=>{const timer=setTimeout(()=>{this.pending=null;reject(Error('marionette_command_timeout'));this.socket.destroy();},timeout);this.pending={id,command,accept,reject,timer};const payload=Buffer.from(JSON.stringify([0,id,command,parameters]));this.socket.write(Buffer.concat([Buffer.from(payload.length+':'),payload]));});
+    return new Promise((accept,reject)=>{const timer=setTimeout(()=>{this.pending=null;reject(Error('marionette_command_timeout_'+command));this.socket.destroy();},timeout);this.pending={id,command,accept,reject,timer};const payload=Buffer.from(JSON.stringify([0,id,command,parameters]));this.socket.write(Buffer.concat([Buffer.from(payload.length+':'),payload]));});
   }
   async script(script,args=[]){const value=await this.call('WebDriver:ExecuteScript',{script,args,newSandbox:false,sandbox:null});return value&&Object.hasOwn(value,'value')?value.value:value;}
   async asyncScript(script,args=[]){const value=await this.call('WebDriver:ExecuteAsyncScript',{script,args,newSandbox:false,sandbox:null});return value&&Object.hasOwn(value,'value')?value.value:value;}

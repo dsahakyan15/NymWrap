@@ -4,7 +4,7 @@
   "description": "Задания легенды и снимки Mirror через локальное ядро. Доступа к Shield и vault нет.",
   "version": "0.1.0",
   "permissions": ["activeTab", "scripting", "nativeMessaging", "alarms", "storage"],
-  "optional_host_permissions": ["https://www.youtube.com/*", "https://youtube.com/*", "https://www.google.com/*"],
+  "optional_host_permissions": ["https://www.youtube.com/*", "https://youtube.com/*", "https://www.google.com/*", "https://127.0.0.1/*"],
   "background": { "scripts": ["background.js"], "type": "module" },
   "action": { "default_popup": "popup.html", "default_title": "NymWrap" },
   "content_security_policy": { "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'" },
