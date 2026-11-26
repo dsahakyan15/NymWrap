@@ -215,6 +215,12 @@ Read both manifests and the complete source, including Map/Set/OrderedMap/Ordere
 Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
 """
 
+[[audits.phf_generator]]
+who = "NymWrap implementation agent (не человек)"
+criteria = "safe-to-deploy"
+version = "0.14.0"
+notes = "Проверено агентом, не человеком. Full source read: Cargo.toml, Cargo.toml.orig, README.md, src/lib.rs, src/ptrhash.rs and src/bin/gen_hash_test.rs. Archive SHA-256 aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100. Reviewed bounded slice/index operations, seed search, bucket placement/displacement, ptrhash pilot eviction/remapping, integer-width assumptions, fixed RNG seed and returned table permutation/lookup agreement. No unsafe, FFI, filesystem, network, subprocess or content logging in the generator; bundled benchmark binary only synthesizes in-memory strings. Deployed table correctness is included, not just safe execution of a build script. Important usage restriction: root uses immutable, modest-sized distinct build-time keys through phf_macros/phf_codegen/string_cache_codegen, not attacker-controlled runtime keys or custom hash callbacks. Read caller duplicate guards (phf_macros Map::from_parsed/check_duplicates; phf_codegen Map/OrderedMap::build) and string_cache_codegen BTreeSet insertion/filtering before generate_hash. Duplicate or permanently colliding custom inputs can loop indefinitely; no universal termination guarantee is claimed. Tables larger than u32 and hostile runtime generation are outside this reviewed root use; adding either requires renewed review. Synthetic tests check empty and varied distinct sets, full map permutations, actual phf_shared lookup, determinism, and codegen duplicate rejection; 4/4 debug and 4/4 release on Windows x86_64. ptrhash also read/tested although inactive in root. Dependencies, emitted Rust syntax in external code generators and unrelated clients remain separate. ADR 0102 batch 5; file hashes/caller sections, active feature evidence and limitations in review-2026-11-26-batch-5.json."
+
 [[audits.phf_macros]]
 who = "NymWrap source review (Codex agent; not human)"
 criteria = "safe-to-deploy"
@@ -538,6 +544,13 @@ start = "2022-08-10"
 end = "2022-08-11"
 notes = "ADR 0102. Trust the RustCrypto project lead for the named cryptographic interfaces, AEAD/cipher/MAC implementations, password-hash encodings and CPU-feature dispatch. Production cryptography requires attention to constant-time behavior, key handling, authentication and architecture dispatch, which are the explicit remit of these RustCrypto projects and their documented security constraints. No claim of an independent cryptographic audit; callers must obey documented nonce/key requirements. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.clang-sys]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Mads Marquart, the exact publisher and official 1.9.1 release author, for maintained libclang ABI declarations, version gates, dynamic-library ownership and discovery. These are the binding maintainer's production contracts. Externally installed LLVM/libclang and safe use of unsafe FFI remain separate; no native LLVM payload is included in this certificate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 157a8ba7b480713b56f4c09fd13fc3e0a22a5dfab8097ba61cbc5feef950788a; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.cmake]]
 criteria = "safe-to-deploy"
 user-id = 55123 # rust-lang-owner
@@ -594,6 +607,20 @@ start = "2025-11-12"
 end = "2025-11-13"
 notes = "ADR 0102. Trust the RustCrypto project lead for the named hash/KDF/cipher utility implementations and legacy getrandom release. This decision covers production untrusted-input handling, unsafe dispatch and OS entropy integration within those maintainership domains, with the documented RustCrypto constant-time constraints and rust-random platform-support/entropy policy; it is not inferred merely from successful execution. Algorithm misuse and dependent crates still need separate coverage. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.dbus-secret-service]]
+criteria = "safe-to-deploy"
+user-id = 103233 # Daniel Brotsky (brotskydotcom)
+start = "2025-08-26"
+end = "2025-08-27"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Daniel Brotsky, maintainer of the synchronous Secret Service implementation and keyring integration, for production session/encryption negotiation, DBus message/error contracts, collection/item lookup and secret transfer. README explicitly separates plain sessions from crypto-rust/crypto-openssl and requires client selection. This does not authorize access to real credentials or certify DBus/native/crypto dependencies or application keyring policy. Read: package identity/manifest metadata and pinned canonical open-source-cooperative README; keyring maintainer/release documentation. Exact published archive SHA-256 708b509edf7889e53d7efb0ffadd994cc6c2345ccb62f55cfd6b0682165e4fa6; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
+[[trusted.derive_more-impl]]
+criteria = "safe-to-deploy"
+user-id = 3797 # Jelte Fennema-Nio (JelteF)
+start = "2025-12-22"
+end = "2025-12-23"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Jelte Fennema-Nio, the author and exact release author/publisher, for the production correctness and hygiene of the generated conversion, formatting, error and operator implementations. Trust explicitly includes emitted deployed Rust, not just macro execution. Derives do not validate application semantics or make formatting secret data safe. Read: implementation README plus root README sections introduction, emitted traits, hygiene and installation; official release-commit metadata. Exact published archive SHA-256 799a97264921d8623a957f6c3b9011f3b5492f557bbb7a5a19b7fa6d06ba8dcb; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.digest]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -607,6 +634,13 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2025-12-27"
 end = "2025-12-28"
 notes = "ADR 0102. Trust the author-maintainer of Serde and its parser/derive infrastructure for production serialization and generated Rust: careful unsafe invariants, compatibility and adversarial parser handling are part of this maintainer role. Covers only the named serialization, syntax, formatting and macro crates, not arbitrary uploads. This is an explicit publisher trust decision for safe-to-deploy, not a source audit. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.ego-tree]]
+criteria = "safe-to-deploy"
+user-id = 17210 # Adam Reichold (adamreichold)
+start = "2026-10-21"
+end = "2026-10-22"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Adam Reichold, the exact upstream release author/publisher and rust-scraper maintainer, for production Vec-backed node ownership, stable IDs, mutable/immutable reference separation and tree/iterator consistency under document-driven mutation. Upstream describes these safety invariants. DOM resource limits and application traversal remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 7bd50d24b1b75aa817bb0339cb9f2e0e664bdfab1e160a69a0fda9145b77fab2; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.either]]
 criteria = "safe-to-deploy"
@@ -664,6 +698,13 @@ start = "2026-08-11"
 end = "2026-08-12"
 notes = "ADR 0102. Trust the maintainer of pinning, atomic, futures and smol/Crossbeam infrastructure for production concurrency, cancellation and memory-safety invariants, including hostile scheduling and wakeups. These are the security-sensitive responsibilities of the named upstream projects, not just workstation-safe behavior. Scope excludes unrelated uploads and does not replace separate dependency audits. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.generic-array]]
+criteria = "safe-to-deploy"
+user-id = 5704 # Nova (novacrazy)
+start = "2023-03-28"
+end = "2023-03-29"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the named generic-array author/maintainer novacrazy, the exact release author/publisher, for production layout/length agreement, initialized-element ownership, Drop/unwind and generated fixed-array operations in the maintained 0.14 line. This includes unsafe collection internals, not only build behavior. User implementations of unsafe ArrayLength and typenum arithmetic/dependencies remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.getrandom]]
 criteria = "safe-to-deploy"
 user-id = 5059 # Artyom Pavlov (newpavlov)
@@ -705,6 +746,13 @@ user-id = 5059 # Artyom Pavlov (newpavlov)
 start = "2023-12-13"
 end = "2023-12-14"
 notes = "ADR 0102. Trust the RustCrypto project lead for the named hash/KDF/cipher utility implementations and legacy getrandom release. This decision covers production untrusted-input handling, unsafe dispatch and OS entropy integration within those maintainership domains, with the documented RustCrypto constant-time constraints and rust-random platform-support/entropy policy; it is not inferred merely from successful execution. Algorithm misuse and dependent crates still need separate coverage. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.html5ever]]
+criteria = "safe-to-deploy"
+user-id = 7 # Simon Sapin (SimonSapin)
+start = "2026-09-14"
+end = "2026-09-15"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Simon Sapin, listed official Servo maintainer and exact release author/publisher, for production HTML tokenization/tree-building/serialization on hostile HTML. Official upstream documents WHATWG behavior and html5lib conformance testing. This is browser-parser maintainer trust; tree sinks, DOM implementations, sanitization and input/work limits remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 456a1a377e608e555d22ddab27ac0114bc7a7b4199078108e34c2aeae6c9b130; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.http]]
 criteria = "safe-to-deploy"
@@ -755,6 +803,20 @@ start = "2026-09-05"
 end = "2026-09-06"
 notes = "ADR 0102. Trust the Rust/rust-num/rayon and indexmap maintainer for production arithmetic, collection invariants and build-time capability detection in the named crates. Input-driven arithmetic and container memory safety are part of their production maintainership, rather than treating an absence of I/O as proof. Numeric algorithms remain subject to documented overflow and size limits. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.interprocess]]
+criteria = "safe-to-deploy"
+user-id = 72501 # kotauskas
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer kotauskas, the exact publisher and upstream commit author, for production ownership/lifetimes, initialized I/O, cancellation and cross-platform local socket/pipe abstractions, including Tokio variants. Upstream documents platform support and deliberately removed unsafe-to-use signal APIs. Endpoint ACLs, peer authorization, message quotas and external OS contracts remain application responsibilities. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 2f243523bf126ddfc5cddf87a8193a941bfca29476ce3c842e24c916cf5a22ec; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
+[[trusted.itertools]]
+criteria = "safe-to-deploy"
+user-id = 1442 # Jack Wrenn (jswrenn)
+start = "2024-05-16"
+end = "2024-05-17"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the exact itertools release publisher Jack Wrenn (jswrenn) for production iterator ownership, lifetime and initialized-output contracts, including unsafe iterator optimizations. The official release commit is authored by Philippe Cholet, not claimed to be authored by the publisher; this is a release-maintenance trust decision, not an authorship assertion. Caller iterators and combinatorial memory/time budgets remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.itoa]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -775,6 +837,13 @@ trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
 start = "2026-10-30"
 end = "2026-10-31"
 notes = "Trust the official wasm-bindgen release identity for the runtime, macro/code generator and JS bindings from this repository. Its production remit includes generated Rust/JS ABI agreement, memory ownership across the Wasm boundary, exception handling and safe exported interfaces; do not infer safety merely because the compiler runs locally. Trust is limited to these four verified releases and their publication days. Imported JS, browser APIs, user-provided bindings and surrounding application policies require their own review; no independent ABI/security audit or workflow audit is claimed. Registry evidence: js-sys 0.3.107; archive SHA-256 8dc09d2154098bbf4ef54eab6b117a3c24cbbffe94046b16ee6d6d4510584d3a; https://crates.io/api/v1/crates/js-sys/0.3.107. ADR 0102 continuation."
+
+[[trusted.keyring]]
+criteria = "safe-to-deploy"
+user-id = 103233 # Daniel Brotsky (brotskydotcom)
+start = "2025-07-27"
+end = "2025-07-28"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Daniel Brotsky, the exact publisher and official release author/maintainer, for production credential-backend selection, platform handles, secret encoding, lookup and error behavior. Upstream documents mock fallback, macOS empty-name wildcard semantics and Windows serialization limits. Correct features, nonempty service/account identifiers, IPC authorization and synchronization must still be supplied by the client; native/DBus backends remain separate dependencies. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 eebcc3aff044e5944a8fbaf69eb277d11986064cba30c468730e8b9909fb551c; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.libc]]
 criteria = "safe-to-deploy"
@@ -804,6 +873,13 @@ start = "2026-10-30"
 end = "2026-10-31"
 notes = "ADR 0102. Trust official Rust log maintainers and release process for the deployed facade, synchronization of global logger state and formatting dispatch. Logging destinations and sensitive message content remain application/caller policy; the trust concerns safe runtime behavior of the facade. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.matchit]]
+criteria = "safe-to-deploy"
+user-id = 103448 # Ibraheem Ahmed (ibraheemdev)
+start = "2024-07-11"
+end = "2024-07-12"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Ibraheem Ahmed, exact release author/publisher, for production radix-trie URL matching, parameter lifetimes, UTF-8 boundaries and mutation/lookup ownership under attacker-controlled request paths. Official documentation specifies wildcard and precedence behavior. Route authentication, canonicalization policy and HTTP limits remain the application's responsibility. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.memchr]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -818,12 +894,26 @@ start = "2026-11-05"
 end = "2026-11-06"
 notes = "ADR 0102. Trust the Hyper/Tokio/Tower maintainer for production HTTP parsing, framing, buffer management and request service composition in the named crates. These projects explicitly implement network-facing infrastructure and document a security reporting process; trust concerns their production boundary and generated code, not simply absence of unexpected build actions. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.minimal-lexical]]
+criteria = "safe-to-deploy"
+user-id = 31684 # Alexander Huszagh (Alexhuszagh)
+start = "2021-10-04"
+end = "2021-10-05"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Alexander Huszagh, exact upstream release author/publisher, for production float-conversion arithmetic, bounds and rounding over digit iterators. Official project documents architecture/endian testing and security notification handling. This covers numeric conversion implementation, not validation of a complete input grammar: callers must supply digit iterators and trim zeros as documented. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.mio]]
 criteria = "safe-to-deploy"
 user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
 start = "2026-11-13"
 end = "2026-11-14"
 notes = "ADR 0102. Trust the Tokio Mio/socket2 maintainer for production readiness notification, socket ownership, FFI lengths and platform networking behavior in mio/socket2. Mio is foundational network-facing Tokio infrastructure, so the trust explicitly covers attacker-controlled I/O and unsafe OS integration, with caller policy on permitted endpoints kept separate. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.nix]]
+criteria = "safe-to-deploy"
+user-id = 6094 # Alan Somers (asomers)
+start = "2026-11-14"
+end = "2026-11-15"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Alan Somers, the exact release author/publisher and nix maintainer, for the production safe syscall wrappers, ABI/layout, descriptor ownership and pointer/length handling. The official project explicitly aims to enforce safe libc use through Rust types and documents tiered platform testing. Unsafe entry points, OS/kernel behavior and application sandbox policy remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 77730ed34f01f4990cb2ea67fec715ecebc6fab9a6396cf83c5529b13f581bdc; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.num]]
 criteria = "safe-to-deploy"
@@ -916,12 +1006,26 @@ start = "2022-07-31"
 end = "2022-08-01"
 notes = "ADR 0102. Trust the RustCrypto project lead for the named cryptographic interfaces, AEAD/cipher/MAC implementations, password-hash encodings and CPU-feature dispatch. Production cryptography requires attention to constant-time behavior, key handling, authentication and architecture dispatch, which are the explicit remit of these RustCrypto projects and their documented security constraints. No claim of an independent cryptographic audit; callers must obey documented nonce/key requirements. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.ppv-lite86]]
+criteria = "safe-to-deploy"
+user-id = 12840 # Keziah Wesley (kazcw)
+start = "2025-03-09"
+end = "2025-03-10"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Keziah Wesley, exact release author/publisher and Cryptocorrosion SIMD maintainer, for production vector storage/operations and CPU-feature dispatch used by deployed RNG/crypto code. Read the library's Machine safety design and the official project scope. This is trust in unsafe SIMD implementation and dispatch, not an independent cryptographic audit or a guarantee for caller-forced unsupported target features. Read: package identity/manifest metadata, src/lib.rs Machine safety/dispatch design, official Cryptocorrosion README and release-commit metadata. Exact published archive SHA-256 85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.prettyplease]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2025-08-19"
 end = "2025-08-20"
 notes = "ADR 0102. Trust the author-maintainer of Serde and its parser/derive infrastructure for production serialization and generated Rust: careful unsafe invariants, compatibility and adversarial parser handling are part of this maintainer role. Covers only the named serialization, syntax, formatting and macro crates, not arbitrary uploads. This is an explicit publisher trust decision for safe-to-deploy, not a source audit. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.quick-xml]]
+criteria = "safe-to-deploy"
+user-id = 129150 # Daniel Alley (dralley)
+start = "2026-08-22"
+end = "2026-08-23"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Daniel Alley, the exact release author/publisher of the maintained quick-xml parser, for production XML tokenization, text/encoding validity, namespace/attribute handling and borrowed-event ownership on hostile input. The official release README describes the parser/serializer and buffering model. Input size/depth, entity policies, schema validation and application error handling remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.r-efi]]
 criteria = "safe-to-deploy"
@@ -944,6 +1048,20 @@ start = "2026-08-25"
 end = "2026-08-26"
 notes = "Trust the official Rand project release identity for the verified rand release: distribution algorithms, unbiased range sampling, RNG state/thread ownership and explicit cryptographic versus noncryptographic generator contracts are the project's production domain. Limited to its verified publication day. This does not turn every RNG into a CSPRNG, certify seeding sources or transfer coverage to dependencies. Explicit safe-to-deploy publisher trust, not an independent cryptographic or workflow audit. Registry evidence: rand 0.8.8; archive SHA-256 e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c; https://crates.io/api/v1/crates/rand/0.8.8. ADR 0102 continuation."
 
+[[trusted.recvmsg]]
+criteria = "safe-to-deploy"
+user-id = 72501 # kotauskas
+start = "2024-01-12"
+end = "2024-01-13"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust kotauskas, the exact publisher and maintainer of the official recvmsg/interprocess pair, for production initialized message buffers, ownership transitions and safe synchronous/asynchronous datagram reception without silent truncation. The official pinned recvmsg README matches the archive despite missing repository metadata in Cargo.toml. Caller-selected quotas, custom unsafe trait implementations and OS behavior remain separate. Read: package identity/manifest metadata and pinned upstream recvmsg README, matched against the packaged README; interprocess documented integration. Exact published archive SHA-256 d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
+[[trusted.redox_syscall]]
+criteria = "safe-to-deploy"
+user-id = 42742 # 4lDO2 (4lDO2)
+start = "2025-10-04"
+end = "2025-10-05"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust 4lDO2, the exact publisher whom the official Redox project credits for kernel memory management, syscall ABI and process/signal safety work, for production Redox syscall numbers, layout and assembly wrapper contracts. This is platform-maintainer trust, not a new assembly/kernel audit; unsafe caller preconditions and compatibility with the deployed Redox kernel remain necessary. Read: package identity/manifest metadata, package README and official Redox 0.9.0 release sections Stability/Performance and Relibc Improvements. Exact published archive SHA-256 ed2bf2547551a7053d6fdfafda3f938979645c44812fbfcda098faae3f1a362d; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.regex]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -964,6 +1082,13 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2026-11-18"
 end = "2026-11-19"
 notes = "ADR 0102. Trust the regex/memchr/ripgrep author for production byte/text search and the named traversal helpers. The regex project documents untrusted-pattern/input behavior, complexity and resource limits; this is directly relevant to adversarial text processing. Filesystem traversal trust is confined to walkdir/same-file/winapi-util and their documented symlink/identity semantics; caller authorization and root containment remain application responsibilities. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.rusqlite]]
+criteria = "safe-to-deploy"
+user-id = 5062 # gwenn (gwenn)
+start = "2026-11-15"
+end = "2026-11-16"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust gwenn, the exact official release author/publisher and rusqlite maintainer, for production Rust-side SQLite handle/statement/row lifetimes, binding lengths, callback/unwind and type conversion contracts. Official documentation separates Rust wrappers from libsqlite3-sys and native engines. Native SQLite/SQLCipher code, extension loading, SQL policy and application database budgets remain separately reviewed. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 f172c4812a19b26d1c23cdb0070e69db335503dfa378b910eb857386e5b8beba; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.rustix]]
 criteria = "safe-to-deploy"
@@ -993,6 +1118,13 @@ start = "2023-07-17"
 end = "2023-07-18"
 notes = "ADR 0102. Trust the parking_lot/hashbrown author-maintainer for production lock ownership, atomic state and RAII unwind invariants in parking_lot, parking_lot_core, lock_api and scopeguard. Concurrency memory safety and correct Drop behavior are core responsibilities of these runtime primitives. This is narrow maintainer trust, not a claim to have independently model-checked synchronization. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.scraper]]
+criteria = "safe-to-deploy"
+user-id = 17210 # Adam Reichold (adamreichold)
+start = "2026-10-21"
+end = "2026-10-22"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Adam Reichold, verified rust-scraper release maintainer and exact publisher, for production integration of hostile HTML parsing, DOM/tree ownership, selector matching and serialization. Official README calls out browser-grade Servo components. This does not claim HTML sanitization or bounded complexity, or transfer coverage to html5ever/selectors/tree dependencies. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 6844b5f49a5579f12ba4f89d9f7eec6d71889e4aa0bc7181821040ce66f08fff; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.secrecy]]
 criteria = "safe-to-deploy"
 user-id = 19631 # Tony Arcieri (iqlusion) (tony-iqlusion)
@@ -1020,6 +1152,13 @@ user-id = 988 # Kornel (kornelski)
 start = "2026-02-20"
 end = "2026-02-21"
 notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Kornel (kornelski), named upstream author and release maintainer of rust-security-framework, for production Apple Security.framework ABI signatures/constants/layout. Safe wrapper invariants, unsafe caller preconditions, OS implementations and entitlement policy remain separate. Read: Official rust-security-framework README, package manifest metadata and official 3.7.0 release commit metadata. Published archive SHA-256 6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate."
+
+[[trusted.selectors]]
+criteria = "safe-to-deploy"
+user-id = 437040 # Oriol Brufau (Loirooriol)
+start = "2026-09-30"
+end = "2026-10-01"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Oriol Brufau (Loirooriol), verified official Servo maintainer and exact publisher, for production browser CSS selector parsing/matching, generic element contracts and internal borrowing on hostile selectors. Official Stylo documents its browser-engine deployment and standalone selectors crate. This does not authorize remote content execution or provide application DOM, recursion/work limits or CSS sanitization. Read: pinned selectors README, Stylo root README crate/release sections and official Servo maintainers list. Exact published archive SHA-256 8322aebea94a6cc288ff884e8a49bdbceef60206c400c6c46d22e62fc4fd91a6; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.serde]]
 criteria = "safe-to-deploy"
@@ -1063,12 +1202,26 @@ start = "2026-07-18"
 end = "2026-07-19"
 notes = "ADR 0102. Trust the author-maintainer of Serde and its parser/derive infrastructure for production serialization and generated Rust: careful unsafe invariants, compatibility and adversarial parser handling are part of this maintainer role. Covers only the named serialization, syntax, formatting and macro crates, not arbitrary uploads. This is an explicit publisher trust decision for safe-to-deploy, not a source audit. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.servo_arc]]
+criteria = "safe-to-deploy"
+user-id = 437040 # Oriol Brufau (Loirooriol)
+start = "2026-09-30"
+end = "2026-10-01"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Oriol Brufau (Loirooriol), verified official Servo maintainer and exact publisher, for production refcount atomics, allocation/layout, Send/Sync, ownership and destruction in Stylo's Arc variant. Official Stylo identifies this standalone crate as part of its browser engine. This explicitly covers unsafe deployed container internals by maintainer trust, not only build/run behavior; unsafe caller extensions remain separate. Read: packaged README, pinned Stylo root README crate/release sections and official Servo maintainers list. Exact published archive SHA-256 b4eceb519ec34d8290aaf6e46f435102f2bfa63f22b05a144fb16ab266d3b198; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.sha1]]
 criteria = "safe-to-deploy"
 trusted-publisher = "github:RustCrypto/hashes"
 start = "2026-07-10"
 end = "2026-07-11"
 notes = "ADR 0102. Trust the official RustCrypto hash-family release process and security expertise for this sha1 implementation and its architecture dispatch on untrusted bytes. SHA-1 collision resistance is broken; this trust addresses implementation safety, not permission to use SHA-1 for security-sensitive collision resistance. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.signal-hook-registry]]
+criteria = "safe-to-deploy"
+user-id = 5906 # Michal 'vorner' Vaner (vorner)
+start = "2025-12-25"
+end = "2025-12-26"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Michal Vaner (vorner), the exact publisher, for production global signal registration, synchronization, removal/chaining and signal-safe registry lifetime handling. The official signal-hook README explains POSIX reentrancy and async-signal-safety constraints. Arbitrary registered callbacks still must meet the unsafe API requirements; registration does not make mutex/allocation safe in a handler. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.slab]]
 criteria = "safe-to-deploy"
@@ -1091,6 +1244,13 @@ start = "2026-07-13"
 end = "2026-07-14"
 notes = "ADR 0102. Trust the Tokio Mio/socket2 maintainer for production readiness notification, socket ownership, FFI lengths and platform networking behavior in mio/socket2. Mio is foundational network-facing Tokio infrastructure, so the trust explicitly covers attacker-controlled I/O and unsafe OS integration, with caller policy on permitted endpoints kept separate. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.string_cache]]
+criteria = "safe-to-deploy"
+user-id = 7 # Simon Sapin (SimonSapin)
+start = "2026-08-21"
+end = "2026-08-22"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Simon Sapin, verified official Servo maintainer and exact publisher, for production atom interning, inline/static/dynamic storage, refcount ownership and generated-static-table integration on hostile text. Official project documents its Servo role and codegen/runtime pairing. Custom unsafe static-set implementations and memory/work quotas remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 ffa8a5dbe8b3f0bbe29d4c3225daafaeead63afdc1b65fc4c01a1384166038e6; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.syn]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -1111,6 +1271,13 @@ user-id = 280 # Steven Allen (Stebalien)
 start = "2025-09-23"
 end = "2025-09-24"
 notes = "Trust the tempfile maintainer for production temporary-file creation/ownership, platform permissions and race-aware lifetime/cleanup contracts, as documented by this project. Limited to the verified tempfile release day. Named temporary paths can be removed or replaced by external cleaners and have documented platform/environment limitations; callers must use suitable directories and handles for secrets. No certification of application path selection or storage encryption; explicit safe-to-deploy publisher trust, not a source audit. Registry evidence: tempfile 3.23.0; archive SHA-256 2d31c77bdf42a745371d260a26ca7163f1e0924b64afa0b688e61b5a9fa02f16; https://crates.io/api/v1/crates/tempfile/3.23.0. ADR 0102 continuation."
+
+[[trusted.tendril]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2026-07-06"
+end = "2026-07-07"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Martin Robinson, verified official Servo maintainer and exact publisher, for production inline/shared string layout, refcount/atomicity, copy-on-write, UTF validity and length invariants of the Servo parser buffer. README openly warns about substantial unsafe code and its early-stage wording; this is an explicit reliance on the Servo maintainer's soundness responsibility, not an independent source audit or denial of that warning. Caller format implementations and size budgets remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 5fed54709c5b3a53d09bb1c113ea4f5ceafd1e772ddcb0030a82e1d56c087b08; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.thiserror]]
 criteria = "safe-to-deploy"
@@ -1196,6 +1363,20 @@ start = "2025-11-26"
 end = "2025-11-27"
 notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the same verified Tokio tracing release maintainer hds for production #[instrument] expansion, including async polling and argument capture. Generated code is part of this trust decision, not only macro-host execution. Arguments are logged by design unless skipped; caller field selection and subscriber policy remain separate. Read: Tokio tracing README/CONTRIBUTING and published package manifest metadata; tracing release-preparation metadata. Published archive SHA-256 7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da, matched exact crates.io API, Cargo.lock and cached sparse-index evidence. One-day historical window [start,end), no future releases or unrelated packages. ADR 0102 batch 4; complete evidence and limitations in review-2026-11-26-batch-4.json. Dependencies remain separate."
 
+[[trusted.typed-path]]
+criteria = "safe-to-deploy"
+user-id = 67779 # Chip Senkbeil (chipsenkbeil)
+start = "2026-10-20"
+end = "2026-10-21"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Chip Senkbeil, the exact publisher and official release-patch author, for production platform-independent Windows/Unix path parsing and UTF/byte boundary correctness, including checked join/push semantics. Read documented path-traversal precautions. Lexical checks are not filesystem canonicalization, symlink confinement or authorization; those remain application responsibilities. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 9ce898823d8cd0f028662d2f349694b1af0a5cc9be83f1d213a00d3147445e1e; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
+[[trusted.typenum]]
+criteria = "safe-to-deploy"
+user-id = 243 # Paho Lurie-Gregg (paholg)
+start = "2026-05-29"
+end = "2026-05-30"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Paho Lurie-Gregg, exact publisher and official release-patch author, for production correctness of the type-level arithmetic, integer conversions and generated constants consumed by array/crypto size contracts. This explicitly covers arithmetic outputs, not just compilation. Generic-array, unsafe external consumers and user-defined marker implementations remain separate. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
 [[trusted.unicode-ident]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -1237,6 +1418,13 @@ trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
 start = "2026-10-30"
 end = "2026-10-31"
 notes = "Trust the official wasm-bindgen release identity for the runtime, macro/code generator and JS bindings from this repository. Its production remit includes generated Rust/JS ABI agreement, memory ownership across the Wasm boundary, exception handling and safe exported interfaces; do not infer safety merely because the compiler runs locally. Trust is limited to these four verified releases and their publication days. Imported JS, browser APIs, user-provided bindings and surrounding application policies require their own review; no independent ABI/security audit or workflow audit is claimed. Registry evidence: wasm-bindgen-macro-support 0.2.130; archive SHA-256 2ca4b54280e455bd831e33a6b8e734baf432fe63fbc35c42ac14ce67a043a53a; https://crates.io/api/v1/crates/wasm-bindgen-macro-support/0.2.130. ADR 0102 continuation."
+
+[[trusted.widestring]]
+criteria = "safe-to-deploy"
+user-id = 3416 # Kathryn Long (VoidStarKat)
+start = "2025-10-09"
+end = "2025-10-10"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Kathryn Long (VoidStarKat), exact publisher and official release-patch author, for production UTF-16/UTF-32 and C-wide-string validity, NUL/length rules, owned/borrowed storage and literal macros used at FFI boundaries. Raw pointers and foreign allocation/termination preconditions of unsafe constructors remain the caller's obligation. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 72069c3113ab32ab29e5584db3c6ec55d416895e60715417b5b883a357c3e471; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"
@@ -1433,6 +1621,13 @@ trusted-publisher = "github:RustCrypto/utils"
 start = "2026-06-12"
 end = "2026-06-13"
 notes = "ADR 0102. Trust the official RustCrypto utility maintainers and releases for zeroize and zeroize_derive, whose production contract covers compiler-resistant memory clearing and sound generated cleanup code. Trust applies to the implementation/derive invariants; preventing all copies, swap and memory disclosure remains a separate application/platform requirement. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
+
+[[trusted.zip]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:zip-rs/zip2"
+start = "2026-11-20"
+end = "2026-11-21"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust the official zip-rs/zip2 GitHub release identity for production hostile ZIP parsing/writing, offsets/lengths and extraction-path handling. Read the exact release README and security policy: header consistency is opt-in in 9.x and extraction has no default size limit. Application must enforce quotas and policy; compression backends, ZipCrypto strength and native dependencies remain separate. Workflow identity is registry evidence, not an independent workflow/code audit. Read: package identity/manifest metadata, exact upstream README and SECURITY.md, including limits/header-consistency caveats. Exact published archive SHA-256 a9534624d547e3f516ecde0ed9a70d37788f01d340efcfdd03bf3ea8e163c1d0; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.zlib-rs]]
 criteria = "safe-to-deploy"

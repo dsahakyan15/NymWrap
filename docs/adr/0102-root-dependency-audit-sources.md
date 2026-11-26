@@ -485,3 +485,176 @@ OpenSSL/SQLite/SQLCipher/native payload и llama-cpp-2 base/fork.
 закрыт. У zbus_names прочитана часть validators/conversions без полного
 чтения остальных modules; сертификата нет. Неизвестное не заменено
 массовыми exemptions или более слабым критерием.
+
+## Продолжение от 41fc8a3: 50 → 10 → 9
+
+2026-11-26, локальная ветка `agent/vet-root-5`. Изменён только store root,
+этот ADR и раздел root в IMPLEMENTATION. Критерий **safe-to-deploy** сохранён;
+версии, манифесты, все девять Cargo.lock, исходные policy и шесть immutable
+imports не менялись. Новых import sources нет. Полные решения, ограничения,
+SHA архивов и прочитанных файлов, команды и остаток находятся в
+[пятом отчёте](../../supply-chain/root/review-2026-11-26-batch-5.json).
+
+### Точные доверия публикаторам
+
+Добавлены **27 записей для 22 identities**, каждая только для своего пакета
+и исторических UTC-суток `[день публикации, следующий день)`. Это явные решения
+доверять сопровождению production-инвариантов, **не независимые исходные аудиты**.
+В notes каждой записи есть «Проверено агентом, не человеком», SHA архива,
+что прочитано, конкретная область доверия и ограничения.
+
+| Публикатор | Пакеты и область продуктового доверия |
+|---|---|
+| madsmtm | clang-sys: libclang ABI, version gates, владение динамической библиотекой; внешний LLVM проверяется отдельно. |
+| brotskydotcom | dbus-secret-service, keyring: выбор backend, сессии/шифрование Secret Service, поиск/передача секретов, handles и ошибки; клиентская политика и зависимости отдельно. |
+| JelteF | derive_more-impl: корректность и hygiene **сгенерированных deployed** conversions/operators/formatters. |
+| adamreichold | ego-tree, scraper: владение DOM/узлами, стабильные IDs, интеграция HTML и selectors на недоверенном тексте. |
+| novacrazy | generic-array: layout/length, инициализация, владение, Drop/unwind; unsafe пользовательские ArrayLength и typenum отдельно. |
+| SimonSapin | html5ever, string_cache: browser HTML parsing и string interning, владение и статические таблицы. |
+| kotauskas | interprocess, recvmsg: IPC handles, lifetimes, cancellation, инициализация message buffers и обработка усечения. |
+| jswrenn | itertools: iterator ownership и unsafe-оптимизации; автор release commit — Philippe Cholet, не публикатор. |
+| ibraheemdev | matchit: radix-trie, параметры/lifetimes и границы UTF-8 на входных URL. |
+| Alexhuszagh | minimal-lexical: арифметика/округление float conversion; грамматика и подготовка digit iterators остаются клиенту. |
+| asomers | nix 0.32.0: безопасные syscall wrappers, ABI, descriptors и pointer/length contracts. |
+| kazcw | ppv-lite86: SIMD storage/операции, CPU dispatch и Machine safety design; не новый криптографический аудит. |
+| dralley | quick-xml: XML events/encoding/namespaces и borrowing; schema, лимиты и политика entities отдельно. |
+| 4lDO2 | redox_syscall: Redox ABI/layout и syscall assembly contracts; компетенция подтверждена официальным описанием kernel/ABI работы. |
+| gwenn | rusqlite: Rust handles/statements/rows, binding lengths и callbacks; libsqlite3-sys и native engines остаются открытыми. |
+| Loirooriol | selectors, servo_arc: browser CSS matching и refcount/layout/ownership unsafe-контейнера Stylo. |
+| vorner | signal-hook-registry: синхронизация и lifetime registry, chaining/removal; callbacks должны оставаться async-signal-safe. |
+| mrobinson | tendril: inline/shared/COW strings, refcounts и UTF validity; предупреждение README об unsafe сохранено и не подменено аудитом. |
+| chipsenkbeil | typed-path: Windows/Unix parsing, UTF/byte boundaries и checked joins; это не symlink confinement. |
+| paholg | typenum: type-level арифметика и генерируемые размерные константы, используемые unsafe-потребителями. |
+| VoidStarKat | widestring: UTF-16/32, C NUL/length и владение; unsafe foreign pointers остаются обязанностью вызывающего. |
+| github:zip-rs/zip2 | zip: hostile archive parsing/offsets и extraction paths; в 9.x header consistency opt-in, размера по умолчанию нет, бюджеты задаёт клиент. |
+
+Для всех 50 исходных пробелов заново получен exact-version crates.io API:
+проверены uploader/workflow, дата, checksum и отсутствие yank. Запросы шли
+последовательно через curl с описательным User-Agent, паузой 1,35 с, кэшем
+в target/ и поддержкой bounded backoff/Retry-After. HTTP 429 не было.
+Начальная попытка Node завершилась TLS-ошибкой, curl без описательного
+User-Agent получил 403; эти ответы не использованы как подтверждения.
+Серия из 50 успешных API responses выполнена после этого, без отключения TLS.
+
+У всех **41 затронутых архивов** SHA совпал с Cargo.lock и фактическим sparse
+index; **1749** присутствующих распакованных файлов совпали с архивами.
+Для identities рассмотрены официальные pinned README/release metadata,
+авторские repositories/patches и документы проектов. Точные URL/SHA в JSON.
+Поздние GitHub API commit lookups вернули 403 — они явно помечены unavailable,
+а не выданы за проверенное авторство. Для Servo отдельно прочитан официальный
+maintainers list; для Redox — разделы kernel/ABI официального release report.
+Эти два mutable снимка имеют хеши и используются только как свидетельства роли.
+У recvmsg repository в manifest отсутствует, но pinned README официального
+`kotauskas/recvmsg` побайтно совпал с опубликованным. Старый URL DBus возвращает
+404, canonical `open-source-cooperative/dbus-secret-service` на точном commit —
+200. Publisher metadata добавлена штатным `regenerate imports`; ручных правок
+evidence в imports.lock нет. Отдельного аудита workflows не заявляем.
+
+### Тринадцать отдельных исключений по недостижимости
+
+Для **каждой из всех 50 пар** выполнены две команды:
+
+```text
+cargo tree --locked --offline --target all -e normal,build,dev -i <crate>@<version>
+cargo tree --locked --offline --target all -e normal,build,dev -i <crate>@<version> --all-features
+```
+
+Все 100 команд завершились exit 0. У следующих 13 пар обе stdout пусты;
+добавлены отдельные exemptions с собственными версиями, SHA, причиной,
+двумя точными командами и условием потери применимости. Исходных аудитов этим
+пакетам не дано, на остальные графы вывод не перенесён.
+
+| Пара | Почему путь неактивен в текущем root |
+|---|---|
+| blocking 1.7.0 | Unselected async zbus backend; dependency dev metadata не создаёт workspace execution path. |
+| event-listener 5.4.2 | Только невыбранная async Secret Service цепочка. |
+| hermit-abi 0.5.3 | polling/Hermit находится в невыбранном async stack, пути нет также при `--target all`. |
+| nix 0.29.0 | Старая версия нужна невыбранному zbus; активная 0.32.0 отдельно получила trust. |
+| openssl 0.10.82 | Rust wrapper optional; synchronous Secret Service использует crypto-rust. Активные openssl-src/openssl-sys **не исключены**. |
+| rsqlite-vfs 0.2.0 | Приходит только из невыбранного sqlite-wasm-rs. |
+| secret-service 4.0.0 | keyring выбирает sync-secret-service → dbus-secret-service. |
+| sqlite-wasm-rs 0.6.3 | Workspace отключает default features rusqlite и не включает ffi-sqlite-wasm-rs. |
+| uds_windows 1.2.1 | Только невыбранный zbus на Windows; активный IPC использует interprocess. |
+| zbus 4.4.0 | Async backend keyring не выбран. |
+| zbus_macros 4.4.0 | Генерирует код только для невыбранного zbus. |
+| zbus_names 3.0.0 | Нужен невыбранной zbus/secret-service цепочке. |
+| zvariant 4.2.0 | Сериализация только невыбранного zbus/zbus_names. |
+
+`--all-features` включает features workspace, а не все optional features
+каждой зависимости. Включение async/OpenSSL/wasm backend, прямой зависимости,
+изменение dependency features или lockfile отменяет соответствующее основание.
+[Стенд партии](../../supply-chain/root/review-tests-2026-11-26-batch-5.mjs)
+повторяет все **26** пустых inverse-tree проверок и отвергает появление пути.
+Вместе 27 trust records и 13 отдельных exemptions дали **50 → 10**.
+
+### Исходный аудит phf_generator 0.14.0
+
+Полностью прочитаны оба manifests, README, `src/lib.rs`, `src/ptrhash.rs`
+и packaged binary `src/bin/gen_hash_test.rs`. SHA архива:
+`aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100`.
+Рассмотрены индексирование/срезы, bucket/displacement и pilot/remap алгоритмы,
+seed, integer widths, принадлежность результатов исходным ключам и соответствие
+генерируемых таблиц deployed lookup. Unsafe, FFI, сети, ФС и subprocess в самом
+генераторе нет; packaged binary создаёт синтетические строки в памяти.
+
+Открытый ранее вопрос о бесконечном seed search разрешён **для root callers**:
+генерация получает небольшие неизменные наборы distinct build-time keys,
+а не runtime-ввод из импортов. Прочитаны `phf_macros::Map::from_parsed` и
+`check_duplicates`, guards `phf_codegen::Map/OrderedMap::build`,
+`string_cache_codegen::AtomType` с `BTreeSet` и фильтрацией перед генерацией.
+Внешние генераторы проверяют или устраняют дубликаты до вызова. Их полный
+исходный аудит здесь не заявляется; прочитанные sections и file hashes в JSON.
+
+Дубликаты или постоянно коллидирующий custom hash всё ещё могут зациклить
+прямой вызов; универсальная termination guarantee не заявляется. Наборы больше
+u32 и генерация по недоверенным runtime keys не входят в рассмотренное root
+использование и требуют пересмотра. Это ограничение записано в самом аудите.
+Ptrhash прочитан и проверен дополнительно, хотя root его feature не включает.
+Четыре синтетических теста в debug и release проверяют пустые/разноразмерные
+наборы, полные перестановки, настоящий lookup через phf_shared, детерминизм
+и отказ codegen на дубликатах. **8/8 результатов**, **10 → 9**.
+
+### Требуют обновления
+
+В этой партии **новых воспроизведённых проблем на активном root-пути нет**.
+Недостаток Perl — ошибка окружения сборки OpenSSL, не доказательство
+уязвимости или необходимости смены версии. Вопросы errno/ERANGE и optional
+serde-state siphasher остаются непроверенными контрактами; они не объявлены
+подтверждёнными уязвимостями, и trust/source audits им не даны.
+У siphasher активны только default/std, но сам crate достижим — exemption ему
+не дан. Предыдущие две ошибки async-broadcast/zvariant_derive остаются
+недостижимыми; их исходные exemptions и условия пересмотра сохранены.
+Ни одной версии как подтверждённого исправления не предложено.
+
+### Проверка и точный остаток
+
+- Финальный `node scripts/vet-dependencies.mjs root`: **failed, 9 gaps**,
+  locked imports, четыре входа неизменны. Сохранены initial/final receipts.
+- `cargo deny check --hide-inclusion-graph`: **exit 0**, advisories/bans/
+  licenses/sources ok; прежние duplicate/unmatched-exception warnings.
+- Стенд: **26/26** проверок недостижимости и **4/4 debug + 4/4 release**;
+  vet wrapper tests **3/3**, расширение после offline npm ci — **24/24**.
+- `cargo test --workspace --locked --offline`,
+  `cargo clippy --locked --offline -- -D warnings`,
+  `cargo test -p nw-leak-tests --locked --offline`: **exit 101** при Configure
+  OpenSSL, `Command 'perl' not found`. Зелёного workspace/clippy/leak результата
+  нет; инструменты не устанавливались. CI и push не запускались.
+- Root cargo-vet fmt, rustfmt стенда, JSON/integrity checks и git diff --check.
+
+Остались **ровно девять пар safe-to-deploy**:
+
+- errno **0.3.15** — закончить ABI/NUL-termination анализ ERANGE перед strlen;
+- siphasher **1.0.4** — завершить feature/state/serde и endian/streaming contracts;
+- libdbus-sys **0.2.7**, libsqlite3-sys **0.40.0**, openssl-sys **0.9.118** —
+  ABI/build и соответствующий native code;
+- openssl-src **300.6.1+3.6.3**;
+- sqlcipher-src **420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2**;
+- llama-cpp-2 **0.1.161**, llama-cpp-sys-2 **0.1.161** — опубликованная база,
+  local fork delta, FFI и llama.cpp/GGML/native model parsing.
+
+Остаток с next actions сохранён в JSON. Все 50 закрыть не удалось: native
+payload и нерешённые контракты не заменены общим доверием или exemptions.
+Всего root теперь содержит **15 exemptions** с двумя исходными; даже ноль
+failures сам по себе не сделал бы wrapper зелёным, поскольку он отдельно
+требует пустой `vetted_with_exemptions`. Это правило не менялось.
+**Root gate и M6 остаются открытыми.**
