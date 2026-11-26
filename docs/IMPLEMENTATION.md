@@ -69,55 +69,49 @@ preflight в 24 часа не входит. Это 24 часа с перезап
 
 ## cargo-vet: граф desktop
 
-2026-11-26: история **514 → 343 → 292 → 89**; четвёртый проход от `2791eb5`
-в `agent/vet-desktop-4` дал **89 → 10 → 9 пробелов**. Добавлены **77 решений
-доверия 60 identities**, **2 source audits** и **1 точечное exemption**.
-Критерий `safe-to-deploy`, версии, все tracked Cargo.lock и другие графы сохранены.
+2026-11-26: история **514 → 343 → 292 → 89 → 9 → 6**. Пятый проход
+в `agent/vet-desktop-5` от `e0f967d` добавил **3 точечных exemptions**;
+**новых safe-to-deploy audits нет**. Критерий, версии, Cargo.lock,
+audits/imports, другие графы и wrapper/ADR 0073 сохранены.
 
-У каждой новой записи — «Проверено агентом, не человеком», SHA архива,
-прочитанный материал и ограничения. Registry evidence повторно взято из
-закоммиченного третьего отчёта; архивы сверены с desktop lockfile и cached
-sparse index. Publisher snapshots обновлены cargo-vet и сверены с решениями.
-77 однодневных записей — product publisher trust, не независимые построчные
-проверки этих пакетов. Source pins шести imports и их audit sections сохранены.
+У всех девяти кандидатов проверено inverse cargo tree с `--locked --offline
+--target all -e normal,build,dev`, с обычными и всеми desktop features.
+`ordered-stream 0.2.0` не имеет активного пути в обоих режимах. Для каждого
+GNU winapi 0.4.0 отдельно подтверждены пустые деревья для MSVC, Linux и macOS
+triples CI, тоже в обоих режимах. В --target all GNU packages присутствуют;
+host/toolchain Windows — MSVC, Windows GNU builds в CI/release не найдены.
+Каждое exemption содержит SHA, точные команды и условия отмены при смене
+features/dependencies/targets. Прежний `dirs-sys 0.5.0` сохранён: **всего 4**.
 
-Собственные аудиты: `version-compare 0.2.1` (весь production-код;
-best-effort ordering, ограничения CPU и build-time consumer отражены в notes)
-и `foreign-types-macros 0.2.4` (все source modules и generated unsafe contracts).
-Прошли **30 upstream tests**, Unicode/overflow/bounds probe и synthetic
-owner/borrow/Clone/borrowed-ToOwned/Drop integration test макросов.
+Активным пакетам сертификаты не выданы: dbus-secret-service использует
+некриптографический fastrand для DH/IV; у recvmsg стенд подтвердил ранний и
+повторный Drop владельца при переносе lifetime; у Template обоих serialize*
+воспроизведён SyntaxError при коллизии placeholders; у native producer vswhom
+найдена путаница byte count и wchar_t index. Это не заявление о доказанном
+exploit из текущих NymWrap call sites. Прямое JSON→JS escaping прошло
+26 проверок, включая все 1 112 064 Unicode scalars; полный Template API
+безопасным из этого не объявлен. Версии для исправлений не выдумывались.
 
-`portable-atomic 1.15.0`: все **66 негenerated-файлов** архива совпали с тегом.
-VCS SHA — release commit, OIDC SHA — его родитель, на котором workflow
-запустился до создания release commit; прочитан pinned release workflow.
-Расхождение объяснено, добавлено ограниченное доверие официальному workflow.
-Все **9 DLL/LIB WebView2** совпали с upstream и Microsoft-owned NuGet package;
-инструкции бинарей построчно не проверялись, signature chain не проверялась.
+SQLCipher: официальный v4.20.0 tag/commit подтверждён, два файла совпали
+побайтно, пять SQLCipher-specific components — после перечисленных
+amalgamator transformations; проверены 430 self-checksums. У sqlcipher-src
+нет build.rs (build=false); inspected libsqlite3-sys bundled branch выполняет
+bindings/compile/link. Полная SQLite regeneration, supplier equivalence
+libtomcrypt и signature chain не проверены, **C построчно не аудирован**.
+`sqlcipher-src` **требует человеческого решения**, safe-to-deploy не выдан.
 
-`dirs-sys 0.5.0`: две slice panics воспроизведены на published parser с ASCII
-OS-string shim на Windows. Native Unix run не заявляется. В текущем deployment
-нет вызывающих native path calls, core path permissions и download handler;
-дополнительный путь Wry проверен. Safe-to-deploy audit не выдан; добавлено
-exemption только для этой версии со ссылкой на анализ и условиями пересмотра.
-Registry latest остаётся 0.5.0, исправленной опубликованной версии не найдено.
-Обязательное обновление по завершённому анализу не установлено; остаток ещё
-может выявить проблемы, версии для него не выдумывались.
+`node scripts/vet-dependencies.mjs desktop` — **failed, 6 gaps**, locked
+inputs неизменны. Exemptions дополнительно блокируют unchanged wrapper.
+**Cargo-deny desktop — exit 0**, четыре checks ok; wrapper tests **3/3**.
+Workspace tests/clippy/leak suite запускались, **exit 101** из-за отсутствия
+perl; extension npm test — **exit 1**, отсутствует tsc. CI не запускался.
 
-Финальный `node scripts/vet-dependencies.mjs desktop` — **failed, 9 gaps**,
-locked inputs неизменны. **Wrapper дополнительно отвергает любое exemption**;
-его правило сохранено, поэтому даже устранение девяти пробелов недостаточно
-для зелёного gate. Desktop `cargo-deny 0.22.0` — **exit 0**, все четыре checks ok.
-
-Остаток: `dbus-secret-service`, `ordered-stream`, `recvmsg`, оба
-`serialize-to-javascript*`, `sqlcipher-src`, `vswhom`, два GNU winapi packages.
-Причины, версии, SHA, checkpoints и дальнейшая работа — в
-[четвёртом отчёте](../supply-chain/desktop/review-2026-11-26-desktop-4.json);
-решения и раздел «Требуют обновления» — в
-[ADR 0104](adr/0104-desktop-dependency-audit-sources.md).
-История сохранена в [третьем отчёте](../supply-chain/desktop/review-2026-11-26-desktop-3.json).
-Workspace tests/clippy/leak tests и extension tests в этом проходе **не запускались**
-по указанному пользователем scope metadata/docs; прежние failures не объявляются
-зелёными. CI не запускался, результат неполный, M6 и gate остаются открытыми.
+Остаток: dbus-secret-service, recvmsg, serialize-to-javascript,
+serialize-to-javascript-impl, sqlcipher-src, vswhom. Доказательства, SHA,
+команды, области чтения и ограничения — в [пятом отчёте](../supply-chain/desktop/review-2026-11-26-desktop-5.json)
+и [ADR 0104](adr/0104-desktop-dependency-audit-sources.md).
+Сохранены [четвёртый отчёт](../supply-chain/desktop/review-2026-11-26-desktop-4.json)
+и предыдущая история. M6 и dependency gate остаются открытыми.
 
 ## cargo-vet: граф root
 
