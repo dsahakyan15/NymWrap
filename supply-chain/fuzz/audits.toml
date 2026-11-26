@@ -1,6 +1,17 @@
 
 # cargo-vet audits file
 
+[[audits.block-padding]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.3.3"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: a8894febbff9f758034a5b8e12d87918f56dfc64a8e1fe757d65e29041538d93.
+Read both manifests, inventory and complete executable library source. Padding implementations read and mutate supplied byte slices only; loops are bounded by those slices. Reviewed the sole unsafe conversion in unpad_blocks: the final padding length is asserted <= block size before producing a view of the contiguous GenericArray slice. Empty/invalid sizes and positions can panic; this is not a production robustness or constant-time certification. No build script, native code, ambient file/network/process access, environment reads or unbounded autonomous work.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
 [[audits.cfg-if]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -10,6 +21,54 @@ AI full source review, not an independent human audit.
 Published archive SHA-256: 4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600.
 Read offline from the existing Cargo cache and verified against the cached registry index. Reviewed the full lib.rs (including tests), both Cargo manifests, package file inventory and cross-crate test. The no_std macro selects the first matching cfg branch, excludes previously matched predicates, and wraps each branch in a helper invocation so cfg covers all its items. Recursion consumes one branch at each step; hygienic $crate paths avoid caller-name capture. No unsafe, build script, procedural macro, native code, I/O or ambient authority. The optional rustc-dep-of-std dependency remains subject to its separate audit.
 Ordinary cargo test --offline did not resolve the uncached optional dependency and ran no tests. Direct default-feature tests with the pinned rustc/rustdoc passed: two unit tests, one cross-crate test and one doctest. This does not certify optional dependencies or platform CI.
+"""
+
+[[audits.crossbeam-utils]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+delta = "0.8.18 -> 0.8.19"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archives read offline from the Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: c3a430a770ebd84726f584a90ee7f020d28db52c6d02138900f22341f866d39c.
+Target SHA-256: 248e3bacc7dc6baa3b21e405ee045c3047101a49145e7e9eca583ab4c2ca5345.
+Reviewed complete source and normalized manifest diff. Removes cfg-if and replaces it with direct cfg/cfg_attr module selection: wide sequence lock remains selected on 16/32-bit targets, regular on 64/128-bit. The std and crossbeam_loom gates remain equivalent. Unix/Windows handle extensions move into gated modules and perform the same lock/handle calls. Only test lint attributes change outside production code. No new unsafe code, authority, file/network/process access or autonomous work. Historical archives were downloaded from static.crates.io solely for review, verified against cached index checksums, and then read from cache; no dependency versions or Cargo.lock changed. This bridges the otherwise missing imported 0.8.18 to 0.8.19 edge.
+This is a delta review; imported coverage of the base and separate coverage of dependencies remain required.
+"""
+
+[[audits.crossbeam-utils]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+delta = "0.8.21 -> 0.8.23"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archives read offline from the Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28.
+Target SHA-256: a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6.
+Reviewed package change inventory and production source/build-script differences, including AtomicCell by-value union conversion, repr(C) CachePadded, initialized MaybeUninit lock-guard reads on acquired shards, and WaitGroup atomic counter/Condvar paths. Operations remain on caller-owned values and synchronization state. The build change reads TARGET and CARGO_CFG_SANITIZE to select TSAN cfg; target atomics tables add four embedded targets. No new file, network, command or device authority. This safe-to-run review does not certify concurrent algorithms against hostile production inputs; upstream tests were inventoried but not run.
+This is a delta review; imported coverage of the base and separate coverage of dependencies remain required.
+"""
+
+[[audits.crypto-common]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.1.7"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a.
+Read inventory, normalized manifest and complete executable library source. Defines size, key, IV and initialization traits over GenericArray. Slice lengths are checked before conversion; generation methods use only the explicitly supplied RngCore/CryptoRng instance and fixed-size arrays. The getrandom feature forwards to rand_core; it does not add a hidden endpoint. No unsafe code, build script, filesystem, networking, process or device APIs in this crate. Cryptographic security and downstream implementations are outside this safe-to-run review.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.endi]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "1.1.1"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 66b7e2430c6dff6a955451e2cfc438f09cea1965a9d6f87f7e3b90decc014099.
+Read both manifests and all three source modules. Endian conversions use fixed-size checked slices and integer/float from/to-byte operations. ReadBytes/WriteBytes operate only on caller-provided Read/Write values with fixed stack arrays (1 to 16 bytes); the crate opens no streams itself. Short slices can panic as documented, and I/O errors are propagated. No unsafe code, build script, external dependencies, environment access, file opening, sockets or processes.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
 """
 
 [[audits.equivalent]]
@@ -28,6 +87,28 @@ or build script was added. This is a delta review, not an audit of the base or
 an independent human security review. Original 1.0.2 coverage is still required.
 """
 
+[[audits.new_debug_unreachable]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "1.0.6"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086.
+Read both manifests, package inventory and complete library source. The only exported macro invokes unreachable! in debug builds and core::hint::unreachable_unchecked in release; the latter still requires an unsafe caller context. This is a caller precondition, not a safe-to-deploy statement. No build script, dependencies, constructors, file access, network or process execution.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.num]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.4.3"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23.
+Read inventory, normalized manifest, feature forwarding and complete executable library source. This no_std facade contains re-exports and module declarations for numeric dependencies only; no functions, initializers, unsafe operations, build script, native code or ambient authority. Its rand/serde/std features forward to numeric dependencies requiring separate audits; the facade itself performs no I/O, execution or autonomous work.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
 [[audits.proc-macro2]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -37,6 +118,54 @@ AI delta source review, not an independent human audit. Both published archives 
 Base SHA-256: 8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934.
 Target SHA-256: 985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9.
 Reviewed the full package diff and surrounding float_digits and invalidate_current_thread_spans code. Replacing map_or(false, predicate) with is_some_and(predicate) preserves both None=false and Some predicate behavior. Removing the else after a diverging panic preserves the compiler-context rejection and calls the same fallback once otherwise. No new unsafe code, I/O, build script changes, dependency constraints or features. MSRV rises from 1.68 to 1.71, below NymWrap's pinned 1.100. Other changes are docs, a test lint, packaged development lockfile and upstream CI action versions; that upstream workflow is not run by NymWrap. Base and dependency coverage are separately required.
+"""
+
+[[audits.secrecy]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.10.3"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: e891af845473308773346dc847b2c23ee78fe442e0472ac50e22a18a93d3ae5a.
+Read inventory, normalized manifest and complete executable library source, including optional serde implementations. Wrappers own caller-supplied heap data; Drop delegates to Zeroize, and Debug emits a fixed redaction plus a type name. Constructors/clones and serde implementations call explicit user-provided callbacks/traits. Serialization requires the SerializableSecret opt-in. No unsafe code, build script, file/socket access, processes, environment probes or background work. This does not certify erasure against compiler/allocator copies or production secret handling.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.serde]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+delta = "1.0.228 -> 1.0.229"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archives read offline from the Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: 9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e.
+Target SHA-256: 4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba.
+Reviewed package change inventory, manifest, build-script and library differences. Runtime change only explicitly reborrows the existing collection reference for clear/reserve/insert in deserialize_in_place; the size-hint bound and element loop are unchanged. Build cfg raises the derive availability threshold to Rust 1.71, below the pinned toolchain. Other changes are documentation, lint spelling and docsrs gating of an unstable feature. No new filesystem/network/process authority or unsafe operations; serde_core version remains separately audited.
+This is a delta review; imported coverage of the base and separate coverage of dependencies remain required.
+"""
+
+[[audits.serde_core]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+delta = "1.0.228 -> 1.0.229"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archives read offline from the Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: 41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad.
+Target SHA-256: 67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48.
+Reviewed package change inventory, manifest, build-script and library differences. The collection deserializer explicitly reborrows self.0 rather than borrowing the reference itself; all operations still target the supplied collection. Build-script cfg detection reorders and raises the serde_derive compiler threshold to 1.71. No new process execution, file access, networking or unsafe code in the delta; other differences are package metadata and lints.
+This is a delta review; imported coverage of the base and separate coverage of dependencies remain required.
+"""
+
+[[audits.serde_repr]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.1.21"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 8d3b1629de253c70a0508c3899572da79ca359fdab27c7920ff00406df418906.
+Read inventory, normalized manifest and both production source modules. Procedural macros parse the supplied enum AST, reject empty/generic/non-unit enums and unsupported integer representations, then quote match-based integer serialization/deserialization through caller-provided serde traits. Attribute parsing consumes token syntax and never evaluates it. Generated loops/format construction are bounded by the number of input variants, and the empty-enum check precedes n-1. No build script, unsafe code, file/environment/network access or process execution in macro implementation or injected template. syn 3 remains separately uncovered. Upstream UI tests were inventoried, not run.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
 """
 
 [[audits.serde_spanned]]
@@ -50,6 +179,43 @@ Target SHA-256: 9c187e0a369471c550af028cba56d4f4fa2a489ad28151ae95a4d340a2a8b782
 Reviewed all package differences and SpannedDeserializer field/key/value consumption. The only executable addition is a MapAccess::size_hint counting the three remaining Option fields. Each count is 0 or 1; their sum is bounded to 3 regardless of untrusted span values or T, and the method only borrows self. No new unsafe code, allocation, I/O or dependencies. Production features and build=false are unchanged. Remaining changes are packaging, lints, docs/license attribution, release/VCS metadata and the package's development lockfile. This delta does not certify dependencies or the base version.
 """
 
+[[audits.stable_deref_trait]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "1.2.1"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596.
+Read both manifests and entire library source. The crate defines two unsafe marker traits and empty implementations for standard stable-address owners, borrow guards and references. Unsafe implementation contracts were read; there are no executable unsafe blocks, constructors, build scripts, dependencies, file/system APIs, network or process operations. Feature gates only select std/alloc type integrations.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.thiserror]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+delta = "2.0.18 -> 2.0.21"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archives read offline from the Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: 4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4.
+Target SHA-256: 09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e.
+Reviewed package change inventory and all production manifest/build/library differences. The only executable change replaces map_or(false, predicate) with is_some_and(predicate) in compiler-version detection, preserving behavior. Build script keeps its existing compiler probes. MSRV rises to 1.77 and the exact thiserror-impl version follows this release; both are separate from the safety of this delta. Library change is a docs URL; no new I/O, execution path or unsafe operation. Upstream tests and development lockfile were inventoried, not run as this audit.
+This is a delta review; imported coverage of the base and separate coverage of dependencies remain required.
+"""
+
+[[audits.thiserror-impl]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+delta = "2.0.18 -> 2.0.21"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archives read offline from the Cargo cache and SHA-256 verified against the cached registry index.
+Base SHA-256: ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5.
+Target SHA-256: fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524.
+Reviewed all source and manifest differences. Token-expression scanning adds a turbofish nesting counter, recognizing :: before < and excluding the > in ->; every iteration still consumes an input token/group. New last_chunk/last helpers inspect only supplied token arrays. Other code replaces map_or(false) with is_some_and and adds generated lint attributes. The syn dependency moves to major 3 and requires separate coverage. No new unsafe, filesystem, environment, network or process operations. MSRV 1.77 is below the pinned toolchain.
+This is a delta review; imported coverage of the base and separate coverage of dependencies remain required.
+"""
+
 [[audits.toml_datetime]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -59,4 +225,26 @@ AI delta source review, not an independent human audit. Both published archives 
 Base SHA-256: 3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7.
 Target SHA-256: 173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49.
 Reviewed all package differences and the surrounding DatetimeDeserializer implementation. The only executable change adds MapAccess::size_hint as Some(usize::from(date.is_some())). The Option is consumed by next_value_seed, so the hint is bounded to 0 or 1 and has no new allocation, I/O, unsafe code or state mutation. Production dependency constraints, features and build=false are unchanged. Other differences are packaging include paths, lints, release/docs/license attribution, VCS metadata and the package's own development lockfile. Dependencies and the previously audited base require their own audit paths.
+"""
+
+[[audits.tower-layer]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "0.3.3"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: 121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e.
+Read package inventory, normalized manifest and all five library modules. Layer, Identity, Stack, LayerFn and tuple implementations through arity 16 only wrap, return or call caller-provided values/closures. Debug formatting writes only to the supplied Formatter. The crate forbids unsafe code and has no dependencies or build script. No socket creation, file access, environment use, processes or background tasks. The original manifest is not included in this published archive.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
+"""
+
+[[audits.xdg-home]]
+who = "NymWrap automated source review (Codex agent)"
+criteria = "safe-to-run"
+version = "1.3.0"
+notes = """
+Agent source review for the unshipped fuzz workspace (ADR 0088), not an independent human audit or safe-to-deploy certification.
+Published archive read offline from the Cargo cache; SHA-256 verified against the cached registry index: ec1cdab258fb55c0da61328dc52c8764709b249011b2cad0454c72f0bf10a1f6.
+Read both manifests and complete library, including Unix/Windows cfg branches and the unit test. Authority is the documented HOME environment read or OS home-directory lookup: geteuid/getpwuid_r with a fixed local buffer and checked return/result pointers; SHGetKnownFolderPath with the fixed Profile identifier and no flags/token. Conversion copies the returned string before normal-path CoTaskMemFree. Invalid UTF-16 can leak that allocation via early return, without reading file contents or initiating application network activity. OS NSS configuration is outside this crate. The unit test changes HOME only in its own process. No build script, arbitrary file reads/writes, command execution or device reconfiguration.
+Dependencies require separate coverage. No crate-specific tests were run as part of this source review.
 """

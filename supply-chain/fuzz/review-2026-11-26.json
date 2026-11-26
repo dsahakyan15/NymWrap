@@ -1,0 +1,1431 @@
+{
+  "schema_version": 1,
+  "scope": "fuzz",
+  "manifest": "fuzz/Cargo.toml",
+  "date": "2026-11-26",
+  "source_commit": "94e6bf9a9665bc809045537a10adcc4e3962233a",
+  "execution": "local Windows x86_64; not CI",
+  "status": "incomplete",
+  "command": "node scripts/vet-dependencies.mjs fuzz",
+  "tool_version": "0.10.4",
+  "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+  "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+  "checkpoints": [
+    {
+      "stage": "baseline",
+      "gaps": 248,
+      "required_criteria": [
+        "safe-to-deploy"
+      ],
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "3577a16bf33804c1fd339873c8794ed737a6de8bd0bfcb46869a648eadb13366",
+        "audits": "1d3a4b30af555771d59d090895c27ddf5bf7451998b4845bf8d80f63b5d4326a",
+        "imports": "1c87004d4c88ee63dc82aa6854da0405cc2696ff56162d4ff78a7e8d31e5e40e"
+      }
+    },
+    {
+      "stage": "added_imports",
+      "gaps": 219,
+      "required_criteria": [
+        "safe-to-deploy"
+      ],
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "a80f5ed23ee1359b465dac7fa9a1648efc9303a2c05ef2327f85822095ce2a34",
+        "audits": "1d3a4b30af555771d59d090895c27ddf5bf7451998b4845bf8d80f63b5d4326a",
+        "imports": "7fe87d20e7acfae1ad6e4f870b6f271516fe1d13d99a42c90f1f40575fe531d9"
+      }
+    },
+    {
+      "stage": "fuzz_safe_to_run_policy",
+      "gaps": 206,
+      "required_criteria": [
+        "safe-to-run"
+      ],
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "1d3a4b30af555771d59d090895c27ddf5bf7451998b4845bf8d80f63b5d4326a",
+        "imports": "fbd57be74649cb837c2a40522f253dd3883b9ba054c2d8bf2feaa07bb5d6fc99"
+      }
+    },
+    {
+      "stage": "agent_source_reviews",
+      "gaps": 193,
+      "required_criteria": [
+        "safe-to-run"
+      ],
+      "input_hashes": {
+        "cargo_lock": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+        "config": "ff8849884d7e9935d7b88a1d0c0bbc13d43dca0085c1a7dbc17ef1605e783157",
+        "audits": "16e48dbcd23942c32c33b1fde9e7485dd32fa3389694a907f7bb4e3c3059e9d4",
+        "imports": "2b1365cd805c94166cd0cb7c336f7cd15961cbf0c52f97f4d88f44d272561591"
+      }
+    }
+  ],
+  "new_agent_audits": {
+    "full": 10,
+    "delta": 6,
+    "criteria": "safe-to-run",
+    "resolved_packages": 13,
+    "notes": "Both crossbeam-utils deltas are needed for one package; thiserror and thiserror-impl deltas still lack base coverage."
+  },
+  "new_exemptions": 0,
+  "cargo_lock_changed": false,
+  "final_inputs_unchanged": true,
+  "final_exit_code": 4294967295,
+  "remaining": [
+    {
+      "name": "aead",
+      "version": "0.5.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "aes",
+      "version": "0.8.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "aho-corasick",
+      "version": "1.1.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "arbitrary",
+      "version": "1.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "argon2",
+      "version": "0.5.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-channel",
+      "version": "2.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-io",
+      "version": "2.6.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-lock",
+      "version": "3.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-process",
+      "version": "2.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-recursion",
+      "version": "1.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-signal",
+      "version": "0.2.14",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "async-trait",
+      "version": "0.1.92",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "autocfg",
+      "version": "1.5.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "axum",
+      "version": "0.8.9",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "axum-core",
+      "version": "0.5.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "base64ct",
+      "version": "1.8.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "bitflags",
+      "version": "2.13.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "blake2",
+      "version": "0.10.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "blocking",
+      "version": "1.7.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "bytes",
+      "version": "1.12.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "cbc",
+      "version": "0.1.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "cc",
+      "version": "1.11.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "chacha20",
+      "version": "0.9.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "chacha20poly1305",
+      "version": "0.10.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "concurrent-queue",
+      "version": "2.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "constant_time_eq",
+      "version": "0.6.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.9.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "dbus-secret-service",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "derive_more",
+      "version": "2.1.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "derive_more-impl",
+      "version": "2.1.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "digest",
+      "version": "0.10.7",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "doctest-file",
+      "version": "1.1.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "dtoa",
+      "version": "1.0.11",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "dtoa-short",
+      "version": "0.3.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "ego-tree",
+      "version": "0.11.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "enumflags2",
+      "version": "0.7.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "enumflags2_derive",
+      "version": "0.7.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "errno",
+      "version": "0.3.15",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "event-listener",
+      "version": "5.4.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "event-listener-strategy",
+      "version": "0.5.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "fastrand",
+      "version": "2.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "find-msvc-tools",
+      "version": "0.1.15",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "flate2",
+      "version": "1.1.11",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "futures-lite",
+      "version": "2.6.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "hashbrown",
+      "version": "0.17.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "hkdf",
+      "version": "0.12.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "html5ever",
+      "version": "0.40.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "http",
+      "version": "1.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "http-body",
+      "version": "1.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "http-body-util",
+      "version": "0.1.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "httparse",
+      "version": "1.10.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "hyper",
+      "version": "1.12.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "hyper-util",
+      "version": "0.1.21",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "indexmap",
+      "version": "2.14.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "interprocess",
+      "version": "2.4.9",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.19",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "jobserver",
+      "version": "0.1.35",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "js-sys",
+      "version": "0.3.107",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "keyring",
+      "version": "3.6.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "libc",
+      "version": "0.2.191",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "libdbus-sys",
+      "version": "0.2.7",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "libfuzzer-sys",
+      "version": "0.4.13",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "libsqlite3-sys",
+      "version": "0.40.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "linux-raw-sys",
+      "version": "0.12.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "lock_api",
+      "version": "0.4.14",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "log",
+      "version": "0.4.35",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "markup5ever",
+      "version": "0.40.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "matchit",
+      "version": "0.8.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "memoffset",
+      "version": "0.9.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "0.3.18",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "mio",
+      "version": "1.2.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "nix",
+      "version": "0.29.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "nix",
+      "version": "0.32.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "num-bigint",
+      "version": "0.4.8",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "num-complex",
+      "version": "0.4.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "num-integer",
+      "version": "0.1.47",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "num-iter",
+      "version": "0.1.46",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "openssl",
+      "version": "0.10.82",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "openssl-src",
+      "version": "300.6.1+3.6.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "openssl-sys",
+      "version": "0.9.118",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "ordered-stream",
+      "version": "0.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "parking_lot",
+      "version": "0.12.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "parking_lot_core",
+      "version": "0.9.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "password-hash",
+      "version": "0.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "phf",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "phf_codegen",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "phf_generator",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "phf_macros",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "phf_shared",
+      "version": "0.14.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "pin-project-lite",
+      "version": "0.2.18",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "piper",
+      "version": "0.2.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "polling",
+      "version": "3.11.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "poly1305",
+      "version": "0.8.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "3.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "quick-xml",
+      "version": "0.42.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "rand",
+      "version": "0.8.8",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "recvmsg",
+      "version": "1.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "redox_syscall",
+      "version": "0.5.18",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "regex",
+      "version": "1.12.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "regex-automata",
+      "version": "0.4.19",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "regex-syntax",
+      "version": "0.8.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "rsqlite-vfs",
+      "version": "0.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "rusqlite",
+      "version": "0.43.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "rustc-hash",
+      "version": "2.1.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "rustix",
+      "version": "1.1.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "rustversion",
+      "version": "1.0.23",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "scraper",
+      "version": "0.29.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "secret-service",
+      "version": "4.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "security-framework",
+      "version": "2.11.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "security-framework",
+      "version": "3.7.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "security-framework-sys",
+      "version": "2.17.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "selectors",
+      "version": "0.41.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.154",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "serde_path_to_error",
+      "version": "0.1.20",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "servo_arc",
+      "version": "0.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "sha1",
+      "version": "0.10.7",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "siphasher",
+      "version": "1.0.4",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "slab",
+      "version": "0.4.12",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "smallvec",
+      "version": "1.16.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "socket2",
+      "version": "0.6.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "sqlcipher-src",
+      "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "sqlite-wasm-rs",
+      "version": "0.6.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "string_cache",
+      "version": "0.11.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "string_cache_codegen",
+      "version": "0.11.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "2.0.119",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "3.0.10",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "tendril",
+      "version": "0.5.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "thiserror",
+      "version": "2.0.21",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "2.0.21",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "tokio",
+      "version": "1.54.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "tokio-macros",
+      "version": "2.7.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "toml",
+      "version": "1.2.2+spec-1.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.25.20+spec-1.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "toml_parser",
+      "version": "1.1.6+spec-1.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "toml_writer",
+      "version": "1.2.0+spec-1.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "tower",
+      "version": "0.5.3",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "typed-path",
+      "version": "0.13.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "uds_windows",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.27",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "version_check",
+      "version": "0.9.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "wasi",
+      "version": "0.11.1+wasi-snapshot-preview1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "wasm-bindgen",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.130",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "web_atoms",
+      "version": "0.3.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "widestring",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.52.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.59.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.60.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.53.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.52.6",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.53.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "winnow",
+      "version": "1.0.5",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zbus",
+      "version": "4.4.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zbus_macros",
+      "version": "4.4.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zbus_names",
+      "version": "3.0.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zerocopy",
+      "version": "0.8.64",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zerocopy-derive",
+      "version": "0.8.64",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zeroize",
+      "version": "1.9.2",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zeroize_derive",
+      "version": "1.5.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zip",
+      "version": "9.8.1",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zmij",
+      "version": "1.0.23",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zvariant",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zvariant_derive",
+      "version": "4.2.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    },
+    {
+      "name": "zvariant_utils",
+      "version": "2.1.0",
+      "missing_criteria": [
+        "safe-to-run"
+      ]
+    }
+  ]
+}

@@ -7,6 +7,57 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Задача 9: M6 cargo-vet, только fuzz; промежуточный результат — 2026-11-26
+
+Изменён только store графа `fuzz/Cargo.toml`; root, netd и desktop не затронуты.
+[ADR 0088](adr/0088-fuzz-dependency-audit-sources.md) описывает прямое доверие к
+добавленным наборам Bytecode Alliance, ISRG/Divvi Up и Zcash. Все три URL
+закреплены immutable commits, обновлён только `supply-chain/fuzz/imports.lock`.
+Прежние Mozilla/Google и версии зависимостей, все Cargo.lock сохранены.
+
+Локальные замеры одной CI-командой `node scripts/vet-dependencies.mjs fuzz`:
+
+| Состояние | Пробелов |
+|---|---:|
+| Baseline на 94e6bf9, прежний `safe-to-deploy` | 248 |
+| После трёх новых imports, прежний критерий | 219 |
+| После явной fuzz-only политики `safe-to-run` | 206 |
+| После самостоятельных просмотров исходников агентом | **193** |
+
+Новые 10 полных и 6 delta-аудитов помечены авторством Codex agent и только
+`safe-to-run`: записаны точные версии, SHA-256 опубликованных архивов и границы
+проверки. Просмотрены исходники и manifests, для delta — различия и затронутые
+пути исполнения. Хеши сверены с локальным registry index; две исторические
+версии crossbeam-utils скачаны с static.crates.io только для чтения.
+Собственные тесты этих крейтов не запускались; исходники больших библиотек,
+которые не удалось достаточно проверить, не сертифицированы.
+
+Закрыто 13 пробелов самостоятельными аудитами: десять полных проверок,
+serde/serde_core и crossbeam-utils. Для последнего нужны обе новые delta.
+Просмотренные delta thiserror/thiserror-impl `2.0.18 -> 2.0.21` пока не дают
+покрытия: отсутствует проверенный путь до базовой версии. Новых exemptions,
+wildcard/trusted-publisher записей, обхода проверок или фильтрации графа нет.
+[Машинный отчёт](../supply-chain/fuzz/review-2026-11-26.json) содержит четыре
+замера с хешами входов и полный список 193 оставшихся пробелов.
+
+Локально на Windows x86_64 прошли:
+
+- `cargo test --workspace --locked`: 164 passed, 16 ignored.
+- `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`.
+- `cargo test -p nw-leak-tests --locked`: 32 passed, 1 ignored.
+- `npm test` в extension: 24 passed; в app: 13 passed (обе команды со сборкой).
+- `node --test scripts/tests/vet-dependencies.test.mjs`: 3 passed.
+- `cargo deny --manifest-path fuzz/Cargo.toml --all-features check --hide-inclusion-graph`:
+  advisories/bans/licenses/sources ok; остаются предупреждения о дубликатах.
+- `cargo vet fmt` для fuzz store; финальный locked check подтвердил неизменность
+  входов и **failed, 193 gaps**. Это ожидаемый красный audit gate, не зелёная проверка.
+
+Ignored native/integration тесты, Linux/macOS и новый CI этим прогоном не
+проверены. M6 и dependency-audits fuzz открыты. Следующая работа — проверить
+193 оставшиеся версии/недостающие delta; остальные три графа вне этой задачи.
+После отправки коммита пользователь запускает/проверяет CI; локальные результаты
+не заменяют его. Пользовательское поведение программы не менялось.
+
 ## Задача 5: оценка Shield/linkcheck отрицательная; этап открыт — 2026-11-26
 
 ADR 0086 фиксирует одноразовый эксперимент. Проверены и объединены восемь
