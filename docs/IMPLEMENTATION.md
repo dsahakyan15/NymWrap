@@ -46,37 +46,44 @@ preflight в 24 часа не входит. Это 24 часа с перезап
 
 ## cargo-vet: граф desktop
 
-2026-11-26: первый проход от `4691e27` дал **514 → 343 пробела**;
-продолжение от `9e07392` — **343 → 292**, ещё 51 закрытый пробел.
-Критерий продукта `safe-to-deploy` сохранён. Версии, Cargo.lock, config.toml
-и остальные графы не менялись, exemptions не добавлены.
+2026-11-26: предыдущие проходы дали **514 → 343 → 292 пробела**; третий
+проход от a1cb2f1 — **292 → 100 → 89**, закрыто ещё **203**.
+safe-to-deploy сохранён, exemptions нет, версии и все Cargo.lock неизменны.
 
-API crates.io для точных версий теперь доступен: для 50 выбранных публикаций
-заново сверены identity, дата, yank-статус и checksum с архивом, sparse index
-и desktop lockfile. Добавлены только однодневные исторические окна доверия
-12 user-id и трём workflow identities; 13 из этих identities уже рассмотрены
-в ADR 0104, отдельно обоснованы `KodrAus` для bitflags и `RustCrypto/traits`.
-Этот шаг оставил 293 пробела. Дополнительные stores Actix, Fermyon и Ariel OS
-рассмотрены, новых imports не добавлено.
+Все 292 публикации сгруппированы по точному публикатору и типу; archive SHA
+сверены с exact-version API, sparse index и desktop lockfile, yank исключён.
+Для 192 выбранных версий рассмотрены официальные project/release identities;
+добавлено 190 однодневных исторических trusted-записей (55 identities,
+39 групп), две уже существовали. Крупные семейства — GTK/GNOME, Tauri,
+ICU4X, objc2, Servo, PHF, wasm-bindgen и zbus. Это обоснованное product
+maintainer trust с границами для unsafe/FFI/generated code, не собственные
+аудиты этих семейств. Последние commits audit-файлов всех шести imports
+совпадают с закреплёнными: новых imports нет, desktop config.toml сохранён.
 
-Полная проверка пяти production-модулей `once_cell 1.21.4` (45 транзитивных
-потребителей) агентом оставила 292 пробела. В записи есть явное «проверено
-агентом, не человеком», SHA-256 архива, рассуждение об unsafe/атомиках и границы
-проверки. Прямые rustc/rustdoc проверки: 5 unit tests и 42 doctests прошли,
-один doctest пропущен upstream; std, no-default и alloc+race варианты собраны.
-Опциональные backend-зависимости и полная межплатформенная матрица не тестировались.
+Затем добавлено 11 собственных полных production source audits с явным
+«проверено агентом, не человеком», SHA архива и перечнем прочитанного:
+android_system_properties, cesu8, dirs, dtoa-short, endi, idna_adapter,
+new_debug_unreachable, secrecy, static_vcruntime, tower-layer, tower-service.
+Файлы побайтно сверены с архивами. Прошли 15 upstream tests и synthetic
+проверки Unicode/ошибок/округления/secret cleanup, в том числе release
+dtoa-short. Ограничения serde/Android/platform execution описаны честно.
 
-Метод и ограничения — [ADR 0104](adr/0104-desktop-dependency-audit-sources.md);
-история первого прохода — [первый отчёт](../supply-chain/desktop/review-2026-11-26.json),
-пошаговые замеры продолжения, registry evidence, SHA и полный остаток по числу
-зависимых — [новый отчёт](../supply-chain/desktop/review-2026-11-26-continuation.json).
-Финальный `node scripts/vet-dependencies.mjs desktop` с locked imports остаётся
-красным: **292 пробела**, входы неизменны. `cargo-deny 0.22.0` desktop прошёл.
-Среди оставшихся крупных узлов — smallvec, hashbrown, typenum, getrandom и
-generic-array; неполные просмотры исходников не объявлены аудитами.
-Workspace tests/clippy/leak/extension tests в этом продолжении не запускались:
-по условию задачи для supply-chain/docs достаточно cargo-vet и cargo-deny.
-M6 и CI dependency-audits desktop остаются открытыми.
+Финальный node scripts/vet-dependencies.mjs desktop с locked imports:
+**89 пробелов**, входы неизменны, gate красный. cargo-deny 0.22.0 desktop
+зелёный. Остаток отсортирован по fanout: среди приоритетов siphasher,
+version-compare, system-deps, GNU winapi import libraries и errno.
+Отдельно отложены portable-atomic (workflow/archive SHA mismatch),
+dirs-sys (возможные panics при разборе malformed XDG), native
+SQLCipher/libtomcrypt и неполные чтения; аудиты для них не выданы.
+
+Метод, identities и обоснования — [ADR 0104](adr/0104-desktop-dependency-audit-sources.md);
+история — [первый отчёт](../supply-chain/desktop/review-2026-11-26.json) и
+[второй](../supply-chain/desktop/review-2026-11-26-continuation.json);
+проверенные registry fields/SHA, замеры и полный остаток —
+[третий отчёт](../supply-chain/desktop/review-2026-11-26-desktop-3.json).
+Workspace tests/clippy/leak tests запущены, но сборка vendored OpenSSL
+остановилась из-за отсутствующего perl; extension npm test — из-за
+отсутствующего tsc. Эти запуски не зелёные. M6 и CI gate остаются открытыми.
 
 ## cargo-vet: граф root
 

@@ -194,3 +194,135 @@ imports и с неизменными входами; `cargo-deny 0.22.0` desktop
 Все Cargo.lock и config.toml сохранены, новых exemptions нет. Полные сборочные
 и extension-тесты в этом продолжении не запускались согласно ограниченной
 проверке supply-chain/docs из задачи. M6 и CI gate остаются открытыми.
+
+## Третий проход от a1cb2f1 — 2026-11-26
+
+Исходные **292 пробела** воспроизведены locked repository-wrapper. Все 292
+точные версии сначала сгруппированы по публикатору и типу поверхности проверки
+в [отчёте третьего прохода](../../supply-chain/desktop/review-2026-11-26-desktop-3.json).
+Идентификаторы и даты получены из exact-version API crates.io, архивы сверены
+одновременно с API, sparse index и неизменным desktop Cargo.lock; yank исключён.
+Полные ответы кешированы в target/, в отчёте — URL, SHA ответа и проверенные поля.
+Новые запросы начинаются с интервалом 1100 мс, максимум три в полёте; реализованы
+паузы/retry-after и exponential backoff при 429/5xx.
+
+Проверен последний commit, менявший audit-файл каждого из шести imports: все
+совпали с уже закреплёнными commits. Immutable-файлы скачаны и хешированы заново;
+новых imports, criteria mappings и заимствования чужого local trust нет.
+GitHub commit API затем ограничил запросы HTTP 403; недоступные lookup не
+объявляются выполненными. Immutable raw README/manifests оставались доступны.
+
+### Решения о product publisher trust
+
+Рассмотрены 192 точные версии. Две записи уже существовали (getrandom 0.2.17
+и hashbrown 0.12.3), добавлено **190 записей**, 55 identities в 39 группах.
+Каждая запись — один исторический UTC-день [start,end), один пакет и конкретный
+user-id либо trusted-publisher. Это доверие разработке и выпуску для
+**safe-to-deploy**, включая hostile input и generated code, а не независимый
+аудит исходников. Нельзя вывести отсутствие ошибок из имени команды или OIDC.
+
+Registry published_by/trustpub_data подтверждает именно публикацию. Current
+owners/team membership — отдельное дополнительное свидетельство; список owners
+не выдаётся за доказательство персонального членства в команде в прошлом.
+Сверены canonical repositories, archive manifests/VCS metadata и project README
+excerpts; полного чтения кода доверенных семейств не заявляется. Во всех 24
+новых workflow-записях VCS commit архива совпал с registry trustpub_data.sha.
+Для Google zerocopy immutable README не найден (404): основание явно ограничено
+официальной registry-attested identity, manifest и совпавшим VCS SHA. У двух
+libappindicator manifests нет repository; canonical Tauri fork README проверен
+на том же archive commit, отдельно подтверждены tauri-bot и registry ownership.
+
+| Семейство (новых записей) | Точные identities | Основание safe-to-deploy и граница доверия |
+|---|---|---|
+| dropbox-brotli (4) | danielrh (4185) | Официальные Dropbox Rust Brotli/allocator packages и их maintainer: malformed streams и unsafe storage; лимиты распаковки задаёт потребитель. |
+| smol (6) | zeenix (6423), fogti (2340), notgull (69526) | Сопровождающие smol-rs: atomic queues, wakeups, cancellation, pinning и блокирующие операции; sandbox по-прежнему ограничивает способности вызывающего кода. |
+| gtk (24) | sdroege (3623), GuillaumeGomez (111), bilelmoussaoui (54339) | Официальные GTK/GNOME bindings: генерация ABI, refcount, потоки и недоверенный GUI/protocol input; native библиотеки и capabilities проверяются отдельно. |
+| base64 (3) | marshallpierce (5563) | Автор rust-base64: hostile lengths/alphabet/padding и optimized buffer contracts; encoding не является шифрованием. |
+| bytemuck (1) | Lokathor (7211) | Автор bytemuck: hostile byte slices/alignment и unsafe Pod/Zeroable contracts; downstream unsafe impl остаются обязанностью потребителя. |
+| rust-project (4) | rust-lang-owner (55123), Noratrieb (130181) | Rust/Cargo и сопровождающие коллекций: platform/glob parsing, unsafe storage/drop и compiler hashing; HashDoS требует подходящего hasher у потребителя. |
+| chrono (1) | djc (4556) | Release maintainer Chrono: production calendar/time parsing, ranges и OS integration; приватность TZ остаётся политикой приложения. |
+| rustcrypto (2) | github:RustCrypto/formats, github:RustCrypto/hybrid-array | Официальные RustCrypto formats/hybrid-array: OID/buffer bounds и array/trait contracts; независимый криптоаудит не заявляется. |
+| servo (20) | jrmuizel (5946), jdm (2396), Manishearth (1139), SimonSapin (7), mrobinson (2844), Loirooriol (437040) | Команда браузерного движка/rust-url: hostile HTML/CSS/URL, atoms/refcounts и platform FFI; quotas/URL policy остаются у потребителя. |
+| crc32fast (1) | github:srijs/rust-crc32fast | Официальный workflow: checksum SIMD dispatch и unsafe slices; CRC не является аутентификацией. |
+| darling (3) | TedDriggs (6324) | Автор Darling: Rust attribute parsing и production generated code во всех трёх crates; не только запуск build tool. |
+| time (4) | github:jhpratt/deranged, jhpratt (15682), github:time-rs/time | Сопровождающий time: диапазоны, overflow, parsing/formatting и generated date macros, включая вспомогательные deranged/powerfmt. |
+| derive-more (2) | JelteF (3797) | Release maintainer derive_more: token parsing и production-generated conversions/operators/error impls; invariants типов отдельно. |
+| objc2 (11) | madsmtm (36629) | Сопровождающий objc2: ABI, retain/release, exceptions, lifetime и thread contracts; наличие location API не разрешает его использование. |
+| enumflags (2) | meithecatte (38769) | Автор enumflags2: generated bit/discriminant validity и unsafe conversions; флаги не являются проверкой permissions. |
+| generic-array (1) | novacrazy (5704) | Release maintainer generic-array: production unsafe layout, initialization/drop и type-level lengths, используемые RustCrypto; не автоматическое наследование RustCrypto trust. |
+| rust-random (3) | josephlr (39279), github:rust-random/getrandom, github:rust-random/rand | Команда rust-random: OS entropy failures, initialization и FFI backends; custom RNG и криптопротокол потребителя остаются отдельными обязательствами. |
+| icu4x (18) | robertbastian (166196), sffc (128408) | Команда Unicode ICU4X: недоверенный Unicode/locale input, zero-copy lifetimes, generated tables и derive; не заменяет политику IDNA. |
+| tauri (20) | tauri-bot (95389) | Команда production UI/IPC boundary: runtime, webview, build/macros, menu/tray и поддерживаемые GTK forks; доверие включает генерируемый код и FFI, но не разрешает обход CSP/IPC/sandbox. |
+| jiff (4) | github:BurntSushi/jiff | Официальный workflow BurntSushi: production date/time parsing, generated timezone data и bounds; системное время не получает разрешение на выход. |
+| jni (3) | rib (68864) | Сопровождающий jni-rs: raw JNI ABI и version-selection macros; JVM validity и unsafe caller contracts обязательны. |
+| wasm-bindgen (7) | github:wasm-bindgen/wasm-bindgen | Официальный release workflow: Wasm/JS ABI, lifetimes и generated glue; права браузера и приложение проверяются отдельно. |
+| rusqlite (2) | gwenn (5062) | Сопровождающий rusqlite: statements/blobs/backups, hostile DB input и native build/link helpers; SQLCipher/OpenSSL dependencies и forks проверяются отдельно. |
+| rust-mobile (2) | MarijnS95 (110371) | Официальные NDK bindings: native ABI/ownership/thread contracts; Android capabilities остаются отдельной политикой. |
+| nix (2) | SteveLauC (146703), asomers (6094) | Команда Nix: Unix ABI, descriptors, errors и lifetimes; доверие не разрешает системные вызовы в обход sandbox. |
+| num-enum (2) | illicitonion (14455) | Автор num_enum: discriminant/range/default handling и generated unchecked APIs с явными caller preconditions. |
+| openssl (2) | alex (163) | Alex Gaynor, registry account alex: официальный rust-openssl, FFI/build/link и hostile crypto inputs; native OpenSSL и TLS policy отдельно. |
+| phf (10) | JohnTitor (51017) | JohnTitor подтверждён автором официального release commit: production lookup tables, escaping и macro/codegen contracts; PHF не является crypto hash. |
+| proc-macro-crate (3) | bkchr (6134) | Автор проекта: Cargo manifest/renamed-dependency lookup и generated crate paths в доверенной build environment. |
+| schemars (4) | GREsau (55662) | Автор Schemars: schema/derive generation, recursion и escaping; JSON Schema generation не является runtime validation. |
+| apple-security (3) | kornelski (988) | Сопровождающий rust-security-framework: certificate/keychain FFI, ownership, lengths и errors; права Keychain не расширяются. |
+| serde-with (2) | github:jonasbb/serde_with | Официальный workflow: hostile serialized values/ranges и derive-generated adapters; сериализация секретов этим не разрешается. |
+| smallvec (1) | github:smallvec/smallvec | Официальный workflow smallvec: production inline/heap storage, capacity, initialization, panic/drop и aliasing; это отдельное release trust, не аудит soundness. |
+| synstructure (1) | mystor (1947) | Автор проекта: Rust type/token parsing и generated impl/trait/lifetime bindings для production derive consumers. |
+| target-lexicon (1) | fitzgen (696) | Сопровождающий Bytecode Alliance/Wasmtime: target parsing/layout и build-time generation; отдельное publisher trust, не импортированный аудит. |
+| typenum (1) | paholg (243) | Автор typenum: production type-level arithmetic/length relations и generated operator tables; независимое математическое доказательство не заявляется. |
+| winapi (1) | retep998 (63) | retep998: исторические raw Windows ABI bindings; отдельный third-party проект, не Microsoft/kennykerr. |
+| zbus (7) | zeenix (6423) | Руководитель zbus: hostile D-Bus serialization/names/messages и generated macros; IPC authorization и запрет D-Bus в sandbox сохраняются. |
+| google-zerocopy (2) | github:google/zerocopy | Официальный Google publishing repository: hostile byte-layout/alignment/validity и derive contracts; не наследование Google imports или чужого local trust. |
+
+Microsoft windows/windows-sys/windows-targets уже покрыты предыдущими решениями
+и в baseline не присутствуют. Сторонние winapi и wravery/WebView2 не объявлены
+Microsoft-публикациями. Старые GNU winapi import-library packages без registry
+publisher identity остались открыты: 27 строк Rust не равны проверке native
+архивов. Для portable-atomic workflow SHA отличается от archive VCS SHA;
+расхождение записано, новая запись доверия не добавлялась. После product trust
+locked-остаток — **100**, закрыты 192 пробела (включая две ранее несохранявшиеся
+записи при других непокрытых версиях того же имени).
+
+### Собственные проверки и итог
+
+Добавлено **11 полных production source audits**, все с явным
+**«проверено агентом, не человеком»**, SHA-256 архива, перечнем прочитанных файлов
+и ограничениями: android_system_properties 0.1.6, cesu8 1.1.0, dirs 7.0.0,
+dtoa-short 0.3.5, endi 1.1.1, idna_adapter 1.2.2, new_debug_unreachable 1.0.6,
+secrecy 0.10.3, static_vcruntime 3.0.0, tower-layer 0.3.3, tower-service 0.3.3.
+Прочитанные файлы побайтно сверены с членами проверенных архивов. Рассмотрены
+все production-модули, manifests, unsafe/FFI контракты и optional source code;
+непроверенные platform/feature executions не заявляются.
+
+15 upstream unit/integration tests прошли; дополнительно проверены I/O errors
+и короткие buffers, secret redaction/zeroize/Drop, округление/carry/ошибки writer,
+100000 generated f32/f64 bit patterns, roundtrip каждого Unicode scalar и все
+65536 двухбайтовых входов CESU-8. dtoa-short отдельно пересобран в release без
+debug assertions. Safe вызов debug_unreachable! в release отвергнут rustc E0133;
+сам unreachable_unchecked не исполнялся. Synthetic probes сохранены рядом с
+отчётом, команды нормализованы без реальных пользовательских путей. Нулевые
+unit suites не считаются runtime coverage; Miri/sanitizers/полная OS матрица
+и выполнение optional serde/Android backend не заявляются.
+
+Ограничения важны для потребителей: CESU-8 decoder fast path допускает валидный
+UTF-8/NUL и не является strict canonical validator; secrecy не гарантирует
+очистку compiler/caller copies, swap или abort; static_vcruntime намеренно меняет
+CRT linker arguments; unsafe macro требует доказательства недостижимости.
+Для dirs-sys audit не выдан: просмотр обнаружил возможные slice panics на
+коротких XDG key/value; это source finding без Unix runtime repro на Windows.
+Чтение ordered-stream не завершено и аудитом не названо.
+
+Итог — **292 → 100 → 89 пробелов**, закрыто **203**. Финальный
+node scripts/vet-dependencies.mjs desktop выполнен с locked imports, входы
+неизменны, результат честно красный. cargo-deny 0.22.0 desktop зелёный.
+Полный остаток с fanout, объёмом и причиной отложения — в JSON. Среди
+приоритетов siphasher, version-compare, system-deps, GNU winapi import libraries
+и errno. Native SQLCipher/libtomcrypt distribution не сертифицирован по одним
+652 строкам Rust helper.
+
+Workspace tests, clippy и leak tests запускались, но остановились до тестов на
+отсутствующем perl для vendored OpenSSL; extension npm test остановился на
+отсутствующем локальном tsc. Зелёных результатов для этих запусков нет.
+Все девять tracked Cargo.lock, desktop config.toml и stores остальных графов
+неизменны. Exemptions не добавлены, safe-to-deploy не ослаблен, M6/CI gate
+остаются открытыми.
