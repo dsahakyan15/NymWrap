@@ -1,0 +1,58 @@
+# NymWrap OpenSSL-only patch; exact base and changes are recorded in UPSTREAM.md.
+
+[package]
+edition = "2021"
+rust-version = "1.100"
+name = "dbus-secret-service"
+version = "4.1.0"
+authors = ["Daniel Brotsky <dev@brotsky.com>"]
+build = false
+exclude = [".github/"]
+autolib = false
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
+description = "Library to interface with Secret Service API over DBUS"
+homepage = "https://github.com/brotskydotcom/dbus-secret-service"
+documentation = "https://docs.rs/dbus-secret-service"
+readme = "README.md"
+keywords = [
+    "secret-service",
+    "password",
+    "linux",
+    "dbus",
+]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/brotskydotcom/dbus-secret-service.git"
+
+[package.metadata.docs.rs]
+features = ["crypto-openssl"]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[features]
+crypto-openssl = ["dep:openssl"]
+crypto-rust = []
+vendored = [
+    "dbus/vendored",
+    "openssl?/vendored",
+]
+
+[lib]
+name = "dbus_secret_service"
+path = "src/lib.rs"
+
+[[example]]
+name = "example"
+path = "examples/example.rs"
+
+[dependencies.dbus]
+version = "=0.9.12"
+
+[dependencies.openssl]
+version = "=0.10.82"
+optional = true
+
+[dependencies.zeroize]
+version = "=1.9.2"
+features = ["derive"]

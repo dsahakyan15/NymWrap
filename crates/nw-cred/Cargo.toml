@@ -19,7 +19,7 @@ keyring={workspace=true,features=["windows-native"]}
 [target.'cfg(target_os="macos")'.dependencies]
 keyring={workspace=true,features=["apple-native"]}
 [target.'cfg(target_os="linux")'.dependencies]
-keyring={workspace=true,features=["sync-secret-service","crypto-rust","vendored"]}
+keyring={workspace=true,features=["sync-secret-service","crypto-openssl","vendored"]}
 
 [lints]
 workspace = true
