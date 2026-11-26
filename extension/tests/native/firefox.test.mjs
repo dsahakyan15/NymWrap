@@ -12,6 +12,7 @@ import net from 'node:net';
 import {createInterface} from 'node:readline';
 import {Marionette} from '../browser/helpers/marionette.mjs';
 import {extensionDigest} from '../browser/helpers/artifact.mjs';
+import {startDenyProxy} from './deny-proxy.mjs';
 import {HOST} from '../../dist/protocol.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../../..'),base=join(root,'target/browser-tests');
 const run=promisify(execFile),wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -30,7 +31,7 @@ test('stock Firefox Native Messaging reaches the actual core and persists pause/
   const reportPath=join(base,'reports/firefox-native.json');await mkdir(dirname(reportPath),{recursive:true});
   await writeFile(reportPath,JSON.stringify({status:'running',browser:'Firefox',scope:'real native messaging integration'}));
   let daemon,browser,client,proxy,registered=false,created=false,store,record;
-  const sockets=new Set(),mark=phase=>writeFile(reportPath,JSON.stringify({status:'running',browser:'Firefox',scope:'real native messaging integration',phase}));
+  const mark=phase=>writeFile(reportPath,JSON.stringify({status:'running',browser:'Firefox',scope:'real native messaging integration',phase}));
   let pending;
   function rpc(command){return new Promise((accept,reject)=>{
     if(pending||!alive(daemon))return reject(Error('fixture_rpc_unavailable'));
@@ -72,9 +73,9 @@ test('stock Firefox Native Messaging reaches the actual core and persists pause/
     await writeFile(manifestPath,JSON.stringify({name:alias,description:'NymWrap isolated native bridge fixture',path:wrapper,type:'stdio',allowed_extensions:[manifest.browser_specific_settings.gecko.id]}));
     registered=true;await registry('Register');await mark('host_registered');
     // Browser network is denied; the real Native Messaging pipe is independent of it.
-    proxy=net.createServer(socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');});await new Promise(r=>proxy.listen(0,'127.0.0.1',r));
+    proxy=await startDenyProxy();
     const portServer=net.createServer();await new Promise(r=>portServer.listen(0,'127.0.0.1',r));const port=portServer.address().port;await new Promise(r=>portServer.close(r));
-    const prefs={'marionette.port':port,'browser.shell.checkDefaultBrowser':false,'datareporting.healthreport.uploadEnabled':false,'datareporting.policy.dataSubmissionEnabled':false,'toolkit.telemetry.enabled':false,'app.update.disabledForTesting':true,'network.proxy.type':1,'network.proxy.http':'127.0.0.1','network.proxy.http_port':proxy.address().port,'network.proxy.ssl':'127.0.0.1','network.proxy.ssl_port':proxy.address().port,'network.proxy.no_proxies_on':'','network.captive-portal-service.enabled':false,'network.connectivity-service.enabled':false};
+    const prefs={'marionette.port':port,'browser.shell.checkDefaultBrowser':false,'datareporting.healthreport.uploadEnabled':false,'datareporting.policy.dataSubmissionEnabled':false,'toolkit.telemetry.enabled':false,'app.update.disabledForTesting':true,'network.proxy.type':1,'network.proxy.http':'127.0.0.1','network.proxy.http_port':proxy.port,'network.proxy.ssl':'127.0.0.1','network.proxy.ssl_port':proxy.port,'network.proxy.no_proxies_on':'','network.captive-portal-service.enabled':false,'network.connectivity-service.enabled':false};
     await writeFile(join(profile,'user.js'),Object.entries(prefs).map(([k,v])=>'user_pref('+JSON.stringify(k)+','+JSON.stringify(v)+');').join('\n'));
     browser=spawn(join(root,'target/tools/privacy-browser/firefox-160.0.1/core/firefox.exe'),['-headless','-no-remote','-profile',profile,'-marionette','about:blank'],{cwd:fixture,windowsHide:true,stdio:'ignore',env:{...env,MOZ_CRASHREPORTER_DISABLE:'1',MOZ_REMOTE_ALLOW_SYSTEM_ACCESS:'1'}});browser.on('error',()=>{});
     client=await Marionette.connect(port);const session=await client.call('WebDriver:NewSession',{});
@@ -91,13 +92,14 @@ test('stock Firefox Native Messaging reaches the actual core and persists pause/
     assert.equal((await rpc({op:'load_network_usage'})).requests,0);
     const hash=async path=>createHash('sha256').update(await readFile(path)).digest('hex');
     record={status:'passed',browser:'Firefox '+session.capabilities.browserVersion,checked_at:new Date().toISOString(),extension_sha256:artifact,native_host_sha256:await hash(join(binaries,'nw-drift-host.exe')),core_sha256:await hash(join(binaries,'nymwrapd.exe')),owner_fixture_sha256:await hash(ownerBinary),owner_source_sha256:await hash(join(root,'tests/leak/src/native_browser_fixture.rs')),test_sha256:await hash(fileURLToPath(import.meta.url)),registry_fixture_sha256:await hash(registryScript),relay_source_sha256:await hash(wrapperSource),relay_binary_sha256:await hash(wrapper),scope:'real Firefox Native Messaging via temporary alias; unchanged product JS and CSP; actual release host/core with desktop authenticated parent; synthetic encrypted workspace; network denied',scenarios:['owned_authenticated_session','connect','pause','resume','independent_core_status','zero_network_reservations'],registry_restored:true};
+    record.deny_proxy_fixture_sha256=await hash(fileURLToPath(new URL('./deny-proxy.mjs',import.meta.url)));
   }finally{
     if(client){try{await client.call('Marionette:Quit',{flags:['eForceQuit']});}catch{}client.close();}
     await stop(browser);
     if(registered)await registry('Remove');
     if(created){const status=await rpc({op:'workspace_status'});if(resolve(status.path)!==resolve(store)||!resolve(store).startsWith(resolve(fixture)+sep))throw Error('foreign_workspace_cleanup_refused');await rpc({op:'destroy_data',confirmation:'СТЕРЕТЬ ВСЁ'});}
     if(alive(daemon)){daemon.stdin.end();await until(async()=>alive(daemon),value=>!value,10000);}
-    await stop(daemon);for(const socket of sockets)socket.destroy();if(proxy?.listening)await new Promise(r=>proxy.close(r));
+    await stop(daemon);if(proxy){await proxy.close();if(record)record.denied_proxy_resets=proxy.resets;}
     const actual=await realpath(fixture),parent=await realpath(base);if((await lstat(fixture)).isSymbolicLink()||!actual.toLowerCase().startsWith((parent+sep).toLowerCase()))throw Error('unsafe_native_fixture_cleanup');await rm(fixture,{recursive:true,force:true});
   }
   if(t.signal.aborted)throw Error('native_fixture_timed_out');

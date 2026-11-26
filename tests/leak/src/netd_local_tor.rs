@@ -9,7 +9,7 @@ use tor_proto::client::stream::ClientStreamCtrl;
 
 async fn wait_for_probe<T, E, F, P>(
     mut probe: P,
-    attempts: usize,
+    wait_timeout: Duration,
     attempt_timeout: Duration,
     retry_delay: Duration,
 ) -> Result<usize, &'static str>
@@ -17,16 +17,22 @@ where
     P: FnMut() -> F,
     F: std::future::Future<Output = Result<T, E>>,
 {
-    for attempt in 1..=attempts {
-        if let Ok(Ok(stream)) = tokio::time::timeout(attempt_timeout, probe()).await {
+    let deadline = tokio::time::Instant::now() + wait_timeout;
+    let mut attempt = 0;
+    loop {
+        let now = tokio::time::Instant::now();
+        if now >= deadline {
+            return Err("tor_exit_not_ready");
+        }
+        attempt += 1;
+        if let Ok(Ok(stream)) =
+            tokio::time::timeout_at(deadline.min(now + attempt_timeout), probe()).await
+        {
             drop(stream);
             return Ok(attempt);
         }
-        if attempt < attempts {
-            tokio::time::sleep(retry_delay).await;
-        }
+        tokio::time::sleep_until(deadline.min(tokio::time::Instant::now() + retry_delay)).await;
     }
-    Err("tor_exit_not_ready")
 }
 
 async fn wait_for_exit(
@@ -36,11 +42,14 @@ async fn wait_for_exit(
     // Chutney's bootstrap/descriptor readiness can precede Arti's usable exit
     // consensus. Probe the actual destination through an isolated Tor client,
     // sending no TLS/HTTP bytes, before any real request is dispatched.
-    // At most 10 * 8s + 9 * 2s = 98s; never retry a real send or a stop check.
+    // Bound elapsed time, not the number of failures: an early no-exit
+    // consensus can reject streams immediately while directory caches catch up.
+    // The outer 180s bootstrap deadline also bounds this wait. Never retry a
+    // real send or a stop check.
     let client = root.isolated_client();
     let attempts = wait_for_probe(
         || client.connect((provider.host.as_str(), 443)),
-        10,
+        Duration::from_secs(180),
         Duration::from_secs(8),
         Duration::from_secs(2),
     )
@@ -58,11 +67,29 @@ async fn bootstrap_local_exit(
         let root = TorClient::create_bootstrapped(config)
             .await
             .map_err(|_| "tor_bootstrap_failed")?;
+        eprintln!("tor_fixture_bootstrap_ready");
         wait_for_exit(&root, provider).await?;
         Ok(root)
     })
     .await
     .map_err(|_| "tor_bootstrap_timeout")?
+}
+
+#[tokio::test]
+async fn exit_readiness_does_not_spend_the_wait_budget_on_fast_failures() {
+    let mut calls = 0;
+    let result = wait_for_probe(
+        || {
+            calls += 1;
+            std::future::ready(if calls < 12 { Err(()) } else { Ok(()) })
+        },
+        Duration::from_secs(1),
+        Duration::from_millis(20),
+        Duration::from_millis(1),
+    )
+    .await;
+    assert_eq!(result, Ok(12));
+    assert_eq!(calls, 12);
 }
 
 #[tokio::test]
@@ -73,7 +100,7 @@ async fn exit_readiness_waits_for_a_real_stream_after_early_bootstrap() {
             calls += 1;
             std::future::ready(if calls < 3 { Err(()) } else { Ok(()) })
         },
-        5,
+        Duration::from_secs(1),
         Duration::from_millis(20),
         Duration::from_millis(1),
     )
@@ -83,20 +110,22 @@ async fn exit_readiness_waits_for_a_real_stream_after_early_bootstrap() {
 }
 
 #[tokio::test]
-async fn exit_readiness_fails_when_the_attempt_budget_is_exhausted() {
+async fn exit_readiness_fails_when_the_time_budget_is_exhausted() {
+    let start = tokio::time::Instant::now();
     let mut calls = 0;
     let result = wait_for_probe(
         || {
             calls += 1;
             std::future::ready(Err::<(), _>(()))
         },
-        3,
+        Duration::from_millis(20),
         Duration::from_millis(20),
         Duration::from_millis(1),
     )
     .await;
     assert_eq!(result, Err("tor_exit_not_ready"));
-    assert_eq!(calls, 3);
+    assert!(calls > 0);
+    assert!(start.elapsed() >= Duration::from_millis(20));
 }
 
 #[tokio::test]
@@ -109,15 +138,29 @@ async fn exit_readiness_bounds_stalled_stream_attempts() {
                 calls += 1;
                 std::future::pending::<Result<(), ()>>()
             },
-            3,
-            Duration::from_millis(10),
+            Duration::from_millis(30),
+            Duration::from_secs(60),
             Duration::from_millis(1),
         ),
     )
     .await
     .expect("exit readiness must have a finite deadline");
     assert_eq!(result, Err("tor_exit_not_ready"));
-    assert_eq!(calls, 3);
+    assert_eq!(calls, 1);
+}
+
+#[tokio::test]
+async fn exit_readiness_does_not_probe_after_the_deadline() {
+    let result = wait_for_probe(
+        || -> std::future::Ready<Result<(), ()>> {
+            panic!("an expired readiness budget must fail closed")
+        },
+        Duration::ZERO,
+        Duration::from_millis(20),
+        Duration::from_millis(1),
+    )
+    .await;
+    assert_eq!(result, Err("tor_exit_not_ready"));
 }
 
 pub(super) fn record_circuit(request: &Request, stream: &arti_client::DataStream) {
@@ -173,7 +216,9 @@ impl crate::server::Factory for LocalFactory {
         let config = builder
             .build()
             .map_err(|_| "invalid_local_tor_configuration")?;
-        let root = bootstrap_local_exit(config, &provider).await?;
+        let root = bootstrap_local_exit(config, &provider)
+            .await
+            .inspect_err(|code| eprintln!("tor_fixture_initialization_failed: {code}"))?;
         let mut roots = rustls::RootCertStore::empty();
         roots
             .add(
