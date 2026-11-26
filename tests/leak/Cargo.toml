@@ -26,6 +26,8 @@ serde_json.workspace = true
 tempfile.workspace = true
 nw-net = { path = "../../crates/nw-net", version = "=0.1.0" }
 nw-bridge = {path="../../crates/nw-bridge",version="=0.1.0"}
+openssl = { version = "=0.10.82", features = ["vendored"] }
+zeroize.workspace = true
 
 [lints]
 workspace = true

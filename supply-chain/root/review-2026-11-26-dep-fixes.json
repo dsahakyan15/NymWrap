@@ -1,0 +1,1713 @@
+{
+  "date": "2026-11-26",
+  "reviewer": "Codex implementation agent; not a human audit",
+  "base_commit": "6e241c5",
+  "scopes": [
+    "root",
+    "desktop"
+  ],
+  "netd_changed": false,
+  "registry": [
+    {
+      "crate": "openssl",
+      "version": "0.10.82",
+      "url": "https://crates.io/api/v1/crates/openssl/0.10.82",
+      "response_sha256": "86ce80bb6b9a60620565190a62ee23eb832a4f8e2c4d133734f00d8e2b95547b",
+      "archive_sha256": "4de8111e94a56adca7ebfe6c365b6d42f99deb69b74b6becacd4204e2f193aa2",
+      "index_checksum_verified": true,
+      "publication": "2026-11-01T20:48:23.849704Z",
+      "publisher": {
+        "id": 163,
+        "login": "alex",
+        "name": "Alex Gaynor",
+        "avatar": "https://avatars.githubusercontent.com/u/772?v=4",
+        "url": "https://github.com/alex",
+        "github_username_matches": true,
+        "created_at": "2008-02-24T20:44:41Z"
+      },
+      "upstream": "https://github.com/rust-openssl/rust-openssl"
+    },
+    {
+      "crate": "dbus-secret-service",
+      "version": "4.1.0",
+      "url": "https://crates.io/api/v1/crates/dbus-secret-service/4.1.0",
+      "response_sha256": "daf00e8e01af523e6f17bd96f8fa5b2156909f057a523a97c9a09cf00c8d441c",
+      "archive_sha256": "708b509edf7889e53d7efb0ffadd994cc6c2345ccb62f55cfd6b0682165e4fa6",
+      "index_checksum_verified": true,
+      "publication": "2025-08-26T02:01:48.814159Z",
+      "publisher": {
+        "id": 103233,
+        "login": "brotskydotcom",
+        "name": "Daniel Brotsky",
+        "avatar": "https://avatars.githubusercontent.com/u/689661?v=4",
+        "url": "https://github.com/brotskydotcom",
+        "github_username_matches": true,
+        "created_at": "2011-03-25T04:15:17Z"
+      },
+      "upstream": "https://github.com/brotskydotcom/dbus-secret-service.git"
+    },
+    {
+      "crate": "interprocess",
+      "version": "2.4.9",
+      "url": "https://crates.io/api/v1/crates/interprocess/2.4.9",
+      "response_sha256": "4ff458bb049e7bdd38590001cb0e23a3aa123b858952a18a2b0d82cdce3c40bb",
+      "archive_sha256": "2f243523bf126ddfc5cddf87a8193a941bfca29476ce3c842e24c916cf5a22ec",
+      "index_checksum_verified": true,
+      "publication": "2026-11-18T22:48:09.948884Z",
+      "publisher": {
+        "id": 72501,
+        "login": "kotauskas",
+        "name": null,
+        "avatar": "https://avatars.githubusercontent.com/u/28248600?v=4",
+        "url": "https://github.com/kotauskas",
+        "github_username_matches": true,
+        "created_at": "2017-05-01T05:43:22Z"
+      },
+      "upstream": "https://github.com/kotauskas/interprocess"
+    },
+    {
+      "crate": "recvmsg",
+      "version": "1.0.0",
+      "url": "https://crates.io/api/v1/crates/recvmsg/1.0.0",
+      "response_sha256": "9d415837b5840c710be7ea1a9b20ee6521b60f7fa827940ee2f537e830f6e0fb",
+      "archive_sha256": "d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175",
+      "index_checksum_verified": true,
+      "publication": "2024-01-12T18:50:56.356114Z",
+      "publisher": {
+        "id": 72501,
+        "login": "kotauskas",
+        "name": null,
+        "avatar": "https://avatars.githubusercontent.com/u/28248600?v=4",
+        "url": "https://github.com/kotauskas",
+        "github_username_matches": true,
+        "created_at": "2017-05-01T05:43:22Z"
+      },
+      "upstream": null
+    },
+    {
+      "crate": "libdbus-sys",
+      "version": "0.2.7",
+      "url": "https://crates.io/api/v1/crates/libdbus-sys/0.2.7",
+      "response_sha256": "a909c488efc119077874e917a1c70933987ad1bea8d1f215b8cb9a52fc4d49d6",
+      "archive_sha256": "328c4789d42200f1eeec05bd86c9c13c7f091d2ba9a6ea35acdf51f31bc0f043",
+      "index_checksum_verified": true,
+      "publication": "2025-12-11T07:27:13.286122Z",
+      "publisher": {
+        "id": 429,
+        "login": "diwic",
+        "name": null,
+        "avatar": "https://avatars.githubusercontent.com/u/9721510?v=4",
+        "url": "https://github.com/diwic",
+        "github_username_matches": true,
+        "created_at": "2014-11-13T15:06:52Z"
+      },
+      "upstream": "https://github.com/diwic/dbus-rs"
+    }
+  ],
+  "source_files": [
+    {
+      "crate": "dbus-secret-service-4.1.0",
+      "file": "Cargo.toml",
+      "sha256": "b4bc203690129ee56ab2e70078ca40f3ef531351e3ced84904225d56c75f7b55"
+    },
+    {
+      "crate": "dbus-secret-service-4.1.0",
+      "file": "src/session.rs",
+      "sha256": "6e74ab952549ed84ca85efb1196e4d2e20e2ac4764e6f910b51be074e1fdbcb2"
+    },
+    {
+      "crate": "dbus-secret-service-4.2.0",
+      "file": "Cargo.toml",
+      "sha256": "1050963f39a05f3d590c9fc24998f5b12532676a6b20b9bd0ab09b65370b0459"
+    },
+    {
+      "crate": "dbus-secret-service-4.2.0",
+      "file": "src/session.rs",
+      "sha256": "8db5fe45a2aedb109dea8b2484de9c2b90b9ae6f916211358d8d7d256ad1d6c9"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "Cargo.toml",
+      "sha256": "039dd68c2270bf639964ae94fa4b1f5eb286b1e2e71cc440f9ebd21a7a316197"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "src/local_socket/tokio/stream/enum.rs",
+      "sha256": "5bd5f5dde8df5ea3f5206cfcf1255bdccaf5ef2dcdbb7343a0770ffcdeb52b54"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "src/os/windows/named_pipe/local_socket/tokio/stream.rs",
+      "sha256": "008a3b04315a3b048730e4c74c9d49e763316a666c6c42c251f1b7752b7454d8"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "src/os/windows/named_pipe/local_socket/tokio/listener.rs",
+      "sha256": "d251eb10b3086c0c8ab8384c0a877a59020af735d1ac40cc1bba6e7112f2c114"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "src/os/windows/named_pipe/tokio/stream/impl/recv_bytes.rs",
+      "sha256": "e21bd620c2eab48e006a72ffa75621d1c3b0a0fa02c10efa571ba1e8f80417c6"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "src/os/windows/named_pipe/stream/impl/recv_msg.rs",
+      "sha256": "ad194b1b1e3a55e2f93b2969260d53668db9b4ea78aa7c20cc2de69546e8e077"
+    },
+    {
+      "crate": "interprocess-2.4.9",
+      "file": "src/os/unix/uds_local_socket/tokio/stream.rs",
+      "sha256": "95021ca657c45b2e9be6040bc05ef92ee3affb0311334a6a98b7de90c731b667"
+    },
+    {
+      "crate": "recvmsg-1.0.0",
+      "file": "src/msgbuf/lifetime.rs",
+      "sha256": "ff823566bff1d92f5369f5efa91b69893809a3c793c8c84201f564b5ffce6668"
+    },
+    {
+      "crate": "recvmsg-1.0.0",
+      "file": "src/msgbuf/owned.rs",
+      "sha256": "9a61fcb0450242ed454245c75ab0a83cd121afbc5f93fdda820e7b4ddac5209a"
+    },
+    {
+      "crate": "libdbus-sys-0.2.7",
+      "file": "build.rs",
+      "sha256": "8c7adcb4cd40bf073118bd50478cba99114f681d5e831487803aab02114166fe"
+    },
+    {
+      "crate": "libdbus-sys-0.2.7",
+      "file": "build_vendored.rs",
+      "sha256": "b13299abcc90d881deb27adb39e13a6f10de787068d16cc08d6bffd8c8e2d881"
+    },
+    {
+      "crate": "openssl-sys-0.9.118",
+      "file": "build/find_vendored.rs",
+      "sha256": "2d565046018a6855b6fbffa47dc6a28b027704ba234b1a00c1fe336b88e3745f"
+    },
+    {
+      "crate": "openssl-sys-0.9.118",
+      "file": "src/err.rs",
+      "sha256": "34976999c2537048ff43112591c9e0234b5df2ce46ea62df02853a2466d975bb"
+    },
+    {
+      "crate": "openssl-0.10.82",
+      "file": "src/derive.rs",
+      "sha256": "74f5c834aa6f4229d6202c9b03b5a150b5015ebfc44a4cf60596d6402d954ed3"
+    },
+    {
+      "crate": "openssl-0.10.82",
+      "file": "src/dh.rs",
+      "sha256": "24fe7c8fd8102744a99dc2b038f6d1d1a02c8d637918b2b842ef58ffe49e75a8"
+    },
+    {
+      "crate": "openssl-0.10.82",
+      "file": "src/symm.rs",
+      "sha256": "149249729a2c4f0fe8a61362f531205c8130d3922d56b8c4e518bff56dc7a0bb"
+    },
+    {
+      "crate": "openssl-0.10.82",
+      "file": "src/error.rs",
+      "sha256": "e083c07c99ea835271f03f097f70790982078597c98ed582f2949ac5df24e68d"
+    },
+    {
+      "crate": "openssl-src-300.6.1+3.6.3",
+      "file": "src/lib.rs",
+      "sha256": "c0f7ee0384ee12835abc6197122dc60ac75e33a3906dfe90bc378e62df56839d"
+    },
+    {
+      "crate": "openssl-src-300.6.1+3.6.3",
+      "file": "openssl/crypto/dh/dh_lib.c",
+      "sha256": "f7db5d85ebb2045246ae13b48badfbb35cb86720a290f75e3aad8863f6b6128c"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "file": "src/ipc/format_callback.rs",
+      "sha256": "e9de68956b9437f440291d37292bb9544b6c0b180029e6d2772685aa768a494d"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "file": "src/app.rs",
+      "sha256": "ef71e5c2da6696f9bef817f5f32d34c7710b678ca7ec8a00e539527bca5ad1d4"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "file": "src/manager/webview.rs",
+      "sha256": "3bfb8bba5dbd61d08ec5ff4ce2fa882997df78666b840a8f13b30aea2c2e7381"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "file": "src/event/plugin.rs",
+      "sha256": "32f3b01840e02b21b34e8ec7e35fdc27123717ee4a27d44f26c6814e7df44f0f"
+    },
+    {
+      "crate": "llama-cpp-sys-2-0.1.161",
+      "file": "build.rs",
+      "sha256": "0caed61d8e9313104b14f27bc8e415f6f38339b855cc26cb0c205bd95d70a9a0"
+    }
+  ],
+  "exemptions_rechecked": [
+    {
+      "scope": "root",
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "async-broadcast@0.7.2"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "async-broadcast@0.7.2",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "blocking",
+      "version": "1.7.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "blocking@1.7.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "blocking@1.7.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "event-listener",
+      "version": "5.4.2",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "event-listener@5.4.2"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "event-listener@5.4.2",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "hermit-abi@0.5.3"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "hermit-abi@0.5.3",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "nix",
+      "version": "0.29.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "nix@0.29.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "nix@0.29.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "rsqlite-vfs",
+      "version": "0.2.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "rsqlite-vfs@0.2.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "rsqlite-vfs@0.2.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "secret-service",
+      "version": "4.0.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "secret-service@4.0.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "secret-service@4.0.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "sqlite-wasm-rs",
+      "version": "0.6.3",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "sqlite-wasm-rs@0.6.3"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "sqlite-wasm-rs@0.6.3",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "uds_windows",
+      "version": "1.2.1",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "uds_windows@1.2.1"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "uds_windows@1.2.1",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "zbus",
+      "version": "4.4.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zbus@4.4.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zbus@4.4.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "zbus_macros",
+      "version": "4.4.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zbus_macros@4.4.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zbus_macros@4.4.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "zbus_names",
+      "version": "3.0.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zbus_names@3.0.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zbus_names@3.0.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "zvariant",
+      "version": "4.2.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zvariant@4.2.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zvariant@4.2.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "root",
+      "name": "zvariant_derive",
+      "version": "4.2.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zvariant_derive@4.2.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "zvariant_derive@4.2.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "desktop",
+      "name": "dirs-sys",
+      "version": "0.5.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "dirs-sys@0.5.0"
+          ],
+          "stdout": "dirs-sys v0.5.0\n└── dirs v7.0.0\n    ├── tauri v2.12.4\n    │   └── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    ├── tauri-build v2.7.6\n    │   [build-dependencies]\n    │   ├── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    │   └── tauri v2.12.4 (*)\n    └── wry v0.57.3\n        └── tauri-runtime-wry v2.12.5\n            └── tauri v2.12.4 (*)\n"
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "dirs-sys@0.5.0",
+            "--all-features"
+          ],
+          "stdout": "dirs-sys v0.5.0\n└── dirs v7.0.0\n    ├── tauri v2.12.4\n    │   └── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    ├── tauri-build v2.7.6\n    │   [build-dependencies]\n    │   ├── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    │   └── tauri v2.12.4 (*)\n    └── wry v0.57.3\n        └── tauri-runtime-wry v2.12.5\n            └── tauri v2.12.4 (*)\n"
+        }
+      ]
+    },
+    {
+      "scope": "desktop",
+      "name": "ordered-stream",
+      "version": "0.2.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "ordered-stream@0.2.0"
+          ],
+          "stdout": ""
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "ordered-stream@0.2.0",
+            "--all-features"
+          ],
+          "stdout": ""
+        }
+      ]
+    },
+    {
+      "scope": "desktop",
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "winapi-i686-pc-windows-gnu@0.4.0"
+          ],
+          "stdout": "winapi-i686-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n"
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "winapi-i686-pc-windows-gnu@0.4.0",
+            "--all-features"
+          ],
+          "stdout": "winapi-i686-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n"
+        }
+      ]
+    },
+    {
+      "scope": "desktop",
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "checks": [
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "winapi-x86_64-pc-windows-gnu@0.4.0"
+          ],
+          "stdout": "winapi-x86_64-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n"
+        },
+        {
+          "args": [
+            "tree",
+            "--manifest-path",
+            "app/src-tauri/Cargo.toml",
+            "--locked",
+            "--offline",
+            "--target",
+            "all",
+            "-e",
+            "normal,build,dev",
+            "-i",
+            "winapi-x86_64-pc-windows-gnu@0.4.0",
+            "--all-features"
+          ],
+          "stdout": "winapi-x86_64-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n"
+        }
+      ]
+    }
+  ],
+  "known_findings_remaining": true,
+  "libdbus_vendor_present": true,
+  "features": [
+    {
+      "scope": "root",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "features",
+        "--prefix",
+        "none",
+        "-i",
+        "dbus-secret-service"
+      ],
+      "stdout": "dbus-secret-service v4.1.0 ($WORKTREE\\vendor\\dbus-secret-service)\ndbus-secret-service feature \"crypto-openssl\"\nkeyring feature \"crypto-openssl\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred)\nnw-cred feature \"default\" (command-line)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnw-core feature \"default\" (command-line)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api)\nnw-api feature \"default\" (command-line)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-leak-tests feature \"default\" (command-line)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault)\nnw-vault feature \"default\" (command-line)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak) (*)\ndbus-secret-service feature \"default\"\nkeyring v3.6.3\nkeyring feature \"crypto-openssl\" (*)\nkeyring feature \"sync-secret-service\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\nkeyring feature \"vendored\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\ndbus-secret-service feature \"vendored\"\nkeyring feature \"vendored\" (*)\n"
+    },
+    {
+      "scope": "root",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "features",
+        "--prefix",
+        "none",
+        "-i",
+        "dbus-secret-service",
+        "--all-features"
+      ],
+      "stdout": "dbus-secret-service v4.1.0 ($WORKTREE\\vendor\\dbus-secret-service)\ndbus-secret-service feature \"crypto-openssl\"\nkeyring feature \"crypto-openssl\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred)\nnw-cred feature \"default\" (command-line)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnw-core feature \"default\" (command-line)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api)\nnw-api feature \"default\" (command-line)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-leak-tests feature \"default\" (command-line)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak) (*)\nnw-cred feature \"experimental-zkapi\" (command-line)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault)\nnw-vault feature \"default\" (command-line)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak) (*)\ndbus-secret-service feature \"default\"\nkeyring v3.6.3\nkeyring feature \"crypto-openssl\" (*)\nkeyring feature \"sync-secret-service\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\nkeyring feature \"vendored\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\ndbus-secret-service feature \"vendored\"\nkeyring feature \"vendored\" (*)\n"
+    },
+    {
+      "scope": "desktop",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "features",
+        "--prefix",
+        "none",
+        "-i",
+        "dbus-secret-service"
+      ],
+      "stdout": "dbus-secret-service v4.1.0 ($WORKTREE\\vendor\\dbus-secret-service)\ndbus-secret-service feature \"crypto-openssl\"\nkeyring feature \"crypto-openssl\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred)\nnw-cred feature \"default\"\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnw-core feature \"default\"\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\nnymwrap-app feature \"default\" (command-line)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault)\nnw-vault feature \"default\"\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri) (*)\ndbus-secret-service feature \"default\"\nkeyring v3.6.3\nkeyring feature \"crypto-openssl\" (*)\nkeyring feature \"sync-secret-service\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\nkeyring feature \"vendored\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\ndbus-secret-service feature \"vendored\"\nkeyring feature \"vendored\" (*)\n"
+    },
+    {
+      "scope": "desktop",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "features",
+        "--prefix",
+        "none",
+        "-i",
+        "dbus-secret-service",
+        "--all-features"
+      ],
+      "stdout": "dbus-secret-service v4.1.0 ($WORKTREE\\vendor\\dbus-secret-service)\ndbus-secret-service feature \"crypto-openssl\"\nkeyring feature \"crypto-openssl\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred)\nnw-cred feature \"default\"\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnw-core feature \"default\"\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\nnymwrap-app feature \"default\" (command-line)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault)\nnw-vault feature \"default\"\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri) (*)\ndbus-secret-service feature \"default\"\nkeyring v3.6.3\nkeyring feature \"crypto-openssl\" (*)\nkeyring feature \"sync-secret-service\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\nkeyring feature \"vendored\"\nnw-cred v0.1.0 ($WORKTREE\\crates\\nw-cred) (*)\nnw-vault v0.1.0 ($WORKTREE\\crates\\nw-vault) (*)\ndbus-secret-service feature \"vendored\"\nkeyring feature \"vendored\" (*)\n"
+    }
+  ],
+  "desktop_supported_target_exemptions": [
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-pc-windows-msvc",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-i686-pc-windows-gnu"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-pc-windows-msvc",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-i686-pc-windows-gnu",
+        "--all-features"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-i686-pc-windows-gnu"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-i686-pc-windows-gnu",
+        "--all-features"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "aarch64-apple-darwin",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-i686-pc-windows-gnu"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "aarch64-apple-darwin",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-i686-pc-windows-gnu",
+        "--all-features"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-pc-windows-msvc",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-x86_64-pc-windows-gnu"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-pc-windows-msvc",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-x86_64-pc-windows-gnu",
+        "--all-features"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-x86_64-pc-windows-gnu"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "x86_64-unknown-linux-gnu",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-x86_64-pc-windows-gnu",
+        "--all-features"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "aarch64-apple-darwin",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-x86_64-pc-windows-gnu"
+      ],
+      "stdout": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "aarch64-apple-darwin",
+        "-e",
+        "normal,build,dev",
+        "-i",
+        "winapi-x86_64-pc-windows-gnu",
+        "--all-features"
+      ],
+      "stdout": ""
+    }
+  ],
+  "recvmsg_probe": {
+    "escape_checks": 26,
+    "unicode_scalars": 1112064,
+    "template_collision": {
+      "collision": "[JSON.parse('\"JSON.parse('\"second\"')\"'),JSON.parse('\"second\"')]",
+      "kind": "template",
+      "ordinary": "[JSON.parse('\"first\"'),JSON.parse('\"second\"')]",
+      "result": "SyntaxError; no code-execution claim"
+    },
+    "recvmsg_ownership": {
+      "kind": "recvmsg_ownership",
+      "premature_releases": 1,
+      "total_releases": 2
+    },
+    "limits": "Windows x86_64, synthetic inputs only. No real D-Bus/registry access, no native SQLCipher execution, no Miri or sanitizer run. The custom owner intentionally leaks 32 bytes to avoid executing undefined behavior."
+  },
+  "local_patch": {
+    "base_archive_sha256": "708b509edf7889e53d7efb0ffadd994cc6c2345ccb62f55cfd6b0682165e4fa6",
+    "files": [
+      {
+        "file": "Cargo.toml",
+        "sha256": "3727068037b5f00b1d767d25f3a6b42d4c79590dc9e3fed1ecdcf64e528dbce1",
+        "matches_upstream": false
+      },
+      {
+        "file": "LICENSE-APACHE",
+        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "matches_upstream": true
+      },
+      {
+        "file": "LICENSE-MIT",
+        "sha256": "0d13fdf5615ccc7e7123b58b5c88b0d2bbabe345cd70b94e094ee44034db5be6",
+        "matches_upstream": true
+      },
+      {
+        "file": "README.md",
+        "sha256": "44455112dae975539ceaa8d79b2f5b718a0453e45de4ac92aa07a81b3ee22d66",
+        "matches_upstream": true
+      },
+      {
+        "file": "UPSTREAM.md",
+        "sha256": "e7a9ed6d62ffa7ced2df78ecd4662c9e74e474cbc5524e714b14b3390147fafd",
+        "matches_upstream": false
+      },
+      {
+        "file": "examples/example.rs",
+        "sha256": "16c0c523c26c8dedd2a23c658ca66c8276632c46d5201286bf4df2189aab2cf7",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/collection.rs",
+        "sha256": "df6760d9e71d0f91ce3f3fab38f828fe85bdb650c208b43da36903c93592936a",
+        "matches_upstream": false
+      },
+      {
+        "file": "src/crypto_openssl.rs",
+        "sha256": "1d68848ef751359e634e6ca7fd06d86000b4e4169d42ba7385433e82093c7184",
+        "matches_upstream": false
+      },
+      {
+        "file": "src/error.rs",
+        "sha256": "103830247381fc1480e930afbd5cbeb572b18c8f4e2320f4eeb6d459efd91aed",
+        "matches_upstream": false
+      },
+      {
+        "file": "src/item.rs",
+        "sha256": "1479da0bd8ab7bfef9e72d955d723ff860a6afe42f1ff98627046361b5350323",
+        "matches_upstream": false
+      },
+      {
+        "file": "src/lib.rs",
+        "sha256": "d4d0c490c58dffa62c50354b23de4593b6abc769c8bd0ca5a52c9eefa13feb1e",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/prompt.rs",
+        "sha256": "a9fd0eebbad013d050ef7d773ce8e27027209da04e09ecaa338e93434dd501c7",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/session.rs",
+        "sha256": "ed47d702026174941c520d7aed66f026e5b24ef8ff9311df1d0a76bc602071c5",
+        "matches_upstream": false
+      },
+      {
+        "file": "src/ss.rs",
+        "sha256": "0a6b399e2de1743f7507a3791f7f93cb8bc49c96affa577c3ce0cf912287d4dd",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/proxy/collection.rs",
+        "sha256": "660f5c79d883adb36670a65d4a440e940efcc8304f037278957edd894d8226ad",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/proxy/item.rs",
+        "sha256": "b3754bb5e3b6271832d1809131a413644ccdc1e4f55952ce7d2de9735df04554",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/proxy/mod.rs",
+        "sha256": "380c5d5bca0092e24fbd222e6a23c95113dc15cf91148a72a9c51e83e95003c0",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/proxy/prompt.rs",
+        "sha256": "598aa9b72a67ef97363b4065831697d035cb503b6481b47957a81fb1b9d8559f",
+        "matches_upstream": true
+      },
+      {
+        "file": "src/proxy/service.rs",
+        "sha256": "efa02ded0bb277ece2d41c82eb236b06b403ec76a93f0fb83d58c4f3689fb22c",
+        "matches_upstream": true
+      }
+    ],
+    "vet_treatment": "Both stores explicitly set policy.dbus-secret-service.audit-as-crates-io=true: the unreviewed registry base remains a gap. Root publisher trust in dbus-secret-service was revoked as well as recvmsg; patch modifications require separate review. No full certificate is granted."
+  },
+  "no_network_build_analysis": {
+    "openssl_src": "Read the complete Rust build helper: copies packaged openssl/ to OUT_DIR then Perl Configure/local make; no downloader in that helper. Native/toolchain not sandbox-certified.",
+    "libdbus_sys": "build_vendored.rs invokes git submodule update only if vendor/dbus/dbus does not exist. Exact cached archive verified; directory present; CI guard checks sentinel and archive hash before proceeding. No Linux network-denial execution test performed."
+  },
+  "limitations": [
+    "Windows x86_64 runtime only; no actual Linux keyring/D-Bus integration or no-network Linux build.",
+    "Local patch implements specific crypto repairs; full source/protocol/FFI audit remains open.",
+    "No Miri/ASan/native malicious-model runtime audit.",
+    "Existing desktop dirs-sys source path exception is unchanged and not independently re-audited by this task.",
+    "Root and desktop wrapper intentionally still reject all exemptions and remaining gaps."
+  ],
+  "recvmsg_paths": [
+    {
+      "scope": "root",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "all",
+        "-e",
+        "normal,build,dev",
+        "--prefix",
+        "none",
+        "-i",
+        "recvmsg@1.0.0"
+      ],
+      "stdout": "recvmsg v1.0.0\ninterprocess v2.4.9\nnw-ipc v0.1.0 ($WORKTREE\\crates\\nw-ipc)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-bridge v0.1.0 ($WORKTREE\\crates\\nw-bridge)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api) (*)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-drift-host v0.1.0 ($WORKTREE\\crates\\nw-drift-host)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-drift-host v0.1.0 ($WORKTREE\\crates\\nw-drift-host)\nnw-llm v0.1.0 ($WORKTREE\\crates\\nw-llm)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api) (*)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-llmd v0.1.0 ($WORKTREE\\crates\\nw-llmd)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-llmd v0.1.0 ($WORKTREE\\crates\\nw-llmd)\nnw-net v0.1.0 ($WORKTREE\\crates\\nw-net)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\n"
+    },
+    {
+      "scope": "root",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "all",
+        "-e",
+        "normal,build,dev",
+        "--prefix",
+        "none",
+        "-i",
+        "recvmsg@1.0.0",
+        "--all-features"
+      ],
+      "stdout": "recvmsg v1.0.0\ninterprocess v2.4.9\nnw-ipc v0.1.0 ($WORKTREE\\crates\\nw-ipc)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-bridge v0.1.0 ($WORKTREE\\crates\\nw-bridge)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api) (*)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-drift-host v0.1.0 ($WORKTREE\\crates\\nw-drift-host)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-drift-host v0.1.0 ($WORKTREE\\crates\\nw-drift-host)\nnw-llm v0.1.0 ($WORKTREE\\crates\\nw-llm)\nnw-api v0.1.0 ($WORKTREE\\crates\\nw-api) (*)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-llmd v0.1.0 ($WORKTREE\\crates\\nw-llmd)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\nnw-llmd v0.1.0 ($WORKTREE\\crates\\nw-llmd)\nnw-net v0.1.0 ($WORKTREE\\crates\\nw-net)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-leak-tests v0.1.0 ($WORKTREE\\tests\\leak)\n"
+    },
+    {
+      "scope": "desktop",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "all",
+        "-e",
+        "normal,build,dev",
+        "--prefix",
+        "none",
+        "-i",
+        "recvmsg@1.0.0"
+      ],
+      "stdout": "recvmsg v1.0.0\ninterprocess v2.4.9\nnw-ipc v0.1.0 ($WORKTREE\\crates\\nw-ipc)\nnw-bridge v0.1.0 ($WORKTREE\\crates\\nw-bridge)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-llm v0.1.0 ($WORKTREE\\crates\\nw-llm)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\nnw-net v0.1.0 ($WORKTREE\\crates\\nw-net)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\n"
+    },
+    {
+      "scope": "desktop",
+      "args": [
+        "tree",
+        "--manifest-path",
+        "app/src-tauri/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--target",
+        "all",
+        "-e",
+        "normal,build,dev",
+        "--prefix",
+        "none",
+        "-i",
+        "recvmsg@1.0.0",
+        "--all-features"
+      ],
+      "stdout": "recvmsg v1.0.0\ninterprocess v2.4.9\nnw-ipc v0.1.0 ($WORKTREE\\crates\\nw-ipc)\nnw-bridge v0.1.0 ($WORKTREE\\crates\\nw-bridge)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core)\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnw-llm v0.1.0 ($WORKTREE\\crates\\nw-llm)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\nnymwrap-app v0.1.0 ($WORKTREE\\app\\src-tauri)\nnw-net v0.1.0 ($WORKTREE\\crates\\nw-net)\nnw-core v0.1.0 ($WORKTREE\\crates\\nw-core) (*)\n"
+    }
+  ],
+  "extra_checks": [
+    {
+      "command": "rustc --test tests/leak/tests/keyring_crypto.rs (reuse exact compiled openssl/zeroize and dependency search paths)",
+      "result": "2 passed, 0 failed; real patched crypto source, synthetic data; no Cargo suite replacement"
+    },
+    {
+      "command": "rustc --emit metadata for libdbus-sys 0.2.7 -> dbus 0.9.12 -> patched dbus-secret-service 4.1.0 with crypto-openssl,vendored",
+      "result": "pass; checks full patched Rust session/item/collection glue; host metadata only, no native D-Bus link/runtime"
+    }
+  ],
+  "schema_version": 1,
+  "checks": [
+    {
+      "command": "cargo test --workspace --locked",
+      "exit_code": 0,
+      "passed": 171,
+      "failed": 0,
+      "ignored": 16,
+      "log_sha256": "0e94262169a4f6f7ed74a8bdde4c838b97f612cd9c08b1be18ae0c4e1367bcaa"
+    },
+    {
+      "command": "cargo test -p nw-leak-tests",
+      "exit_code": 0,
+      "passed": 35,
+      "failed": 0,
+      "ignored": 1,
+      "log_sha256": "d77e4bf89402f8c00d5a9f334370bd1e9193c041fb7b3f99d3117e57339b116e"
+    },
+    {
+      "command": "cargo test -p nw-leak-tests --locked --test keyring_crypto",
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "log_sha256": "9c276408ae72f6c9f5cc57e965ca654bed114ad7adb41379db3f4a966d3d06ae"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets --locked -- -D warnings",
+      "exit_code": 0,
+      "log_sha256": "183be05b4c68e902b40b3ca58766bffb90c297b6649cd752a608f06c2b6c79e7"
+    },
+    {
+      "command": "npm ci && npm test (app)",
+      "exit_code": 0,
+      "passed": 13
+    },
+    {
+      "command": "npm ci && npm test (extension)",
+      "exit_code": 0,
+      "passed": 24
+    },
+    {
+      "command": "node scripts/check-keyring-backend.mjs",
+      "exit_code": 0,
+      "scopes": [
+        "root",
+        "desktop"
+      ],
+      "targets": [
+        "Linux (feature resolution, default/all-features)"
+      ],
+      "checks": [
+        "OpenSSL-only local patch selected",
+        "dbus vendor sentinel present",
+        "OpenSSL Configure present",
+        "exact libdbus-sys and openssl-src cached archive hashes"
+      ]
+    },
+    {
+      "command": "node --test scripts/tests/vet-dependencies.test.mjs",
+      "exit_code": 0,
+      "passed": 3
+    },
+    {
+      "command": "node scripts/lint-workflows.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo deny check --hide-inclusion-graph",
+      "version": "0.22.0",
+      "exit_code": 0,
+      "log_sha256": "b6b691b752b2c03984a0f5f79d17f9522a8a97d765c72b606b756574e5d1f850"
+    },
+    {
+      "command": "node scripts/vet-dependencies.mjs root",
+      "wrapper_exit_code": 1,
+      "cargo_vet_exit_code": 4294967295,
+      "status": "failed",
+      "failures": [
+        {
+          "name": "dbus-secret-service",
+          "version": "4.1.0"
+        },
+        {
+          "name": "libdbus-sys",
+          "version": "0.2.7"
+        },
+        {
+          "name": "libsqlite3-sys",
+          "version": "0.40.0"
+        },
+        {
+          "name": "llama-cpp-2",
+          "version": "0.1.161"
+        },
+        {
+          "name": "llama-cpp-sys-2",
+          "version": "0.1.161"
+        },
+        {
+          "name": "openssl-sys",
+          "version": "0.9.118"
+        },
+        {
+          "name": "sqlcipher-src",
+          "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2"
+        }
+      ],
+      "receipt": {
+        "version": 1,
+        "scope": "root",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "803bde58d515992e096b0c12f8c0d880906db37f48b2c481c1420be7693a6f68",
+          "config": "836ec05b2fe76aab6004231a7965c0fac78106ca639fd5bb6cd9525d720f6d64",
+          "audits": "accdc0f8b6c08db31a5c9a8db038f26756a693555ef2d3d88ce52b6955a8f676",
+          "imports": "8b33cf024360bb84a4665c114b0b5956b08434595e2a61c9cd1a08151a6736fb"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemptions": 15
+    },
+    {
+      "command": "cargo deny --manifest-path app/src-tauri/Cargo.toml check --hide-inclusion-graph",
+      "version": "0.22.0",
+      "exit_code": 0,
+      "log_sha256": "3f1ed900a671fbadce801dc755d7e644c6c8b7baf99ec77422d7b6c80506bec9"
+    },
+    {
+      "command": "node scripts/vet-dependencies.mjs desktop",
+      "wrapper_exit_code": 1,
+      "cargo_vet_exit_code": 4294967295,
+      "status": "failed",
+      "failures": [
+        {
+          "name": "dbus-secret-service",
+          "version": "4.1.0"
+        },
+        {
+          "name": "serialize-to-javascript",
+          "version": "0.1.2"
+        },
+        {
+          "name": "serialize-to-javascript-impl",
+          "version": "0.1.2"
+        },
+        {
+          "name": "sqlcipher-src",
+          "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2"
+        },
+        {
+          "name": "vswhom",
+          "version": "0.1.0"
+        }
+      ],
+      "receipt": {
+        "version": 1,
+        "scope": "desktop",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "a6b7681b1f5c7f08417c3489da6c57f1343a0b6b46ca7026647a7bdeb9e7b2ac",
+          "config": "58ce9d0431606031ef6130c6c8f36bb420d5f6b07d77c2b5be39958685e5af55",
+          "audits": "03215e06004ad3fdcc4d37990cdceed9cfda8fa55647693bdcc20f37fbad1683",
+          "imports": "fe015fce18ea23cca3d2849c5ee6c1fdf68156c9d2ce715c70c140ad3aa60e86"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemptions": 5
+    }
+  ],
+  "repository_inputs": {
+    "Cargo.lock": "803bde58d515992e096b0c12f8c0d880906db37f48b2c481c1420be7693a6f68",
+    "app/src-tauri/Cargo.lock": "a6b7681b1f5c7f08417c3489da6c57f1343a0b6b46ca7026647a7bdeb9e7b2ac",
+    "Cargo.toml": "1ac385e98f6022914e0a457a84c40dbbcc1a477fc5f2f8d4c4d53243c9e23e25",
+    "app/src-tauri/Cargo.toml": "13711209fee9b160c816d306541fe7b312724d1ed818fcb51d56f14da0b1e9a2",
+    "crates/nw-cred/Cargo.toml": "f2f2a650bf7ce372ef745002476f15a8260802220f028eea51b3f734941ca2b8",
+    "crates/nw-vault/Cargo.toml": "9b8ee298076bf64716243fa88e3529ac2ddc8156eb3a63d7ad80ee7cb89e32a5",
+    "scripts/check-keyring-backend.mjs": "8f52f822c1511d428856247ba85471aff09a817ee1616d675e4f5bb52d692744",
+    "tests/leak/tests/keyring_crypto.rs": "5af8cc0f186a1197b4fb4903f11d61b81b06cb0035b3dacadf4e5e3911443563"
+  },
+  "protected_inputs": {
+    "netd_lock_and_store_unchanged_from_HEAD": true,
+    "netd_lock_sha256": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84"
+  },
+  "external_sources": [
+    {
+      "url": "https://specifications.freedesktop.org/secret-service/latest/ch07s03.html",
+      "retrieved": "2026-11-26",
+      "scope": "Official group/KDF/cipher and IV/public-key wire format; no interoperability runtime claim"
+    }
+  ],
+  "release_gate": "FAILED: remaining source/native/protocol gaps plus exemptions; no criteria or wrapper weakened."
+}

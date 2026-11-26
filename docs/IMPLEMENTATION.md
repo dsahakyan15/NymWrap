@@ -7,6 +7,36 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Исправления по находкам cargo-vet
+
+Linux keyring в графах root/desktop переведён на crypto-openssl + vendored
+([ADR 0109](adr/0109-secret-service-openssl.md)). Простая смена feature не убирала
+fastrand из upstream, поэтому добавлен локальный OpenSSL patch: DH/CSPRNG,
+проверки peer/IV, Zeroizing и возврат ошибок без plain fallback. Проверка Linux
+features и полных vendored prerequisites добавлена в CI; регрессии с синтетической
+канарейкой используют тот же backend на любой ОС. Обновлены только root и desktop
+lockfiles; netd не изменён. Ложное root exemption openssl заменено проверенным
+доверием публикатору конкретного релиза.
+
+Доверие recvmsg отозвано; дефект владения воспроизведён. Текущий nw-ipc byte-stream
+путь не вызывает MsgBuf/try_extend_lifetime; в обоих графах одинаковые исключения
+на версию 1.0.0 с условиями отмены. Остальные находки, их риски и решения человека
+собраны в [ADR 0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md).
+Cargo-vet wrapper не ослаблен: открытые пробелы и любые exemptions сохраняют
+красный gate. Для path patch явно сохранён audit-as-crates-io; непроверенный
+upstream base остаётся открытым пробелом, прежнее root trust ему отозвано.
+
+Локально Windows x64, CARGO_BUILD_JOBS=4, полный Perl из bootstrap и build-env:
+`cargo test --workspace --locked` — 171 passed, 16 ignored;
+`cargo clippy --workspace --all-targets --locked -- -D warnings` — exit 0;
+`cargo test -p nw-leak-tests` — 35 passed, 1 ignored;
+`npm test` после npm ci — app 13/13, extension 24/24.
+Проверка keyring backend, vet wrapper tests (3/3), workflow lint и cargo-deny
+для root/desktop прошли. `node scripts/vet-dependencies.mjs root` и `desktop`
+запущены: failed, соответственно 7 и 5 gaps, 15 и 5 exemptions; locked inputs
+не изменились. Все обязательные локальные команды выполнены; ignored native
+tests, настоящий Linux Secret Service, Linux build с запретом сети и CI не
+запускались. Подробные результаты и hashes — в dep-fixes review JSON.
 ## Задача 12 — MicroVM для агентов
 
 Добавлен отдельный opt-in Linux x86_64 backend Firecracker:

@@ -269,6 +269,8 @@ jobs:
           node-version: '24'
       - run: rustup show
       - run: cargo fetch --manifest-path "$NW_VET_MANIFEST" --locked
+      - if: matrix.scope == 'root' || matrix.scope == 'desktop'
+        run: node scripts/check-keyring-backend.mjs "$NW_VET_SCOPE"
       - run: node scripts/vet-dependencies.mjs "$NW_VET_SCOPE"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

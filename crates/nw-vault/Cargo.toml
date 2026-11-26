@@ -24,7 +24,7 @@ keyring = { workspace = true, features = ["windows-native"] }
 keyring = { workspace = true, features = ["apple-native"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-keyring = { workspace = true, features = ["sync-secret-service", "crypto-rust", "vendored"] }
+keyring = { workspace = true, features = ["sync-secret-service", "crypto-openssl", "vendored"] }
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true

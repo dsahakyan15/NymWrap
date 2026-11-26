@@ -607,13 +607,6 @@ start = "2025-11-12"
 end = "2025-11-13"
 notes = "ADR 0102. Trust the RustCrypto project lead for the named hash/KDF/cipher utility implementations and legacy getrandom release. This decision covers production untrusted-input handling, unsafe dispatch and OS entropy integration within those maintainership domains, with the documented RustCrypto constant-time constraints and rust-random platform-support/entropy policy; it is not inferred merely from successful execution. Algorithm misuse and dependent crates still need separate coverage. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
-[[trusted.dbus-secret-service]]
-criteria = "safe-to-deploy"
-user-id = 103233 # Daniel Brotsky (brotskydotcom)
-start = "2025-08-26"
-end = "2025-08-27"
-notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust Daniel Brotsky, maintainer of the synchronous Secret Service implementation and keyring integration, for production session/encryption negotiation, DBus message/error contracts, collection/item lookup and secret transfer. README explicitly separates plain sessions from crypto-rust/crypto-openssl and requires client selection. This does not authorize access to real credentials or certify DBus/native/crypto dependencies or application keyring policy. Read: package identity/manifest metadata and pinned canonical open-source-cooperative README; keyring maintainer/release documentation. Exact published archive SHA-256 708b509edf7889e53d7efb0ffadd994cc6c2345ccb62f55cfd6b0682165e4fa6; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
-
 [[trusted.derive_more-impl]]
 criteria = "safe-to-deploy"
 user-id = 3797 # Jelte Fennema-Nio (JelteF)
@@ -964,6 +957,13 @@ start = "2026-03-12"
 end = "2026-03-13"
 notes = "Trust the author-maintainer of once_cell for its production single-assignment/lazy initialization implementation: ownership, synchronization, panic/reentrancy and publication ordering are the explicit documented contracts of this library. Limited to once_cell and the verified historical release date. Caller initializer side effects and application deadlock policy remain the caller's responsibility; this is publisher trust for safe-to-deploy, not a new independent source audit. Registry evidence: once_cell 1.21.4; archive SHA-256 9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50; https://crates.io/api/v1/crates/once_cell/1.21.4. ADR 0102 continuation."
 
+[[trusted.openssl]]
+criteria = "safe-to-deploy"
+user-id = 163 # Alex Gaynor (alex)
+start = "2026-11-01"
+end = "2026-11-02"
+notes = "ADR 0109. Package scope: openssl 0.10.82, newly reachable on Linux keyring and cross-platform synthetic crypto tests. Trust the rust-openssl project release maintainer Alex Gaynor for this official openssl release, including FFI lifetimes, build/link selection and hostile crypto/protocol inputs. The registry account alex is verified separately from alexcrichton. OpenSSL native source/toolchain and application TLS policy remain separate audit obligations. One historical UTC publication day [start,end) only; no trust in future releases or unrelated packages. Exact-version registry publisher/date/yank/checksum, cached archive, sparse index and root and desktop Cargo.lock checksums verified; archive SHA-256 4de8111e94a56adca7ebfe6c365b6d42f99deb69b74b6becacd4204e2f193aa2. Fresh exact-version API, archive and index verification: review-2026-11-26-dep-fixes.json. Prior identity evidence: ../desktop/review-2026-11-26-desktop-3.json for registry records, current-owner/team evidence, canonical repository metadata and scope limits. Trust decision by Codex agent, not a human source audit; no claim of full source review."
+
 [[trusted.openssl-src]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1061,13 +1061,6 @@ trusted-publisher = "github:rust-random/rand"
 start = "2026-08-25"
 end = "2026-08-26"
 notes = "Trust the official Rand project release identity for the verified rand release: distribution algorithms, unbiased range sampling, RNG state/thread ownership and explicit cryptographic versus noncryptographic generator contracts are the project's production domain. Limited to its verified publication day. This does not turn every RNG into a CSPRNG, certify seeding sources or transfer coverage to dependencies. Explicit safe-to-deploy publisher trust, not an independent cryptographic or workflow audit. Registry evidence: rand 0.8.8; archive SHA-256 e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c; https://crates.io/api/v1/crates/rand/0.8.8. ADR 0102 continuation."
-
-[[trusted.recvmsg]]
-criteria = "safe-to-deploy"
-user-id = 72501 # kotauskas
-start = "2024-01-12"
-end = "2024-01-13"
-notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust kotauskas, the exact publisher and maintainer of the official recvmsg/interprocess pair, for production initialized message buffers, ownership transitions and safe synchronous/asynchronous datagram reception without silent truncation. The official pinned recvmsg README matches the archive despite missing repository metadata in Cargo.toml. Caller-selected quotas, custom unsafe trait implementations and OS behavior remain separate. Read: package identity/manifest metadata and pinned upstream recvmsg README, matched against the packaged README; interprocess documented integration. Exact published archive SHA-256 d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
 
 [[trusted.redox_syscall]]
 criteria = "safe-to-deploy"
