@@ -78,8 +78,11 @@ impl Route {
             self.slot.as_ref(),
             now,
         )?;
+        self.check_available()?;
         // The sole production adapter is Tor + pooled keys (L3). No fallback.
-        if self.config.net.transport != crate::config::Transport::Tor {
+        if self.config.net.transport != crate::config::Transport::Tor
+            || self.config.net.credential_ref.as_deref() != Some("keyring:pool")
+        {
             return Err(CoreError::Transport);
         }
         Ok(())
@@ -111,4 +114,6 @@ fn check_dispatch(
 mod tests {
     use super::*;
     include!("../../../../../../tests/leak/src/paranoid_queue.rs");
+    #[cfg(feature = "experimental-zkapi")]
+    include!("../../../../../../tests/leak/src/experimental_queue.rs");
 }

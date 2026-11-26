@@ -17,6 +17,10 @@ path = "src/daemon.rs"
 name = "core-cover-egress"
 path = "../../tests/leak/src/core_cover_coordinator.rs"
 
+[features]
+experimental-zkapi = ["nw-net/experimental-zkapi"]
+experimental-nym = ["nw-net/experimental-nym"]
+
 [dependencies]
 nw-proto.workspace = true
 nw-shield.workspace = true

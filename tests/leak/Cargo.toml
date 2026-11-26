@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+experimental-zkapi = ["nw-core/experimental-zkapi", "nw-net/experimental-zkapi"]
+experimental-nym = ["nw-core/experimental-nym", "nw-net/experimental-nym"]
+
 [dev-dependencies]
 nw-core.workspace = true
 nw-api = { path = "../../crates/nw-api", version = "=0.1.0" }

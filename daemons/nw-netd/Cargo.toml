@@ -6,6 +6,10 @@ license = "MIT OR Apache-2.0"
 
 [workspace]
 
+[features]
+experimental-zkapi = ["nw-net/experimental-zkapi"]
+experimental-nym = ["nw-net/experimental-nym"]
+
 [dependencies]
 arti-client = { version = "=0.48.0", default-features = false, features = ["tokio","rustls","compression","static-sqlite","pt-client"] }
 tor-ptmgr = "=0.48.0"

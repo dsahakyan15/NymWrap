@@ -275,7 +275,14 @@ impl Config {
                 .as_deref()
                 .ok_or(CoreError::Request)?;
             nw_net::validate_provider(host, path).map_err(|_| CoreError::Request)?;
-            if self.net.credential_ref.as_deref() != Some("keyring:pool")
+            let credential_allowed = self.net.credential_ref.as_deref() == Some("keyring:pool");
+            #[cfg(feature = "experimental-zkapi")]
+            let credential_allowed = credential_allowed
+                || self.net.credential_ref.as_deref() == Some(nw_net::zkapi::CREDENTIAL_REF)
+                    && (self.net.transport == Transport::Tor
+                        || cfg!(feature = "experimental-nym")
+                            && self.net.transport == Transport::Nym);
+            if !credential_allowed
                 || self.net.provider_model.as_ref().is_none_or(|m| {
                     m.is_empty() || m.len() > 128 || m.chars().any(char::is_control)
                 })
