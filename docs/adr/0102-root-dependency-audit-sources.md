@@ -658,3 +658,144 @@ payload и нерешённые контракты не заменены общ�
 failures сам по себе не сделал бы wrapper зелёным, поскольку он отдельно
 требует пустой `vetted_with_exemptions`. Это правило не менялось.
 **Root gate и M6 остаются открытыми.**
+
+## Шестая партия от 902745c: 9 → 6
+
+2026-11-26, ветка `agent/vet-root-6`, implementation sub-agent, без делегирования
+и push. Добавлены ровно **три доверия публикаторам**, каждое для одного пакета
+и исторических UTC-суток. **safe-to-deploy сохранён**, новых exemptions нет.
+Версии, все Cargo.lock, manifests, прежние policy и шесть import sources не
+менялись. Прежние разделы этого ADR описывают историю, не новый результат.
+Полные registry evidence, SHA, область чтения и остаток — в
+[шестом отчёте](../../supply-chain/root/review-2026-11-26-batch-6.json).
+
+### Три ограниченных доверия
+
+| Пара | Проверенный uploader и окно [start,end) | Основание |
+|---|---|---|
+| errno 0.3.15 | Chris Wong / lambda-fairy, id 684; 2026-11-12–13 | Автор и автор точного release commit; сопровождение OS ABI, TLS errno, форматирования и преобразования UTF. Прочитаны все production Rust файлы и manifests. |
+| siphasher 1.0.4 | Frank Denis / jedisct1, id 468; 2026-09-25–26 | Автор и автор точного release commit; SipHash 1-3/2-4, 64/128 бит, tail/chunk bounds и deployed hashing. Прочитан весь production Rust. |
+| openssl-src 300.6.1+3.6.3 | Alex Crichton / alexcrichton, id 1; 2026-06-09–10 | Прочитан весь production Rust build helper; отдельно подтверждено происхождение native payload OpenSSL 3.6.3 ниже. |
+
+Для девяти исходных кандидатов свежие exact-version API запросы дали HTTP 200:
+uploader, дата, отсутствие yank, checksum сверены с архивом и фактической записью
+sparse index; registry-зависимости — также с Cargo.lock. У path fork llama-cpp-2
+проверена опубликованная база, собственного checksum в Cargo.lock нет.
+Все распакованные файлы совпали с .crate. Запросы последовательные, с
+описательным User-Agent и паузой 1,4 с; TLS не отключался. Release patches и
+README закреплены на точных commits и записаны с SHA. Publisher evidence
+добавлена штатным regenerate imports, вручную imports.lock не дополнялся.
+Каждая запись явно помечена **«Проверено агентом, не человеком»**; это решения
+доверия, не заявление о полном независимом человеческом исходном аудите.
+
+У errno прежний вопрос ERANGE проверен по GNU libc 2.42 `string/xpg-strerror.c`
+и musl 1.2.5 `src/string/strerror_r.c`: обе реализации завершают непустой
+буфер NUL и при ERANGE. Это не универсальное доказательство для всех libc,
+локалей и ОС: их контракты остаются частью явного доверия сопровождающему.
+Windows get/set и форматирование неизвестных кодов проверены локально.
+
+У siphasher конструкторы и запись сохраняют `ntail < 8`; root выбирает только
+default/std, также при workspace --all-features. Serde восстанавливает private
+state без валидации: `ntail=8` принимается и даёт debug panic при write_u8.
+Это воспроизведено, не объявлено исправленным; внешнее недоверенное состояние
+десериализовать нельзя. В текущем root serde этой зависимости не включён.
+Нулевые default keys не дают защиты от намеренных коллизий; криптографическая
+аутентификация и универсальная constant-time гарантия не заявляются.
+
+### Сверка native payload с upstream
+
+[Воспроизводимая сверка](../../supply-chain/root/review-native-2026-11-26-batch-6.mjs)
+проверяет SHA артефактов и побайтное совпадение упакованных поддеревьев.
+По умолчанию использует cache в target/; `--fetch-upstream` загружает только
+точные записанные HTTPS-артефакты. Сравнение упакованного подмножества не
+объявляется равенством полных деревьев: исключённые upstream-файлы перечислены
+числом, добавленный crate glue рассматривается отдельно.
+
+| Крейты / upstream | Результат |
+|---|---|
+| openssl-src / OpenSSL 3.6.3 | Все 2425 общих упакованных файлов совпали с официальным release tar.gz. Три оставшихся dot-файла инструментов совпали с официальным тегом openssl-3.6.3. SHA архива совпал с upstream SHA256 asset. |
+| libdbus-sys / libdbus 1.14.4 | Все 304 упакованных файла vendor/dbus совпали с официальным GitLab тегом dbus-1.14.4. Сертификата нет из-за build fallback ниже. |
+| libsqlite3-sys / SQLite 3.54.1 | sqlite3.c, sqlite3.h и sqlite3ext.h совпали с официальным sqlite-amalgamation-3540100.zip. Два Rust binding-файла и wasm32-wasi-vfs.c — отдельный crate glue; его полная проверка не завершена. |
+| sqlcipher-src / SQLCipher 4.20.0, SQLite 3.54.1 | Release source archive получен, но готовой амальгамации в нём нет. Генерация configure/make/Tcl не воспроизведена; совпадение sqlcipher.c и generated headers **не доказано**. Требует человеческого решения. |
+| sqlcipher-src / libtomcrypt 1.18.2 | Все 425 файлов src/ совпали с официальным crypt-1.18.2.zip. В git-tag tarball отличались только ref-комментарии; он не выдан за побайтное совпадение. Это не закрывает непроверенную амальгамацию SQLCipher. |
+| llama-cpp-sys-2 / llama.cpp d81235049384534c167caea52b85a694f6103d14 | Все 1908 упакованных файлов совпали с официальным commit; gitlink подтверждён HTML дерева wrapper на точном release commit. Соответствующего release tag среди свежих upstream refs не найдено. Это совпадение с commit, **не подтверждение официального релиза**; доверие не дано. |
+
+OpenSSL archive SHA-256:
+`243a86649cf6f23eeb6a2ff2456e09e5d77dd9018a54d3d96b0c6bdd6ba6c7f1`.
+**Вендоренный C/C++ совпадает с upstream OpenSSL 3.6.3; построчно агентом не
+аудирован; доверие к upstream-проекту.** То же ограничение относится к ASM.
+Происхождение подтверждено по официальному
+[релизу OpenSSL](https://github.com/openssl/openssl/releases/tag/openssl-3.6.3),
+а не по одному номеру версии внутри крейта. Подпись GPG независимо не проверялась.
+
+У openssl-src default build/install/remove paths находятся внутри
+OUT_DIR/openssl-build; Configure запускается в копии исходников, --prefix
+направлен в OUT_DIR. openssldir — runtime metadata, не destination сборки.
+Скачивания в Rust helper нет. Toolchain/environment и явный caller out_dir
+остаются доверенной конфигурацией сборки. Legacy provider включён через
+openssl-sys; безопасность всех legacy algorithms не заявляется. Доверие этому
+пакету не сертифицирует openssl-sys, SQLCipher или вызывающий код приложения.
+
+GitHub API git-tree вернул 403, поэтому для gitlink использован закреплённый
+HTML. Неудачные 404 запросы и ошибка распаковки .xz без xz не выданы за evidence:
+libdbus проверен по официальному GitLab tar.gz, libtomcrypt — по release ZIP.
+Сырые URL, коды и SHA сохранены в JSON, включая эти ограничения.
+
+### Открытые решения и точный остаток
+
+Остались **6 safe-to-deploy gaps**, без новых exemptions:
+
+- **libdbus-sys 0.2.7:** C совпал с 1.14.4, Rust/build прочитаны. При отсутствии
+  vendor/dbus/dbus build_vendored.rs запускает git submodule update --init.
+  В проверенном .crate каталог есть, но абсолютное требование «build не качает»
+  этим fallback не обеспечено. Требует человеческого решения, доверие не дано.
+- **libsqlite3-sys 0.40.0:** build.rs и runtime helpers прочитаны, SQLite сверена;
+  завершить полную проверку generated Rust ABI и отдельного WASI VFS C glue.
+  Неполное чтение не повышено до сертификата.
+- **openssl-sys 0.9.118:** из фактического src/err.rs воспроизведено
+  ERR_GET_REASON(ERR_SYSTEM_FLAG | 13) == 2. Проверенный OpenSSL 3.6.3
+  include/openssl/err.h.in возвращает 13 через ERR_SYSTEM_MASK. Доверие и
+  exemption не даны; исправление/обновление требует отдельного решения.
+  Собственного Rust caller этого helper в root не найдено; crate остаётся
+  активным для линковки SQLCipher. Это не remote exploit и не причина
+  самовольно менять версии.
+- **sqlcipher-src 420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2:**
+  Rust lib/source list прочитаны, libtomcrypt совпал; официальную амальгамацию
+  ещё нужно воспроизвести. Требует человеческого решения, доверие не дано.
+- **llama-cpp-sys-2 0.1.161:** native subset совпал с commit, release qualification
+  не подтверждена. При dynamic-link build.rs делает hard links DLL в
+  target/profile, examples и deps вне OUT_DIR. Прочитана часть build/Rust,
+  полный feature/ABI аудит не завершён. Требует человеческого решения.
+- **llama-cpp-2 0.1.161:** опубликованная база и локальная разница открыты.
+  Прочитан локальный build.rs и Win32 FILE bridge на C/Rust, сверена область
+  delta; полный аудит Rust ownership/FFI базы не завершён. Сертификат не дан.
+
+### Проверки шестой партии
+
+- Финальный `node scripts/vet-dependencies.mjs root`: **failed, 6 gaps**,
+  locked imports, все четыре входа неизменны. Критерий и wrapper не менялись.
+- `cargo deny check --hide-inclusion-graph`: **exit 0**, advisories/bans/
+  licenses/sources ok; прежние duplicate/unmatched-exception warnings.
+- [Стенд](../../supply-chain/root/review-tests-2026-11-26-batch-6.mjs):
+  **13 upstream + 6 synthetic tests** в debug и release, **38 результатов**.
+  Включает полные split/tail проверки 64/128-bit SipHash, errno, serde-state
+  ограничение и расхождение OpenSSL error helper; воспроизведения не исправления.
+- Native recheck: OpenSSL 2425 + три dot-файла, libdbus 304, SQLite 3,
+  llama.cpp 1908, libtomcrypt 425 файлов; SHA manifests сохранены в JSON.
+- Все 15 прежних exemptions повторно дали пустое inverse tree с --target all,
+  --all-features, normal/build/dev. Новых исключений нет. Wrapper tests **3/3**,
+  расширение после offline npm ci — **24/24**.
+- Workspace tests, clippy и leak suite запущены; каждый **exit 101**, Configure
+  OpenSSL не находит Perl. Зелёного результата нет. Первый запуск isolated
+  harness также столкнулся с rustup auto-sync/rename ошибкой rust-src;
+  повтор с явными installed rustc/rustdoc прошёл. Toolchain/config не менялись.
+- Root vet fmt, проверка неизменности lockfiles/других sections и git diff --check.
+  CI и push не запускались. Native runtime, Miri и cross-platform matrix не
+  запускались.
+
+Все **15 прежних exemptions** сохранены и отдельно перечислены в JSON:
+async-broadcast 0.7.2, blocking 1.7.0, event-listener 5.4.2, hermit-abi 0.5.3,
+nix 0.29.0, openssl 0.10.82, rsqlite-vfs 0.2.0, secret-service 4.0.0,
+sqlite-wasm-rs 0.6.3, uds_windows 1.2.1, zbus 4.4.0, zbus_macros 4.4.0,
+zbus_names 3.0.0, zvariant 4.2.0, zvariant_derive 4.2.0. Даже ноль gaps не
+сделал бы wrapper зелёным при этих exemptions. **Root gate и M6 открыты.**

@@ -649,6 +649,13 @@ start = "2026-10-06"
 end = "2026-10-07"
 notes = "ADR 0102. Trust the Rust/rust-num/rayon and indexmap maintainer for production arithmetic, collection invariants and build-time capability detection in the named crates. Input-driven arithmetic and container memory safety are part of their production maintainership, rather than treating an absence of I/O as proof. Numeric algorithms remain subject to documented overflow and size limits. Exact publication verified with crates.io API, locked checksum, sparse index and archive SHA-256; evidence in review-2026-11-26.json. One-day historical window [start, end), no future releases."
 
+[[trusted.errno]]
+criteria = "safe-to-deploy"
+user-id = 684 # Chris Wong (lambda-fairy)
+start = "2026-11-12"
+end = "2026-11-13"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent complete source audit. Trust Chris Wong (lambda-fairy), named author and exact upstream release-commit author/publisher, for production platform errno ABI, thread-local get/set, bounded OS error formatting and UTF conversion. Read both manifests, README/changelog and every production Rust file (lib, Unix, Windows, WASI, Hermit). The prior ERANGE question was checked against GNU libc 2.42 xpg-strerror.c and musl 1.2.5 strerror_r.c: both terminate the supplied nonempty buffer on ERANGE. This is not a proof for every alternate libc/locale/OS: those platform contracts remain entrusted to the maintainer, not certified independently. Windows round-trip/error formatting tested locally. No network/build script or persistent storage in this crate. Exact archive SHA-256 e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776, crates.io checksum/uploader/date/yank status, Cargo.lock and cached sparse index checked. One-day historical UTC window [start,end), only this named package; no future releases. ADR 0102 batch 6; evidence and limitations in review-2026-11-26-batch-6.json. Dependencies remain separate."
+
 [[trusted.event-listener-strategy]]
 criteria = "safe-to-deploy"
 user-id = 33035 # Taiki Endo (taiki-e)
@@ -957,6 +964,13 @@ start = "2026-03-12"
 end = "2026-03-13"
 notes = "Trust the author-maintainer of once_cell for its production single-assignment/lazy initialization implementation: ownership, synchronization, panic/reentrancy and publication ordering are the explicit documented contracts of this library. Limited to once_cell and the verified historical release date. Caller initializer side effects and application deadlock policy remain the caller's responsibility; this is publisher trust for safe-to-deploy, not a new independent source audit. Registry evidence: once_cell 1.21.4; archive SHA-256 9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50; https://crates.io/api/v1/crates/once_cell/1.21.4. ADR 0102 continuation."
 
+[[trusted.openssl-src]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2026-06-09"
+end = "2026-06-10"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent complete source audit. Read both manifests, pinned README, exact release patch and all Rust build-helper production code in src/lib.rs. Default output/build/install/remove paths remain under OUT_DIR/openssl-build; Configure runs in its copied source tree, --prefix points inside OUT_DIR; /usr/local/ssl / OPENSSL_CONFIG_DIR is runtime configuration metadata, not an installation target. Builds use local cc/Perl/make/nmake and packaged input, no download command; explicit caller out_dir/toolchain overrides remain trusted build configuration. Source/config/assembly payload: all 2425 packaged files present in the official OpenSSL 3.6.3 release archive match byte-for-byte, the remaining three packaging-only dotfiles match the official openssl-3.6.3 tag. Official archive SHA-256 243a86649cf6f23eeb6a2ff2456e09e5d77dd9018a54d3d96b0c6bdd6ba6c7f1 also matches the upstream checksum asset. вендоренный C/C++ совпадает с upstream OpenSSL 3.6.3; построчно агентом не аудирован; доверие к upstream-проекту. Trust Alex Crichton, exact release author/publisher, for packaging and build configuration; explicit trust to OpenSSL maintainers for deployed cryptographic C/ASM, not an independent cryptographic or toolchain audit. Legacy provider is enabled transitively by openssl-sys, not a claim all legacy algorithms are secure. No trust granted to openssl-sys or SQLCipher by this entry. Exact archive SHA-256 46eb8fb9fb3b61ce1c0f8a026c4c1a0714d3a9e138e7fbde78753ce2babc3846, crates.io checksum/uploader/date/yank status, Cargo.lock and cached sparse index checked. One-day historical UTC window [start,end), only this named package; no future releases. ADR 0102 batch 6; evidence and limitations in review-2026-11-26-batch-6.json. Dependencies remain separate."
+
 [[trusted.parking_lot]]
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
@@ -1222,6 +1236,13 @@ user-id = 5906 # Michal 'vorner' Vaner (vorner)
 start = "2025-12-25"
 end = "2025-12-26"
 notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent source audit. Trust author-maintainer Michal Vaner (vorner), the exact publisher, for production global signal registration, synchronization, removal/chaining and signal-safe registry lifetime handling. The official signal-hook README explains POSIX reentrancy and async-signal-safety constraints. Arbitrary registered callbacks still must meet the unsafe API requirements; registration does not make mutex/allocation safe in a handler. Read: package identity/manifest metadata, packaged/pinned upstream README production API/contracts; available release-commit metadata or documented author/maintainer identity (see JSON evidence). Exact published archive SHA-256 c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b; exact-version crates.io API, Cargo.lock and cached sparse index checked. Only this named package and historical UTC day [start,end); no future releases or unrelated uploads. ADR 0102 batch 5; evidence and limitations in review-2026-11-26-batch-5.json. Dependencies remain separate."
+
+[[trusted.siphasher]]
+criteria = "safe-to-deploy"
+user-id = 468 # Frank Denis (jedisct1)
+start = "2026-09-25"
+end = "2026-09-26"
+notes = "Проверено агентом, не человеком. Publisher trust for safe-to-deploy, not an independent complete source audit. Trust Frank Denis (jedisct1), named author and exact upstream release-commit author/publisher, for production SipHash 1-3/2-4 (64/128-bit), chunk/tail bounds, LE input loading and deployed hashing. Read both manifests, README and all production Rust (lib/common/sip/sip128); inspect unsafe loads, private state transitions, Clone/Default and serde derives. Only default/std is selected in current root, including workspace --all-features. Constructors maintain ntail < 8; arbitrary deserialized private state is not validated and must not be accepted from an untrusted source. This is maintainer trust, not a certificate that malformed serde state is valid. Noncryptographic hash-table/codegen use only: zero default keys do not provide adversarial collision resistance; Hasher integer methods are target-native and no constant-time or cryptographic authentication claim is made. Test vectors and exhaustive split/streaming checks run locally. Exact archive SHA-256 33f4fe9184a62d842c9ef383018f3306d8ba224fd9d836f56d7288308847c256, crates.io checksum/uploader/date/yank status, Cargo.lock and cached sparse index checked. One-day historical UTC window [start,end), only this named package; no future releases. ADR 0102 batch 6; evidence and limitations in review-2026-11-26-batch-6.json. Dependencies remain separate."
 
 [[trusted.slab]]
 criteria = "safe-to-deploy"
