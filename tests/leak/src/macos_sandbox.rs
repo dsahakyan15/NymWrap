@@ -236,7 +236,11 @@ fn invalid_macos_authority_is_rejected_before_spawn() {
 
 #[test]
 fn profiles_allow_cpu_discovery_but_deny_host_identifier_sysctls() {
-    let executable = Path::new("/usr/sbin/sysctl").canonicalize().unwrap();
+    if std::env::var_os("NW_MACOS_SYSCTL_CHILD").is_some() {
+        nw_sandbox::macos::verify_runtime_sysctl_policy().unwrap();
+        return;
+    }
+    let executable = std::env::current_exe().unwrap().canonicalize().unwrap();
     for (process, lane) in PROFILES {
         let profile = Profile {
             process,
@@ -245,31 +249,25 @@ fn profiles_allow_cpu_discovery_but_deny_host_identifier_sysctls() {
             read_only: &[],
             sockets: &[],
         };
-        let cpu = profile
-            .command(&executable, &["-n".into(), "hw.ncpu".into()])
+        let output = profile
+            .command(
+                &executable,
+                &[
+                    "--exact".into(),
+                    "profiles_allow_cpu_discovery_but_deny_host_identifier_sysctls".into(),
+                    "--nocapture".into(),
+                ],
+            )
             .unwrap()
+            .env("NW_MACOS_SYSCTL_CHILD", "1")
             .output()
             .unwrap();
         assert!(
-            cpu.status.success(),
-            "{process:?}/{lane:?}: CPU discovery unavailable"
+            output.status.success(),
+            "{process:?}/{lane:?}: status={}\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr)
         );
-        assert!(
-            std::str::from_utf8(&cpu.stdout)
-                .unwrap()
-                .trim()
-                .parse::<u32>()
-                .unwrap()
-                > 0
-        );
-        let host = profile
-            .command(&executable, &["-n".into(), "kern.hostname".into()])
-            .unwrap()
-            .output()
-            .unwrap();
-        assert!(!host.status.success());
-        assert!(host.stdout.is_empty());
-        let error = String::from_utf8_lossy(&host.stderr);
-        assert!(error.contains("Operation not permitted") || error.contains("Permission denied"));
+        assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed; 0 failed"));
     }
 }

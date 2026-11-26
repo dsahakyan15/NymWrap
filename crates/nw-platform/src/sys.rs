@@ -7,6 +7,10 @@ pub use device::*;
 mod macos_probe;
 #[cfg(target_os = "macos")]
 pub use macos_probe::*;
+#[cfg(target_os = "macos")]
+mod macos_sandbox;
+#[cfg(target_os = "macos")]
+pub use macos_sandbox::verify_runtime_sysctl_policy;
 #[cfg(windows)]
 mod windows_sandbox;
 #[cfg(windows)]

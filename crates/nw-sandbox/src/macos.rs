@@ -2,6 +2,7 @@
 //! The trusted coordinator chooses one lane, one private container and exact IPC
 //! endpoints. No entitlement, shell, caller-supplied SBPL or unsandboxed retry.
 use crate::SandboxError;
+pub use nw_platform::verify_runtime_sysctl_policy;
 use std::{ffi::OsString, os::unix::fs::MetadataExt, path::Path, process::Command};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

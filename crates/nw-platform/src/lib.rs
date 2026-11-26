@@ -16,6 +16,8 @@ pub use sys::inherited_stdin_pipe;
 #[cfg(target_os = "macos")]
 pub use sys::local_peer_process;
 pub use sys::open_device_config;
+#[cfg(target_os = "macos")]
+pub use sys::verify_runtime_sysctl_policy;
 #[cfg(target_os = "linux")]
 pub use sys::{
     ChildIdentity, drop_process_identity, enter_child_network_namespace, isolate_core_network,
