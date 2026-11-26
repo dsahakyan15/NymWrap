@@ -1,0 +1,17 @@
+(version 1)
+(deny default)
+; Public runtime metadata is not permission to read file contents.
+(allow file-read-metadata)
+(allow sysctl-read)
+(allow file-read-data
+    (subpath "/System/Library")
+    (subpath "/usr/lib")
+    (subpath "/usr/share/zoneinfo")
+    (literal "/dev/null")
+    (literal "/dev/urandom")
+    (literal "/dev/random")
+    (literal (param "PROGRAM")))
+(allow file-write-data (literal "/dev/null"))
+; Only the initial executable. No fork, arbitrary exec, Mach services, IOKit,
+; location services, Wi-Fi services or access to the user's home is granted.
+(allow process-exec (literal (param "PROGRAM")))
