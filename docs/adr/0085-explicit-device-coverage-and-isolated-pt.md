@@ -24,6 +24,15 @@ macOS читает passwd, CoreFoundation/SystemConfiguration/IOKit и getifaddr
 доказывает полноту современного Wi-Fi, источник остаётся неизвестным. Новые
 location/Wi-Fi capabilities не запрашиваются. При отказе sandbox нет fallback.
 
+Нативный run 45769281372 подтвердил, что Seatbelt на GitHub macOS runner
+устанавливается, но Darwin разрешает создать пустой IP socket fd и применяет
+запрет при сетевой операции. Поэтому самопроверка до чтения IPC требует именно
+`PermissionDenied` от `bind` и `connect` для TCP/UDP IPv4/IPv6; успешная операция
+или иной код ошибки завершает worker. Если уже `socket` возвращает
+`PermissionDenied`, это также строгий запрет. Ошибка `sandbox_init` остаётся
+явным `probe_sandbox_unavailable`, падает в обязательном CI и не превращается в
+skip или запуск без песочницы.
+
 Гигиена использует только трёхзначные наблюдения: NetBIOS по всем прочитанным
 Windows-интерфейсам, Linux read-only adjtimex и ограниченный буквальный JSON
 политик Firefox по умолчанию. Для положительного browser verdict нужны оба

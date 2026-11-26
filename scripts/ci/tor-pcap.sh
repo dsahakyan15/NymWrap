@@ -184,7 +184,13 @@ config=tomllib.loads((root/'chutney/nodes/arti.toml').read_text())
 config['storage']={'cache_dir':str(root/'mount/private/cache'),'state_dir':str(root/'mount/private/state')}
 (root/'arti.json').write_text(json.dumps(config))
 PY
-relay "$chutney/chutney" start "$network"
+if test "$mode" = obfs4; then
+  # Preserve Tor's pre-log startup diagnostics for the managed bridge. Chutney
+  # otherwise appends --quiet, hiding failures that occur before notice.log.
+  relay env CHUTNEY_DEBUG=1 "$chutney/chutney" start "$network"
+else
+  relay "$chutney/chutney" start "$network"
+fi
 # Arti can bootstrap from an early consensus containing only the authorities.
 # Require Chutney's full network/descriptor readiness, including the sole exit.
 relay "$chutney/chutney" wait_for_bootstrap "$network"
