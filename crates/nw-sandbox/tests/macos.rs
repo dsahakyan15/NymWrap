@@ -6,20 +6,18 @@ include!("../../../tests/leak/src/macos_sandbox.rs");
 #[test]
 fn cli_executes_only_with_an_explicit_valid_profile() {
     let executable = env!("CARGO_BIN_EXE_nw-sandbox");
-    assert!(
-        std::process::Command::new(executable)
-            .args([
-                "--process",
-                "nw-api",
-                "--lane",
-                "shadow",
-                "--",
-                "/usr/bin/true"
-            ])
-            .status()
-            .unwrap()
-            .success()
-    );
+    let status = std::process::Command::new(executable)
+        .args([
+            "--process",
+            "nw-api",
+            "--lane",
+            "shadow",
+            "--",
+            "/usr/bin/true",
+        ])
+        .status()
+        .unwrap();
+    assert!(status.success(), "native CLI status={status}");
     for args in [
         vec![
             "--process",

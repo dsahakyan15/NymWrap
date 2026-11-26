@@ -4,6 +4,9 @@
 (allow file-read-metadata)
 (allow sysctl-read)
 (allow file-read-data
+    ; dyld opens the root directory while locating its shared cache. This is a
+    ; literal directory grant, not a recursive grant to the filesystem.
+    (literal "/")
     (subpath "/System/Library")
     (subpath "/usr/lib")
     (subpath "/usr/share/zoneinfo")
@@ -13,7 +16,7 @@
     (literal (param "PROGRAM")))
 ; dyld's immutable runtime locations on current macOS (including Cryptex).
 ; Reading code and mapping it executable are distinct Seatbelt operations.
-(allow file-read-data file-map-executable
+(allow file-read* file-map-executable
     (subpath "/System/Library")
     (subpath "/usr/lib")
     (subpath "/System/Cryptexes/OS")
