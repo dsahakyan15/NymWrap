@@ -115,6 +115,8 @@ jobs:
         run: cargo test -p nw-sandbox --test agent actual_agent --locked -- --ignored
       - if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test -p nw-sandbox --test daemons actual_ --locked -- --ignored
+      - if: runner.os == 'Windows' || runner.os == 'Linux'
+        run: cargo test -p nw-drift-host --test sandbox_relay actual_ --locked -- --ignored
       - if: runner.os == 'Windows' || runner.os == 'Linux' || runner.os == 'macOS'
         run: cargo test -p nw-probe --test worker actual_device_probe --locked -- --ignored
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings

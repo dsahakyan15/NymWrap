@@ -31,18 +31,18 @@ fn start() -> std::io::Result<()> {
 async fn launch_relay() -> std::io::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     let endpoint = nw_bridge::endpoint().map_err(std::io::Error::other)?;
-    let environment = ["LOCALAPPDATA", "XDG_DATA_HOME", "XDG_RUNTIME_DIR", "HOME"]
-        .into_iter()
-        .filter_map(|k| std::env::var_os(k).map(|v| (k.into(), v)))
-        .collect();
     let mut child = nw_sandbox::daemon::Launch {
         profile: nw_sandbox::daemon::Profile::DriftHost,
         binary: std::env::current_exe()?,
-        arguments: vec!["--sandbox-relay".into()],
+        arguments: vec![
+            "--sandbox-relay".into(),
+            "--cover-socket".into(),
+            endpoint.value().into(),
+        ],
         listener: None,
         upstream: vec![endpoint.value().into()],
         files: vec![],
-        environment,
+        environment: vec![],
     }
     .spawn()
     .await
@@ -92,6 +92,19 @@ async fn launch_relay() -> std::io::Result<()> {
 }
 async fn run() -> std::io::Result<()> {
     nw_platform::harden_process()?;
+    #[cfg(any(windows, target_os = "linux"))]
+    let endpoint = {
+        let arguments: Vec<_> = std::env::args().skip(1).collect();
+        if arguments.len() != 3
+            || arguments[0] != "--sandbox-relay"
+            || arguments[1] != "--cover-socket"
+        {
+            return Err(std::io::Error::other("invalid_relay_arguments"));
+        }
+        nw_ipc::Endpoint::new(arguments[2].clone(), nw_proto::Lane::Cover)
+            .map_err(std::io::Error::other)?
+    };
+    #[cfg(not(any(windows, target_os = "linux")))]
     let endpoint = nw_bridge::endpoint().map_err(std::io::Error::other)?;
     let (mut input, mut output) = (std::io::stdin().lock(), std::io::stdout().lock());
     nw_drift_host::relay(&endpoint, &mut input, &mut output).await

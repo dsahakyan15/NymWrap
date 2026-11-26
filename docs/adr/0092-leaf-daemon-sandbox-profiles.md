@@ -59,6 +59,12 @@ Native host, который запускает браузер, оставляе�
 выполнением требования «каждый процесс»: M6 остаётся открытым. Production
 Linux netns launcher ADR 0078/0082 и изоляция PT ADR 0085 не заменяются.
 
+Launcher передаёт relay готовый логический cover endpoint по внутреннему
+аргументу, до чтения browser-кадров. Окружение пользователя relay не выдаётся:
+AppContainer может виртуализировать LOCALAPPDATA, и повторное вычисление
+namespace внутри LPAC выбирало другой pipe. Binary-регрессия sandbox_relay
+проверяет настоящий host → LPAC/bwrap relay → синтетический cover listener.
+
 Проверки ОС находятся в `tests/leak/src/daemon_sandbox.rs`: отдельный
 отрицательный тест каждого профиля, разрешённый IPC и совпадение PID,
 недоступность shadow IPC для cover-профиля. Они обязательны в Windows/Linux CI.

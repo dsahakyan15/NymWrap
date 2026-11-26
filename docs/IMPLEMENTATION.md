@@ -14,6 +14,8 @@ host (ADR 0092): Windows LPAC/Job Object, Linux bwrap/двухэтапный sec
 Модели доступны read-only, IPC выдаётся по отдельным endpoints, запрещены
 внешние сокеты и дочерние процессы. Отрицательные проверки каждого профиля
 находятся в tests/leak/src/daemon_sandbox.rs и подключены к Windows/Linux CI.
+Полный binary-канал native host/relay проверяется тестом sandbox_relay; готовый
+cover endpoint передаётся launcher, без повторного вычисления внутри LPAC.
 Локально на Windows прошли cargo test --workspace --locked, clippy для всех
 targets с -D warnings, nw-leak-tests, npm test в extension/app, actual-тесты
 трёх профилей, LPAC/владельца объектов, core/API RPC и обеих GGUF-моделей.
