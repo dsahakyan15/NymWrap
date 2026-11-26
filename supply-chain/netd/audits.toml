@@ -12,6 +12,18 @@ Read offline from the existing Cargo cache and verified against the cached regis
 Ordinary cargo test --offline did not resolve the uncached optional dependency and ran no tests. Direct default-feature tests with the pinned rustc/rustdoc passed: two unit tests, one cross-crate test and one doctest. This does not certify optional dependencies or platform CI.
 """
 
+[[audits.crypto-common]]
+who = "NymWrap Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.2.2"
+notes = """
+Проверено агентом, не человеком. AI source review by Codex; not an independent human security audit.
+Published archive SHA-256: ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453.
+Archive freshly checked against Cargo.lock and the local sparse registry index; reviewed directly from safely extracted archive bytes.
+Reviewed both manifests, README, and all code in lib.rs, generate.rs and hazmat.rs, including each serialization macro expansion family. no_std and forbid(unsafe_code); no build script, native code, process, file or network access. Key/IV slice constructors perform fallible exact-size array conversions before invoking algorithm constructors; invalid lengths return errors rather than truncating/padding secret material. Trait blanket implementations preserve those checks. Serialization uses fixed-width little-endian conversions; chunks_exact uses fixed nonzero integer widths, so each try_into().unwrap() receives exactly the required length for all input byte values.
+Random generation requires CryptoRng/TryCryptoRng and propagates fill failures without returning partially filled keys; explicit infallible system generation may panic on entropy failure. Underlying RNG, hybrid-array and typenum soundness require separate audits; this is not certification of cryptographic algorithms or their implementations. SetIvState::peek restores IV only on normal closure return, not during unwinding; callers must not treat it as transactional or use it to guarantee nonce uniqueness. No zeroization guarantee for local temporaries is inferred. Offline all-feature compilation in an isolated source copy seeded with netd's lock resolution succeeded; upstream has zero unit tests and four ignored doctests, so this is compile evidence only.
+"""
+
 [[audits.equivalent]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -60,3 +72,1054 @@ Base SHA-256: 3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7.
 Target SHA-256: 173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49.
 Reviewed all package differences and the surrounding DatetimeDeserializer implementation. The only executable change adds MapAccess::size_hint as Some(usize::from(date.is_some())). The Option is consumed by next_value_seed, so the hint is bounded to 0 or 1 and has no new allocation, I/O, unsafe code or state mutation. Production dependency constraints, features and build=false are unchanged. Other differences are packaging include paths, lints, release/docs/license attribution, VCS metadata and the package's own development lockfile. Dependencies and the previously audited base require their own audit paths.
 """
+
+[[audits.version_check]]
+who = "NymWrap Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.9.5"
+notes = """
+Проверено агентом, не человеком. AI source review by Codex; not an independent human security audit.
+Published archive SHA-256: 0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a.
+Archive freshly checked against Cargo.lock and the local sparse registry index; reviewed directly from safely extracted archive bytes.
+Reviewed both manifests and all production/test code in lib.rs, version.rs, channel.rs and date.rs. No dependencies, unsafe code, build.rs, native code or generated deployed functions. The sole production ambient operation runs the trusted RUSTC environment executable (or rustc from PATH) with literal --verbose --version arguments and captures stdout; no shell interpretation, runtime network endpoint or unrelated file writes. RUSTFLAGS/CARGO_ENCODED_RUSTFLAGS are parsed as strings and never executed. Callers must keep the build environment/compiler trusted.
+Compiler-output parsers use safe string operations and checked u16 parsing. Fixed three-element version/date loops return on i=3 before indexing; packed representations mask/cast fixed widths. Extra version components and invalid numeric values return None. Date parsing is intentionally not a full calendar validator; channel parsing recognizes compiler-style substrings, so neither is an authentication or arbitrary-semver validator. The feature checks only inform builds. No untrusted runtime input can turn these into new ambient authority. In an isolated copy with only an empty workspace marker added, offline upstream tests passed: 10 unit tests and 26 doctests; excluded historical static fixtures were not supplied.
+"""
+
+[[audits.wasm-bindgen-macro]]
+who = "NymWrap Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.2.130"
+notes = """
+Проверено агентом, не человеком. AI source review by Codex; not an independent human security audit.
+Published archive SHA-256: 6e931a02a39abdbf66966fc35902b5ed58344750a70885bed4ebb3d8eaf28ed9.
+Archive freshly checked against Cargo.lock and the local sparse registry index; reviewed directly from safely extracted archive bytes.
+Reviewed both manifests, the complete src/lib.rs, README and the comment-only worker.js; package inventory has no build script/native component. All four procedural-macro entry points only convert compiler TokenStreams and delegate to the corresponding exact-version wasm-bindgen-macro-support expansion. Error paths interpolate its Diagnostic as tokens with quote; link_to adds String::clone around the diagnostic to retain expected type checking. No shell, environment/filesystem/network access, unsafe block or dynamically executed text in this wrapper. The optional debug cfg only prints generated tokens to build stdout; it is not enabled by ordinary features.
+This audit covers the wrapper's own behavior and generated diagnostic glue under hostile syntax, not the implementation of macro-support or the soundness of its generated deployed bindings. Those dependencies remain subject to their own safe-to-deploy coverage (macro-support remains an explicit gap). strict-macro only forwards a dependency feature. No upstream macro/JS integration tests were run for this entry.
+"""
+
+[[audits.wasm-bindgen-shared]]
+who = "NymWrap Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.2.130"
+notes = """
+Проверено агентом, не человеком. AI source review by Codex; not an independent human security audit.
+Published archive SHA-256: 3b1f9c3798725016c6ee5f2f57869ec0831e8bbc0ab0310a86e787e97f41389e.
+Archive freshly checked against Cargo.lock and the local sparse registry index; reviewed directly from safely extracted archive bytes.
+Reviewed both published manifests, the complete build.rs and all four Rust modules (lib, identifier, tys, schema_hash_approval), package inventory and the finite schema macro expansion. No unsafe Rust or native code. The no_std library constructs strings/schema declarations and identifier predicates; character iteration/safe slices handle malformed or long Unicode without unchecked memory access. JS keyword handling and escape_string are JS-generation helpers, not HTML sanitization; FNV module hashes/name mangling are not cryptographic identifiers. The exported macro only forwards a fixed finite schema to a caller-selected macro, with no hidden executable payload. Generated code consumers/dependencies require separate coverage.
+The build script reads only its two fixed schema source paths under Cargo's CARGO_MANIFEST_DIR, emits Cargo metadata, and runs git rev-parse HEAD with literal arguments (no shell). PATH/git and the build environment are trusted build inputs, not runtime network input. It does not open sockets or execute schema contents; malformed git output can fail the build, not inject shell commands. No runtime filesystem/process capability. Offline upstream test in an isolated source copy passed the schema-hash test; no JS/WASM integration suite or downstream code generator was certified.
+"""
+
+[[trusted.aead]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-02"
+end = "2023-04-03"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.aho-corasick]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-08-03"
+end = "2026-08-04"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.async-trait]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-08-08"
+end = "2026-08-09"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.atomic]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2023-05-15"
+end = "2023-05-16"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.atomic]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-06-20"
+end = "2025-06-21"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.autocfg]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-05-22"
+end = "2026-05-23"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.axum]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-04-14"
+end = "2026-04-15"
+notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.base16ct]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-02-26"
+end = "2023-02-27"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.base16ct]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2026-01-03"
+end = "2026-01-04"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.base64ct]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2026-01-12"
+end = "2026-01-13"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.block-buffer]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2023-03-09"
+end = "2023-03-10"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.block-buffer]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-11"
+end = "2026-06-12"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.bstr]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.bytes]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-11-17"
+end = "2026-11-18"
+notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.cc]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2026-11-20"
+end = "2026-11-21"
+notes = "ADR 0103: Only cc/find-msvc-tools from the official repository workflow. Rust project native-build maintainers are trusted to select toolchains and emit correct native build/link directives for deployment; trust includes generated/compiled native-code consequences. The upstream C/ASM sources compiled by cc are not audited by trusting this helper. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.chacha20]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-01"
+end = "2023-04-02"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.chacha20poly1305]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-08-10"
+end = "2022-08-11"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.cipher]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2023-03-09"
+end = "2023-03-10"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.cmov]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-05-28"
+end = "2026-05-29"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.cpubits]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-04-28"
+end = "2026-04-29"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.cpufeatures]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2025-01-25"
+end = "2025-01-26"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.cpufeatures]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2026-08-26"
+end = "2026-08-27"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.crossbeam-queue]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-09-05"
+end = "2026-09-06"
+notes = "ADR 0103: Only futures-task/util, crossbeam and fastrand. Maintains pinning, async and crossbeam/atomic infrastructure used in deployed Rust; trust covers pin/waker and concurrency invariants and generated code under adversarial task scheduling. fastrand is trusted as a documented noncryptographic RNG, never as entropy for credentials. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.crossbeam-utils]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-09-05"
+end = "2026-09-06"
+notes = "ADR 0103: Only futures-task/util, crossbeam and fastrand. Maintains pinning, async and crossbeam/atomic infrastructure used in deployed Rust; trust covers pin/waker and concurrency invariants and generated code under adversarial task scheduling. fastrand is trusted as a documented noncryptographic RNG, never as entropy for credentials. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.crypto-bigint]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-11-18"
+end = "2023-11-19"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.crypto-common]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2025-11-12"
+end = "2025-11-13"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.ctutils]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-11-02"
+end = "2026-11-03"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.digest]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-05-19"
+end = "2023-05-20"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.dyn-clone]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-07-27"
+end = "2025-07-28"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.ecdsa]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-11-16"
+end = "2023-11-17"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.either]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-10-06"
+end = "2026-10-07"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.elliptic-curve]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-11-19"
+end = "2023-11-20"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.fastrand]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-07-19"
+end = "2026-07-20"
+notes = "ADR 0103: Only futures-task/util, crossbeam and fastrand. Maintains pinning, async and crossbeam/atomic infrastructure used in deployed Rust; trust covers pin/waker and concurrency invariants and generated code under adversarial task scheduling. fastrand is trusted as a documented noncryptographic RNG, never as entropy for credentials. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.filetime]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2026-11-16"
+end = "2026-11-17"
+notes = "ADR 0103: Only filetime and wasi. Rust/Cargo/Wasmtime systems maintainer; the pinned Bytecode Alliance/ISRG sets explicitly trust these package families for safe-to-deploy. Trust includes intended filesystem timestamp operations and ABI-correct WASI imports; neither API becomes an authorization boundary for callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.find-msvc-tools]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2026-10-19"
+end = "2026-10-20"
+notes = "ADR 0103: Only cc/find-msvc-tools from the official repository workflow. Rust project native-build maintainers are trusted to select toolchains and emit correct native build/link directives for deployment; trust includes generated/compiled native-code consequences. The upstream C/ASM sources compiled by cc are not audited by trusting this helper. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.flate2]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/flate2-rs"
+start = "2026-11-06"
+end = "2026-11-07"
+notes = "ADR 0103: Only flate2 from its official release workflow. Rust compression maintainers are trusted for bounds/state handling of adversarial compressed streams in deployment; decompressed-size quotas remain the application responsibility. Compression backends/native dependencies require their own coverage. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.futures-task]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-08-11"
+end = "2026-08-12"
+notes = "ADR 0103: Only futures-task/util, crossbeam and fastrand. Maintains pinning, async and crossbeam/atomic infrastructure used in deployed Rust; trust covers pin/waker and concurrency invariants and generated code under adversarial task scheduling. fastrand is trusted as a documented noncryptographic RNG, never as entropy for credentials. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.futures-util]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-08-11"
+end = "2026-08-12"
+notes = "ADR 0103: Only futures-task/util, crossbeam and fastrand. Maintains pinning, async and crossbeam/atomic infrastructure used in deployed Rust; trust covers pin/waker and concurrency invariants and generated code under adversarial task scheduling. fastrand is trusted as a documented noncryptographic RNG, never as entropy for credentials. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.getrandom]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2026-01-11"
+end = "2026-01-12"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2022-07-17"
+end = "2022-07-18"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/hashbrown"
+start = "2026-11-22"
+end = "2026-11-23"
+notes = "ADR 0103: Only hashbrown from its official Rust repository release workflow. Maintainers of the hash table underlying Rust std collections are trusted for unsafe bucket allocation/ownership and probe invariants under adversarial keys. Publication identity alone is not a source review, and a non-DoS-resistant hasher remains a caller choice. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hex-literal]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2025-10-29"
+end = "2025-10-30"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hmac]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2022-02-17"
+end = "2022-02-18"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.http]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.http-body]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.http-body-util]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-08-12"
+end = "2026-08-13"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.httparse]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2025-03-03"
+end = "2025-03-04"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hyper]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-10-06"
+end = "2026-10-07"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.hyper-util]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-09-24"
+end = "2026-09-25"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.indexmap]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2023-03-24"
+end = "2023-03-25"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.indexmap]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-09-05"
+end = "2026-09-06"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.inout]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2025-02-21"
+end = "2025-02-22"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.inout]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-11-07"
+end = "2026-11-08"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.inventory]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-07"
+end = "2026-10-08"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.itoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-11-09"
+end = "2026-11-10"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.jiff-tzdb-platform]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2025-03-23"
+end = "2025-03-24"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.jobserver]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2026-07-06"
+end = "2026-07-07"
+notes = "ADR 0103: Only jobserver, reusing the ADR 0088 scope. Official Rust project build coordination package; deployment criterion covers inherited handle/FD ownership and bounded build-tool interaction. Shared account is not blanket authority: hashbrown, libm and lazy_static under this id are deliberately excluded from this local trust batch. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/libc"
+start = "2026-10-16"
+end = "2026-10-17"
+notes = "ADR 0103: Only libc from the official Rust libc workflow. Rust platform-ABI maintainers are trusted for production layouts, constants and FFI signatures, including targets not executed locally. This does not certify unsafe call sites elsewhere or native system libraries. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.linux-raw-sys]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2025-12-23"
+end = "2025-12-24"
+notes = "ADR 0103: Only rustix/linux-raw-sys. Rustix and WASI/capability-runtime maintainer with responsibility for safe syscall wrappers and ABI definitions; trust covers unsafe pointer/length and OS-error translation in production. Pinned Bytecode Alliance trust precedent supports this boundary; wrappers do not grant a sandbox to their caller. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.lock_api]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.log]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/log"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "ADR 0103: Only log from its official workflow. Rust logging maintainers are trusted for global logger initialization/lifetime and concurrent dispatch in deployed software. This crate permits logging; NymWrap content-free logging policy must still be enforced by callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.memchr]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-07-08"
+end = "2026-07-09"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.mime]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-11-05"
+end = "2026-11-06"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.mio]]
+criteria = "safe-to-deploy"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2026-11-13"
+end = "2026-11-14"
+notes = "ADR 0103: Only Mio/socket2. Tokio low-level socket maintainer; trust covers socket ABI, buffer lengths, ownership and readiness behavior with hostile network peers and schedules. Pinned Bytecode Alliance explicitly trusts this package family for safe-to-deploy. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.num-bigint]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-07-05"
+end = "2026-07-06"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.num-integer]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-08-12"
+end = "2026-08-13"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.num-iter]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-07-07"
+end = "2026-07-08"
+notes = "ADR 0103: Only autocfg, either, indexmap and rust-num integers. Rust compiler/library/release and rust-num maintainer; trust includes container/number invariants and output of compiler probes in deployed code. Pinned sets provide safe-to-deploy publisher-trust precedent for indexmap and num-bigint. num-complex/rational safe-to-run precedent is not used as safe-to-deploy evidence. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.p256]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-15"
+end = "2023-04-16"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.p384]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2025-02-07"
+end = "2025-02-08"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.p521]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-11-11"
+end = "2023-11-12"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.parking_lot]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.parking_lot_core]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.paste]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2024-05-07"
+end = "2024-05-08"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.pem-rfc7468]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-02-26"
+end = "2023-02-27"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.pem-rfc7468]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2025-11-08"
+end = "2025-11-09"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.pin-project-lite]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:taiki-e/pin-project-lite"
+start = "2026-11-19"
+end = "2026-11-20"
+notes = "ADR 0103: Only pin-project-lite from the official workflow. Its maintainer specializes in pin projection and async soundness; deployment trust specifically covers the unsafe projection/drop code emitted for caller types under adversarial polling. Other generated macro families are not implicitly covered. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.pkcs1]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-24"
+end = "2023-04-25"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.pkcs8]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-05"
+end = "2023-04-06"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.poly1305]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-07-31"
+end = "2022-08-01"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.primeorder]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-11-16"
+end = "2023-11-17"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.ref-cast]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-08-19"
+end = "2026-08-20"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.ref-cast-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-08-19"
+end = "2026-08-20"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.regex]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2025-10-13"
+end = "2025-10-14"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.regex-automata]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.regex-syntax]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.rfc6979]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-02-28"
+end = "2023-03-01"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.rustix]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2026-10-27"
+end = "2026-10-28"
+notes = "ADR 0103: Only rustix/linux-raw-sys. Rustix and WASI/capability-runtime maintainer with responsibility for safe syscall wrappers and ABI definitions; trust covers unsafe pointer/length and OS-error translation in production. Pinned Bytecode Alliance trust precedent supports this boundary; wrappers do not grant a sandbox to their caller. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.rustversion]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-07"
+end = "2026-07-08"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.same-file]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2020-01-11"
+end = "2020-01-12"
+notes = "ADR 0103: Only regex/automata/syntax, memchr, bstr, same-file and jiff-tzdb-platform. Maintains production text search and bounded regex engines; trust includes untrusted patterns/text, SIMD bounds, and documented platform/file identity operations. Pinned Bytecode Alliance/ISRG use safe-to-deploy trust for these core search families; resource bounds still depend on callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.scopeguard]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2023-07-17"
+end = "2023-07-18"
+notes = "ADR 0103: Only atomic, hashbrown 0.12, lock_api, parking_lot/core and scopeguard. Maintains production synchronization and hash tables; trust includes unsafe storage ownership, lock ordering and hostile concurrency/hash workloads. Bytecode Alliance/ISRG explicitly trust these families at safe-to-deploy; not an assertion that arbitrary caller lock protocols are deadlock-free. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.sec1]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-07-16"
+end = "2023-07-17"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-18"
+end = "2026-07-19"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_core]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-18"
+end = "2026-07-19"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_derive]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-18"
+end = "2026-07-19"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_ignored]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_json]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-11"
+end = "2026-10-12"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_path_to_error]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-09-15"
+end = "2025-09-16"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_spanned]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-06-06"
+end = "2025-06-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.serde_spanned]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-06"
+end = "2026-11-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.sha1]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-03-27"
+end = "2026-03-28"
+notes = "ADR 0103: Only sha1/sha2/sha3 from the official RustCrypto workflow. RustCrypto hashing maintainers are trusted for production compression/padding, unsafe accelerated paths and hostile message lengths. Trust does not make SHA-1 suitable for collision-sensitive security and does not imply a separate cryptographic audit. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.sha2]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2025-04-30"
+end = "2025-05-01"
+notes = "ADR 0103: Only his published RustCrypto hash/cipher/KDF, entropy, buffer and literal-macro family. RustCrypto project lead responsible for cryptographic implementations and platform acceleration; trust extends to adversarial inputs and generated code/unsafe platform boundaries used in deployment. Entropy-source correctness remains a high-impact residual maintainer-trust assumption. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.sha2]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-10-12"
+end = "2026-10-13"
+notes = "ADR 0103: Only sha1/sha2/sha3 from the official RustCrypto workflow. RustCrypto hashing maintainers are trusted for production compression/padding, unsafe accelerated paths and hostile message lengths. Trust does not make SHA-1 suitable for collision-sensitive security and does not imply a separate cryptographic audit. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.sha3]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-05-15"
+end = "2026-05-16"
+notes = "ADR 0103: Only sha1/sha2/sha3 from the official RustCrypto workflow. RustCrypto hashing maintainers are trusted for production compression/padding, unsafe accelerated paths and hostile message lengths. Trust does not make SHA-1 suitable for collision-sensitive security and does not imply a separate cryptographic audit. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.signature]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-11-12"
+end = "2023-11-13"
+notes = "ADR 0103: Only his published RustCrypto primitives, encodings, key formats and CPU-feature support. As RustCrypto project lead he maintains code whose normal purpose is operating on adversarial keys, signatures and ciphertext; trust covers production constant-time/memory-safety and parser obligations, not merely compilation. This is maintainer trust, not an independent cryptographic proof or a new crypto-reviewed criterion. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.slab]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-01-31"
+end = "2026-02-01"
+notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.socket2]]
+criteria = "safe-to-deploy"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0103: Only Mio/socket2. Tokio low-level socket maintainer; trust covers socket ABI, buffer lengths, ownership and readiness behavior with hostile network peers and schedules. Pinned Bytecode Alliance explicitly trusts this package family for safe-to-deploy. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.sponge-cursor]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-05-08"
+end = "2026-05-09"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2023-02-24"
+end = "2023-02-25"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-15"
+end = "2026-07-16"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-11-09"
+end = "2026-11-10"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.thiserror]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2024-11-10"
+end = "2024-11-11"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.thiserror]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-09-23"
+end = "2026-09-24"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2024-11-10"
+end = "2024-11-11"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-09-23"
+end = "2026-09-24"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.tokio]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-10-21"
+end = "2026-10-22"
+notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.tokio-macros]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.tokio-util]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-10-09"
+end = "2026-10-10"
+notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-06-06"
+end = "2025-06-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_datetime]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-06-06"
+end = "2025-06-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_datetime]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-06"
+end = "2026-11-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-06-06"
+end = "2025-06-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_parser]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_write]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-06-06"
+end = "2025-06-07"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.toml_writer]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.tower]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-01-12"
+end = "2026-01-13"
+notes = "ADR 0103: Only Hyper/HTTP/body/Tower and mime. Maintainer of deployed HTTP protocol libraries; trust explicitly includes hostile HTTP bytes, length/framing and unsafe buffer handling. Pinned Bytecode Alliance safe-to-deploy trust entries for HTTP families provide precedent, not automatic approval of newer releases. NymWrap request allowlists remain mandatory. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.unicode-ident]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-12"
+end = "2026-10-13"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.wasi]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2025-06-10"
+end = "2025-06-11"
+notes = "ADR 0103: Only filetime and wasi. Rust/Cargo/Wasmtime systems maintainer; the pinned Bytecode Alliance/ISRG sets explicitly trust these package families for safe-to-deploy. Trust includes intended filesystem timestamp operations and ABI-correct WASI imports; neither API becomes an authorization boundary for callers. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-11-15"
+end = "2023-11-16"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-30"
+end = "2024-07-31"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows-targets]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_i686_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0103: Only Microsoft windows-sys/targets and architecture import libraries. Maintains generated Win32 ABI bindings; trust for deployment covers generated layouts/linkage and vendored import archives, not arbitrary Windows calls made by callers. ISRG/Zcash explicitly trust this publisher for these families at safe-to-deploy; individual publication dates are independently bounded here. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.winnow]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-05"
+end = "2026-11-06"
+notes = "ADR 0103: Only TOML/spanned/parser/writer/edit and winnow. Cargo/clap/TOML maintainer; trust covers hostile TOML/token input, safe parser bounds and emitted syntax. Existing product usage and pinned Bytecode Alliance trust for this parser family support deployment-level publisher judgment; no promotion of the fuzz criterion is performed. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.zeroize]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-11-17"
+end = "2026-11-18"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.zeroize_derive]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-12"
+end = "2026-06-13"
+notes = "ADR 0103: Only block-buffer/cmov/cpubits/ctutils/inout/sponge-cursor/zeroize/zeroize_derive from the official workflow. RustCrypto maintainers are trusted for buffer/constant-time/zeroization and generated-code invariants with adversarial input. Dependencies and cryptographic compositions remain separately accountable; workflow metadata is provenance, not an audited workflow claim. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.zmij]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0103: Own serialization and procedural-macro family. Trust for production includes correct bounds/lifetimes in generated code and handling hostile syntax/serialized values, based on long-term maintenance of Serde/syn and explicit safe-to-deploy trust precedent for these families in the pinned Bytecode Alliance/ISRG sets. This is a publisher judgment, not promotion of the fuzz safe-to-run audits. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
