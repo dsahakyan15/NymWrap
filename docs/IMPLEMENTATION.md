@@ -114,78 +114,89 @@ wasm-bindgen-shared, wasm-bindgen-macro, version_check, crypto-common.
 (у установленного Git Perl отсутствует `Locale/Maketext/Simple.pm`).
 Локальные проверки не объявляются результатом CI.
 
-## Задача 9: M6 cargo-vet, только fuzz; промежуточный результат — 2026-11-26
+## Задача 9: M6 cargo-vet, только fuzz; локальный gate зелёный — 2026-11-26
 
-Продолжение от `a120a5f`: **193 → 79 пробелов**. Изменён только store
-`fuzz/Cargo.toml` и документация. Root, netd, desktop, версии зависимостей и все
-Cargo.lock сохранены. Новых exemptions нет. M6 и dependency-audits fuzz остаются
-открытыми: локальный locked gate по-прежнему красный.
+Продолжение от `4691e27`: **79 → 0 пробелов**, накопительно **248 → 0**.
+Изменены только `supply-chain/fuzz/`, [ADR 0088](adr/0088-fuzz-dependency-audit-sources.md)
+и этот существующий раздел. Root/netd/desktop, версии, все Cargo.lock и
+fuzz config.toml сохранены. Новых exemptions или wildcard audits нет.
+M6 и общий CI остаются открытыми; подтверждён только локальный fuzz gate.
 
-Локальные замеры одной CI-командой `node scripts/vet-dependencies.mjs fuzz`:
+Замеры командой job dependency-audits `node scripts/vet-dependencies.mjs fuzz`:
 
 | Состояние | Пробелов |
 |---|---:|
-| Исторический baseline на 94e6bf9, `safe-to-deploy` | 248 |
-| Первая партия: Bytecode Alliance/ISRG/Zcash imports | 219 |
-| Первая партия: fuzz-only политика `safe-to-run` | 206 |
-| Первая партия: 16 аудитов агента, коммит a120a5f | 193 |
-| Продолжение: подтверждённые 16 crates.io user-id | 97 |
-| Продолжение: 8 официальных GitHub Trusted Publishing identities | 87 |
-| Дополнительный закреплённый import Embark Studios | 87 |
-| Аудит version_check 0.9.5 | 86 |
-| Аудит bitflags 2.13.2 | 85 |
-| Аудит wasm-bindgen-shared 0.2.130 | 84 |
-| Аудит errno 0.3.15 | 83 |
-| Аудит phf_shared 0.14.0 | 82 |
-| Аудит phf_generator 0.14.0 | 81 |
-| Аудит proc-macro-crate 3.5.0 | 80 |
-| Аудит memoffset 0.9.1; финальный check --locked | **79** |
+| Исторический baseline 94e6bf9, safe-to-deploy | 248 |
+| Первая партия, a120a5f: imports, fuzz safe-to-run и 16 аудитов агента | 193 |
+| Предыдущее продолжение, 4691e27: проверенные публикаторы и восемь аудитов | 79 |
+| Ещё 64 подтверждённые публикации: 29 user-id и семь GitHub identities | 15 |
+| Аудит enumflags2_derive 0.7.12 | 14 |
+| Аудит redox_syscall 0.5.18 | 13 |
+| Аудит enumflags2 0.7.12 | 12 |
+| Аудит blocking 1.7.0 | 11 |
+| Аудит async-recursion 1.2.0 | 10 |
+| Аудит doctest-file 1.1.1 | 9 |
+| Аудит matchit 0.8.4 | 8 |
+| Аудит ordered-stream 0.2.0 | 7 |
+| Аудит recvmsg 1.0.0 | 6 |
+| Аудит uds_windows 1.2.1 | 5 |
+| Аудит dtoa-short 0.3.5 | 4 |
+| Аудит secret-service 4.0.0 | 3 |
+| Аудит constant_time_eq 0.6.1 | 2 |
+| Аудит ego-tree 0.11.1 | 1 |
+| Аудит scraper 0.29.0 | **0** |
+| Финальный check --locked, без обновления imports | **0** |
 
-[ADR 0088, «Доверенные публикаторы»](adr/0088-fuzz-dependency-audit-sources.md#доверенные-публикаторы)
-содержит отдельный список: кто, числовой user-id или workflow identity, основание
-доверия и измеренное число закрытых пробелов. Он предназначен для повторного
-рассмотрения другими графами; их политика не менялась. Доверие относится только
-к `safe-to-run`, конкретным пакетам и историческим датам публикации, без будущих
-релизов. Перед добавлением каждой записи точный uploader/дата проверены в API
-crates.io; SHA-256 архива совпал с API и sparse index. Workflow-публикации с
-`published_by = null` не приписаны человеческому user-id.
+У новых trusted entries однодневные исторические UTC-окна, отдельные для
+каждого пакета/дня и только safe-to-run. API uploader/workflow, дата, отсутствие
+yank и SHA-256 каждого архива проверены по API crates.io и sparse index.
+Cargo.toml.orig сопоставлен с официальным upstream commit; для workflow также
+совпали repository и SHA из реестра с VCS commit архива. У widestring разрешена
+только разница CRLF/LF. Это свидетельства происхождения, а решение доверять
+конкретному публикатору, его основание и остаточные риски перечислены отдельно
+в ADR/отчёте. Native bundles/IPC не выданы за независимый исходный аудит;
+незаконченный просмотр typenum покрыт доверием к paholg, не сертификацией агента.
 
-Embark закреплён commit `732513edfd9172f4eda358b2d0cefc6cad1585ee`; прежние
-пять imports сохранены на своих commits. Проверенные Actix/Fermyon не добавлены
-из-за отсутствия полезного покрытия. Наборы не передают собственные imports и
-exemptions; исходные criteria не усиливаются.
+Шесть imports сохранены на прежних commits. Ariel OS рассмотрен и не добавлен:
+его исторические futures-lite delta не нужны поверх выбранного точного
+публикатора. В imports.lock изменились только publisher-метаданные, чужие
+audits/criteria сохранены; чужие exemptions или imports не наследуются.
 
-Восемь новых исходных аудитов честно помечены Codex agent, имеют только
-`safe-to-run`, точную версию, SHA-256 архива и описание просмотренного. Сначала
-проверялись узлы с большим числом потребителей. Просмотрены production-модули,
-macro templates и build scripts; зафиксированы ожидаемые обращения к rustc,
-git, Cargo/manifests и OS error APIs. Это не независимый человеческий аудит,
-не проверка криптографии и не `safe-to-deploy`. Тесты самих крейтов не запускались.
-Незаконченные просмотры typenum, больших генераторов/библиотек и native C/ASM
-не сертифицированы; полный остаток требует дальнейших содержательных проверок.
+15 новых аудитов точных версий честно помечены Codex agent, имеют SHA-256 и
+только safe-to-run. Приоритет — число транзитивных потребителей (сначала 10,
+9 и 8). В notes перечислены прочитанные пути и пределы: raw Redox ABI/pointers,
+unsafe/FFI contracts, необязательные квоты recvmsg, caller closures blocking,
+доверенный session bus Secret Service и явные file/man-page операции CLI scraper.
+Большие обёртки получили целевой просмотр полномочий, не доказательство каждого
+unsafe; production-парсеры, криптография и safe-to-deploy не сертифицированы.
+Upstream crate-specific tests не запускались.
 
-[Первый отчёт](../supply-chain/fuzz/review-2026-11-26.json) сохраняет историю
-248 → 193. [Отчёт продолжения](../supply-chain/fuzz/review-2026-11-26-continuation.json)
-содержит каждый промежуточный замер по публикатору/аудиту, хеши входов,
-свидетельства реестра для точных версий, границы новых проверок и полный список
-79 оставшихся пробелов с приоритетом по числу потребителей.
+[Первый отчёт](../supply-chain/fuzz/review-2026-11-26.json) сохраняет 248 → 193,
+[предыдущее продолжение](../supply-chain/fuzz/review-2026-11-26-continuation.json) —
+193 → 79. [Отчёт завершения](../supply-chain/fuzz/review-2026-11-26-completion.json)
+содержит 79 → 15 → 0, каждую точную публикацию и источник доверия, SHA архивов,
+границы исходных проверок, промежуточные хеши и финальный receipt.
 
-Проверено локально на Windows x86_64, cargo-vet 0.10.4 и cargo-deny 0.22.0:
+Проверено локально Windows x86_64, cargo-vet 0.10.4, cargo-deny 0.22.0:
 
+- Финальный `node scripts/vet-dependencies.mjs fuzz`: **check_passed**, exit 0,
+  conclusion success, **273 fully vetted**, 0 partial/exemptions, все четыре
+  входа неизменны; JSON/stderr/receipt — `target/vet/fuzz.*`.
 - `cargo deny --manifest-path fuzz/Cargo.toml --all-features check --hide-inclusion-graph`:
   exit 0, advisories/bans/licenses/sources ok; предупреждения о дубликатах.
-- `cargo vet fmt` с manifest/store fuzz; `git diff --check`.
-- Финальный `node scripts/vet-dependencies.mjs fuzz` без обновления imports:
-  **failed, 79 gaps**, хеши четырёх входов неизменны. JSON, stderr и receipt —
-  `target/vet/fuzz.*`, cargo-deny log —
-  `target/vet/fuzz-task9/continuation/deny.log`.
+- `cargo vet fmt` только manifest/store fuzz; `git diff --check`.
+- `cargo test --workspace --locked`: exit 0.
+- `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`:
+  exit 0.
+- `cargo test -p nw-leak-tests --locked`: exit 0, 14 passed, один прежний ignored.
+- Тесты расширения: **24/24**.
 
-Полные cargo test/clippy, leak/extension tests и CI в этой партии не запускались:
-изменены только supply-chain/docs, как разрешено задачей. Прежние результаты
-тестов относятся к a120a5f и первому отчёту. Пользовательское поведение программы
-не менялось. Работа останавливается с явным остатком **79**, без push; остальные
-графы и этапы вне этой задачи.
-
+Логи этой партии — `target/vet/fuzz-task9/completion/`. После исходной ошибки
+отсутствующего Perl применены закреплённые Windows build tools; clippy/leak tests
+использовали существующий общий target cache при совпадающем Cargo.lock,
+workspace tests — target этого worktree. Условия и хеши логов есть в отчёте.
+Пользовательское поведение
+не менялось. Остаток fuzz — **0**; другие графы и приёмка M6 вне этой задачи.
 
 ## Задача 5: оценка Shield/linkcheck отрицательная; этап открыт — 2026-11-26
 
