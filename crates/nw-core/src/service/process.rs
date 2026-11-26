@@ -3,16 +3,16 @@ use super::{
     auth::{Grant, Key, RpcRole},
 };
 use nw_ipc::Endpoint;
+use nw_sandbox::daemon::{Child, Input};
 use std::{
     path::Path,
     process::Stdio,
     sync::{Arc, Mutex},
 };
-use tokio::process::{Child, ChildStdin};
 
 pub(super) struct OwnedProcess {
     pub(super) child: Mutex<Child>,
-    lifetime: Option<ChildStdin>,
+    lifetime: Option<Input>,
     kill_on_drop: bool,
 }
 impl Drop for OwnedProcess {
@@ -105,7 +105,67 @@ pub(super) async fn launch(
     }
     #[cfg(windows)]
     command.creation_flags(0x08000000);
-    let mut starting = StartingProcess(Some(command.spawn().map_err(|_| "runtime_start_failed")?));
+    #[cfg(any(windows, target_os = "linux"))]
+    let child = if role == RpcRole::Api {
+        let paths = crate::config::Paths::discover().map_err(|_| "runtime_path_unavailable")?;
+        #[cfg(target_os = "linux")]
+        let environment = vec![
+            (
+                "XDG_DATA_HOME".into(),
+                paths
+                    .data
+                    .parent()
+                    .ok_or("runtime_path_unavailable")?
+                    .as_os_str()
+                    .to_owned(),
+            ),
+            (
+                "XDG_RUNTIME_DIR".into(),
+                paths
+                    .runtime
+                    .parent()
+                    .ok_or("runtime_path_unavailable")?
+                    .as_os_str()
+                    .to_owned(),
+            ),
+        ];
+        #[cfg(windows)]
+        let environment = vec![(
+            "LOCALAPPDATA".into(),
+            paths
+                .data
+                .parent()
+                .ok_or("runtime_path_unavailable")?
+                .as_os_str()
+                .to_owned(),
+        )];
+        nw_sandbox::daemon::Launch {
+            profile: nw_sandbox::daemon::Profile::Api,
+            binary: binary.clone(),
+            arguments: arguments
+                .iter()
+                .map(Into::into)
+                .chain([
+                    "--socket".into(),
+                    paths.api.clone().into(),
+                    "--core-socket".into(),
+                    paths.core_shadow.clone().into(),
+                ])
+                .collect(),
+            listener: Some(paths.api.into()),
+            upstream: vec![paths.core_shadow.into()],
+            files: vec![],
+            environment,
+        }
+        .spawn()
+        .await
+        .map_err(|_| "api_sandbox_unavailable")?
+    } else {
+        Child::coordinator(command.spawn().map_err(|_| "runtime_start_failed")?)
+    };
+    #[cfg(not(any(windows, target_os = "linux")))]
+    let child = Child::coordinator(command.spawn().map_err(|_| "runtime_start_failed")?);
+    let mut starting = StartingProcess(Some(child));
     let child = starting.0.as_mut().ok_or("runtime_start_failed")?;
     let pid = child.id().ok_or("runtime_start_failed")?;
     let mut lifetime = child.stdin.take().ok_or("ipc_bootstrap_failed")?;

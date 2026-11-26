@@ -110,7 +110,7 @@ impl Key {
     }
     pub(super) async fn deliver(
         &self,
-        writer: &mut tokio::process::ChildStdin,
+        writer: &mut (impl tokio::io::AsyncWrite + Unpin),
         role: RpcRole,
     ) -> Result<(), String> {
         let mut bytes = Zeroizing::new([0; BOOTSTRAP_BYTES]);

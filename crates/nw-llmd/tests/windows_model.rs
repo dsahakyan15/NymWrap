@@ -3,16 +3,15 @@ use nw_llm::{LocalModel, Message, Role};
 use secrecy::ExposeSecret;
 use std::{
     os::windows::process::CommandExt,
-    process::{Child, Command, Stdio},
-    time::Duration,
+    process::{Command, Stdio},
+    sync::Arc,
 };
 #[path = "../../../tests/leak/src/multilingual_assertions.rs"]
 mod multilingual_assertions;
-struct Managed(Child);
+struct Managed(Arc<nw_llm::windows_worker::WindowsModel>);
 impl Drop for Managed {
     fn drop(&mut self) {
-        let _ = self.0.kill();
-        let _ = self.0.wait();
+        self.0.stop();
     }
 }
 #[test]
@@ -36,6 +35,23 @@ fn worker_mode_rejects_execution_outside_appcontainer() {
     assert!(!result.status.success());
     assert!(result.stdout.is_empty());
 }
+#[test]
+fn ordinary_http_broker_is_not_an_inference_fallback() {
+    let result = Command::new(env!("CARGO_BIN_EXE_nw-llmd"))
+        .creation_flags(0x08000000)
+        .args([
+            "--socket",
+            "nymwrap-SYNTHETIC_MODEL_CANARY",
+            "--model",
+            "SYNTHETIC_MODEL_CANARY",
+        ])
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(result.stdout.is_empty());
+    assert!(!String::from_utf8_lossy(&result.stderr).contains("SYNTHETIC_MODEL_CANARY"));
+}
 async fn start_model(
     embedding: &str,
     hash: &str,
@@ -43,49 +59,22 @@ async fn start_model(
 ) -> (Managed, nw_llm::UnixModel, nw_ipc::Endpoint) {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/test-models");
     let address = format!("nymwrap-isolated-model-{label}-test-{}", std::process::id());
-    let mut child = Managed(
-        Command::new(env!("CARGO_BIN_EXE_nw-llmd"))
-            .creation_flags(0x08000000)
-            .args(["--parent-stdio", "--socket", &address, "--model"])
-            .arg(root.join("qwen2.5-0.5b-instruct-q4_k_m.gguf"))
-            .args([
-                "--sha256",
-                "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
-                "--embed-model",
-            ])
-            .arg(root.join(embedding))
-            .args(["--embed-sha256", hash])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::null())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap(),
+    let worker = Arc::new(
+        nw_llm::windows_worker::WindowsModel::load(
+            std::path::Path::new(env!("CARGO_BIN_EXE_nw-llmd")),
+            &root.join("qwen2.5-0.5b-instruct-q4_k_m.gguf"),
+            "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+            &root.join(embedding),
+            hash,
+        )
+        .await
+        .unwrap(),
     );
     let endpoint = nw_ipc::Endpoint::new(address.clone(), nw_proto::Lane::Shadow).unwrap();
-    tokio::time::timeout(Duration::from_secs(120), async {
-        loop {
-            assert!(
-                child.0.try_wait().unwrap().is_none(),
-                "model broker exited before ready"
-            );
-            if let Ok(stream) = endpoint.connect().await {
-                assert_eq!(nw_ipc::peer_process(&stream).unwrap(), child.0.id());
-                break;
-            }
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    })
-    .await
-    .unwrap();
     let model = nw_llm::UnixModel::new(address.into(), "default".into(), "local-embedding".into())
         .unwrap()
-        .expect_peer_image(
-            std::path::Path::new(env!("CARGO_BIN_EXE_nw-llmd"))
-                .canonicalize()
-                .unwrap(),
-        )
-        .unwrap();
-    (child, model, endpoint)
+        .expect_windows_worker(&worker);
+    (Managed(worker), model, endpoint)
 }
 #[tokio::test]
 #[ignore = "requires pinned GGUFs and creates offline AppContainers for actual native inference"]
@@ -170,18 +159,28 @@ async fn actual_appcontainer_model_over_private_ipc() {
     assert_eq!(vectors[0].len(), 768);
     let dot = |a: &[f64], b: &[f64]| a.iter().zip(b).map(|(x, y)| x * y).sum::<f64>();
     assert!(dot(&vectors[0], &vectors[1]) > dot(&vectors[0], &vectors[2]));
-    stop_model(child, &endpoint).await;
+    stop_model(child, &endpoint, &model).await;
 }
-async fn stop_model(mut child: Managed, endpoint: &nw_ipc::Endpoint) {
-    drop(child.0.stdin.take());
-    tokio::time::timeout(Duration::from_secs(10), async {
-        while child.0.try_wait().unwrap().is_none() {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    })
-    .await
-    .unwrap();
+async fn stop_model(child: Managed, endpoint: &nw_ipc::Endpoint, model: &nw_llm::UnixModel) {
+    child.0.stop();
+    let result = model
+        .complete(&[Message {
+            role: Role::User,
+            content: "SYNTHETIC_CLOSED_MODEL_CANARY".into(),
+        }])
+        .await;
+    assert!(matches!(result, Err(nw_llm::ModelError::Unavailable)));
     assert!(endpoint.connect().await.is_err());
+    drop(child);
+    assert!(matches!(
+        model
+            .complete(&[Message {
+                role: Role::User,
+                content: "SYNTHETIC_REVOKED_MODEL_CANARY".into()
+            }])
+            .await,
+        Err(nw_llm::ModelError::Peer)
+    ));
 }
 #[tokio::test]
 #[ignore = "requires pinned multilingual GGUF and creates offline AppContainers"]
@@ -193,5 +192,5 @@ async fn actual_multilingual_appcontainer_embeddings() {
     )
     .await;
     multilingual_assertions::verify(&model).await;
-    stop_model(child, &endpoint).await;
+    stop_model(child, &endpoint, &model).await;
 }

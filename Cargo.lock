@@ -1268,6 +1268,7 @@ dependencies = [
  "nw-llm",
  "nw-platform",
  "nw-proto",
+ "nw-sandbox",
  "nw-shield",
  "secrecy",
  "serde",
@@ -1382,6 +1383,7 @@ dependencies = [
  "nw-ipc",
  "nw-platform",
  "nw-proto",
+ "nw-sandbox",
  "serde_json",
  "tempfile",
  "tokio",
@@ -1439,6 +1441,7 @@ dependencies = [
  "hyper-util",
  "nw-ipc",
  "nw-proto",
+ "nw-sandbox",
  "nw-shield",
  "secrecy",
  "serde",
@@ -1459,6 +1462,7 @@ dependencies = [
  "nw-llm",
  "nw-platform",
  "nw-proto",
+ "nw-sandbox",
  "secrecy",
  "serde",
  "serde_json",
@@ -1547,12 +1551,15 @@ dependencies = [
 name = "nw-sandbox"
 version = "0.1.0"
 dependencies = [
+ "nw-ipc",
  "nw-platform",
+ "nw-proto",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "thiserror",
+ "tokio",
  "zeroize",
 ]
 

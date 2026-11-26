@@ -8,9 +8,10 @@ license.workspace = true
 [dependencies]
 nw-bridge = {path="../nw-bridge",version="=0.1.0"}
 nw-platform.workspace = true
+nw-sandbox.workspace = true
 nw-proto.workspace = true
 nw-ipc.workspace = true
-tokio.workspace = true
+tokio = {workspace=true,features=["io-std"]}
 
 [dev-dependencies]
 serde_json.workspace = true

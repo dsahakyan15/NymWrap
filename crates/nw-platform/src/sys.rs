@@ -3,6 +3,10 @@
 use std::io;
 mod device;
 pub use device::*;
+#[cfg(target_os = "linux")]
+mod linux_leaf;
+#[cfg(target_os = "linux")]
+pub use linux_leaf::*;
 #[cfg(target_os = "macos")]
 mod macos_probe;
 #[cfg(target_os = "macos")]
@@ -15,8 +19,9 @@ pub use macos_sandbox::verify_runtime_sysctl_policy;
 mod windows_sandbox;
 #[cfg(windows)]
 pub use windows_sandbox::{
-    SandboxOutput, appcontainer_exchange, appcontainer_exchange_with_files,
-    appcontainer_probe_exchange, inherited_read_file, is_appcontainer,
+    AppContainerProcess, SandboxOutput, appcontainer_daemon, appcontainer_exchange,
+    appcontainer_exchange_with_files, appcontainer_pipe_acl, appcontainer_pipe_address,
+    appcontainer_probe_exchange, inherited_read_file, is_appcontainer, verify_lpac_boundary,
 };
 fn failed() -> io::Error {
     io::Error::other("platform_security_operation_failed")

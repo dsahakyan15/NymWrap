@@ -1254,6 +1254,7 @@ dependencies = [
  "hyper-util",
  "nw-ipc",
  "nw-proto",
+ "nw-sandbox",
  "nw-shield",
  "secrecy",
  "serde",
@@ -1342,6 +1343,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "thiserror",
+ "tokio",
  "zeroize",
 ]
 

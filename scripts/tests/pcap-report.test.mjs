@@ -39,7 +39,7 @@ function processCapture(count=16){
   Object.assign(data.rust,{production_launcher:true,authenticated_dispatcher:true,core_socket_denied:true,
     core_namespace:'net:[101]',worker_namespace:'net:[102]',host_namespace:'net:[103]'});
   data.daemon=Object.fromEntries(['complete','actual_production_daemon','separate_namespaces','core_namespace_unreachable','all_threads_dropped',
-    'api_inherits_core_namespace','netd_in_transport_namespace','parent_eof_stops_children','invalid_setup_rejected'].map(key=>[key,true]));
+    'api_private_offline_namespace','netd_in_transport_namespace','parent_eof_stops_children','invalid_setup_rejected'].map(key=>[key,true]));
   data.circuits=Object.fromEntries(Array.from({length:count},(_,index)=>[index.toString(16).padStart(32,'0'),`circuit-${index}`]));
   return data;
 }

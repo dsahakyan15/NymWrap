@@ -7,6 +7,27 @@
 при включённой защите устройства удалённая отправка закрыта, L0 доступен.
 strict/paranoid отклоняют маршрут L3. Интерфейс показывает фактический уровень ответа.
 
+## Задача 7 — песочницы Windows/Linux
+
+Добавлены отдельные профили nw-sandbox для shadow API, модели и cover native
+host (ADR 0092): Windows LPAC/Job Object, Linux bwrap/двухэтапный seccomp.
+Модели доступны read-only, IPC выдаётся по отдельным endpoints, запрещены
+внешние сокеты и дочерние процессы. Отрицательные проверки каждого профиля
+находятся в tests/leak/src/daemon_sandbox.rs и подключены к Windows/Linux CI.
+Полный binary-канал native host/relay проверяется тестом sandbox_relay; готовый
+cover endpoint передаётся launcher, без повторного вычисления внутри LPAC.
+Локально на Windows прошли cargo test --workspace --locked, clippy для всех
+targets с -D warnings, nw-leak-tests, npm test в extension/app, actual-тесты
+трёх профилей, LPAC/владельца объектов, core/API RPC и обеих GGUF-моделей.
+Linux-target clippy для platform/sandbox/llm/drift-host тоже прошёл; реальные
+bwrap/seccomp и production netns проверяются в CI ветки agent/task-7.
+
+M6 открыт: core требует отдельного брокера ключей и запуска (дизайн ADR 0093,
+без реализации; миграция доменных ключей и сетевая граница ещё не доказаны); общие профили
+netd и минимальный внешний stdio-переходник браузера ещё требуют завершения.
+Linux launcher ADR 0078/0082 сохранён, Windows PT остаётся fail-closed по
+ADR 0085. macOS и microVM не изменялись. Новых внешних зависимостей нет.
+
 ## Задача 8 — macOS App Sandbox
 
 Добавлены встроенные deny-default Seatbelt-профили и macOS launcher `nw-sandbox`
