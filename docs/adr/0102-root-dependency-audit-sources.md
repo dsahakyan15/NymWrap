@@ -265,3 +265,71 @@ advisories/bans/licenses/sources ok, только предупреждения �
 не вызывались, Perl не использовался. CI не запускался. **88 пробелов**, включая
 все три getrandom, typenum/generic-array/errno и native C/ASM/fork, перечислены
 в JSON с критериями и приоритетами. Root dependency gate и M6 остаются открытыми.
+
+## Третья партия от 61c17b5: 88 → 67
+
+2026-11-26, ветка `agent/vet-root-3`. Добавлен **21 source audit агента**
+для неизменного **safe-to-deploy**; новых trust/imports/exemptions и изменений
+policy нет. Все девять Cargo.lock и версии сохранены. Другие графы не менялись.
+Подробности, SHA архивов/просмотренных файлов, режим чтения и полный остаток —
+в [третьем отчёте](../../supply-chain/root/review-2026-11-26-batch-3.json).
+
+Сначала проинвентаризированы все 88 пакетов: размер Rust-исходников, unsafe,
+build scripts, proc-macro, native/FFI и признаки файлов/сети/процессов.
+Группы: 36 native/FFI, 26 unsafe/контракты, 6 proc-macro, 5 build scripts,
+4 с признаками ambient capabilities, 5 небольших и 6 больших safe-Rust.
+Это эвристическая сортировка, а не доказательство отсутствия опасных операций;
+в отчёте указаны также перекрывающиеся признаки каждого пакета.
+Использован локальный Cargo cache, SHA архивов сверен с Cargo.lock и sparse
+index; просматривались байты архивов, имеющиеся распакованные файлы сверены.
+crates.io API не вызывался; новой проверки uploader/свежести yank не заявляем.
+
+Проверены new_debug_unreachable, stable_deref_trait, dtoa-short, find_cuda_helper,
+async-recursion, enumflags2 и derive, zvariant_utils, doctest-file, rustc-hash,
+string_cache_codegen, phf_codegen, phf_macros, phf, markup5ever, memoffset,
+derive_more, constant_time_eq, xdg-home, ordered-stream и web_atoms. У каждой
+записи есть явное **«Проверено агентом, не человеком»**, SHA и конкретные
+ограничения. Для небольших крейтов прочитаны manifests и весь production-код;
+у ordered-stream прочитан весь исполняемый код и контракты, без полного чтения
+больших rustdoc-примеров. У web_atoms прочитана вся логика, а таблица 2231 entities
+и 1108 local names целиком разобраны строгой грамматикой как данные; точность
+каждого соответствия стандарту HTML не объявлена проверенной. **88 → 72 → 67**.
+
+Рассмотрены также небезопасные контракты и генерация deployed-кода: mask/enum
+transmute, float scratch/UTF-8, SIMD/DIT, UTF-8 границы tendril, escaping Rust
+литералов и доверенные текстовые fragments в codegen, файловые пути и rustfmt.
+Дискреционные ограничения safe-to-deploy явно записаны в notes: memoffset
+опирается на уже закреплённый Rust 1.100, а старые unsound fallback не признаны
+универсально безопасными; xdg-home может терять OS allocation на error/UTF-16
+ветвях и доверяет локальному HOME/NSS; у ordered-stream воспроизведён завышенный
+position_hint в B-ветви Join, поэтому hint не принят как граница авторизации
+или anti-replay. Это не новые более слабые критерии и не аудиты зависимостей
+этих библиотек. Constant-time свойства не объявлены измеренными на всех CPU.
+
+Без сертификата оставлены полностью прочитанные кандидаты:
+
+- **async-broadcast 0.7.2:** set_capacity(0) + overflow=true позволяет расти
+  очереди сверх ёмкости; воспроизведено на 32 синтетических сообщениях.
+- **zvariant_derive 4.2.0:** сгенерированный TryFrom<Value> паникует на короткой
+  Structure из-за remove(0); воспроизведено в debug и release.
+- **blocking 1.7.0:** persistent spawn failure повторяется под mutex в grow_pool;
+  failure injection не запускался, требуется анализ ограничений ресурсов.
+- **phf_generator 0.14.0:** неограниченный поиск/дубликаты/несогласованный hash
+  могут зависать; контракт недоверенного ввода не объявлен закрытым.
+
+Для первых двух подтверждён путь в самой библиотеке, а не remote exploit
+NymWrap. siphasher 1.0.4 прочитан частично (common/64-bit и manifests), но
+128-bit/serde state invariants ещё требуют анализа; UB не заявлен. Остальные
+пакеты, включая getrandom всех трёх версий, typenum/generic-array/errno,
+native C/ASM, llama-cpp-2 base/fork, остаются явно перечисленными пробелами.
+
+Финальный `node scripts/vet-dependencies.mjs root` без обновления imports —
+**failed, 67 gaps**, входы неизменны. cargo-deny 0.22.0 — exit 0;
+advisories/bans/licenses/sources ok, прежние предупреждения. Сохранённый
+[стенд](../../supply-chain/root/review-tests-2026-11-26-batch-3.mjs):
+**11/11** в debug, release и ptrhash debug (33 результата), включая
+воспроизведения двух причин отказа в аудите. Это не полные upstream suites,
+не Miri, не ARM/timing matrix и не CI. Wrapper — 3/3, расширение — 24/24.
+Workspace tests, clippy и leak tests вызваны, но все остановились (exit 1)
+на сборке OpenSSL: executable perl не найден. Инструменты не устанавливались.
+Root gate и M6 остаются открытыми; зелёная приёмка не заявляется.

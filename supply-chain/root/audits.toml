@@ -1,6 +1,17 @@
 
 # cargo-vet audits file
 
+[[audits.async-recursion]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "1.2.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 4f8abc12baad266b1c8cec146854c195b5864b4221d4b2ca7296a7ae82d9e451. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all three production modules (lib.rs, parse.rs, expand.rs). Arguments accept only optional ?Send and Sync, rejecting duplicates, excess and other syntax; the item must be an async function. Expansion removes async from the signature, adds explicit generic/reference outlives bounds and returns Pin<Box<dyn Future>> around Box::pin(async move { original body }). It adds Send/Sync bounds, never unsafe implementations or lifetime casts, so the Rust type checker enforces transfer/borrow validity. Newly synthesized lifetime names and the unqualified Box can collide with caller names; unsupported typed-self or nested-reference cases can reject otherwise valid source rather than bypass the type checker. The original function body and its authority remain caller code. Runtime recursion depth, allocation and exponential algorithms are not bounded by this transformation. No unsafe code, environment/file/network/process operations, build script or native payload. Reviewed generated deployed behavior, not just macro-host behavior.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
 [[audits.bitflags]]
 who = "NymWrap source review (Codex agent; not human)"
 criteria = "safe-to-deploy"
@@ -23,6 +34,50 @@ Read offline from the existing Cargo cache and verified against the cached regis
 Ordinary cargo test --offline did not resolve the uncached optional dependency and ran no tests. Direct default-feature tests with the pinned rustc/rustdoc passed: two unit tests, one cross-crate test and one doctest. This does not certify optional dependencies or platform CI.
 """
 
+[[audits.constant_time_eq]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.6.1"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 9eb6feb175df65d0a3ccd3e73484e940d0ac664e8034f0519fd49a93db3071d9. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests, build.rs and all five source modules, including generic/SSE2/AVX/NEON paths and ARM DIT detection/guards. Unsafe word/vector loads receive checked exact-size slices after equal-length checks, use unaligned-capable operations and read only initialized byte/integer/vector types. Each loop consumes 16/32 bytes or one Word; tails use successively bounded integer widths, preserving a difference accumulator without data-dependent early exits. Register-only comparison/mask assembly declares inputs/outputs and does not touch memory or stack; SIMD modules are gated on corresponding target features. The atomic ARM feature cache is private and stores only valid Features discriminants; relaxed ordering suffices because it publishes no separate data. DIT/SB instructions follow standard feature detection or explicit unsafe caller overrides, and guards restore the saved DIT value on unwind. Build output is fixed cfg data selected from compiler version/target environment. Length and address timing remains observable; no universal hardware/compiler side-channel proof, instruction-count measurement, ARM execution or formal cryptographic audit is claimed. No native payload, dynamic allocation, file/network/process API or content logging. Tests cover functional equality and boundaries separately.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.derive_more]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "2.1.1"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: d751e9e49156b02b44f9c1815bcb94b984cdcc4396ecc32521c739452808b134. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all ten production modules, including every feature-gated helper and reexport. This crate is the runtime facade, not the derive_more-impl proc macro: the latter still needs its own audit. Runtime helpers contain no unsafe code. Autoref specialization either returns the original lifetime-bound shared/exclusive reference or delegates to the caller's AsRef/AsMut; it does not cast or extend lifetimes. AsDynError uses ordinary trait-object coercions and retains the original borrow. Formatting helpers propagate fmt errors, process strings using safe split_inclusive boundaries and write to the supplied formatter only. Error values own their input and static labels; Debug and some Display implementations expose the retained input, so application logs need redaction. PhantomData markers enforce Eq bounds without touching memory. Feature selection only changes helper availability and dependency/reexport wiring. No build script, native payload, file/env/network/process access, hidden logging or code generation in this facade itself. Caller trait implementations, formatted sinks and separately resolved procedural macros remain outside this source audit.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.doctest-file]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "1.1.1"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: c2db04e74f0a9a93103b50e90b96024c9b2bdca8bce6a632ec71b88736d3d359. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all four modules, including literal parsing, argument iteration, both processing passes, UTF-8 slicing and token emission. The macro reads only the explicitly supplied build-time path (absolute paths and parent traversal are intentionally allowed), resolving relative paths against CARGO_MANIFEST_DIR. Lines are buffered, selected by anchors and hidden-line markers, dedented and emitted using proc_macro::Literal::string; file contents cannot break out of that literal into Rust tokens. compile_error messages are escaped the same way. It never spawns a process or accesses the network. Included documentation/doctests are intentionally publishable and can execute when rustdoc tests are run; the author must trust and review that file exactly as source code, never include secrets or service-provided filenames. Input size is not bounded; malformed whitespace/anchor combinations can panic at checked UTF-8 boundaries or fail compilation, not cause memory unsafety. No dependencies, unsafe code, build script or native payload.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.dtoa-short]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.3.5"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: cd1511a7b6a56299bd043a9c167a6d2bfb37bf84a6dfceaba651168adfb43c87. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and the complete src/lib.rs, including rounding, sign handling, exponent movement and both unsafe operations. Also inspected the locked dtoa 1.0.11 Buffer/Float API in src/lib.rs (separately covered dependency): Float is sealed to f32/f64 and Buffer owns 25 bytes; format_finite returns bounded ASCII even for nonfinite inputs, whose numeric value is unspecified. The scratch array has size_of(Buffer)+1 bytes and is separate from the source, so copying the returned bytes starting at offset one fits without overlap. Precision is the internal constant 6 or 15, never caller-controlled. Rounding and forward exponent compaction stay within the initialized slice and preserve ASCII; the unchecked UTF-8 conversion therefore receives valid bytes. Zero/sign/large-exponent paths use checked slicing; custom fmt::Write remains caller code. Output is deliberately lossy and nonfinite values are not faithfully represented: unsuitable for exact numeric protocols, monetary calculations or authentication encodings. No allocation, build script, native payload or OS authority. Dependency internals are not recertified by the supporting API inspection.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
 [[audits.endi]]
 who = "NymWrap source review (Codex agent; not human)"
 criteria = "safe-to-deploy"
@@ -32,6 +87,28 @@ notes = """
 Published archive SHA-256: 66b7e2430c6dff6a955451e2cfc438f09cea1965a9d6f87f7e3b90decc014099. Verified against crates.io API, locked checksum and sparse index; reviewed source files matched the archive.
 Read both manifests, complete archive inventory and all three source modules, including complete macro templates and the included README. No dependencies, unsafe code, build script, native code, environment access, file opening, network or process operations. Every integer/float read/write uses a fixed-width checked slice and the standard from/to_le/be_bytes operations, with fixed macro sizes from 1 through 16 bytes. The std extension traits only use caller-supplied Read/Write handles, fixed stack buffers and read_exact/write_all, propagating short reads and I/O errors. They do not select paths or endpoints. Direct Endian slice methods deliberately panic on buffers shorter than their documented primitive width; consumers of untrusted data must check that precondition or use the fallible ReadBytes interface. No unchecked length arithmetic or attacker-controlled allocation is introduced here; arbitrary trait implementations remain caller code. Eleven upstream endian unit tests passed with std; a separate no_std library compilation passed. The Read/Write extension implementation was reviewed but not exhaustively tested for third-party stream behavior. No independent human audit.
 Dependencies require separate coverage.
+"""
+
+[[audits.enumflags2]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.7.12"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 1027f7680c853e056ebcec683615fb6fbbc07dbaa13b4d5d9442b146ded4ecef. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all five production modules, including serde, const API and every macro expansion. Cross-read the matching derive generator. Safe constructors mask or reject bits outside ALL_BITS; union/intersection/xor/not preserve that invariant. Exactly-one and iteration transmute_copy only a nonzero single bit belonging to an actual enum discriminant of the same unsigned repr; iteration clears that bit before continuing and terminates within the integer width. Manual RawBitFlags implementations and unchecked constructors are explicitly unsafe caller contracts. ConstToken fields are private, preventing safe fabrication of a mismatched allowed mask; const operations preserve both its mask and matching numeric representation. Serde deserializes the primitive then uses the checked constructor. Debug/Display write only to the caller formatter. Numeric Ord compares integer values, not set inclusion. No build script, native payload, dynamic allocation for flag operations or OS authority. Malicious unsafe impls and arbitrary caller trait implementations are outside this audit.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.enumflags2_derive]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.7.12"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 67c78a4d8fdf9953a5c9d458f9efe940fd97a0cab0941c075a813ac594733827. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and the complete generator, and cross-read the RawBitFlags contract and consumers in enumflags2 0.7.12. Accepts only non-generic, unit-variant enums with fixed unsigned u8/u16/u32/u64/u128 representation; signed/usize/other representations are rejected and rustc checks layout, discriminant range and uniqueness. Literal and shift folding uses checked shifts; explicit flags must be powers of two, deferred expressions get compile-time power-of-two assertions, and inferred values select an unused bit. Too many variants are rejected. The generated unsafe RawBitFlags implementation uses that same representation, casts real enum values, ORs real variants for ALL_BITS/default and emits no transmute itself; these properties justify the runtime single-bit transmute consumers. Malformed attributes, cfg variants or overflowing inferred constants may fail compilation. Caller expressions/attributes remain trusted Rust source, not data to sandbox. No file/env/process/network access, build script or native payload.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
 """
 
 [[audits.equivalent]]
@@ -48,6 +125,94 @@ executable code, dependencies, targets and build=false are unchanged.
 Other changes are package versions and VCS metadata. No unsafe, I/O, native code
 or build script was added. This is a delta review, not an audit of the base or
 an independent human security review. Original 1.0.2 coverage is still required.
+"""
+
+[[audits.find_cuda_helper]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.2.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: f9f9e65c593dd01ac77daad909ea4ad17f0d6d1776193fc8ea766356177abdad. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all platform branches in src/lib.rs. This build helper checks CUDA header/directory existence, enumerates a fixed /usr/local/cuda-* glob on Unix, reads the documented CUDA/OPTIX/TARGET/DOCS_RS environment variables and emits fixed cargo linker directives with discovered paths. It does not open file contents, write files, spawn commands, load a library itself or access the network. Windows TARGET is split/indexed and supports only x86_64-pc-windows; malformed targets or missing SDKs can panic. Local environment, SDK directories, PATH used by downstream tools and linker inputs must be trusted build configuration; newline-containing paths are not sanitized for Cargo stdout and untrusted runtime data must not be supplied as build configuration. The helper does not authenticate SDK/native libraries or certify CUDA, OptiX or consuming build scripts. No unsafe code, build.rs or packaged native code in this crate.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.markup5ever]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.40.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 0ab3dc68ac4a0f5719e560136778c1ee716e296030d75dbd4484e37e39e3a842. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all six production modules. Inspected the single unsafe block in BufferQueue::pop_except_from: the prefix scanner stops only on ASCII below 64, so its byte count is either the whole valid UTF-8 tendril or a character boundary; count never exceeds the tendril's u32 length. The shared subtendril retains backing ownership before the original prefix is removed, satisfying the tendril API contracts. Queue operations use RefCell and checked containers; reentrant callbacks, self-swap, emptied mutable front chunks or a comparator that splits UTF-8 can panic rather than cause unchecked reads. SmallCharSet membership shifts only after the less-than-64 guard. Generic standalone strings larger than u32 can overflow the prefix count; it is not a general unbounded-string API. TreeSink/Serializer are caller interfaces: helpers only compute namespace/template/integration flags and forward data, including explicit duplicate-attribute information. Script/encoding markers do not execute content. Debug/errors can expose names/content; consumers must control logging and escaping. No build.rs, native payload or OS authority. Dependencies and actual parsers/serializers need separate audits.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.memoffset]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.9.1"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests, build.rs and all four production modules, including all historical cfg branches and tests. On NymWrap's pinned Rust 1.100 the fixed version probes enable MaybeUninit, addr_of, stable_const and stable_offset_of: ordinary/tuple/union offsets use core::mem::offset_of!, and span computation uses raw field addresses in a live MaybeUninit allocation. Field-pattern checks prevent implicit Deref traversal; caller expressions are evaluated outside inserted unsafe blocks. Offsets/spans are layout information only, not reads of padding or uninitialized contents. raw_field helpers require a live non-dangling correctly typed base pointer; they do not validate arbitrary pointers. Historical pre-MaybeUninit/pre-addr_of fallbacks explicitly contain known unsound constructions and are not accepted as a portable soundness claim: discretion is limited to this project's enforced modern compiler; do not reuse this review to support old compilers. Span ordering/padding for repr(Rust) is not a stable serialization contract. Build authority is limited to autocfg compiler probes and fixed cfg stdout; no own file/network/process calls or native payload. No assurance for caller unsafe use or separately reviewed autocfg.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.new_debug_unreachable]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "1.0.6"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and the complete src/lib.rs, including both macro arms. The no_std macro expands to unreachable! in debug and to core::hint::unreachable_unchecked in release; it does not insert an unsafe block around that call, so release-capable callers must already provide unsafe context and prove the branch unreachable. Reaching it in release is undefined behavior: untrusted parse failures must use ordinary errors, never this optimization. The hidden reexport preserves the same unsafe API. The zero-argument recursive invocation is not fully hygienic and may fail if renamed/shadowed; this is a compile-time limitation, not input execution. No dependencies, build script, native payload, allocation or OS authority. This certifies the documented unsafe primitive, not the correctness of downstream unreachability proofs.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.ordered-stream]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.2.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 9aa2b01e1d916879f73a53d01d1d6cee68adbb31d6d9177a8cfce093cced1d50. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests, README, the complete OrderedStream/OrderedFuture contracts and all executable code in all four source modules (large rustdoc example blocks omitted from the implementation view; no claim to have read those examples in full). Pin projections keep child streams/futures pinned; explicit Unpin implementations wrap pinned references or require Unpin children before constructing pins. Buffered items are ordinary owned values; Then replaces/drops completed pinned futures through pin-project-lite rather than moving them. Join polls each side with bounded retries; multi-join performs at most two finite passes over caller collections, with one buffered item per stream. Size-hint sums use saturating/checked arithmetic. Filter/filter_map can consume an unbounded always-ready rejected stream in one poll, so callers need bounded/cooperative sources; no fairness guarantee is claimed. Found a logic limitation in Join::position_hint's B-buffered arm: it consults stream_b instead of stream_a, so hints can overestimate the minimum of future items. Do not use hints or source ordering as an authorization/replay boundary; validate protocol order separately. Ordering mappers, comparisons, callbacks and child polling remain caller code. No own unsafe blocks, build script, native payload, OS authority or text execution. Pin-project-lite and other dependencies require separate coverage.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.phf]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.14.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 010378780309880b08997fae13be7834dba947d36393bd372f2b1556deb2a2f6. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all five production modules, including both CHD/ptrhash layouts, cfg trampolines, iterator implementations and optional serde serialization. Runtime lookup hashes caller data, computes an index into immutable static metadata using checked indexing, and verifies key equality before returning the stored reference: a perfect hash index alone is never treated as membership. Empty tables return None before hash indexing; Index intentionally panics for absent keys. Ordered maps apply the generated permutation and preserve definition-order iteration; iterators borrow standard slices, with no unsafe code or ownership tricks. Public hidden metadata fields must contain matching generated tables; malformed hand-built tables may panic but cannot cause unchecked memory access here. Macros consume finite grouped source syntax and delegate to the separately audited proc macro. Caller hashing/equality/formatting/serde implementations remain caller code. No build.rs, native payload, file/network/process/env operations or logging. Public fixed-key hashes are not cryptographic authentication; generators and dependencies are separately covered.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.phf_codegen]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.14.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 41b585a510fb76fdebead6897982ef2a03a21d8e6cbcca904999742a4afc6ffe. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and the complete source, including Map/Set/OrderedMap/OrderedSet, optional quote and ptrhash paths. Both map builders check duplicate keys with HashSet before passing keys to the generator. Generated key/value ordering matches the generator permutation for ordinary maps and preserves input order plus index mapping for ordered maps. Numeric metadata is formatted as numbers; standard key formatting delegates to the separately reviewed FmtConst interface. Values and phf_path are intentionally emitted verbatim as Rust source, and custom FmtConst/Hash/PhfHash/Eq implementations remain arbitrary caller code. Therefore all source fragments and key trait behavior must be trusted build inputs, never untrusted request data. Duplicate or inconsistent/custom hash behavior can fail or hang the build through the generator; quote parsing can panic on invalid source. This crate only formats to caller-provided fmt sinks; file/env operations in examples are not library operations. No unsafe, build.rs, native payload or ambient process/network/file-opening API. The runtime/generator dependencies require separate coverage.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.phf_macros]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.14.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 5fa8d0ca26d424d27630da600c6624696e7dec8bf7b3b492b383c5dc49e5e085. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and both complete modules, including supported literal/array/tuple/unary/case-wrapper parsing, homogeneous key inference, OR-pattern expansion, cfg filtering and every table-generation template. Parsed keys are typed data used for hashing; unsupported expressions are rejected, duplicates are detected before generation, while values and original key expressions remain trusted Rust AST emitted by quote. Signed-minimum handling and integer conversions can panic on malformed or out-of-range source; host-sized usize/isize keys can disagree across cross-compilation widths, so fixed-width keys are required for portable tables. Caller-named constructors in optional case wrappers must be the documented real types. The cfg trampoline preserves entry order and re-enters the macro after consuming conditional groups; type checking still applies to generated constants. No unsafe generated operations, host I/O, process/network/env access, build script or native payload. Rust token source, custom constructors and dependency behavior are not sandboxed or implicitly certified.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
 """
 
 [[audits.phf_shared]]
@@ -83,6 +248,17 @@ Target SHA-256: 985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9
 Reviewed the full package diff and surrounding float_digits and invalidate_current_thread_spans code. Replacing map_or(false, predicate) with is_some_and(predicate) preserves both None=false and Some predicate behavior. Removing the else after a diverging panic preserves the compiler-context rejection and calls the same fallback once otherwise. No new unsafe code, I/O, build script changes, dependency constraints or features. MSRV rises from 1.68 to 1.71, below NymWrap's pinned 1.100. Other changes are docs, a test lint, packaged development lockfile and upstream CI action versions; that upstream workflow is not run by NymWrap. Base and dependency coverage are separately required.
 """
 
+[[audits.rustc-hash]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "2.1.3"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all three modules, including optional rand/nightly branches and unit tests. All production operations are safe Rust. Byte hashing handles empty and short lengths before indexing, consumes fixed 16-byte chunks and uses a proven in-bounds suffix for longer inputs. Integer mixing is explicitly wrapping with fixed shifts/rotations and separate 32/64-bit paths. Seeded builders return independent scalar hash state; optional randomness uses a thread-local Cell initialized through rand and wrapping increments, without direct OS calls here. FxHashMap/FxHashSet are standard containers with this hasher. This is explicitly noncryptographic and not HashDoS-resistant, including with the random seed option; attacker-controlled large key sets need application resource bounds or a different hasher. It must not be used for authentication, secret fingerprints or anonymity. No unsafe, build script, packaged native code, file/process/network access or logging. Optional dependency behavior is separate.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
 [[audits.serde_spanned]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -92,6 +268,28 @@ AI delta source review, not an independent human audit. Both published archives 
 Base SHA-256: 6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26.
 Target SHA-256: 9c187e0a369471c550af028cba56d4f4fa2a489ad28151ae95a4d340a2a8b782.
 Reviewed all package differences and SpannedDeserializer field/key/value consumption. The only executable addition is a MapAccess::size_hint counting the three remaining Option fields. Each count is 0 or 1; their sum is bounded to 3 regardless of untrusted span values or T, and the method only borrows self. No new unsafe code, allocation, I/O or dependencies. Production features and build=false are unchanged. Remaining changes are packaging, lints, docs/license attribution, release/VCS metadata and the package's development lockfile. This delta does not certify dependencies or the base version.
+"""
+
+[[audits.stable_deref_trait]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "1.2.1"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all of src/lib.rs, including the complete unsafe trait contracts and every implementation. StableDeref requires stable storage across moves/shared operations; CloneStableDeref additionally preserves the same target across clones and must not be combined with mutable dereferencing. Box/Vec/String/CString/OsString/PathBuf own out-of-line storage; the listed Cow variants preserve borrowed or owned backing storage across shared methods. Rc/Arc clones share their allocation and Arc is gated on pointer atomics. References, Ref/RefMut and lock guards preserve the borrowed target for their lifetime; exclusive operations on the owning container are outside the contract. No blanket implementation for arbitrary user Deref types or runtime pointer manipulation is introduced. No dependencies, build script, native payload or OS calls; Path/lock types here are marker implementations, not file or synchronization operations. Incorrect downstream unsafe implementations and aliasing in consuming libraries require separate review.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.string_cache_codegen]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.11.2"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 928dcdf75e47626b3617a976ec205d9f057584c371c1f23b782129268d0e6edc. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and the entire root lib.rs, including token templates, rustfmt subprocess handling and the unit test. Atoms are deduplicated in a BTreeSet; static strings are separated from at-most-seven-byte inline strings, and an empty static set receives a fixed dummy. Inline shifts therefore range only from 8 to 56 bits. Strings/docs become quoted literals; generated constant names encode character values, and numeric tables come from phf_generator. The configured module path is deliberately parsed as Rust tokens, so path/type/macro names are trusted build-source configuration, not an injection-safe interface for runtime text. Invalid identifiers may panic. write_to_file creates/truncates exactly the caller path. write_to invokes rustfmt from trusted PATH with piped stdin/stdout and no shell, falling back to unformatted tokens on failure; no timeout or guarantee against formatter hangs/pipe stalls, and some error paths may leave a child unreaped. Large inputs require controlled build resource limits. No unsafe, build script, network access or native payload; separately audit generated Atom packing and dependencies.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
 """
 
 [[audits.toml_datetime]]
@@ -147,6 +345,39 @@ notes = """
 Published archive SHA-256: 3b1f9c3798725016c6ee5f2f57869ec0831e8bbc0ab0310a86e787e97f41389e. Verified against crates.io API, locked checksum and sparse index; reviewed source files matched the archive.
 Read both manifests, complete archive inventory, build script and every library module, including shared schema macro definitions and all string/identifier helpers. No unsafe blocks, native payload or network access. The schema macro emits data declarations into a caller-supplied macro; it does not execute imported text or itself produce raw-pointer operations. Type-tag generation consumes a fixed list; module hashing uses explicit wrapping FNV arithmetic and checked byte indexing, not cryptographic authentication. Identifier helpers iterate Unicode scalar values, delegate XID membership to the separately covered unicode-ident dependency, replace invalid characters and prefix reserved JS keywords. Generated symbol and string helpers allocate proportional to caller text; escape_string handles backslash, both quotes and CR/LF for ordinary JS string literals. It is not an HTML/script-element sanitizer or a substitute for downstream code-generator validation. Build authority is limited to reading two fixed schema files beneath CARGO_MANIFEST_DIR, hashing their text, emitting Cargo metadata and invoking git rev-parse HEAD without a shell. Compiler/build environment and git/PATH are trusted build inputs; malformed git output can at most fail a build at its nine-byte prefix slice. The complete schema hash approval test passed after compiling/executing the reviewed build script with pinned rustc; its calculated schema hash matched upstream approval. No independent human audit; this does not certify downstream wasm-bindgen code generators, native/JS ABI implementation or arbitrary consuming macros.
 Dependencies require separate coverage.
+"""
+
+[[audits.web_atoms]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "0.3.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: 7572660c8890448ba236b7376f27e389c6a7e1c70195622faced601f855c0ada. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests, complete build.rs and lib.rs, including both generated-code include sites and every namespace/macro template. The 2231-entry entities.rs constant array was read by an exhaustive strict full-file grammar (only ASCII entity-name string literals and two decimal u32 values per tuple, no other Rust syntax), checking unique names and Unicode scalar values; all 1108 local_names.txt lines were validated as restricted textual names. Those data tables were not individually compared to HTML specification mappings, and are not claimed as a line-by-line semantic table audit. Build code reads only the packaged local-name corpus and writes fixed generated.rs/named_entities.rs filenames under trusted Cargo OUT_DIR. Entity prefix slicing is safe because the exhaustive data check establishes ASCII keys; BTreeMap deduplicates prefixes and supplies a nonempty set including the empty prefix. Entity values are formatted numeric tuples; all dynamic names/URLs go through reviewed quoted-literal generators. Fixed namespace tokens are trusted constants. No own unsafe code, network calls or native payload; string_cache_codegen's rustfmt subprocess and other dependency capabilities are separate. Runtime code exposes immutable tables and generated Atom types, never executes parsed HTML. This is parsing support, not an HTML sanitizer or content-escaping boundary.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.xdg-home]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "1.3.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: ec1cdab258fb55c0da61328dc52c8764709b249011b2cad0454c72f0bf10a1f6. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests, README and the complete single module, including Unix/Windows FFI and its test. HOME is accepted verbatim, including empty/relative paths; it is trusted local configuration, not validated storage policy. The Unix fallback calls geteuid/getpwuid_r with a live passwd output and 1024-byte scratch buffer, checks return code/result/pw_dir before CStr conversion, and copies the returned directory before stack storage expires. Insufficient buffer space returns None without examining uninitialized output. Windows passes the Profile GUID and null user token, reads the successful API-owned NUL-terminated UTF-16 path, copies it and frees it with CoTaskMemFree. Primary Linux man-pages and Microsoft SHGetKnownFolderPath contracts were checked. Explicit discretion: failure or invalid UTF-16 paths can leak an OS allocation because early returns miss freeing; this is a local-profile resource leak, not certified as leak-free. No shell, file writes or direct network API; OS user-database/NSS lookup may itself perform OS-configured I/O, so sandbox restrictions still apply. Returned paths are sensitive and must not bypass NymWrap storage/encryption policy or be sent remotely. No build script or packaged native code.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
+"""
+
+[[audits.zvariant_utils]]
+who = "NymWrap source review (Codex agent; not human)"
+criteria = "safe-to-deploy"
+version = "2.1.0"
+notes = """
+Проверено агентом, не человеком. Agent source review for product safe-to-deploy (ADR 0102); no independent human audit.
+Published archive SHA-256: c51bcff7cc3dbb5055396bcf774748c3dab426b4b8659046963523cee4808340. Matched Cargo.lock and the cached crates.io sparse index; reviewed bytes were read from the archive, with present unpacked Cargo sources compared byte-for-byte. No fresh crates.io API/uploader verification claimed.
+Read both manifests and all three modules, including every def_attrs/old_new macro arm and case-conversion unit tests. Case conversion iterates Unicode chars using ASCII case changes and safe String pushes; it does not splice byte indices. Attribute helpers parse syn metadata as data, require the expected literal/list/path forms and propagate typed parse errors. Generated structures store optional strings/bools/lists/nested groups, reject duplicate or unknown fields and recurse over a finite caller-defined schema. old_new only generates a tagged wrapper and From implementations. Namespaced/empty hand-built syn paths can hit get_ident/last unwraps and panic during compilation; case conversion is not an identifier validator. These helpers do not execute string contents, authenticate D-Bus peers or validate runtime wire signatures. Downstream generators must validate identifiers and their generated behavior separately. No unsafe, build script, native payload, filesystem/process/network/environment operations.
+Exact reviewed file paths and SHA-256 are recorded in review-2026-11-26-batch-3.json. Source review is not an upstream test run; validation results and untested configurations are recorded separately there. Dependencies require separate coverage.
 """
 
 [[trusted.aead]]
