@@ -212,7 +212,7 @@ async fn start_job(
         )
     };
     let mut route = Route {
-        scheduled: false,
+        slot: None,
         job: None,
         state: state.clone(),
         epoch,

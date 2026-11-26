@@ -51,7 +51,10 @@ pub(in crate::service) fn prefetch_decoy(state: &State) -> Result<(), String> {
     let Some(w) = session.workspace.as_mut() else {
         return Ok(());
     };
-    if !w.config.cover.enabled {
+    if !w.config.cover.enabled
+        || w.config.profile != nw_proto::Profile::Standard
+        || w.config.shield.show_diff_before_send
+    {
         return Ok(());
     }
     let at = workspace::now();

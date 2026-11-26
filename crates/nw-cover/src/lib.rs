@@ -133,6 +133,36 @@ impl Scheduler {
     pub fn next_slot(&self) -> u64 {
         self.next_slot
     }
+    /// Constant-rate admission: a missed slot is skipped, never released on arrival.
+    /// Persist the snapshot even on NotReady, so restart cannot revive that slot.
+    pub fn tick_constant<R: Rng>(
+        &mut self,
+        now: u64,
+        has_real: bool,
+        cost_upper_bound: u64,
+        rng: &mut R,
+    ) -> Result<Slot, CoverError> {
+        if !matches!(self.config.mode, Mode::Constant) {
+            return Err(CoverError::Configuration);
+        }
+        if now < self.last_now {
+            return Err(CoverError::Clock);
+        }
+        if now > self.next_slot {
+            let interval = self.config.mean_interval_s;
+            let remainder = (now - self.next_slot) % interval;
+            self.next_slot = now
+                .checked_add(if remainder == 0 {
+                    0
+                } else {
+                    interval - remainder
+                })
+                .ok_or(CoverError::Clock)?;
+        }
+        now.checked_add(self.config.mean_interval_s)
+            .ok_or(CoverError::Clock)?;
+        self.tick(now, has_real, cost_upper_bound, rng)
+    }
     /// Reserve an upper cost bound before sending; failed attempts are charged conservatively.
     pub fn tick<R: Rng>(
         &mut self,
@@ -187,6 +217,53 @@ pub fn decoy<R: Rng>(rng: &mut R) -> &'static str {
 mod tests {
     use super::*;
     use rand::{SeedableRng, rngs::StdRng};
+    #[test]
+    fn paranoid_constant_slots_keep_phase_across_misses_budget_and_restore() {
+        let mut rng = StdRng::seed_from_u64(6);
+        let config = Config {
+            mode: Mode::Constant,
+            mean_interval_s: 10,
+            max_requests_per_day: 1,
+            max_spend_microusd: 1,
+        };
+        let mut scheduler = Scheduler::delayed(config.clone(), 0, &mut rng).unwrap();
+        assert_eq!(
+            scheduler.tick_constant(9, true, 1, &mut rng),
+            Err(CoverError::NotReady)
+        );
+        assert_eq!(
+            scheduler.tick_constant(11, true, 1, &mut rng),
+            Err(CoverError::NotReady)
+        );
+        assert_eq!(scheduler.next_slot(), 20);
+        scheduler = Scheduler::restore(config.clone(), scheduler.snapshot(), 11).unwrap();
+        assert_eq!(
+            scheduler.tick_constant(20, true, 1, &mut rng),
+            Ok(Slot::Real)
+        );
+        assert_eq!(
+            scheduler.tick_constant(20, true, 1, &mut rng),
+            Err(CoverError::NotReady)
+        );
+        assert_eq!(
+            scheduler.tick_constant(30, true, 1, &mut rng),
+            Ok(Slot::Queued)
+        );
+        assert_eq!(
+            scheduler.tick_constant(86401, true, 1, &mut rng),
+            Err(CoverError::NotReady)
+        );
+        assert_eq!(scheduler.next_slot(), 86410);
+        assert_eq!(
+            scheduler.tick_constant(86410, false, 1, &mut rng),
+            Ok(Slot::Decoy)
+        );
+        assert!(Scheduler::restore(config, scheduler.snapshot(), 86409).is_err());
+        assert_eq!(
+            scheduler.tick_constant(u64::MAX, true, 1, &mut rng),
+            Err(CoverError::Clock)
+        );
+    }
     #[test]
     fn seven_days_never_exceed_budget_and_paranoid_queues() {
         for mode in [Mode::Constant, Mode::Poisson] {
