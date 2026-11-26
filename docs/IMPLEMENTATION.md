@@ -9,21 +9,37 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 
 ## cargo-vet: граф desktop
 
-2026-11-26, от `4691e27`: **514 → 343 пробела**, критерий продукта
-`safe-to-deploy` сохранён. Изменён только `supply-chain/desktop/` и эта
-документация; версии, Cargo.lock и остальные графы сохранены, новых exemptions нет.
-Четыре закреплённых imports оставили 463 пробела, доверие проверенным историческим
-публикациям — 345, две полные проверки агентом — 343. Окна доверия ограничены
-отдельными днями публикации. API crates.io возвращал 429: использованы ответы,
-SHA-256 которых совпадает с отчётом ADR 0088; архивы/index/lockfile сверены заново.
+2026-11-26: первый проход от `4691e27` дал **514 → 343 пробела**;
+продолжение от `9e07392` — **343 → 292**, ещё 51 закрытый пробел.
+Критерий продукта `safe-to-deploy` сохранён. Версии, Cargo.lock, config.toml
+и остальные графы не менялись, exemptions не добавлены.
+
+API crates.io для точных версий теперь доступен: для 50 выбранных публикаций
+заново сверены identity, дата, yank-статус и checksum с архивом, sparse index
+и desktop lockfile. Добавлены только однодневные исторические окна доверия
+12 user-id и трём workflow identities; 13 из этих identities уже рассмотрены
+в ADR 0104, отдельно обоснованы `KodrAus` для bitflags и `RustCrypto/traits`.
+Этот шаг оставил 293 пробела. Дополнительные stores Actix, Fermyon и Ariel OS
+рассмотрены, новых imports не добавлено.
+
+Полная проверка пяти production-модулей `once_cell 1.21.4` (45 транзитивных
+потребителей) агентом оставила 292 пробела. В записи есть явное «проверено
+агентом, не человеком», SHA-256 архива, рассуждение об unsafe/атомиках и границы
+проверки. Прямые rustc/rustdoc проверки: 5 unit tests и 42 doctests прошли,
+один doctest пропущен upstream; std, no-default и alloc+race варианты собраны.
+Опциональные backend-зависимости и полная межплатформенная матрица не тестировались.
 
 Метод и ограничения — [ADR 0104](adr/0104-desktop-dependency-audit-sources.md);
-все пошаговые замеры, хеши и полный остаток по числу зависимых —
-[JSON-отчёт](../supply-chain/desktop/review-2026-11-26.json).
-Финальный `node scripts/vet-dependencies.mjs desktop` остаётся красным с 343
-пробелами. `cargo-deny` desktop, 24 теста расширения и 3 теста vet-wrapper прошли.
-Workspace tests, clippy и leak tests остановились при сборке OpenSSL из-за
-отсутствующего `perl`. M6 и CI dependency-audits desktop остаются открытыми.
+история первого прохода — [первый отчёт](../supply-chain/desktop/review-2026-11-26.json),
+пошаговые замеры продолжения, registry evidence, SHA и полный остаток по числу
+зависимых — [новый отчёт](../supply-chain/desktop/review-2026-11-26-continuation.json).
+Финальный `node scripts/vet-dependencies.mjs desktop` с locked imports остаётся
+красным: **292 пробела**, входы неизменны. `cargo-deny 0.22.0` desktop прошёл.
+Среди оставшихся крупных узлов — smallvec, hashbrown, typenum, getrandom и
+generic-array; неполные просмотры исходников не объявлены аудитами.
+Workspace tests/clippy/leak/extension tests в этом продолжении не запускались:
+по условию задачи для supply-chain/docs достаточно cargo-vet и cargo-deny.
+M6 и CI dependency-audits desktop остаются открытыми.
 
 ## cargo-vet: граф root
 
