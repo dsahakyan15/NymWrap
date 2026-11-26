@@ -50,6 +50,16 @@ Target SHA-256: 9c187e0a369471c550af028cba56d4f4fa2a489ad28151ae95a4d340a2a8b782
 Reviewed all package differences and SpannedDeserializer field/key/value consumption. The only executable addition is a MapAccess::size_hint counting the three remaining Option fields. Each count is 0 or 1; their sum is bounded to 3 regardless of untrusted span values or T, and the method only borrows self. No new unsafe code, allocation, I/O or dependencies. Production features and build=false are unchanged. Remaining changes are packaging, lints, docs/license attribution, release/VCS metadata and the package's development lockfile. This delta does not certify dependencies or the base version.
 """
 
+[[audits.stable_deref_trait]]
+who = "NymWrap automated source review (Codex agent, not human)"
+criteria = "safe-to-deploy"
+version = "1.2.1"
+notes = """
+Проверено агентом, не человеком. AI full source review by Codex; not an independent human audit.
+Published archive SHA-256: 6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596.
+Read the entire single-module crate including unsafe marker contracts, every unsafe impl, documentation examples, both manifests and archive inventory. No dependencies, build script, raw pointer operations, native code or ambient I/O. Reasoned about each unsafe impl: Box/Vec/String and owned path/C/OS strings dereference to separately allocated storage stable across moves; their shared methods cannot reallocate the target. The concrete Cow str/slice/path/CStr/OsStr forms preserve target address through shared access; ownership conversion requires mutable access outside the StableDeref promise. Rc/Arc keep target allocation fixed and are the owned types allowed CloneStableDeref; mutable access uses normal unique-borrow rules, not a blanket CloneStableDeref on mutable references. Ref/RefMut and lock guards hold the borrow/lock while dereferencing to the same target. Shared and mutable references preserve pointee location; CloneStableDeref is implemented only for shared references. Arc impls are gated on pointer atomics. The unsafe traits explicitly bind downstream implementers; this review does not certify external unsafe implementations or consumers that violate aliasing/lifetimes or retain references after a guard drops. All std, alloc and no-default configurations were considered.
+Direct rustc unit tests and rustdoc examples passed. No-default, alloc and std configurations also compiled. Package dependencies and downstream uses remain separately subject to vet. ADR 0104."""
+
 [[audits.toml_datetime]]
 who = "NymWrap automated source review (Codex)"
 criteria = "safe-to-deploy"
@@ -60,3 +70,853 @@ Base SHA-256: 3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7.
 Target SHA-256: 173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49.
 Reviewed all package differences and the surrounding DatetimeDeserializer implementation. The only executable change adds MapAccess::size_hint as Some(usize::from(date.is_some())). The Option is consumed by next_value_seed, so the hint is bounded to 0 or 1 and has no new allocation, I/O, unsafe code or state mutation. Production dependency constraints, features and build=false are unchanged. Other differences are packaging include paths, lints, release/docs/license attribution, VCS metadata and the package's own development lockfile. Dependencies and the previously audited base require their own audit paths.
 """
+
+[[audits.version_check]]
+who = "NymWrap automated source review (Codex agent, not human)"
+criteria = "safe-to-deploy"
+version = "0.9.5"
+notes = """
+Проверено агентом, не человеком. AI full source review by Codex; not an independent human audit.
+Published archive SHA-256: 0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a.
+Read the complete package inventory, both manifests and all four source modules including tests. No dependencies, unsafe code, native code or own build script. The sole production ambient authority is launching the caller-selected RUSTC (or rustc on PATH) with fixed --verbose --version arguments using Command without a shell, and reading compiler feature environment flags. This is appropriate for a build-time compiler probe, under the same trusted-toolchain assumption as Cargo; child output is not bounded and no timeout is imposed, so this is not an API for executing attacker-selected compilers. Version and date parsing use checked u16 parsing, fixed arrays and early return before a fourth element can be stored; packed shifts have fixed valid widths. String iteration is finite and UTF-8 safe. Dates reject out-of-range month/day but are not calendar validation (e.g. February 31); channel recognition intentionally accepts suffix matches. Those are compiler metadata helpers, not authorization/date validation. Feature flags only affect the caller build configuration, never execute model/import text or select a network destination. Tests read optional excluded static fixtures only when present. No serious production exploit identified in reasonable build-time use. This is a new safe-to-deploy review, not an upgrade of the fuzz safe-to-run audit.
+Direct rustc unit tests and rustdoc examples passed. Package dependencies and downstream uses remain separately subject to vet. ADR 0104."""
+
+[[trusted.aead]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-02"
+end = "2023-04-03"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.aes]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-02-13"
+end = "2024-02-14"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.aho-corasick]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-08-03"
+end = "2026-08-04"
+notes = "ADR 0104. Trust the regex/ripgrep maintainer for these specific production regex/search/byte and filesystem traversal utilities, including robustness against untrusted input and documented resource tradeoffs. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.argon2]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-01-20"
+end = "2024-01-21"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.async-channel]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-07-06"
+end = "2025-07-07"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.async-io]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.async-lock]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-11-02"
+end = "2026-11-03"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.async-process]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.async-signal]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-04-07"
+end = "2026-04-08"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.async-trait]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-08-08"
+end = "2026-08-09"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.autocfg]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-05-22"
+end = "2026-05-23"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.axum]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-04-14"
+end = "2026-04-15"
+notes = "ADR 0104. Trust Tokio maintainer Alice Ryhl for these specific deployed runtime, byte-buffer and slab releases, including concurrent unsafe internals and handling of input-driven lengths. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.base64ct]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2026-01-12"
+end = "2026-01-13"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.blake2]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2022-12-16"
+end = "2022-12-17"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific deployed hash/crypto-support libraries and their treatment of attacker-controlled data. No broader endorsement of every crate published by this account. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.bytes]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-11-17"
+end = "2026-11-18"
+notes = "ADR 0104. Trust Tokio maintainer Alice Ryhl for these specific deployed runtime, byte-buffer and slab releases, including concurrent unsafe internals and handling of input-driven lengths. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.cbc]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2022-03-24"
+end = "2022-03-25"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific deployed hash/crypto-support libraries and their treatment of attacker-controlled data. No broader endorsement of every crate published by this account. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.cc]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2026-11-20"
+end = "2026-11-21"
+notes = "ADR 0104. Trust official Rust cc-rs release workflow for the deployed native build/compiler discovery helpers; intentional execution of the chosen toolchain remains bounded by build environment policy. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.chacha20]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-04-01"
+end = "2023-04-02"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.chacha20poly1305]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-08-10"
+end = "2022-08-11"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.digest]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-05-19"
+end = "2023-05-20"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.dtoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-12-27"
+end = "2025-12-28"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.event-listener-strategy]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-03-27"
+end = "2025-03-28"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.fastrand]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2026-07-19"
+end = "2026-07-20"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.find-msvc-tools]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2026-10-19"
+end = "2026-10-20"
+notes = "ADR 0104. Trust official Rust cc-rs release workflow for the deployed native build/compiler discovery helpers; intentional execution of the chosen toolchain remains bounded by build environment policy. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.flate2]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/flate2-rs"
+start = "2026-11-06"
+end = "2026-11-07"
+notes = "ADR 0104. Trust official Rust flate2 workflow for production decompression, including handling hostile compressed data and unsafe backend contracts; caller resource limits remain necessary. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2022-07-17"
+end = "2022-07-18"
+notes = "ADR 0104. Trust parking_lot/hashbrown maintainer for these specific production synchronization/collection crates, including their unsafe storage, locking and lifetime invariants. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.hkdf]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2023-12-13"
+end = "2023-12-14"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific deployed hash/crypto-support libraries and their treatment of attacker-controlled data. No broader endorsement of every crate published by this account. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.http]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.http-body]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.http-body-util]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-08-12"
+end = "2026-08-13"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.httparse]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2025-03-03"
+end = "2025-03-04"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.hyper]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-10-06"
+end = "2026-10-07"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.hyper-util]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-09-24"
+end = "2026-09-25"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.indexmap]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2023-03-24"
+end = "2023-03-25"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.indexmap]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-09-05"
+end = "2026-09-06"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.itoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-11-09"
+end = "2026-11-10"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/libc"
+start = "2026-10-16"
+end = "2026-10-17"
+notes = "ADR 0104. Trust official Rust libc workflow for deployed platform FFI declarations; caller unsafe/OS permission obligations remain separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.linux-raw-sys]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2025-12-23"
+end = "2025-12-24"
+notes = "ADR 0104. Trust rustix/cap-std/WASI maintainer for these specific production OS wrappers and generated kernel bindings, including unsafe FFI invariants. Caller capability policy is separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.lock_api]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0104. Trust parking_lot/hashbrown maintainer for these specific production synchronization/collection crates, including their unsafe storage, locking and lifetime invariants. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.log]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/log"
+start = "2026-10-30"
+end = "2026-10-31"
+notes = "ADR 0104. Trust official Rust log workflow for deployed logging facade code and synchronization. Applications must avoid logging secret content. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.memchr]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-07-08"
+end = "2026-07-09"
+notes = "ADR 0104. Trust the regex/ripgrep maintainer for these specific production regex/search/byte and filesystem traversal utilities, including robustness against untrusted input and documented resource tradeoffs. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.mime]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-11-05"
+end = "2026-11-06"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.mio]]
+criteria = "safe-to-deploy"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2026-11-13"
+end = "2026-11-14"
+notes = "ADR 0104. Trust Tokio Mio maintainer for the specific deployed Mio/socket2 OS-I/O wrappers, including unsafe FFI and readiness handling. Application network permissions remain enforced independently. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.num-bigint]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-07-05"
+end = "2026-07-06"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.num-complex]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2024-05-07"
+end = "2024-05-08"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.num-integer]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-08-12"
+end = "2026-08-13"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.num-iter]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2026-07-07"
+end = "2026-07-08"
+notes = "ADR 0104. Trust Rust compiler/library/release and rayon/rust-num maintainer for these specific production numerical, collection and build-probing crates, including unsafe collection/concurrency contracts. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.openssl-src]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2026-06-09"
+end = "2026-06-10"
+notes = "ADR 0104. Trust the Rust/Cargo and Wasmtime maintainer for these specific native-toolchain, filesystem metadata, and demangling packages used in production. Authority is intentional and downstream deployment controls remain required. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.parking_lot]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0104. Trust parking_lot/hashbrown maintainer for these specific production synchronization/collection crates, including their unsafe storage, locking and lifetime invariants. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.parking_lot_core]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2025-10-03"
+end = "2025-10-04"
+notes = "ADR 0104. Trust parking_lot/hashbrown maintainer for these specific production synchronization/collection crates, including their unsafe storage, locking and lifetime invariants. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.password-hash]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2023-03-04"
+end = "2023-03-05"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.pin-project-lite]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:taiki-e/pin-project-lite"
+start = "2026-11-19"
+end = "2026-11-20"
+notes = "ADR 0104. Trust the official maintainer release workflow for production pin-projection macros, including soundness of generated unsafe code. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.polling]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2025-09-14"
+end = "2025-09-15"
+notes = "ADR 0104. Trust the maintainer of pin-project/portable-atomic and async infrastructure for these specific production pinning, atomic and future utilities, including generated unsafe code and synchronization soundness. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.poly1305]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-07-31"
+end = "2022-08-01"
+notes = "ADR 0104. Trust the RustCrypto project lead for these specific production cryptographic primitives, KDFs and secret-memory utilities, including their unsafe/constant-time implementations. This is maintainer trust for safe-to-deploy, not a claim of an independent cryptographic audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.regex]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2025-10-13"
+end = "2025-10-14"
+notes = "ADR 0104. Trust the regex/ripgrep maintainer for these specific production regex/search/byte and filesystem traversal utilities, including robustness against untrusted input and documented resource tradeoffs. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.regex-automata]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0104. Trust the regex/ripgrep maintainer for these specific production regex/search/byte and filesystem traversal utilities, including robustness against untrusted input and documented resource tradeoffs. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.regex-syntax]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-11-18"
+end = "2026-11-19"
+notes = "ADR 0104. Trust the regex/ripgrep maintainer for these specific production regex/search/byte and filesystem traversal utilities, including robustness against untrusted input and documented resource tradeoffs. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.rustix]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2026-10-27"
+end = "2026-10-28"
+notes = "ADR 0104. Trust rustix/cap-std/WASI maintainer for these specific production OS wrappers and generated kernel bindings, including unsafe FFI invariants. Caller capability policy is separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.rustversion]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-07"
+end = "2026-07-08"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.serde_derive]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-18"
+end = "2026-07-19"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.serde_json]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-11"
+end = "2026-10-12"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.serde_path_to_error]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-09-15"
+end = "2025-09-16"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.sha1]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-07-10"
+end = "2026-07-11"
+notes = "ADR 0104. Trust official RustCrypto hashes release workflow for production hashing implementations, including unsafe backend/hostile input behavior; this is maintainer trust, not an independent crypto audit. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.slab]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-01-31"
+end = "2026-02-01"
+notes = "ADR 0104. Trust Tokio maintainer Alice Ryhl for these specific deployed runtime, byte-buffer and slab releases, including concurrent unsafe internals and handling of input-driven lengths. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.socket2]]
+criteria = "safe-to-deploy"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0104. Trust Tokio Mio maintainer for the specific deployed Mio/socket2 OS-I/O wrappers, including unsafe FFI and readiness handling. Application network permissions remain enforced independently. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2023-02-24"
+end = "2023-02-25"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-15"
+end = "2026-07-16"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-11-09"
+end = "2026-11-10"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.thiserror]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2024-11-10"
+end = "2024-11-11"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.thiserror]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-09-23"
+end = "2026-09-24"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2024-11-10"
+end = "2024-11-11"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-09-23"
+end = "2026-09-24"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.tokio]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-10-21"
+end = "2026-10-22"
+notes = "ADR 0104. Trust Tokio maintainer Alice Ryhl for these specific deployed runtime, byte-buffer and slab releases, including concurrent unsafe internals and handling of input-driven lengths. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.tokio-macros]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2026-07-29"
+end = "2026-07-30"
+notes = "ADR 0104. Trust Tokio maintainer Alice Ryhl for these specific deployed runtime, byte-buffer and slab releases, including concurrent unsafe internals and handling of input-driven lengths. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-10-03"
+end = "2023-10-04"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-09-08"
+end = "2023-09-09"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-10-03"
+end = "2023-10-04"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml_parser]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-21"
+end = "2026-11-22"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.toml_writer]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-04"
+end = "2026-11-05"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.tower]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2026-01-12"
+end = "2026-01-13"
+notes = "ADR 0104. Trust the Hyper/HTTP maintainer for these specific deployed HTTP and byte-processing packages, including hostile protocol input. This is production maintainer trust; application egress authorization remains separate. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.unicode-ident]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-10-12"
+end = "2026-10-13"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.wasi]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2025-06-10"
+end = "2025-06-11"
+notes = "ADR 0104. Trust the Rust/Cargo and Wasmtime maintainer for these specific native-toolchain, filesystem metadata, and demangling packages used in production. Authority is intentional and downstream deployment controls remain required. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-01-21"
+end = "2023-01-22"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-11-15"
+end = "2023-11-16"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-30"
+end = "2024-07-31"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-06-12"
+end = "2025-06-13"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-targets]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-targets]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows-targets]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-13"
+end = "2023-03-14"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-03"
+end = "2024-07-04"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-10-06"
+end = "2025-10-07"
+notes = "ADR 0104. Trust Microsoft windows-rs maintainer for these generated production Windows API bindings and target import libraries. Correct unsafe FFI use and OS security policy remain responsibilities of callers; do not infer that arbitrary caller usage is safe. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.winnow]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2024-02-12"
+end = "2024-02-13"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.winnow]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2026-11-05"
+end = "2026-11-06"
+notes = "ADR 0104. Trust Cargo/clap/TOML maintainer for these specific deployed command/configuration parsers and serialization utilities, including untrusted input and generated parser behavior. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.zeroize]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-11-17"
+end = "2026-11-18"
+notes = "ADR 0104. Trust official RustCrypto utils workflow for production zeroization code/derives, including volatile writes, optimizer barriers and generated implementations. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.zeroize_derive]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-12"
+end = "2026-06-13"
+notes = "ADR 0104. Trust official RustCrypto utils workflow for production zeroization code/derives, including volatile writes, optimizer barriers and generated implementations. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
+
+[[trusted.zmij]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2026-07-13"
+end = "2026-07-14"
+notes = "ADR 0104. Trust release engineering of the maintainer of Serde and Rust procedural-macro infrastructure for deployed serialization/error/derive crates. Production criterion includes generated code and untrusted data; this is an explicit maintainer-trust judgment, not promotion of fuzz audits. Only this historical UTC publication day is trusted. Registry response reused from ADR 0088 with its committed SHA-256, then checked against the archive, index and desktop lockfile; see review-2026-11-26.json. Trust decision by Codex agent, not a human source audit."
