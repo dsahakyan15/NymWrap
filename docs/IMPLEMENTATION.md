@@ -287,7 +287,7 @@ Wrapper по-прежнему отвергает любые vetted_with_exemptio
 
 ## cargo-vet: граф netd
 
-2026-11-26, [ADR 0103](adr/0103-netd-dependency-audit-sources.md): **499 → 312 → 253 → 109 → 26 пробелов**
+2026-11-26, [ADR 0103](adr/0103-netd-dependency-audit-sources.md): **499 → 312 → 253 → 109 → 26 → 20 пробелов**
 для `daemons/nw-netd/Cargo.toml`. Критерий продукта `safe-to-deploy` сохранён;
 версии, все Cargo.lock, манифесты и остальные stores не менялись.
 Четвёртая партия добавила 18 индивидуальных exemptions по недостижимости;
@@ -437,6 +437,37 @@ exit 0; расширение — **24/24**. Это локальные резул
 Источники, SHA, checkpoints, все исключения, воспроизведения и полный остаток —
 в [четвёртом отчёте](../supply-chain/netd/review-2026-11-26-fourth.json).
 Нулевой остаток не достигнут; M6 и netd dependency-audits остаются открытыми.
+
+Пятая партия от `79e0aa6`, ветка `agent/vet-netd-5` от `a1f6894`:
+**26 → 20 пробелов**, **18 прежних exemptions без изменений**. Четыре
+исходных аудита агента: blanket 0.3.0 (82 library tests), async_executors
+0.7.0 (четыре behavior tests), asynchronous-codec 0.7.0 (14 upstream tests
+с JSON), enum_dispatch 0.3.13 (23 tests; две несовместимые test-only suites
+исключены явно). Для каждого в audits.toml и
+[пятом JSON-отчёте](../supply-chain/netd/review-2026-11-26-fifth.json) — SHA
+архива, полный перечень production-файлов и честные ограничения просмотра.
+Узкое publisher trust для slotmap/orlp и imara-diff/pascalkuthe ограничено
+точным пакетом и историческими сутками; identity/owner/API/archive/index/lock
+и immutable VCS original manifest сверены заново.
+
+ADR 0103 «Требуют обновления» теперь содержит точные процессы/call sites,
+разделение сетевых операндов и дефектного входа, исправляющие версии и риск.
+Для четырёх прежних defects сетевой trigger в текущем коде не найден:
+data-encoding callers используют константу кодировки, sanitize-filename —
+фиксированные ключи состояния, enum-ordinalize работает в proc-macro host
+на последовательном enum educe, dirs-sys XDG user-dirs parser не вызывается
+через используемые BaseDirs/ProjectDirs/home_dir.
+Подтверждённого исправляющего релиза нет: enum-ordinalize 4.4.2 вместе с
+актуальной derive 4.4.2 и sanitize-filename 0.8.0-beta повторяют defects;
+data-encoding/dirs-sys latest совпадают с pinned версиями.
+rdrand/educe заново проверены по исходникам без общего аудита; дополнительно
+отмечены source-only unsafe-trait проблема iprange и воспроизведённые
+непригодные для UTF-8 str slices captures glob-match. Native/FFI без полного
+просмотра явно **требует человеческого решения**. Runtime/версии/lockfiles,
+root/desktop stores и gate не менялись. cargo-vet: failed, 20 gaps + 18
+exemptions; cargo-deny: green. Workspace tests — **169 passed / 16 ignored**,
+включая leak suites **33 passed / 1 ignored**; clippy с `-D warnings` — exit 0;
+расширение — **24/24**. Полные статусы и SHA логов находятся в JSON.
 
 ## Задача 9: M6 cargo-vet, только fuzz; локальный gate зелёный — 2026-11-26
 

@@ -1,6 +1,24 @@
 
 # cargo-vet audits file
 
+[[audits.async_executors]]
+who = "Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.7.0"
+notes = "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 a982d2f86de6137cc05c9db9a915a19886c97911f9790d04f174cede74be01a5; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests, README, build.rs and all production code in all 19 src modules, including optional backend branches. Reviewed FutureObj/static/Send bounds, Rc-owned LocalSet versus Arc-owned multithread runtime, fallible runtime-flavor conversion, join-handle polling, cancellation-on-drop/detach, remote handles, blocking-task non-cancellation, timer pin projection and wake-once yield. No unsafe in this wrapper; build script only asks rustc_version for compiler channel and emits fixed cfg names. Runtime construction/thread spawning and optional Tokio I/O driver initialization are intended capabilities; no socket connection, command execution or content logging is added by this crate. Drop cancellation is cooperative, not an instantaneous revocation of task side effects. Nested block_on, task panic/runtime shutdown and some disabled backend combinations may panic or fail compilation as documented; do not treat this as a sandbox. Dependencies and executor internals require separate coverage. Isolated unchanged source compiled for Tokio current/multithread, native timers, I/O and futures local/thread pools; four synthetic behavior tests passed (non-Send local task, drop cancellation, detach, ready/expired timeout). Other backends source-reviewed, not executed; reduced test-only manifest and omitted unavailable optional runtime/test dependencies are disclosed in the report. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+
+[[audits.asynchronous-codec]]
+who = "Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.7.0"
+notes = "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 a860072022177f903e59730004fb5dc13db9275b79bb2aef7ba8ce831956c233; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests and complete production code in all 13 source modules, including optional JSON/CBOR. Reviewed safe buffer slicing/splitting, pin_project_lite projections, read/decode/EOF/error transitions, partial writes/write-zero rejection, flush-before-close, backpressure, borrowed encoder items and from_parts buffer ownership. No own unsafe, build script, FFI or ambient socket creation. The codec is not a size/work limit: a decoder returning None indefinitely can grow the buffer; builtin line/JSON/CBOR/length codecs need caller limits on hostile input. LengthCodec casts u64 to usize (not portable protocol validation on 32-bit); supported NymWrap targets are 64-bit, and Arti uses its own bounded channel-cell decoder rather than these builtin codecs. Current Tor channel framing reads a u16 body length plus seven-byte header (or 514-byte fixed cell), and FramedRead appends at most 8192 bytes before decoding again. Source-review of this adapter does not certify the independent Tor cell/message parsers. Isolated unchanged-source library/integration tests with JSON: 14 passed; CBOR branch reviewed but not run because its optional dependency was uncached. Reduced test-only manifest uses exact netd dependency versions. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+
+[[audits.blanket]]
+who = "Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.3.0"
+notes = "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 e0b121a9fe0df916e362fb3271088d071159cdf11db0e4182d02152850756eff; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests and all production code in nine source modules: attribute parsing, five pointer/reference forwarding generators, default-module delegation and signature/generic helpers. Generated code uses Rust method calls and dereferences, preserves type/borrow checking and adds no runtime parser, unsafe block, filesystem, process or network access. Box by-value forwarding moves the owned value; Ref/Rc/Arc reject mutable or by-value receivers. Unsupported static/arbitrary receivers, const generics or lowercase-only trait names may fail during compilation; this is not runtime handling of network text. Compile-time trait bounds and caller-selected default functions remain caller obligations. Inspected emitted implementations, not merely the absence of unsafe markers. Original library tests in an isolated copy: 82 passed with a reduced test-only manifest using exact netd syn 2/proc-macro2/quote versions; external trybuild suites not run. Embedded tests were not all read as audit inputs. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+
 [[audits.by_address]]
 who = "Codex: проверено агентом, не человеком"
 criteria = "safe-to-deploy"
@@ -88,6 +106,12 @@ who = "Codex: проверено агентом, не человеком"
 criteria = "safe-to-deploy"
 version = "2.0.2"
 notes = "проверено агентом, не человеком. SHA-256 .crate: 117240f60069e65410b3ae1bb213295bd828f707b5bec6596a1afc8793ce0cbc. Read both manifests, complete sole library source including macro arms and unit tests, and both integration-test files. Downcast conversions delegate to safe Any APIs for Box/Rc/Arc; wrong types return original ownership or None. Any/static bounds and Send/Sync bounds are retained by generated methods, and borrows carry their original lifetimes. Guarded unwrap follows the matching is check through blanket Any implementations. Token-tree generics/where predicates are compiler type-checked, with hygienic crate paths. No unsafe, dependencies, build script, FFI or OS access. This does not make user-provided trait implementations or their destructors safe. Exact reviewed files and hashes: review-2026-11-26-third.json. Dependencies require separate coverage."
+
+[[audits.enum_dispatch]]
+who = "Codex agent (проверено агентом, не человеком)"
+criteria = "safe-to-deploy"
+version = "0.3.13"
+notes = "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests and all production code in all ten modules, with README API/limitations sections and selective crate-level overview docs. Reviewed typed token parsing/quoting, Mutex-protected host-side caches, enum field ownership and cfg propagation, match-based dispatch, generic/argument forwarding and renaming, async await generation, From/TryInto and Self-return wrapping. No runtime text evaluation, raw-pointer casts, FFI, filesystem/network access or build script. Cache identities are item name plus generic arity, not module paths; ambiguous/unsupported definitions can fail compilation and must not be generated from runtime text. The macro copies explicitly unsafe trait/method signatures; using it for an unsafe trait still requires the developer to prove that the wrapper preserves that trait invariant. No new runtime unsafe operations are synthesized to bypass type checking. Unchanged upstream library plus 22 integration binaries: 23 tests passed in a reduced test-only manifest using exact netd dependencies. Two obsolete/nightly suites were excluded explicitly: async-trait uses a stable-channel-rejected feature attribute and uncached smol; arg_patterns requests removed box_patterns. No RUSTC_BOOTSTRAP or source modification used. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
 
 [[audits.equivalent]]
 who = "NymWrap automated source review (Codex)"
@@ -1153,6 +1177,13 @@ start = "2026-04-27"
 end = "2026-04-28"
 notes = "ADR 0103 third batch: Explicit production trust in the official Rust URL/IDNA maintainers for the enumerated URL/form and IDNA adapter packages. Covers hostile UTF-8, percent/form encodings, URL component boundaries and ICU normalization interactions, including unsafe optimized paths. URL parsing alone is not SSRF prevention, DNS authorization or a privacy policy. Exact package: idna_adapter 1.2.2; archive SHA-256 cb68373c0d6620ef8105e855e7745e18b0d00d3bdb07fb532e434244cdb9a714. Exact registry publisher/date/yank, archive/index/lock checksum evidence and family identity evidence: review-2026-11-26-third.json. Historical one-day UTC window only; no future publications intended. Publisher trust, not a source audit by an agent or human."
 
+[[trusted.imara-diff]]
+criteria = "safe-to-deploy"
+user-id = 91593 # Pascal Kuthe (pascalkuthe)
+start = "2025-06-14"
+end = "2025-06-15"
+notes = "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Explicit production publisher trust in Pascal Kuthe for the maintained diff implementation, including hostile token sequences, Myers/histogram index bounds, compressed-pointer arithmetic and unsafe tokenization. Basis: exact registry publisher/current owner and canonical original manifest at packaged VCS commit agree; official Helix upstream records his diff-gutter implementation as a merged contribution from a project MEMBER and his official profile links imara-diff and the related maintained text tooling. This is trust in the responsible implementation/release maintainer, not an independent audit of this exact release or a claim that adoption proves safety. Caller must cap input/output/work and respect the documented maximum 2^31-2 tokens; diff results are data, not commands or an authenticity decision. Exact imara-diff 0.2.0, archive SHA-256 2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c. One historical publication-day window only; no future or unrelated releases. Fresh registry/index/lock/archive and immutable canonical manifest checks: review-2026-11-26-fifth.json. Publisher trust for safe-to-deploy, not an agent or human line-by-line source audit."
+
 [[trusted.indexmap]]
 criteria = "safe-to-deploy"
 user-id = 539 # Josh Stone (cuviper)
@@ -2072,6 +2103,13 @@ user-id = 6741 # Alice Ryhl (Darksonn)
 start = "2026-01-31"
 end = "2026-02-01"
 notes = "ADR 0103: Only Tokio/macros/util, bytes, slab and axum. Tokio maintainer with responsibility for async memory/pinning/concurrency and network servers; trust includes adversarial schedules and input lengths, not just safe execution of builds. Pinned Bytecode Alliance explicitly uses safe-to-deploy trust for Tokio/bytes family. Exact locked publication metadata and archive/index checks in review-2026-11-26.json; this is publisher trust, not an agent source audit. One-day UTC window, no future releases intended."
+
+[[trusted.slotmap]]
+criteria = "safe-to-deploy"
+user-id = 24326 # Orson Peters (orlp)
+start = "2025-12-06"
+end = "2025-12-07"
+notes = "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Explicit production publisher trust in Orson Peters for the maintained Rust generational-container family, including unsafe initialization/drop/unwind, key generations, free-list ownership, secondary maps, serde validation and disjoint mutable access. Basis: exact publication is by the current official repository maintainer; canonical original manifest matches packaged VCS commit; Rust standard-library documentation independently credits Orson Peters for production slice-sorting algorithms and his official profile links the maintained Rust data-structure projects. This is an engineering trust judgment about the maintainer capability relevant to unsafe collections, not proof that sorting experience audits slotmap. Keys are handles, not authorization capabilities; documented generation wraparound and caller unsafe Key contracts remain limitations. No independent source audit of all slotmap implementations, serde or generated code is claimed. Exact slotmap 1.1.1, archive SHA-256 bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038. One historical publication-day window only; no future or unrelated releases. Fresh registry/index/lock/archive and immutable canonical manifest checks: review-2026-11-26-fifth.json. Publisher trust for safe-to-deploy, not an agent or human line-by-line source audit."
 
 [[trusted.slotmap-careful]]
 criteria = "safe-to-deploy"
