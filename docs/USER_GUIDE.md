@@ -78,10 +78,82 @@ node scripts/release-signature.mjs verify путькпапке
 Windows SmartScreen или macOS «неизвестный разработчик»: для этого нужны платные
 сертификаты, их у проекта нет.
 
-Для владельца ключа: `node scripts/release-signature.mjs keygen` один раз
-создаёт ключ под паролем в `~/.nymwrap-release/`. Сам ключ и пароль никуда не
-загружайте. Если ключ потерян, новые выпуски придётся подписывать новым ключом,
-а открытый ключ в репозитории — заменить. `sign <папка>` подписывает выпуск.
+Воспроизводимый набор пока выпускается только для Linux x86_64: архив
+`nymwrap-linux-x86_64.tar.gz`, исходный SBOM `.cdx.json`, сведения об окружении
+`.buildinfo.json`, хеши файлов внутри архива `.files.sha256`, `SHA256SUMS` и
+подпись `SHA256SUMS.sig`. На Linux нужны системные GTK/WebKit 4.1. Нативные
+Windows/macOS выпуски этим способом пока не проверены (ADR 0098).
+Автоматические GitHub «Source code» zip/tar.gz в подписанный набор не входят.
+Проверяйте подпись до распаковки и запуска. После проверки архива можно
+дополнительно проверить отдельные файлы:
+
+```bash
+mkdir unpacked
+tar -xzf nymwrap-linux-x86_64.tar.gz -C unpacked
+(cd unpacked && sha256sum -c ../nymwrap-linux-x86_64.files.sha256)
+```
+
+Для владельца ключа порядок такой (команды из корня чистого checkout):
+
+1. Выберите проверенный commit и существующий тег версии, например `v0.1.0`.
+   Push тега или ручной запуск `unsigned-release` на этом теге выполняет две
+   независимые сборки и создаёт **черновик**, содержащий неподписанные файлы и
+   SBOM. На обычной ветке работает только `reproducible-release`; его artifact
+   `nymwrap-unsigned-linux-x86_64` позволяет проверить кандидата без выпуска.
+   Пока задача 11 проверяется, release workflow запускать не требуется.
+2. Дождитесь зелёного сравнения `compare`. Скачайте все пять неподписанных
+   assets из draft в пустую папку, например:
+
+   ```powershell
+   gh release download v0.1.0 --dir target/downloaded
+   git switch --detach v0.1.0
+   git rev-parse HEAD
+   ```
+
+   Сверьте commit с выбранным CI run и полем `commit` в buildinfo. Для
+   кандидата можно использовать `gh run download RUN_ID --name
+   nymwrap-unsigned-linux-x86_64 --dir target/downloaded` вместо release download.
+   Неподписанные файлы пока не запускайте.
+3. Установите Docker с Linux containers (на Windows/macOS — Docker с Linux VM).
+   Запустите тот же сценарий: он соберёт **закоммиченный HEAD**, а не рабочие
+   правки, заново скачает закреплённые средства/исходники и соберёт с четырьмя
+   заданиями. Старые Cargo/npm caches и локальные ключи ему не передаются.
+
+   ```powershell
+   node scripts/repro-build.mjs target/local-rebuild
+   $releaseCommit = git rev-parse HEAD
+   node scripts/release-artifacts.mjs compare target/downloaded target/local-rebuild target/verified-release $releaseCommit
+   ```
+
+   Папки вывода должны быть пустыми. На Linux/macOS последнюю команду можно
+   выполнить с `"$(git rev-parse HEAD)"` вместо `$releaseCommit`. Успех —
+   `"identical": true`: заново пересчитаны SHA-256 архива, SBOM, buildinfo и
+   файлового манифеста; набор и исходный commit также совпали. При расхождении
+   остановитесь, выясните причину и пересоберите; подпись не исправляет различия.
+4. Вне контейнера установите существующий CLI и подпишите проверенный набор
+   своим уже созданным ключом. Пароль будет запрошен скрыто:
+
+   ```powershell
+   npm ci --prefix app
+   node scripts/release-signature.mjs sign target/verified-release
+   node scripts/release-signature.mjs verify target/verified-release
+   ```
+
+   По умолчанию ключ — `~/.nymwrap-release/nymwrap-release.key`; другой путь
+   задаётся `--key`. Не помещайте ключ или пароль в Actions secrets, репозиторий,
+   каталог выпуска или контейнер. Не запускайте `keygen` заново: открытый ключ
+   уже закреплён. `keygen` нужен только при первоначальном создании/согласованной
+   замене ключа; потеря ключа требует его замены и отдельного уведомления людей.
+5. Загрузите пересозданный манифест и подпись в тот же черновик:
+
+   ```powershell
+   gh release upload v0.1.0 target/verified-release/SHA256SUMS target/verified-release/SHA256SUMS.sig --clobber
+   ```
+
+   Заново скачайте все шесть assets в другую пустую папку, выполните `verify`
+   для неё и лишь после успеха опубликуйте draft в GitHub, убрав пометку unsigned.
+   Все загруженные assets должны входить в SHA256SUMS; добавление файла требует
+   нового сравнения, подписи и проверки полного набора.
 
 ## Создание и блокировка
 

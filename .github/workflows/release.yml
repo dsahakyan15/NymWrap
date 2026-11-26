@@ -1,0 +1,39 @@
+name: unsigned-release
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require an existing version tag (select the tag for workflow_dispatch)
+        env:
+          RELEASE_REF: ${{ github.ref }}
+        run: '[[ "$RELEASE_REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]'
+  reproduce:
+    needs: tag
+    uses: ./.github/workflows/reproducible.yml
+  upload:
+    needs: reproduce
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: nymwrap-unsigned-linux-x86_64
+          path: target/release
+      - name: Create draft for the owner's local rebuild and signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          printf '%s\n' 'UNSIGNED: do not install yet. The owner must rebuild, compare and sign SHA256SUMS locally before publishing.' 'See docs/USER_GUIDE.md: Проверка скачанного выпуска.' > target/release-notes.txt
+          gh release create "$RELEASE_TAG" --verify-tag --draft --title "NymWrap $RELEASE_TAG (unsigned)" --notes-file target/release-notes.txt target/release/*
