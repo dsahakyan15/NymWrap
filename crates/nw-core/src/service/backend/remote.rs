@@ -3,6 +3,7 @@ use crate::{CoreError, RemoteCompletion};
 use nw_proto::TrustLevel;
 mod decoys;
 mod jobs;
+mod queue;
 pub(in crate::service) use decoys::{Decoys, prefetch_decoy};
 pub use jobs::RemoteSubmission;
 pub(in crate::service) use jobs::{
@@ -39,6 +40,7 @@ pub(in crate::service) async fn traffic_tick(state: &State) -> Result<(), String
     traffic_tick_at(state, workspace::now()).await
 }
 async fn traffic_tick_at(state: &State, at: u64) -> Result<(), String> {
+    let slot = queue::Slot::new();
     let ready = {
         let mut pending = state
             .pending_sends
@@ -65,6 +67,9 @@ async fn traffic_tick_at(state: &State, at: u64) -> Result<(), String> {
         let Some(w) = s.workspace.as_mut() else {
             return Ok(());
         };
+        if w.config.profile == nw_proto::Profile::Paranoid {
+            queue::check_route(&w.config, w.config.shield.min_trust, Route::TRUST).map_err(code)?;
+        }
         let real = !tail && ready && w.config.cover.mode == crate::config::CoverMode::Constant;
         let Some(job) = w.take_traffic_slot(at, real).map_err(code)? else {
             return Ok(());
@@ -81,7 +86,7 @@ async fn traffic_tick_at(state: &State, at: u64) -> Result<(), String> {
             let item=state.pending_sends.lock().map_err(|_|CoreError::Session)?.pop_front().ok_or(CoreError::Session)?;
             let QueuedSend {epoch:queued_epoch,conversation,body,config,context,required,job:remote_job,mut response}=item;
             if queued_epoch!=epoch{return Err(CoreError::Session);}
-            let route=Route {state:state.clone(),epoch,config,context,required,job:Some(remote_job),scheduled:true};
+            let route=Route {state:state.clone(),epoch,config,context,required,job:Some(remote_job),slot:Some(slot)};
             let result=tokio::select!{biased;_=response.closed()=>Err(CoreError::Session),result=route.send_now(&conversation,&body)=>result};
             let status=result.as_ref().map(|_|()).map_err(|e|match e {CoreError::Budget=>CoreError::Budget,CoreError::Credential=>CoreError::Credential,CoreError::Session=>CoreError::Session,_=>CoreError::Transport});
             let _=response.send(result);return status;
@@ -89,7 +94,7 @@ async fn traffic_tick_at(state: &State, at: u64) -> Result<(), String> {
         let ready=state.decoys.lock().map_err(|_|CoreError::Session)?.take(epoch).ok_or(CoreError::Model)?;
         // The replacement is prepared independently while this slot uses immutable checked bytes.
         prefetch_decoy(state).map_err(|_|CoreError::Session)?;
-        let route=Route {state:state.clone(),epoch,context,required:config.shield.min_trust,config,job:None,scheduled:true};
+        let route=Route {state:state.clone(),epoch,context,required:config.shield.min_trust,config,job:None,slot:Some(slot)};
         route.send_now(&ready.conversation,&ready.body).await?;
         Ok(())
     }.await;
@@ -111,7 +116,7 @@ async fn traffic_tick_at(state: &State, at: u64) -> Result<(), String> {
     operation.map_err(code)
 }
 struct Route {
-    scheduled: bool,
+    slot: Option<queue::Slot>,
     job: Option<String>,
     state: State,
     epoch: u64,
@@ -131,7 +136,7 @@ pub(super) struct QueuedSend {
 }
 impl RemoteCompletion for Route {
     fn trust(&self) -> TrustLevel {
-        TrustLevel::L3
+        Self::TRUST
     }
     fn context(&self) -> &str {
         &self.context
@@ -149,13 +154,14 @@ impl RemoteCompletion for Route {
         prepared: &nw_shield::Prepared,
         max_tokens: u32,
     ) -> Result<SecretString, CoreError> {
-        if self.required < TrustLevel::L3 {
-            return Err(CoreError::Trust);
+        queue::check_route(&self.config, self.required, self.trust())?;
+        if self.config.profile.requires_approval() && self.job.is_none() {
+            return Err(CoreError::Approval);
         }
         if self.config.net.transport != crate::config::Transport::Tor {
             return Err(CoreError::Transport);
         }
-        if self.job.is_none() && !self.scheduled {
+        if self.job.is_none() && self.slot.is_none() {
             let session = self.state.session.lock().map_err(|_| CoreError::Session)?;
             if session.in_tail() || session.epoch != self.epoch {
                 return Err(CoreError::Session);
@@ -177,10 +183,7 @@ impl RemoteCompletion for Route {
             max_tokens,
         )
         .map_err(|_| CoreError::Blocked)?;
-        if self.config.cover.enabled
-            && self.config.cover.mode == crate::config::CoverMode::Constant
-            && !self.scheduled
-        {
+        if queue::needs_slot(&self.config) && self.slot.is_none() {
             let job = self.job.clone().ok_or(CoreError::Queue)?;
             let (response, received) = tokio::sync::oneshot::channel();
             {
@@ -210,9 +213,11 @@ impl RemoteCompletion for Route {
     }
 }
 impl Route {
+    // Replace alongside the transport/credential adapter at M7, never from config.
+    const TRUST: TrustLevel = TrustLevel::L3;
     fn workspace<'a>(&self, session: &'a mut Session) -> Result<&'a mut Workspace, CoreError> {
         if session.epoch != self.epoch
-            || session.in_tail() && !(self.scheduled && self.job.is_none())
+            || session.in_tail() && !(self.slot.is_some() && self.job.is_none())
             || session.tail_expired(std::time::Instant::now())
         {
             return Err(CoreError::Session);
@@ -224,6 +229,7 @@ impl Route {
         conversation: &str,
         shaped: &nw_net::ShapedRequest,
     ) -> Result<SecretString, CoreError> {
+        self.check_dispatch(std::time::Instant::now())?;
         let mut changes = self.state.changes.subscribe();
         let deadline = {
             let mut s = self.state.session.lock().map_err(|_| CoreError::Session)?;
@@ -295,10 +301,12 @@ impl Route {
                 s.network_context = Some(self.context.clone());
             }
             drop(_init);
-            // The pause does not expose user text and is cancellable before charging.
-            use rand::Rng;
-            let seconds = rand::rngs::OsRng.gen_range(2..=8);
-            tokio::time::sleep(std::time::Duration::from_secs(seconds)).await;
+            // Paranoid dispatch is bounded by its slot, with no extra timing jitter.
+            if self.config.profile != nw_proto::Profile::Paranoid {
+                use rand::Rng;
+                let seconds = rand::rngs::OsRng.gen_range(2..=8);
+                tokio::time::sleep(std::time::Duration::from_secs(seconds)).await;
+            }
             let key = {
                 let mut s = self.state.session.lock().map_err(|_| CoreError::Session)?;
                 if s.epoch != self.epoch {
@@ -312,7 +320,8 @@ impl Route {
                 if !w.device_probe_ready().map_err(|_| CoreError::Session)? {
                     return Err(CoreError::DeviceProbe);
                 }
-                let key = if self.scheduled && self.job.is_none() {
+                self.check_dispatch(now)?;
+                let key = if self.slot.is_some() && self.job.is_none() {
                     w.consume_provider_key(conversation, &nw_cred::os::OsProviderSecrets)
                 } else {
                     w.acquire_provider_key(conversation, &nw_cred::os::OsProviderSecrets)
@@ -331,7 +340,15 @@ impl Route {
                 }
                 key
             };
-            let result = if self.scheduled && self.job.is_none() {
+            // Durable key/budget/job updates can take time. Check the slot again
+            // immediately before handing bytes to nw-netd, then consume it once.
+            self.check_dispatch(std::time::Instant::now())?;
+            if let Some(slot) = &self.slot
+                && self.config.profile == nw_proto::Profile::Paranoid
+            {
+                slot.consume(std::time::Instant::now())?;
+            }
+            let result = if self.slot.is_some() && self.job.is_none() {
                 network
                     .send_once(conversation, shaped, key.expose_secret())
                     .await
@@ -347,7 +364,7 @@ impl Route {
                     return Err(CoreError::Session);
                 }
                 self.workspace(&mut session)?
-                    .count_delivery(self.scheduled && self.job.is_none())
+                    .count_delivery(self.slot.is_some() && self.job.is_none())
                     .map_err(|_| CoreError::Session)?;
             }
             Ok(text)
@@ -480,7 +497,7 @@ async fn remote_action(
         .min_trust
         .min(min_trust.unwrap_or(TrustLevel::L3));
     let route = Route {
-        scheduled: false,
+        slot: None,
         job: None,
         state: state.clone(),
         epoch,
@@ -568,7 +585,7 @@ mod queue_tests {
     use nw_platform::LockedKey;
     use nw_vault::{VaultError, os_secret::SecretStore};
     #[derive(Default)]
-    struct Keys(Mutex<std::collections::BTreeMap<String, LockedKey>>);
+    pub(super) struct Keys(Mutex<std::collections::BTreeMap<String, LockedKey>>);
     impl SecretStore for Keys {
         fn put(&self, id: &str, key: &LockedKey) -> Result<(), VaultError> {
             self.0
@@ -591,7 +608,7 @@ mod queue_tests {
             Ok(())
         }
     }
-    struct Model;
+    pub(super) struct Model;
     impl LocalModel for Model {
         async fn embed_identified(
             &self,
@@ -604,6 +621,14 @@ mod queue_tests {
         }
         async fn canonicalize(&self, t: &str) -> Result<SecretString, nw_llm::ModelError> {
             Ok(SecretString::from(t.to_owned()))
+        }
+        async fn canonicalize_with_translation(
+            &self,
+            text: &str,
+            _: bool,
+        ) -> Result<SecretString, nw_llm::ModelError> {
+            // Fixture requests are already English; preserve their placeholders.
+            self.canonicalize(text).await
         }
         async fn complete(&self, _: &[Message]) -> Result<SecretString, nw_llm::ModelError> {
             Err(nw_llm::ModelError::Unavailable)
@@ -787,7 +812,7 @@ mod queue_tests {
         let state = State::default();
         state.session.lock().unwrap().workspace = Some(w);
         let mut route = Route {
-            scheduled: false,
+            slot: None,
             job: None,
             state: state.clone(),
             epoch: 0,

@@ -111,7 +111,8 @@ impl Workspace {
         at: u64,
         has_real: bool,
     ) -> Result<Option<TrafficJob>, WorkspaceError> {
-        if !self.config.cover.enabled {
+        let paranoid = self.config.profile == nw_proto::Profile::Paranoid;
+        if !self.config.cover.enabled && !paranoid {
             return Ok(None);
         }
         self.config.validate().map_err(|_| WorkspaceError::Policy)?;
@@ -151,6 +152,11 @@ impl Workspace {
         if at < scheduler.next_slot() {
             return Ok(None);
         }
+        // Automatic background decoys are still standard-only. Paranoid must
+        // never use an unreviewed decoy to fill an otherwise empty slot.
+        if paranoid && !has_real {
+            return Ok(None);
+        }
         let cost = self
             .config
             .net
@@ -161,17 +167,32 @@ impl Workspace {
             Err(WorkspaceError::Budget) => return Ok(None),
             Err(error) => return Err(error),
         }
-        match scheduler.tick(at, has_real, cost, &mut rand::rngs::OsRng) {
+        let slot = if paranoid {
+            scheduler.tick_constant(at, has_real, cost, &mut rand::rngs::OsRng)
+        } else {
+            scheduler.tick(at, has_real, cost, &mut rand::rngs::OsRng)
+        };
+        if paranoid {
+            self.store.put_json(
+                Domain::Vault,
+                "traffic-scheduler",
+                &scheduler.snapshot(),
+                at,
+            )?;
+        }
+        match slot {
             Ok(Slot::Decoy | Slot::Real) => {}
             Ok(Slot::Queued) | Err(nw_cover::CoverError::NotReady) => return Ok(None),
             _ => return Err(WorkspaceError::Policy),
         }
-        self.store.put_json(
-            Domain::Vault,
-            "traffic-scheduler",
-            &scheduler.snapshot(),
-            at,
-        )?;
+        if !paranoid {
+            self.store.put_json(
+                Domain::Vault,
+                "traffic-scheduler",
+                &scheduler.snapshot(),
+                at,
+            )?;
+        }
         let job = TrafficJob {
             purpose: if has_real {
                 TrafficPurpose::Real
