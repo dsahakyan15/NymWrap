@@ -1675,6 +1675,60 @@ mod tests {
         w.destroy().unwrap();
     }
     #[test]
+    fn ai_execution_requires_explicit_opt_in_and_revocation_invalidates_the_permit() {
+        for service in [
+            nw_proto::Service::Chatgpt,
+            nw_proto::Service::Claude,
+            nw_proto::Service::Gemini,
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let mut w = Workspace::create_with(
+                &dir.path().join("ai-execution"),
+                SecretString::from(""),
+                Profile::Standard,
+                Arc::new(MemoryKeys::default()),
+            )
+            .unwrap();
+            assert!(matches!(
+                w.config.drift.mode,
+                crate::config::DriftMode::Assisted
+            ));
+            assert!(!w.config.drift.allow_ai_web_automation);
+            let checked = checked();
+            let evidence = checked.evidence().clone();
+            let mut plan = checked.plan().clone();
+            for stage in &mut plan.stages {
+                for action in &mut stage.actions {
+                    action.service = service;
+                }
+            }
+            let checked = plan
+                .evaluate(&evidence.persona, &evidence.cover, &evidence.stages)
+                .unwrap();
+            let review = w.save_plan(checked).unwrap();
+            w.approve(&review.hash).unwrap();
+            let template = w.day_template().unwrap();
+            let day = w.save_day(template, evidence.stages[0].clone()).unwrap();
+            w.approve_day(&day.hash).unwrap();
+            let at = 1_000_000;
+            let task = w.daily_tasks(at).unwrap().remove(0);
+            assert!(w.begin_search_execution(&task, at).is_err());
+            let mut config = w.config.clone();
+            config.drift.mode = crate::config::DriftMode::Extension;
+            w.save_config(config.clone()).unwrap();
+            assert!(w.begin_search_execution(&task, at).is_err());
+            config.drift.allow_ai_web_automation = true;
+            w.save_config(config.clone()).unwrap();
+            let token = w.begin_search_execution(&task, at).unwrap();
+            w.validate_search_execution(&task, &token, at + 1).unwrap();
+            config.drift.allow_ai_web_automation = false;
+            w.save_config(config).unwrap();
+            assert!(w.validate_search_execution(&task, &token, at + 2).is_err());
+            assert!(w.finish_search_execution(&task, &token, at + 30).is_err());
+            w.destroy().unwrap();
+        }
+    }
+    #[test]
     fn search_execution_permits_are_one_shot_timed_and_invalidated_by_policy_or_restart() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("execution");

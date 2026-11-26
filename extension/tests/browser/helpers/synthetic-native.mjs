@@ -4,7 +4,7 @@ export function syntheticNativeHost(task){
   chrome.scripting.executeScript=async options=>{
     try{
       const result=await scripting.call(chrome.scripting,options),core=globalThis.syntheticCore;
-      core.events.push({kind:'script',func:options.func.name,args:options.args?.length,result:options.func.name==='searchPageStep'?result:'capture'});
+      core.events.push({kind:'script',func:options.func.name,phase:options.args?.[0]?.phase,args:options.args?.length,result:['searchPageStep','localPageStep'].includes(options.func.name)?result:'capture'});
       if(core.dropNextInput&&options.args?.[0]?.letter!==undefined){core.dropNextInput=false;return [{frameId:0,result:null}];}
       return result;
     }
@@ -13,7 +13,7 @@ export function syntheticNativeHost(task){
   const dispatch=command=>{
     const core=globalThis.syntheticCore;command=structuredClone(command);core.commands.push(command);
     let result={kind:'ack'};
-    if(command.kind==='status')result={kind:'status',paused:core.paused,mode:'extension',ai_web_automation:false};
+    if(command.kind==='status')result={kind:'status',paused:core.paused,mode:core.mode??'extension',ai_web_automation:core.ai??false};
     else if(command.kind==='tasks')result={kind:'tasks',tasks:core.completed?[]:core.tasks};
     else if(command.kind==='begin_search'){
       if(core.claimed)result={kind:'error',code:'already_attempted'};
@@ -31,7 +31,7 @@ export function syntheticNativeHost(task){
     if(message?.kind==='synthetic_control'&&sender.id===chrome.runtime.id&&['probe.html','popup.html'].some(p=>sender.url===chrome.runtime.getURL(p))){
       const core=globalThis.syntheticCore;
       if(message.op==='state'){respond(structuredClone(core));return false;}
-      if(message.op==='task'){core.tasks=[message.task];core.completed=false;core.claimed=false;core.paused=false;core.commands=[];core.events=[];respond(true);return false;}
+      if(message.op==='task'){core.tasks=[message.task];core.completed=false;core.claimed=false;core.paused=false;core.mode=message.mode??'extension';core.ai=message.ai??false;core.commands=[];core.events=[];respond(true);return false;}
       if(message.op==='alarm'){Promise.resolve(chrome.alarms.create('nymwrap-mirror-hourly-v1',{when:Date.now()+100})).then(()=>respond(true));return true;}
       if(message.op==='storage'){chrome.storage.local.get(null).then(respond);return true;}
       return false;

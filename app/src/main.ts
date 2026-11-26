@@ -1,4 +1,5 @@
 import { takeoutExample } from "./fixtures.js";
+import {createAiWebConsent} from "./drift-consent.js";
 import {chatStatusLabel} from "./chat-status.js";
 import {createHygienePanel,renderDeviceProbe,renderHygiene,deviceInventoryReady,type DeviceProbeStatus} from "./hygiene.js";
 import {activityTransition,activityLabel,type ActivitySchedule} from "./activity.js";
@@ -217,6 +218,7 @@ async function hydrate(){
   deviceProbe=await invoke<DeviceProbeStatus>("load_device_probe");renderDeviceProbe($("device-probe-status"),deviceProbe);
   renderHygiene($("hygiene-checks"),deviceProbe);
   driftMode.value=c.drift.mode;
+  aiWebConsent.checked=c.drift.allow_ai_web_automation===true;
   storedSecrets=s;
   $<HTMLInputElement>("model-socket").value=c.llm.endpoint;$<HTMLInputElement>("settings-socket").value=c.llm.endpoint;
   $<HTMLInputElement>("settings-model").value=c.llm.model;$<HTMLInputElement>("settings-embed").value=c.llm.embed_model;
@@ -403,7 +405,7 @@ on("record-account",async()=>{await invoke("account_activity",{count:Number(valu
 async function saveSettings(){
   if(!config)throw new Error("workspace_locked");
   const next:Config={...config,llm:{...config.llm,endpoint:value("settings-socket"),model:value("settings-model"),embed_model:value("settings-embed")},shield:{...config.shield,history_retention_days:Number(value("history-days"))}};
-  next.drift={...config.drift,mode:driftMode.value};
+  next.drift={...config.drift,mode:driftMode.value,allow_ai_web_automation:aiWebConsent.checked};
   for(const [field,id]of modelFileFields)next.llm[field]=value(id).trim()||null;
   const transport=value("net-transport");
   next.net={transport,provider_host:value("net-host").trim()||null,provider_path:value("net-path").trim()||null,provider_model:value("net-model").trim()||null,credential_ref:transport==="local"?null:"keyring:pool",max_request_cost_microusd:value("net-cost").trim()?Math.ceil(Number(value("net-cost"))*1_000_000):null};
@@ -532,8 +534,9 @@ const modelFiles=document.createElement("div");
 const driftModeLabel=document.createElement("label"),driftMode=document.createElement("select"),driftModeHint=document.createElement("p");
 driftMode.id="drift-mode";driftModeLabel.htmlFor=driftMode.id;driftModeLabel.textContent="Исполнение легенды";
 for(const [id,title]of [["assisted","Вручную (по умолчанию)"],["extension","Поиск Google / YouTube через расширение"]]){const option=document.createElement("option");option.value=id!;option.textContent=title!;driftMode.append(option);}
-driftModeHint.className="hint";driftModeHint.textContent="В режиме расширения каждое действие запускается вашей кнопкой с разрешением на сайт. Ввод идёт в отдельной вкладке, затем 20–90 секунд чтения. CAPTCHA, вход, закрытие вкладки или пауза останавливают действие; прерванные попытки не повторяются. Веб-чаты ИИ и просмотр видео остаются ручными.";
-modelFiles.append(driftModeLabel,driftMode,driftModeHint);
+driftModeHint.className="hint";driftModeHint.textContent="В режиме расширения каждое действие запускается вашей кнопкой с разрешением на сайт. Ввод идёт в отдельной вкладке, затем 20–90 секунд чтения. CAPTCHA, вход, закрытие вкладки или пауза останавливают действие; прерванные попытки не повторяются. Новые адаптеры видео и веб-чатов ИИ доступны только на синтетических локальных HTTPS-страницах; настоящие видео и ИИ-чаты выполняйте вручную.";
+const {label:aiWebLabel,input:aiWebConsent}=createAiWebConsent();
+modelFiles.append(driftModeLabel,driftMode,driftModeHint,aiWebLabel);
 for(const [field,id,title]of modelFileFields){
   const label=document.createElement("label");label.htmlFor=id;label.textContent=title;
   const input=document.createElement("input");input.id=id;input.maxLength=field.endsWith('sha256')?64:4096;input.spellcheck=false;input.autocomplete="off";input.placeholder=field.endsWith('sha256')?"64 шестнадцатеричных символа":"Полный путь к локальному файлу";modelFiles.append(label,input);

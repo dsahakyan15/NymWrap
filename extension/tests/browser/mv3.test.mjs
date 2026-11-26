@@ -1,6 +1,7 @@
 import {syntheticNativeHost} from './helpers/synthetic-native.mjs';
 import {fixtureCertificate} from './helpers/certificate.mjs';
 import {extensionDigest} from './helpers/artifact.mjs';
+import {localFixtures,localScenarios} from './helpers/local-fixtures.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,readFile,readdir,writeFile,copyFile,realpath,lstat,rm} from 'node:fs/promises';
@@ -24,7 +25,7 @@ async function until(read,accept,timeout=10000){
 }
 // Runs only in the isolated test worker. Production code and manifest remain unchanged.
 
-test('actual Chromium MV3 runs cover search, periodic Mirror and CAPTCHA stop on synthetic pages',{timeout:120000},async t=>{
+test('actual Chromium MV3 runs cover search, periodic Mirror and CAPTCHA stop on synthetic pages',{timeout:300000},async t=>{
   await mkdir(browserRoot,{recursive:true});
   const fixture=await mkdtemp(join(browserRoot,'mv3-'));
   const extension=join(fixture,'extension'),profile=join(fixture,'profile');
@@ -49,7 +50,9 @@ test('actual Chromium MV3 runs cover search, periodic Mirror and CAPTCHA stop on
       assert.equal(createHash('sha256').update(await readFile(join(source,entry))).digest('hex'),createHash('sha256').update(await readFile(join(extension,entry))).digest('hex'));
     }
     const requests=[],inputs=[],scriptErrors=[];let challenge=false;
+    const local=localFixtures();
     server=createServer(await fixtureCertificate(),(request,response)=>{
+      if(local.handler(request,response))return;
       const host=request.headers.host;
       if(!['www.google.com','www.youtube.com','youtube.com'].includes(host)){response.writeHead(403);response.end();return;}
       const url=new URL(request.url,`https://${host}`);requests.push(url.href);
@@ -66,7 +69,7 @@ test('actual Chromium MV3 runs cover search, periodic Mirror and CAPTCHA stop on
     context=await chromium.launchPersistentContext(profile,{
       channel:'chromium',headless:true,ignoreHTTPSErrors:true,
       // Only this throwaway profile trusts the in-memory certificate. All other DNS is denied.
-      args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update','--no-first-run','--no-proxy-server','--ignore-certificate-errors',`--host-resolver-rules=MAP www.google.com 127.0.0.1:${port}, MAP www.youtube.com 127.0.0.1:${port}, MAP youtube.com 127.0.0.1:${port}, MAP * ~NOTFOUND`],
+      args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`,'--disable-background-networking','--disable-component-update','--no-first-run','--no-proxy-server','--ignore-certificate-errors',`--host-resolver-rules=MAP www.google.com 127.0.0.1:${port}, MAP www.youtube.com 127.0.0.1:${port}, MAP youtube.com 127.0.0.1:${port}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1`],
     });
     context.on('page',page=>{
       page.on('pageerror',error=>scriptErrors.push(error.message));
@@ -163,8 +166,14 @@ test('actual Chromium MV3 runs cover search, periodic Mirror and CAPTCHA stop on
       assert.ok(!state.commands.some(c=>c.kind==='finish_search'||c.kind==='safety_stop'));
       assert.equal(state.dropNextInput,false);
     });
-    if(passed!==5)throw Error('incomplete_chromium_scenarios');
-    await writeFile(reportPath,JSON.stringify({status:'passed',browser:'Chromium '+context.browser().version(),checked_at:new Date().toISOString(),extension_sha256:artifact,scope:'actual MV3; synthetic loopback HTTPS; fake native core; no user profile',scenarios:['google','youtube','alarm','captcha','lost_reply','xss_storage']},null,2)+'\n');
+    challenge=false;
+    await localScenarios({scenario,until,origin:`https://127.0.0.1:${port}`,fixture:local.state,
+      control:(op,extra={})=>popup.evaluate(message=>chrome.runtime.sendMessage(message),{kind:'synthetic_control',op,...extra}),
+      status:()=>popup.evaluate(()=>chrome.runtime.sendMessage({kind:'execution_status'})),
+      execute:(task,target)=>popup.evaluate(message=>chrome.runtime.sendMessage(message),{kind:'execute_local',task,target}),
+    });
+    if(passed!==10)throw Error('incomplete_chromium_scenarios');
+    await writeFile(reportPath,JSON.stringify({status:'passed',browser:'Chromium '+context.browser().version(),checked_at:new Date().toISOString(),extension_sha256:artifact,scope:'actual MV3; synthetic loopback HTTPS; fake native core; no user profile',scenarios:['google','youtube','alarm','captcha','lost_reply','xss_storage','local_video','local_ai_layouts','ai_opt_in','local_login','late_safety_stop','hostile_video']},null,2)+'\n');
   }finally{
     await context?.close();
     server?.closeAllConnections();

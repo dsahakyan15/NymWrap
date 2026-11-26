@@ -4,6 +4,8 @@ import type {Task} from "./protocol.js";
 import {readMirrorPage} from "./capture.js";
 import {MIRROR_ORIGINS, scheduleState, type ScheduleState} from "./mirror_schedule.js";
 import {searchOrigins} from "./execution.js";
+import {LOCAL_ORIGINS} from "./local_execution.js";
+import {localTarget} from "./local_page.js";
 declare const chrome: {
   tabs: { query(query: { active: boolean; currentWindow: boolean }): Promise<{ id?: number; url?: string }[]>;create(options:{url:string}):Promise<unknown> };
   scripting: { executeScript<T>(options: { target: { tabId: number }; func: () => T }): Promise<{ result?: T }[]> };
@@ -38,6 +40,7 @@ void (async()=>showPeriodic(await chrome.runtime.sendMessage({kind:"mirror_statu
 let paused=false;
 let connected=false;
 let executionMode="assisted";
+let aiWebAutomation=false;
 let captured:{kind:"youtube_feed"|"ad_topics";items:string[];captured_at:number}|undefined;
 let stopped:{event_id:string;reason:"captcha"|"login"}|undefined;
 function failure(error:unknown){
@@ -52,6 +55,20 @@ async function tasks(){
     const item=document.createElement("li");const text=document.createElement("p");text.textContent=task.text;
     const service=document.createElement("small");service.textContent=task.service+" · "+task.stage+"."+task.day;
     item.append(service,text);
+    if(executionMode==="extension"&&task.service!=="google"&&(task.service==="youtube"||aiWebAutomation)&&Array.from(task.text).length<=512){
+      const local=document.createElement("button");local.textContent="Выполнить на локальной HTTPS-странице";
+      local.addEventListener("click",()=>{
+        if(paused){failure(Error("paused"));return;}local.disabled=true;
+        void chrome.permissions.request({origins:LOCAL_ORIGINS}).then(async granted=>{
+          if(!granted)throw Error("permission_required");
+          const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+          if(!tab?.url)throw Error("local_fixture_required");localTarget(tab.url,task.service);
+          const result=await chrome.runtime.sendMessage({kind:"execute_local",task,target:tab.url});
+          if(!result||typeof result!=="object"||!("started" in result)||result.started!==true)throw Error("local_fixture_required");
+          bridgeStatus.textContent="Локальная проверка запущена в отдельной вкладке. Результат — в состоянии исполнения.";
+        }).catch(()=>{local.disabled=false;bridgeStatus.textContent="Откройте синтетическую страницу https://127.0.0.1:<порт>/drift-fixtures/"+task.service+"/. Проверьте режим расширения и отдельное согласие ИИ в приложении.";});
+      });item.append(local);
+    }
     if(task.service==="google"||task.service==="youtube"){
       const open=document.createElement("button");open.textContent="Открыть поиск";open.addEventListener("click",()=>{if(paused){failure(Error("paused"));return;}void chrome.tabs.create({url:coverUrl(task.service,task.text)}).catch(failure);});item.append(open);
       if(executionMode==="extension"&&Array.from(task.text).length<=512){
@@ -73,14 +90,14 @@ async function tasks(){
 }
 button("connect").addEventListener("click",()=>{
   bridge.connect();void bridge.request({kind:"status"}).then(result=>{
-    if(result.kind!=="status")throw Error("invalid_bridge_reply");connected=true;paused=result.paused;executionMode=result.mode;button("tasks").disabled=false;button("pause").disabled=false;button("pause").textContent=paused?"Продолжить":"Пауза";button("save-snapshot").disabled=!captured;button("report-stop").disabled=!stopped;bridgeStatus.textContent="Канал легенды открыт. Shield и vault недоступны.";
+    if(result.kind!=="status")throw Error("invalid_bridge_reply");connected=true;paused=result.paused;executionMode=result.mode;aiWebAutomation=result.ai_web_automation;button("tasks").disabled=false;button("pause").disabled=false;button("pause").textContent=paused?"Продолжить":"Пауза";button("save-snapshot").disabled=!captured;button("report-stop").disabled=!stopped;bridgeStatus.textContent="Канал легенды открыт. Shield и vault недоступны.";
   }).catch(failure);
 });
 button("tasks").addEventListener("click",()=>void tasks().catch(failure));
 button("stop-execution").addEventListener("click",()=>void chrome.runtime.sendMessage({kind:"execution_cancel"}).then(()=>{bridgeStatus.textContent="Исполнение останавливается. Если запрос мог уйти, проверьте вкладку и отметьте результат вручную. Автоматического повтора не будет.";}).catch(failure));
 button("execution-status").addEventListener("click",()=>void chrome.runtime.sendMessage({kind:"execution_status"}).then(result=>{
   if(!result||typeof result!=="object"||!("code" in result))throw Error("invalid_bridge_reply");
-  const code=String(result.code);bridgeStatus.textContent=code==="completed"?"Поиск выполнен и отмечен в ядре. Обновите задания.":code==="running"?"Расширение выполняет поиск. Не меняйте вкладку; её закрытие останавливает действие.":code==="idle"?"Исполнение ещё не запускалось в этом фоновом процессе.":"Исполнение остановлено. Проверьте вкладку и отметьте выполненное вручную. Повтор той же попытки запрещён.";
+  const code=String(result.code);bridgeStatus.textContent=code==="completed"?"Действие выполнено и отмечено в ядре. Обновите задания.":code==="running"?"Расширение выполняет действие. Не меняйте вкладку; её закрытие останавливает действие.":code==="idle"?"Исполнение ещё не запускалось в этом фоновом процессе.":"Исполнение остановлено. Проверьте вкладку и отметьте выполненное вручную. Повтор той же попытки запрещён.";
 }).catch(failure));
 button("pause").addEventListener("click",()=>void bridge.request({kind:"pause",paused:!paused}).then(()=>{paused=!paused;button("pause").textContent=paused?"Продолжить":"Пауза";bridgeStatus.textContent=paused?"Drift на паузе.":"Drift продолжен.";}).catch(failure));
 button("report-stop").addEventListener("click",()=>{
