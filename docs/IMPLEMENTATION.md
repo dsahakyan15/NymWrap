@@ -171,7 +171,7 @@ Exemptions не являются аудитами; требование wrapper 
 
 ## cargo-vet: граф netd
 
-2026-11-26, [ADR 0103](adr/0103-netd-dependency-audit-sources.md): **499 → 312 → 253 пробела**
+2026-11-26, [ADR 0103](adr/0103-netd-dependency-audit-sources.md): **499 → 312 → 253 → 109 пробелов**
 для `daemons/nw-netd/Cargo.toml`. Критерий продукта `safe-to-deploy` сохранён;
 версии, все Cargo.lock, манифесты и остальные stores не менялись. Новых exemptions нет.
 Результат промежуточный, M6 и dependency-audits netd остаются открытыми.
@@ -210,7 +210,7 @@ commit. Ещё девять вспомогательных пакетов тог
 на `split(&"a:::b", &[delim_boundary!("::")])` воспроизведён panic;
 достижимость из NymWrap не установлена. errno оставлен до проверки контрактов ABI.
 
-Финальный `node scripts/vet-dependencies.mjs netd` подтверждает **253 пробела**,
+Замер предыдущей партии `node scripts/vet-dependencies.mjs netd` подтвердил **253 пробела**,
 `check --locked`, неизменность входов и красный gate. `cargo-deny` для netd зелёный.
 В изолированных копиях прошли четыре doctest strum; для displaydoc отдельный
 harness с неизменёнными upstream-тестами прошёл 3 теста со std и 2 без std.
@@ -218,6 +218,58 @@ harness с неизменёнными upstream-тестами прошёл 3 т�
 Полноценный Perl подготовлен штатными скриптами; workspace tests, clippy,
 leak tests и тесты расширения в этой партии не запускались по согласованному объёму.
 Это локальные результаты, не CI; M6 остаётся открытым.
+
+Третья партия от `3ab65e9`, ветка `agent/vet-netd-3`: **253 → 109**. Полный
+исходный остаток сгруппирован по публикатору, репозиторию и типу; для всех 253
+версий получены exact-version ответы crates.io и сверены SHA архивов/index/lock.
+Новые 128 записей доверия ограничены отдельным пакетом, проверенным identity
+и историческими UTC-сутками. Семейства: ICU4X (18), RustCrypto (21), windows-rs
+(10), BurntSushi (11), Rust Random (6), Darling (6), Rustls (5), другие явно
+перечисленные в ADR команды. Это доверие сопровождению для safe-to-deploy,
+включая unsafe/генерируемый код, без утверждения о независимом исходном аудите.
+Версии, policies, источники imports, все lockfiles и exemptions сохранены.
+
+Добавлены **16 исходных аудитов**, каждый с пометкой «проверено агентом,
+не человеком», SHA архива и точным перечнем прочитанных файлов: hostname-validator,
+tower-service/layer, derive_builder_macro_fork_arti, три darling_macro,
+derive-deftly, humantime-serde, secrecy, downcast-rs, stable_deref_trait,
+by_address, две universal-hash и lazy_static. В каждом прочитаны манифесты и
+весь Rust-код; unsafe casts/marker contracts и Once publication разобраны
+отдельно. Прочитанные wrappers не сертифицируют их зависимости и callers.
+
+Проверены именно локальные дельты rustls, tor-ptmgr, tor-llcrypto,
+tor-key-forge и полный rusqlite-compat shim; границы вывода записаны отдельно.
+У **convert_case** единственный потребитель — proc-macro derive_more-impl:
+все call sites используют встроенные Case, custom delimiter отсутствует.
+Найденный panic с перекрывающимся `"::"` недостижим этим путём и не принимает
+runtime bytes NymWrap. Общий аудит convert_case остаётся незавершённым.
+У pin-project/internal и portable-atomic расхождение package VCS SHA с SHA
+публикации разрешено: это непосредственные дочерние release-коммиты с дельтой
+только версий/changelog; закреплённый workflow создаёт их перед публикацией.
+Официальные commit metadata и полные patches проверены; три записи доверия
+дали заключительный шаг **112 → 109**, без заявления о полном аудите workflow.
+
+Финальный locked wrapper подтверждает **109 пробелов**, неизменность входов
+и красный gate; cargo-deny netd зелёный. В isolated source tests: 33 unit tests
+трёх пакетов прошли, stable_deref_trait компилируется без unit tests.
+У by_address 2/3, провал на compiler-dependent vtable assumption сохранён.
+Девять lazy_static tests прошли с `--cap-lints=allow`; первоначальный строгий
+compile failure на новых lints также записан. Остальные source test suites
+не объявлены проверенными. Реестр опрашивался последовательно с паузами,
+backoff и кэшем в target/; HTTP 429 не наблюдался.
+
+Все новые записи, источники личности, SHA ответов/архивов/файлов, checkpoints,
+проверки forks и полный остаток — в [третьем отчёте](../supply-chain/netd/review-2026-11-26-third.json).
+В остатке: typenum/r-efi, generic-array/once_cell, генераторы, native/OS/FFI
+библиотеки и convert_case. M6 и netd dependency-audits
+остаются открытыми; результаты локальные, не CI.
+
+В этой партии workspace tests — exit 0 (164 passed, 16 ignored), clippy с
+`-D warnings` — exit 0, расширение — 24/24. В workspace прошли 32 leak tests,
+один специального окружения ignored; отдельный повторный native rebuild
+leak-пакета остановлен, самостоятельный результат не заявляется. Финальные
+проверки использовали штатные bootstrap Perl/libclang и build-env.ps1;
+первые неуспешные попытки без инструментов отмечены в отчёте.
 
 ## Задача 9: M6 cargo-vet, только fuzz; локальный gate зелёный — 2026-11-26
 
