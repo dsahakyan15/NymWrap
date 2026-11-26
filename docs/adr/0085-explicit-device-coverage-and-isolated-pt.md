@@ -90,6 +90,12 @@ PT и не проверяемая клиентская граница: productio
 пройти отдельные bwrap, namespace, UID/capability/NNP и stop-with-live-Tor
 проверки; fallback без этой песочницы не добавляется.
 
+В том же run все семь узлов достигли bootstrap 100%, но строгая проверка
+дескриптора моста отказала: custom topology не содержала bridge authority.
+Проверка не пропускается: как в закреплённой upstream `networks/bridges-obfs4`,
+четвёртый authority имеет отдельную роль bridge authority. Три обычных authority
+сохраняют consensus, а номера exit/bridge/client 004/005/006 не меняются.
+
 ## Границы
 
 Новый CI ещё не запускался, M3H открыт. Нативный macOS sandbox, Linux PT/pcap и

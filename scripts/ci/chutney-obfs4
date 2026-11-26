@@ -1,5 +1,7 @@
 # Only private RFC 5737 listeners; the client may reach the obfs4 port alone.
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
+BridgeAuthority = Node(tag="ba", authority=1, bridgeauthority=1,
+                       relay=1, torrc="bridgeauthority.tmpl")
 ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
 # Tor's built-in seccomp sandbox rejects every managed ServerTransportPlugin.
 # This is the synthetic server inside the route-less relay netns; the
@@ -7,4 +9,5 @@ ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
 Bridge = Node(tag="br", bridge=1, pt_bridge=1, relay=1, pt_transport="obfs4",
               sandbox=0, torrc="bridge-obfs4.tmpl")
 Client = Node(tag="c", client=1, torrc="client.tmpl")
-ConfigureNodes(Authority.getN(4) + ExitRelay.getN(1) + Bridge.getN(1) + Client.getN(1))
+ConfigureNodes(Authority.getN(3) + BridgeAuthority.getN(1) + ExitRelay.getN(1) +
+               Bridge.getN(1) + Client.getN(1))
