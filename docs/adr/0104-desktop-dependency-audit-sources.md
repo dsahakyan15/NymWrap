@@ -519,3 +519,140 @@ Workspace tests/clippy/leak tests и extension tests в этом проходе 
 Прошлые неудачные запуски не объявляются новыми зелёными результатами.
 Все tracked Cargo.lock, версии, production-код и stores других графов сохранены.
 CI не запускался; итог неполный, M6/gate открыты.
+
+## Пятый проход от e0f967d — 2026-11-26
+
+Ветка `agent/vet-desktop-5`, продолжение `b9ae93f` после merge в main.
+Проверено агентом, не человеком. **9 → 6 пробелов**: добавлены только три
+поштучных exemptions, **новых safe-to-deploy audits нет**. Критерий не ослаблен,
+`audits.toml`, imports, версии и все Cargo.lock сохранены. У шести активных
+пакетов обнаружены либо воспроизведены основания оставить проверку открытой.
+Полные команды/выводы, SHA архивов и прочитанных файлов, области чтения и
+ограничения — в [пятом отчёте](../../supply-chain/desktop/review-2026-11-26-desktop-5.json).
+Архивы девяти кандидатов сверены с desktop lockfile и cached non-yanked sparse
+index; каждый обычный member побайтно совпал с cached source. Свежая registry
+publisher-проверка и новые доверия не заявляются.
+
+<a id="desktop-5-unreachable"></a>
+### Недостижимые пакеты: три отдельных исключения
+
+В `app/src-tauri` для **каждого из девяти** выполнено
+`cargo tree --locked --offline --target all -e normal,build,dev -i <crate>`
+и та же команда с `--all-features`. У `ordered-stream 0.2.0` оба результата:
+exit 0, пустой stdout, `nothing to print`. Linux выбирает
+`keyring → sync-secret-service → dbus-secret-service`; optional async backend
+не включён. Отсутствие пути сохраняется с all-features корневого desktop crate,
+который не включает все features транзитивных crates автоматически.
+Exemption перестаёт действовать при включении async-secret-service, новой
+прямой зависимости, изменении feature forwarding/manifests или версий.
+Прежний дефект position_hint здесь независимо не воспроизводился и не признан
+исправленным; полный исходный аудит ordered-stream не заявлен.
+
+Оба `winapi-*-pc-windows-gnu 0.4.0` **есть в --target all**. Это не сборка
+всех targets: для каждого отдельно повторены две команды с
+`--target x86_64-pc-windows-msvc`, `--target x86_64-unknown-linux-gnu`
+и `--target aarch64-apple-darwin`. Все 12 результатов пусты, exit 0.
+`rustc -vV` подтверждает host MSVC, `rustup target list --installed`
+не содержит Windows GNU. Прочитаны .cargo/config.toml, CI/release/reproducible
+workflows: Windows host MSVC, SBOM targets перечислены выше, release Linux;
+Windows GNU build/packaging не найден. У winapi 0.3.9 зависимости закреплены
+за двумя GNU triples; build.rs каждого пакета добавляет lib search path только
+при своём точном TARGET. Для каждого — отдельная version-specific запись.
+Исключения отменяются до любого Windows GNU/custom/cross target, смены
+toolchain/CI/release target, прямой зависимости в обход target gate или версий.
+1387 + 1416 native import archives **не аудированы и не объявлены Microsoft
+публикацией**; их inventory не заменяет проверку поставщика.
+
+### Активные пакеты: находки и ограничения
+
+- **dbus-secret-service 4.1.0.** Полностью прочитан session.rs и manifests,
+  выборочно keyring и документация fastrand. Активный Linux crypto-rust backend
+  использует `fastrand::Rng` для DH private key и IV, хотя библиотека прямо
+  исключает криптографическую стойкость. Keyring выбирает `EncryptionType::Dh`.
+  У decrypt также не закрыта обработка неверной длины peer IV перед
+  GenericArray::from_slice. Нужны исправление/криптографический разбор и полный
+  protocol review; нового source audit или publisher trust нет.
+- **recvmsg 1.0.0.** Прочитаны ownership/buffer modules. В
+  `try_extend_lifetime` копируются поля self, но исходный self получает Drop.
+  Стенд с корректным синтетическим OwnedBuf, который считает освобождения и
+  намеренно не освобождает allocation, подтвердил **1 ранний + 1 повторный
+  nonempty Drop**. У Vec-владельца это создаёт риск UAF/double-free.
+  Освобождённая память не читалась, UB не исполнялось. Достижимость именно этой
+  функции из текущего nw-ipc byte-stream API не доказана; активный crate не
+  объявляется целиком недостижимым. Полный syscall/async audit не завершён.
+- **serialize-to-javascript и -impl 0.1.2.** Прочитаны оба runtime-модуля,
+  полный macro source и manifests. Прямой Serialized::new прошёл **26**
+  JSON→JS roundtrips, включая все **1 112 064 Unicode scalars**, freeze,
+  quotes/backslashes/NUL и синтетическую canary. Но два обычных поля Template,
+  где первое содержит `__TEMPLATE_b__`, приводят к повторной замене внутри уже
+  сериализованного значения и **SyntaxError**. Raw-атрибут не нужен.
+  Это воспроизведение порчи результата/DoS, не доказательство выполнения
+  внедрённого JS. У выбранных Tauri call sites фиксированные init values;
+  IPC callback использует прямой Serialized::new. Полная недостижимость дефекта
+  во всех contexts/features не доказана; оба пакета оставлены открытыми.
+- **vswhom 0.1.0.** Полный Rust wrapper и native ABI/build/registry excerpts
+  прочитаны. SDK version у native producer — 0/8/10, но в vswhom-sys 0.1.3
+  `RegQueryValueExW` возвращает байтовую длину, используемую как wchar_t-индекс:
+  `value[length]`, `buffer[cb_data]`. Например, при 20 байтах allocation
+  24 байта, а value[20] имеет offset 40. Это source finding OOB, без запуска
+  реального registry, ASan или доказанного exploit из NymWrap. Native safety
+  не закрыта, аудит wrapper не выдан.
+
+Стенд [review-tests-2026-11-26-desktop-5.mjs](../../supply-chain/desktop/review-tests-2026-11-26-desktop-5.mjs)
+воспроизводит escaping, Template collision и ledger-owner Drop; зависимости
+точных версий, отдельный synthetic lockfile только в ignored target/desktop5.
+
+### sqlcipher-src: требует человеческого решения
+
+Версия `420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2`,
+archive SHA-256 `fd6b5280ed2593d07b2816ec531821c15c306903bcca224716f1fbcc2bbfedfe`.
+У **этого пакета нет build.rs**, normalized manifest содержит build=false.
+Прочитанный helper только возвращает compile-time paths/constants и включает
+список C files. Активная сборка находится у libsqlite3-sys 0.40.0: прочитаны
+main и bundled-sqlcipher branch — bindings, flags, cc compile/link; загрузки
+по сети или произвольного shell-step там не найдено. Это не полный аудит
+всех optional build branches и вызываемых toolchain dependencies.
+
+Официальный [SQLCipher v4.20.0](https://github.com/sqlcipher/sqlcipher/releases/tag/v4.20.0)
+подтверждён git ls-remote: tag object
+`52252487a5cada9b430e8d4b20025790c5a6ba20`, peeled commit
+`355d4db92d3404e71faa8088d071a71d767807f4` совпадает с pin packager.
+SHA-256 официального source archive —
+`4a93dd9374db45603980efbb96fad7289a26b30ad72d1b54facdd4e1209c5b46`.
+LICENSE и sqlite3ext.h совпали побайтно. Все пять SQLCipher-specific components
+(sqlcipher.c/.h, crypto_cc.c, crypto_openssl.c, crypto_libtomcrypt.c) совпали
+по SHA после **явно перечисленных** transformations amalgamator: trailing
+whitespace, commented includes, inlined sqlcipher.h, SQLITE_API и section
+comments. Просмотрены соответствующие правила официального mksqlite3c.tcl;
+это проверка происхождения компонентов, не доказательство C safety или
+эквивалентности include/linkage в целом. Все 430 self-checksums проверены.
+
+[Отдельный verifier](../../supply-chain/desktop/review-sqlcipher-2026-11-26-desktop-5.mjs)
+повторяет hash/component comparison. **Полное совпадение всей SQLite
+amalgamation независимо не подтверждено**: официальный source archive
+не содержит готовой sqlite3.c, configure/make regeneration не выполнена
+(Tcl/make и рабочая WSL в этой Windows-среде недоступны). Поставщик libtomcrypt
+и signature chain независимо не проверены. **C-код построчно не аудирован**.
+Итог: **требует человеческого решения**, safe-to-deploy не выдан и exemption
+для активного native package не добавлено. Решение должно определить дальнейший
+native review/regeneration или отдельную замену/обновление; одно совпадение
+хеша не закрывает безопасность криптографии.
+
+### Остаток, обновления и проверки пятого прохода
+
+Остались **6**: dbus-secret-service, recvmsg, оба serialize-to-javascript*,
+sqlcipher-src, vswhom. Подтверждённой исправленной опубликованной версии
+для новых находок здесь не установлено; версии не угадывались и не менялись.
+Для PRNG, ownership и native bounds нужны отдельные исправления/проверки;
+это не разрешение принять известный дефект административным решением.
+
+`node scripts/vet-dependencies.mjs desktop` — **failed, 6 gaps**, locked
+inputs неизменны. Всего exemptions **4**: прежний dirs-sys 0.5.0 и три новых.
+У dirs-sys сохранён анализ четвёртого прохода; его runtime reachability здесь
+заново не проверялась. Wrapper по-прежнему отвергает **любые exemptions**,
+ADR 0073 и скрипт не изменены. Cargo-deny 0.22.0 desktop — **exit 0**,
+advisories/bans/licenses/sources ok. Wrapper tests — **3/3**.
+Workspace tests, clippy и leak suite запускались: **exit 101**, OpenSSL build
+не нашёл perl. Extension npm test — **exit 1**, отсутствует tsc. Эти запуски
+не дошли до тестов и не объявляются зелёными. CI и push не запускались.
+Продуктовое поведение не менялось; M6 и gate остаются открытыми.

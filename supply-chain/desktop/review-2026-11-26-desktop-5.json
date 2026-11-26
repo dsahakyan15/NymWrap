@@ -1,0 +1,1317 @@
+{
+  "schema_version": 1,
+  "scope": "desktop",
+  "manifest": "app/src-tauri/Cargo.toml",
+  "date": "2026-11-26",
+  "source_commit": "e0f967dcaba8888e5163f761981213bd895add13",
+  "previous_pass_commit": "b9ae93f",
+  "branch": "agent/vet-desktop-5",
+  "reviewer": "Проверено агентом, не человеком",
+  "execution": "local Windows x86_64 MSVC; not CI",
+  "criteria": "safe-to-deploy",
+  "status": "incomplete",
+  "baseline_gaps": 9,
+  "final_gaps": 6,
+  "closed_gaps": 3,
+  "coverage_added": {
+    "source_audits": 0,
+    "publisher_trust": 0,
+    "exemptions": 3
+  },
+  "exemptions": {
+    "retained": [
+      {
+        "name": "dirs-sys",
+        "version": "0.5.0",
+        "analysis": "review-2026-11-26-desktop-4.json; not re-reviewed for runtime reachability here"
+      }
+    ],
+    "added": [
+      {
+        "name": "ordered-stream",
+        "version": "0.2.0",
+        "archive_sha256": "9aa2b01e1d916879f73a53d01d1d6cee68adbb31d6d9177a8cfce093cced1d50",
+        "reason": "Exact-version non-reachability exemption: both all-target inverse trees are empty, including --all-features. Keyring selects the synchronous backend. No source certificate or new reproduction of the previous position_hint concern."
+      },
+      {
+        "name": "winapi-i686-pc-windows-gnu",
+        "version": "0.4.0",
+        "archive_sha256": "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6",
+        "reason": "Exact-version target exemption: present for --target all; absent with and without --all-features for MSVC, Linux and macOS triples used by this project. Host is MSVC and no Windows GNU target installed. winapi target-specific dependency sections and build-script TARGET guards read. Import archive bytes are inventoried, not supplier-audited/disassembled. Any Windows GNU/custom/cross-target or direct-dependency change invalidates this exemption."
+      },
+      {
+        "name": "winapi-x86_64-pc-windows-gnu",
+        "version": "0.4.0",
+        "archive_sha256": "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f",
+        "reason": "Exact-version target exemption: present for --target all; absent with and without --all-features for MSVC, Linux and macOS triples used by this project. Host is MSVC and no Windows GNU target installed. winapi target-specific dependency sections and build-script TARGET guards read. Import archive bytes are inventoried, not supplier-audited/disassembled. Any Windows GNU/custom/cross-target or direct-dependency change invalidates this exemption."
+      }
+    ],
+    "total": 4,
+    "repository_wrapper_rejects_all": true
+  },
+  "tree_checks": [
+    {
+      "crate": "dbus-secret-service",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i dbus-secret-service",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "dbus-secret-service v4.1.0\n└── keyring v3.6.3\n    ├── nw-cred v0.1.0 (<repo>\\crates\\nw-cred)\n    │   └── nw-core v0.1.0 (<repo>\\crates\\nw-core)\n    │       └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n    └── nw-vault v0.1.0 (<repo>\\crates\\nw-vault)\n        ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n        └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "dbus-secret-service",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i dbus-secret-service",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "dbus-secret-service v4.1.0\n└── keyring v3.6.3\n    ├── nw-cred v0.1.0 (<repo>\\crates\\nw-cred)\n    │   └── nw-core v0.1.0 (<repo>\\crates\\nw-core)\n    │       └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n    └── nw-vault v0.1.0 (<repo>\\crates\\nw-vault)\n        ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n        └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "ordered-stream",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i ordered-stream",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "ordered-stream",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i ordered-stream",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "recvmsg",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i recvmsg",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "recvmsg v1.0.0\n└── interprocess v2.4.9\n    └── nw-ipc v0.1.0 (<repo>\\crates\\nw-ipc)\n        ├── nw-bridge v0.1.0 (<repo>\\crates\\nw-bridge)\n        │   └── nw-core v0.1.0 (<repo>\\crates\\nw-core)\n        │       └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n        ├── nw-llm v0.1.0 (<repo>\\crates\\nw-llm)\n        │   ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n        │   └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        └── nw-net v0.1.0 (<repo>\\crates\\nw-net)\n            └── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "recvmsg",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i recvmsg",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "recvmsg v1.0.0\n└── interprocess v2.4.9\n    └── nw-ipc v0.1.0 (<repo>\\crates\\nw-ipc)\n        ├── nw-bridge v0.1.0 (<repo>\\crates\\nw-bridge)\n        │   └── nw-core v0.1.0 (<repo>\\crates\\nw-core)\n        │       └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n        ├── nw-llm v0.1.0 (<repo>\\crates\\nw-llm)\n        │   ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n        │   └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        └── nw-net v0.1.0 (<repo>\\crates\\nw-net)\n            └── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "serialize-to-javascript",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i serialize-to-javascript",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "serialize-to-javascript v0.1.2\n└── tauri v2.12.4\n    └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "serialize-to-javascript",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i serialize-to-javascript",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "serialize-to-javascript v0.1.2\n└── tauri v2.12.4\n    └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "serialize-to-javascript-impl",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i serialize-to-javascript-impl",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "serialize-to-javascript-impl v0.1.2 (proc-macro)\n└── serialize-to-javascript v0.1.2\n    └── tauri v2.12.4\n        └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "serialize-to-javascript-impl",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i serialize-to-javascript-impl",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "serialize-to-javascript-impl v0.1.2 (proc-macro)\n└── serialize-to-javascript v0.1.2\n    └── tauri v2.12.4\n        └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "sqlcipher-src",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i sqlcipher-src",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "sqlcipher-src v420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2\n[build-dependencies]\n└── libsqlite3-sys v0.40.0\n    └── rusqlite v0.43.0\n        ├── nw-audit v0.1.0 (<repo>\\crates\\nw-audit)\n        │   ├── nw-core v0.1.0 (<repo>\\crates\\nw-core)\n        │   │   └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        │   └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        └── nw-vault v0.1.0 (<repo>\\crates\\nw-vault)\n            ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n            └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "sqlcipher-src",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i sqlcipher-src",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "sqlcipher-src v420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2\n[build-dependencies]\n└── libsqlite3-sys v0.40.0\n    └── rusqlite v0.43.0\n        ├── nw-audit v0.1.0 (<repo>\\crates\\nw-audit)\n        │   ├── nw-core v0.1.0 (<repo>\\crates\\nw-core)\n        │   │   └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        │   └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n        └── nw-vault v0.1.0 (<repo>\\crates\\nw-vault)\n            ├── nw-core v0.1.0 (<repo>\\crates\\nw-core) (*)\n            └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "vswhom",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i vswhom",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "vswhom v0.1.0\n└── embed-resource v3.0.12\n    └── tauri-winres v0.3.7\n        └── tauri-build v2.7.6\n            [build-dependencies]\n            ├── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n            └── tauri v2.12.4\n                └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "vswhom",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i vswhom",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "vswhom v0.1.0\n└── embed-resource v3.0.12\n    └── tauri-winres v0.3.7\n        └── tauri-build v2.7.6\n            [build-dependencies]\n            ├── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n            └── tauri v2.12.4\n                └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "winapi-i686-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "winapi-i686-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "winapi-x86_64-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target all -e normal,build,dev --all-features -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "winapi-x86_64-pc-windows-gnu v0.4.0\n└── winapi v0.3.9\n    ├── dlopen2 v0.8.2\n    │   └── tao v0.37.3\n    │       └── tauri-runtime-wry v2.12.5\n    │           └── tauri v2.12.4\n    │               └── nymwrap-app v0.1.0 (<repo>\\app\\src-tauri)\n    └── gio-sys v0.18.1\n        ├── gdk-pixbuf-sys v0.18.0\n        │   ├── gdk-pixbuf v0.18.5\n        │   │   ├── gdk v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2\n        │   │   │   │   └── wry v0.57.3\n        │   │   │   │       └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   ├── gtk v0.18.2\n        │   │   │   │   ├── muda v0.20.0\n        │   │   │   │   │   └── tauri v2.12.4 (*)\n        │   │   │   │   ├── tao v0.37.3 (*)\n        │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   ├── tauri-runtime v2.12.4\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   └── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   ├── webkit2gtk v2.0.2\n        │   │   │   │   │   ├── tauri v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime v2.12.4 (*)\n        │   │   │   │   │   ├── tauri-runtime-wry v2.12.5 (*)\n        │   │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   │   └── wry v0.57.3 (*)\n        │   │   │   └── webkit2gtk v2.0.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── gdk-sys v0.18.2\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gdkwayland-sys v0.18.2\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gdkx11-sys v0.18.2\n        │   │   │   ├── gdkx11 v0.18.2 (*)\n        │   │   │   └── tao v0.37.3 (*)\n        │   │   ├── gtk-sys v0.18.2\n        │   │   │   ├── gtk v0.18.2 (*)\n        │   │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   │   └── webkit2gtk-sys v2.0.2\n        │   │   │       ├── webkit2gtk v2.0.2 (*)\n        │   │   │       └── wry v0.57.3 (*)\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── webkit2gtk-sys v2.0.2 (*)\n        │   └── gtk-sys v0.18.2 (*)\n        ├── gdk-sys v0.18.2 (*)\n        ├── gio v0.18.4\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── pango v0.18.3\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── soup3 v0.5.0\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── glib v0.18.5\n        │   ├── atk v0.18.2\n        │   │   └── gtk v0.18.2 (*)\n        │   ├── cairo-rs v0.18.5\n        │   │   ├── gdk v0.18.2 (*)\n        │   │   ├── gtk v0.18.2 (*)\n        │   │   └── webkit2gtk v2.0.2 (*)\n        │   ├── gdk v0.18.2 (*)\n        │   ├── gdk-pixbuf v0.18.5 (*)\n        │   ├── gdkx11 v0.18.2 (*)\n        │   ├── gio v0.18.4 (*)\n        │   ├── gtk v0.18.2 (*)\n        │   ├── javascriptcore-rs v1.1.2\n        │   │   ├── webkit2gtk v2.0.2 (*)\n        │   │   └── wry v0.57.3 (*)\n        │   ├── pango v0.18.3 (*)\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk v2.0.2 (*)\n        ├── gtk-sys v0.18.2 (*)\n        ├── soup3-sys v0.5.0\n        │   ├── soup3 v0.5.0 (*)\n        │   └── webkit2gtk-sys v2.0.2 (*)\n        ├── webkit2gtk v2.0.2 (*)\n        └── webkit2gtk-sys v2.0.2 (*)\n",
+      "stderr": ""
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target x86_64-pc-windows-msvc -e normal,build,dev -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target x86_64-pc-windows-msvc -e normal,build,dev --all-features -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target x86_64-pc-windows-msvc -e normal,build,dev -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-pc-windows-msvc",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target x86_64-pc-windows-msvc -e normal,build,dev --all-features -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu -e normal,build,dev -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu -e normal,build,dev --all-features -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu -e normal,build,dev -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "x86_64-unknown-linux-gnu",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu -e normal,build,dev --all-features -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target aarch64-apple-darwin -e normal,build,dev -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-i686-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target aarch64-apple-darwin -e normal,build,dev --all-features -i winapi-i686-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "all_features": false,
+      "command": "cargo tree --locked --offline --target aarch64-apple-darwin -e normal,build,dev -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    },
+    {
+      "crate": "winapi-x86_64-pc-windows-gnu",
+      "target": "aarch64-apple-darwin",
+      "all_features": true,
+      "command": "cargo tree --locked --offline --target aarch64-apple-darwin -e normal,build,dev --all-features -i winapi-x86_64-pc-windows-gnu",
+      "cwd": "app/src-tauri",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: nothing to print.\n\nTo find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.\n"
+    }
+  ],
+  "packages": [
+    {
+      "name": "dbus-secret-service",
+      "version": "4.1.0",
+      "archive_sha256": "708b509edf7889e53d7efb0ffadd994cc6c2345ccb62f55cfd6b0682165e4fa6",
+      "vcs": {
+        "git": {
+          "sha1": "d739c219802a213746dfcd6358c46723c3fc42e3"
+        },
+        "path_in_vcs": ""
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "open",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 2336,
+          "sha256": "b4bc203690129ee56ab2e70078ca40f3ef531351e3ced84904225d56c75f7b55",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1467,
+          "sha256": "06c2944bcb2ba423f9f21a5f8969ca87f4c9c8abacffdee3ce238a8277acaff2",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/session.rs",
+          "bytes": 15518,
+          "sha256": "6e74ab952549ed84ca85efb1196e4d2e20e2ac4764e6f910b51be074e1fdbcb2",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 22,
+        "bytes": 115654,
+        "sha256": "869c0619387512a91d67d0f6f355c1af69812c8187c5d95c4c74f46ed28d0c4a",
+        "native_files": 0
+      },
+      "decision": "No audit: crypto-rust is selected on Linux. In session.rs, Keypair::generate and salt use fastrand::Rng, whose own documentation explicitly excludes cryptographic security. keyring selects EncryptionType::Dh. Predictable crypto PRNG choice and unchecked peer-IV length before GenericArray::from_slice need fixes/review. Only session.rs, manifests and selected consumer/PRNG excerpts read; not a completed full protocol/source audit. Prior canonical VCS lookup failure is not resolved by publisher trust."
+    },
+    {
+      "name": "ordered-stream",
+      "version": "0.2.0",
+      "archive_sha256": "9aa2b01e1d916879f73a53d01d1d6cee68adbb31d6d9177a8cfce093cced1d50",
+      "vcs": {
+        "git": {
+          "sha1": "5c58ca1a3d680c2406f0c6a1520c3476c27048aa"
+        },
+        "path_in_vcs": ""
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "exemption",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 497,
+          "sha256": "d47be2cd71b3e9dc6ec38c04c56a7f92cc2edbdf2e664d0bab74f0c2707fb179",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 11,
+        "bytes": 88195,
+        "sha256": "299fd41362320ba38eec55ca6639b7c0a1bac11e852953618c3d96de711ebe10",
+        "native_files": 0
+      },
+      "decision": "Exact-version non-reachability exemption: both all-target inverse trees are empty, including --all-features. Keyring selects the synchronous backend. No source certificate or new reproduction of the previous position_hint concern."
+    },
+    {
+      "name": "recvmsg",
+      "version": "1.0.0",
+      "archive_sha256": "d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175",
+      "vcs": {
+        "git": {
+          "sha1": "e68e3abdbb88313eea12bc2c87ce6a39de4e2ebe"
+        },
+        "path_in_vcs": ""
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "open",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 863,
+          "sha256": "4eebabd8cebc370ea1e97b14c459d0cae09094a78fc38179ae69c8bacad9e4a5",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 5556,
+          "sha256": "512f394572fc053a5bc72aa1fb8f29410138a925fb8158497986ec015896f615",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf.rs",
+          "bytes": 5108,
+          "sha256": "513c73e687653c69a5473855e82798608eefcc6b4affb33e4e54bc7e78ad39f9",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/cap.rs",
+          "bytes": 3269,
+          "sha256": "8e3121f2306a08977bbfc61f042b1969dd6606b19cace23c9fd73f71a3b12bdb",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/ctor.rs",
+          "bytes": 3570,
+          "sha256": "e5cc63e3327974fa96ec7296c2331a445a175f3c33d58c39f5ed3122d1e05c35",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/cursors.rs",
+          "bytes": 3113,
+          "sha256": "51104a2271e5d2a185c22a54cb58409ea765fc570df1b28d017802116d7ae243",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/lifetime.rs",
+          "bytes": 1047,
+          "sha256": "ff823566bff1d92f5369f5efa91b69893809a3c793c8c84201f564b5ffce6668",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/owned.rs",
+          "bytes": 3729,
+          "sha256": "9a61fcb0450242ed454245c75ab0a83cd121afbc5f93fdda820e7b4ddac5209a",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/owned/grow_fn.rs",
+          "bytes": 1876,
+          "sha256": "29b0ee0b19bfa065fc1a2c5547cc395ce7bf468512e508b1f9295fcd6aed722d",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/owned/impl.rs",
+          "bytes": 1093,
+          "sha256": "b55e8adc8d3b3935f532cc23fdb7ad0128c3ed212cd3563f14bcebbb09c78f96",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/owned/trait_object.rs",
+          "bytes": 3423,
+          "sha256": "5b65b2baf3778fe637451fc24580152870b93044902dc8030b11a3ec0ea9687e",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/safe_write.rs",
+          "bytes": 624,
+          "sha256": "90d83149dc083fa0da43229d698d95b853c2babb18009717d4aa04c1861bb6b3",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/slicing.rs",
+          "bytes": 2856,
+          "sha256": "0f91f0d0b50169af8bef5dc0e68fd3c0fb07e170fcb924b03e780b72ba2148d3",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/msgbuf/take.rs",
+          "bytes": 2383,
+          "sha256": "8593538711dfedacc1210ce5b19651090eae2a8c53d3582bd6ee51c90c38cd93",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 49,
+        "bytes": 121857,
+        "sha256": "6513b33b98a5560302af5e8181295a55f1f7006a32e79c098fb5161aa446fb46",
+        "native_files": 0
+      },
+      "decision": "No audit: synthetic no-free owner records one premature nonempty Drop during try_extend_lifetime and two releases after dropping the returned buffer. Copying the fields of self does not suppress its Drop. Vec-backed use therefore risks use-after-free/double-free. Source review of the ownership/buffer modules, not all 3455 source lines. No UAF executed and no claim that this function is reachable from the current nw-ipc byte-stream API; crate itself has an active path, so no package-level non-reachability exemption is invented."
+    },
+    {
+      "name": "serialize-to-javascript",
+      "version": "0.1.2",
+      "archive_sha256": "04f3666a07a197cdb77cdf306c32be9b7f598d7060d50cfd4d5aa04bfd92f6c5",
+      "vcs": {
+        "git": {
+          "sha1": "5401db83de0d561231605bf658c2f468dbe7ffd1"
+        },
+        "path_in_vcs": ""
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "open",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 1273,
+          "sha256": "801ca3e226c6f79cb17f7756b2da15baec85f8e387be67262ae688f3cc2d9741",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 621,
+          "sha256": "3c7cbe04b06020f0c6b31b0381bacf65bc801292fc5cf8e7992459b52fb5b30e",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 9148,
+          "sha256": "c9648170026bd4311e20e5c5621ac46a584650e14aeadd24f610957b0c3974ac",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/private.rs",
+          "bytes": 1807,
+          "sha256": "55be0ea5f04e75bcc4e1b05aa6d4920401737565ee8fe77af893f2e559cf7c65",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "tests/mixed.rs",
+          "bytes": 154,
+          "sha256": "99bc7b89e67ed80305c4f189d9ea9dc70eef77935938295c5d81e1bfa6e7c377",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 11,
+        "bytes": 27853,
+        "sha256": "19f6925f1e04f465a60bb68e56541503cacad2b36c2e239b1dd929867603165d",
+        "native_files": 0
+      },
+      "decision": "No audit: the primitive JSON.parse escaping passes 26 checks, including all Unicode scalars and freeze variants. However the crate publicly re-exports Template; a two-field safe Template use with a value containing __TEMPLATE_b__ produces invalid JavaScript after the later replacement. Both packages remain open; standalone escaping success is not promoted to safety of the complete public/generated API. HTML script-element safety is not implied by JSON.parse escaping. Reviewed both complete runtime modules and manifests."
+    },
+    {
+      "name": "serialize-to-javascript-impl",
+      "version": "0.1.2",
+      "archive_sha256": "772ee033c0916d670af7860b6e1ef7d658a4629a6d0b4c8c3e67f09b3765b75d",
+      "vcs": {
+        "git": {
+          "sha1": "5401db83de0d561231605bf658c2f468dbe7ffd1"
+        },
+        "path_in_vcs": "impl"
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "open",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 1142,
+          "sha256": "b0cc7cca5853379b6fbca35eebe18f7c0559d773594feca4fa283f486ea54e69",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 456,
+          "sha256": "c2a7e2f9d5fed29216809151a9529199dfdffebf498cc96374a896e2a86e19ea",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 5435,
+          "sha256": "47e5536024ad09a0becdcf904e07bf8c32a6ed878a9bba361640d72b515359ce",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 6,
+        "bytes": 19554,
+        "sha256": "840d03254e992383110deeb677975223ffb289e222a2431217be8ef5b4c34581",
+        "native_files": 0
+      },
+      "decision": "No audit: complete macro source and manifests read. Generated sequential str::replace processes placeholders inside prior field values. The exact published macro reproduces SyntaxError for two ordinary serialized fields; no raw attribute, network input or injected JS execution is needed. Selected Tauri call sites use fixed initialization values, and arbitrary IPC callback data uses Serialized::new; this does not prove all feature/context uses unreachable, so no exemption. Generic where-clause handling and resource usage are not claimed fully validated."
+    },
+    {
+      "name": "sqlcipher-src",
+      "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2",
+      "archive_sha256": "fd6b5280ed2593d07b2816ec531821c15c306903bcca224716f1fbcc2bbfedfe",
+      "vcs": {
+        "git": {
+          "sha1": "617c0cc9673cadddd1beefda6db47aa732d5a7ab"
+        },
+        "path_in_vcs": ""
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "open",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 1728,
+          "sha256": "745f02b8a6687b58e95d3ec6856f19834457a28ac4d1b80343deaa63f9b23c18",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 1046,
+          "sha256": "004e8eae1f830633e03ae9a6f13cbb9673996dd7b37219f5d0e04896f7850d81",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "README.md",
+          "bytes": 4077,
+          "sha256": "1aaa49732df8c88e6305c352d6b29824b6437c04107634b26c47536a7bddf6ac",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 1375,
+          "sha256": "966360e853c08c150483d5306e061600d2229c3b918129918c6b8c16c324be0f",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 440,
+        "bytes": 13229417,
+        "sha256": "9cfe8730bc73da5987d233fcee8572fea5fd4682b97a1e0314f9181b8ebbdfc7",
+        "native_files": 428
+      },
+      "decision": "No audit; требует человеческого решения. Package has build=false and no build.rs. Helper returns compile-time source paths/constants and includes a generated path list; it performs no I/O/subprocess/network. Active libsqlite3-sys bundled-sqlcipher build branch reads those paths, generates/copies bindings and compiles/links via cc, with build environment crypto settings; no download or arbitrary shell step found in the inspected branch. Official SQLCipher v4.20.0 tag peeled to the expected commit. Two files match byte-for-byte and all five SQLCipher-specific embedded components match after enumerated amalgamator transformations. Full SQLite amalgamation, libtomcrypt supplier equivalence and signature chain remain unverified. Native C was not audited line by line."
+    },
+    {
+      "name": "vswhom",
+      "version": "0.1.0",
+      "archive_sha256": "be979b7f07507105799e854203b470ff7c78a1639e330a58f183b5fea574608b",
+      "vcs": {
+        "git": {
+          "sha1": "2472981fa9c8670928ff8e165a4651bfc0d1104a"
+        }
+      },
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "open",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 1065,
+          "sha256": "a3ac2f682740dc45875a9593a9cc2bb1d104212648c2f8519cef8b7b20e7c8f5",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "bytes": 567,
+          "sha256": "28d4c57a4a92658f1ab8a0bfbbaca44e831e7279837d4339119b5506fb7d12d3",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 3710,
+          "sha256": "9d3f41e3a7fcfdcd9915441ab443c8aa440abbbaf0eef56c4b51f59d748e6148",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 12,
+        "bytes": 15409,
+        "sha256": "2c963b0441b2cb9addff6243d7e1e84643fd990bd8e1096c961b9b86890a5f65",
+        "native_files": 0
+      },
+      "decision": "No audit: complete Rust wrapper and manifests read, plus native ABI/build and selected allocation/registry/discovery/cleanup excerpts in vswhom-sys 0.1.3. Native result assigns SDK version only 0/8/10, addressing the narrowing question in this path, but find_windows_kit_root indexes wchar_t* by byte length returned from RegQueryValueExW. A 20-byte value allocates 24 bytes and then evaluates value[20] at byte offset 40; the fallback buffer[cb_data] has the same unit mismatch. This is a static source finding, not a native registry exploit/ASan reproduction. Full native safety and deployment reachability are not closed."
+    },
+    {
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "archive_sha256": "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6",
+      "vcs": null,
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "exemption",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 948,
+          "sha256": "9652222664ffc7e2a26fdcdebdce0917a455b39d8fbcbf451bf0b011a3067bf7",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "build.rs",
+          "bytes": 831,
+          "sha256": "4344ce95f51197e1377429cd9ef7a8e3f97d39546776705857991f2f9416f545",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 389,
+          "sha256": "79212a91f610f8a77aa6ed4cc77212c2531eeb35630388bf07323cc328fcca42",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 1391,
+        "bytes": 50931525,
+        "sha256": "0b5139743b20ea96235a1dbdb5bbb40b8bde14802404d46ad50201b7db9948fc",
+        "native_files": 1387
+      },
+      "decision": "Exact-version target exemption: present for --target all; absent with and without --all-features for MSVC, Linux and macOS triples used by this project. Host is MSVC and no Windows GNU target installed. winapi target-specific dependency sections and build-script TARGET guards read. Import archive bytes are inventoried, not supplier-audited/disassembled. Any Windows GNU/custom/cross-target or direct-dependency change invalidates this exemption."
+    },
+    {
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "archive_sha256": "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f",
+      "vcs": null,
+      "reviewer": "Проверено агентом, не человеком",
+      "safe_to_deploy_audit_granted": false,
+      "status": "exemption",
+      "archive_verified_against": "unchanged desktop Cargo.lock and cached non-yanked sparse index; every regular archive member byte-equal to cached source",
+      "read_files": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 952,
+          "sha256": "a88605a11db5def9b6cf73398e83b3edb72228cb43ea935729fac5cd33cec22c",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "build.rs",
+          "bytes": 833,
+          "sha256": "b4ab421e1dc98159dd4440813cdaf7d9ea98278324bc6118d0f7cf378933f371",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 389,
+          "sha256": "79212a91f610f8a77aa6ed4cc77212c2531eeb35630388bf07323cc328fcca42",
+          "scope": "complete file; native and consumer excerpts listed separately"
+        }
+      ],
+      "inventory": {
+        "files": 1420,
+        "bytes": 53158180,
+        "sha256": "07f4b817f59b483fbd404c8379acd7ba7ad70f98129aece68cbe45d171c086a8",
+        "native_files": 1416
+      },
+      "decision": "Exact-version target exemption: present for --target all; absent with and without --all-features for MSVC, Linux and macOS triples used by this project. Host is MSVC and no Windows GNU target installed. winapi target-specific dependency sections and build-script TARGET guards read. Import archive bytes are inventoried, not supplier-audited/disassembled. Any Windows GNU/custom/cross-target or direct-dependency change invalidates this exemption."
+    }
+  ],
+  "supporting_read_material": [
+    {
+      "crate": "vswhom-sys-0.1.3",
+      "path": "ext/vswhom.cpp",
+      "sha256": "b25ba082c54a9546ed1f20c63105bf189e18c6fa3a7d0ae6c57dad41ca099166",
+      "scope": "selected native ABI, 0/8/10 assignments, allocation/registry and cleanup excerpts; not a full native audit"
+    },
+    {
+      "crate": "vswhom-sys-0.1.3",
+      "path": "src/lib.rs",
+      "sha256": "0616323fd399ba8230b160d787528218e6ade4a8952214d772f44c75488f8d9a",
+      "scope": "ABI fields"
+    },
+    {
+      "crate": "vswhom-sys-0.1.3",
+      "path": "build.rs",
+      "sha256": "3adb4b0f64aa6af4ca91aa3b0bacf81eb75e98b5587a625568ed825eb18a6f17",
+      "scope": "complete"
+    },
+    {
+      "crate": "keyring-3.6.3",
+      "path": "Cargo.toml.orig",
+      "sha256": "435cc9ea9a2c68ff007da37f6072c3b1321fbefbef0ead36e4476d39eebb43b6",
+      "scope": "feature forwarding excerpts"
+    },
+    {
+      "crate": "keyring-3.6.3",
+      "path": "src/secret_service.rs",
+      "sha256": "1f3e0dab29e3805e2e2c17a17e3504997128444f50cd15b29e921bb3562b0d19",
+      "scope": "Dh selection excerpts"
+    },
+    {
+      "crate": "fastrand-2.5.0",
+      "path": "src/lib.rs",
+      "sha256": "858da6a3831589762ec2214df3f8e8b09a1262708fb08072f1cf13c1260d6ce1",
+      "scope": "cryptographic-security warning in opening documentation"
+    },
+    {
+      "crate": "winapi-0.3.9",
+      "path": "Cargo.toml",
+      "sha256": "d25b7c71c515a1869c75b3ff957bf845386bec03bcb407532e3726919f0b36c7",
+      "scope": "two target-specific GNU dependency sections"
+    },
+    {
+      "crate": "libsqlite3-sys-0.40.0",
+      "path": "build.rs",
+      "sha256": "769b31370a41aa722e1d5a530012432c985bb142eab34d095481ffd1a3436e1b",
+      "scope": "main, entire bundled branch and portions of linked/bindgen branches; optional extension generator not fully reviewed"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/app.rs",
+      "sha256": "ef71e5c2da6696f9bef817f5f32d34c7710b678ca7ec8a00e539527bca5ad1d4",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/manager/webview.rs",
+      "sha256": "3bfb8bba5dbd61d08ec5ff4ce2fa882997df78666b840a8f13b30aea2c2e7381",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/protocol/isolation.rs",
+      "sha256": "65ae247b18dd551e7ce9a1c535beb5114891d73f33ddef50f3c8c9d3de7062af",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/path/plugin.rs",
+      "sha256": "b6e69d7dfe1490cd21125abef6aad35a5f56661a0a54484e5276a2ff1d436381",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/event/plugin.rs",
+      "sha256": "32f3b01840e02b21b34e8ec7e35fdc27123717ee4a27d44f26c6814e7df44f0f",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/pattern.rs",
+      "sha256": "0d4a4f4c88fa93a590a3e9ce3e0438dd4263b42ab27cc2424bb83de7c8a56edd",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/window/plugin.rs",
+      "sha256": "125ce6fffffdd5ba7aec2b0bd4c75fb83a4fad868e11f93cf725a2ec7b664eab",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/webview/plugin.rs",
+      "sha256": "5a7ac2c1401c8c06946e00b6bc8956d3efcdcb4f494aeb794e5ed7053ac0fc71",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    },
+    {
+      "crate": "tauri-2.12.4",
+      "path": "src/ipc/format_callback.rs",
+      "sha256": "e9de68956b9437f440291d37292bb9544b6c0b180029e6d2772685aa768a494d",
+      "scope": "template declarations/selected input construction or callback serialization excerpts; not a complete Tauri audit"
+    }
+  ],
+  "synthetic_probes": {
+    "escape_checks": 26,
+    "unicode_scalars": 1112064,
+    "template_collision": {
+      "collision": "[JSON.parse('\"JSON.parse('\"second\"')\"'),JSON.parse('\"second\"')]",
+      "kind": "template",
+      "ordinary": "[JSON.parse('\"first\"'),JSON.parse('\"second\"')]",
+      "result": "SyntaxError; no code-execution claim"
+    },
+    "recvmsg_ownership": {
+      "kind": "recvmsg_ownership",
+      "premature_releases": 1,
+      "total_releases": 2
+    },
+    "limits": "Windows x86_64, synthetic inputs only. No real D-Bus/registry access, no native SQLCipher execution, no Miri or sanitizer run. The custom owner intentionally leaks 32 bytes to avoid executing undefined behavior.",
+    "synthetic_lockfile_sha256": "f6567220d5ce894894526da66296b5f7237af289edcb13bb73993b80ce763292"
+  },
+  "sqlcipher": {
+    "tag": "v4.20.0",
+    "tag_object": "52252487a5cada9b430e8d4b20025790c5a6ba20",
+    "commit": "355d4db92d3404e71faa8088d071a71d767807f4",
+    "official_archive": {
+      "url": "https://codeload.github.com/sqlcipher/sqlcipher/tar.gz/52252487a5cada9b430e8d4b20025790c5a6ba20",
+      "sha256": "4a93dd9374db45603980efbb96fad7289a26b30ad72d1b54facdd4e1209c5b46"
+    },
+    "published_archive_sha256": "fd6b5280ed2593d07b2816ec531821c15c306903bcca224716f1fbcc2bbfedfe",
+    "self_checksums_verified": 430,
+    "build_script_present": false,
+    "build_false_in_manifest": true,
+    "normalization": "Trailing whitespace; known commented #includes and dontcache comments; sqlcipher.h inline section replaced by its original include; generated SQLITE_API prefixes on int/void sqlite3 entry points; section-marker comments.",
+    "generator_sha256": "dea1168e93e9e4a492979d43a3519f2a08a7903f35664f0d0e167878cddc7ef0",
+    "comparisons": [
+      {
+        "local": "sqlcipher/LICENSE-sqlcipher",
+        "official": "LICENSE.md",
+        "local_sha256": "2a2826f6acf46fa650730cf42cbb22a642be33a7ef119c9c4f4bf6daf3bef48e",
+        "official_sha256": "2a2826f6acf46fa650730cf42cbb22a642be33a7ef119c9c4f4bf6daf3bef48e",
+        "byte_equal": true
+      },
+      {
+        "local": "sqlcipher/sqlite3ext.h",
+        "official": "src/sqlite3ext.h",
+        "local_sha256": "48963abfefb41ac329ef9d706acb5eadba952a99a748285c9ded6b5e0942721b",
+        "official_sha256": "48963abfefb41ac329ef9d706acb5eadba952a99a748285c9ded6b5e0942721b",
+        "byte_equal": true
+      },
+      {
+        "official": "src/sqlcipher.c",
+        "official_sha256": "4bde516f8642979405c154b162c1d4f0e54ea0197c9e60f8c4ac7144919e2006",
+        "embedded_sha256": "b6356ce378e21824becaf1091e2be476c10a9be300881163229fd519e74ae575",
+        "normalized_sha256": "a2894cdcfcc469d574faff8d123d7031b2da4e94fa0b2c32d3cd1a7c658f04d0",
+        "normalized_equal": true
+      },
+      {
+        "official": "src/sqlcipher.h",
+        "official_sha256": "e4dcab1a3c02f8c1a06f7daa27dbe85af6dc79fc6b0504a62dd4dabe711258c2",
+        "embedded_sha256": "d8fa52341cd714316a448a628ffebde532a53eac55b57c09ba2a7ca1ec5d9d8e",
+        "normalized_sha256": "e6814a96ce4f93c858423fa862b9adcb2a7e897ac007fff421fb17c13d776729",
+        "normalized_equal": true
+      },
+      {
+        "official": "src/crypto_cc.c",
+        "official_sha256": "8cf8bc772cc7291db1ddfc5a56277bca877caca7f3a5487efd0ee88c50584328",
+        "embedded_sha256": "6b7dce502d2a9c671deba32c277b1a6b9f89384189df8186f1889be46a92c5b2",
+        "normalized_sha256": "d8ee21d1c4b0dce0631ed060a7c69137d8e9b241e03dd8497f26262b55887032",
+        "normalized_equal": true
+      },
+      {
+        "official": "src/crypto_libtomcrypt.c",
+        "official_sha256": "389c700c0d47bb3a2b79c278893a65f9dbdda329d1ad209932f36c81455af899",
+        "embedded_sha256": "098594423450be68f49cb9589200a2c1cab4fdc041db81ca1b95a495e16d4d47",
+        "normalized_sha256": "4ab0e4272ed77b5f637551d316fdc505dc17843820ec2e2b03e69bfbc1250d45",
+        "normalized_equal": true
+      },
+      {
+        "official": "src/crypto_openssl.c",
+        "official_sha256": "9830118eae153c3f59decd2fecb9c240026f0f678f2718c9537977b914901cea",
+        "embedded_sha256": "764f37fd125ddcccf91dc64ac8b2d3e7a7ac337a32d1c75cf7f63319c7f42f86",
+        "normalized_sha256": "3426816363f86df7d27d1ebf3170b971704b8e165e014661b04340334e3a6455",
+        "normalized_equal": true
+      }
+    ],
+    "complete_amalgamation_match_confirmed": false,
+    "native_c_audited_line_by_line": false,
+    "signature_verified": false,
+    "decision": "требует человеческого решения; no safe-to-deploy audit",
+    "limits": "Only the five SQLCipher-specific embedded components plus two unchanged files were compared with the official release. Full SQLite amalgamation regeneration, libtomcrypt supplier equivalence, signature chain, all compiler/include/linkage effects and native C safety remain unverified."
+  },
+  "upstream_requests": [
+    {
+      "url": "https://api.github.com/repos/sqlcipher/sqlcipher/git/ref/tags/v4.20.0",
+      "status": 403,
+      "sha256": "111f7bb6e2e3c9a6fef63fd588cf891269762eec6be2c19e24dc3810e15f1935",
+      "bytes": 280,
+      "file": "sqlcipher-ref.json"
+    },
+    {
+      "command": "git ls-remote https://github.com/sqlcipher/sqlcipher.git refs/tags/v4.20.0 refs/tags/v4.20.0^{}",
+      "stdout": "52252487a5cada9b430e8d4b20025790c5a6ba20\trefs/tags/v4.20.0\n355d4db92d3404e71faa8088d071a71d767807f4\trefs/tags/v4.20.0^{}\n",
+      "exit_code": 0
+    },
+    {
+      "url": "https://codeload.github.com/sqlcipher/sqlcipher/tar.gz/52252487a5cada9b430e8d4b20025790c5a6ba20",
+      "status": 200,
+      "sha256": "4a93dd9374db45603980efbb96fad7289a26b30ad72d1b54facdd4e1209c5b46",
+      "bytes": 19653488,
+      "file": "sqlcipher-official.tar.gz"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/LucaCappelletti94/sqlcipher-src/617c0cc9673cadddd1beefda6db47aa732d5a7ab/upgrade.sh",
+      "status": 200,
+      "sha256": "f86db8857c005385119c8ab2af75a973726d230099e7013b5111aa2bf05f29e2",
+      "bytes": 490,
+      "file": "upgrade.sh"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/LucaCappelletti94/sqlcipher-src/617c0cc9673cadddd1beefda6db47aa732d5a7ab/Cargo.toml",
+      "status": 200,
+      "sha256": "004e8eae1f830633e03ae9a6f13cbb9673996dd7b37219f5d0e04896f7850d81",
+      "bytes": 1046,
+      "file": "Cargo.toml"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/LucaCappelletti94/sqlcipher-src/617c0cc9673cadddd1beefda6db47aa732d5a7ab/tools/releases.sh",
+      "status": 200,
+      "sha256": "6cb6874003d0914b808477608b2fdd55384f58422cbe7f5338518989cb9af1f4",
+      "bytes": 4038,
+      "file": "tools_releases.sh"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/LucaCappelletti94/sqlcipher-src/617c0cc9673cadddd1beefda6db47aa732d5a7ab/tools/assemble.py",
+      "status": 200,
+      "sha256": "faf4e8c471273b223aee7a3a0e5773b8a1ed1192591e296d92fb540852c19e7a",
+      "bytes": 1810,
+      "file": "tools_assemble.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/LucaCappelletti94/sqlcipher-src/617c0cc9673cadddd1beefda6db47aa732d5a7ab/tools/checksums.py",
+      "status": 200,
+      "sha256": "93d46b15eac95b2776c016065812603ec5b8e2bbe47bcebfeeb0fbb20976b1cf",
+      "bytes": 580,
+      "file": "tools_checksums.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/LucaCappelletti94/sqlcipher-src/617c0cc9673cadddd1beefda6db47aa732d5a7ab/.github/workflows/sqlcipher-release.yml",
+      "status": 200,
+      "sha256": "16773934f8736cd8a6b0a1bfcfb6e79c1e4a62bc5ae8073860d2dc163378c65e",
+      "bytes": 8911,
+      "file": ".github_workflows_sqlcipher-release.yml"
+    }
+  ],
+  "prior_report_sha256": "e116b06446ea436f5c89f6f87dfd75fca2445db6577bcda41358e2617cbcb2f7",
+  "remaining": [
+    {
+      "name": "dbus-secret-service",
+      "version": "4.1.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "No audit: crypto-rust is selected on Linux. In session.rs, Keypair::generate and salt use fastrand::Rng, whose own documentation explicitly excludes cryptographic security. keyring selects EncryptionType::Dh. Predictable crypto PRNG choice and unchecked peer-IV length before GenericArray::from_slice need fixes/review. Only session.rs, manifests and selected consumer/PRNG excerpts read; not a completed full protocol/source audit. Prior canonical VCS lookup failure is not resolved by publisher trust."
+    },
+    {
+      "name": "recvmsg",
+      "version": "1.0.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "No audit: synthetic no-free owner records one premature nonempty Drop during try_extend_lifetime and two releases after dropping the returned buffer. Copying the fields of self does not suppress its Drop. Vec-backed use therefore risks use-after-free/double-free. Source review of the ownership/buffer modules, not all 3455 source lines. No UAF executed and no claim that this function is reachable from the current nw-ipc byte-stream API; crate itself has an active path, so no package-level non-reachability exemption is invented."
+    },
+    {
+      "name": "serialize-to-javascript",
+      "version": "0.1.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "No audit: the primitive JSON.parse escaping passes 26 checks, including all Unicode scalars and freeze variants. However the crate publicly re-exports Template; a two-field safe Template use with a value containing __TEMPLATE_b__ produces invalid JavaScript after the later replacement. Both packages remain open; standalone escaping success is not promoted to safety of the complete public/generated API. HTML script-element safety is not implied by JSON.parse escaping. Reviewed both complete runtime modules and manifests."
+    },
+    {
+      "name": "serialize-to-javascript-impl",
+      "version": "0.1.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "No audit: complete macro source and manifests read. Generated sequential str::replace processes placeholders inside prior field values. The exact published macro reproduces SyntaxError for two ordinary serialized fields; no raw attribute, network input or injected JS execution is needed. Selected Tauri call sites use fixed initialization values, and arbitrary IPC callback data uses Serialized::new; this does not prove all feature/context uses unreachable, so no exemption. Generic where-clause handling and resource usage are not claimed fully validated."
+    },
+    {
+      "name": "sqlcipher-src",
+      "version": "420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "No audit; требует человеческого решения. Package has build=false and no build.rs. Helper returns compile-time source paths/constants and includes a generated path list; it performs no I/O/subprocess/network. Active libsqlite3-sys bundled-sqlcipher build branch reads those paths, generates/copies bindings and compiles/links via cc, with build environment crypto settings; no download or arbitrary shell step found in the inspected branch. Official SQLCipher v4.20.0 tag peeled to the expected commit. Two files match byte-for-byte and all five SQLCipher-specific embedded components match after enumerated amalgamator transformations. Full SQLite amalgamation, libtomcrypt supplier equivalence and signature chain remain unverified. Native C was not audited line by line."
+    },
+    {
+      "name": "vswhom",
+      "version": "0.1.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "No audit: complete Rust wrapper and manifests read, plus native ABI/build and selected allocation/registry/discovery/cleanup excerpts in vswhom-sys 0.1.3. Native result assigns SDK version only 0/8/10, addressing the narrowing question in this path, but find_windows_kit_root indexes wchar_t* by byte length returned from RegQueryValueExW. A 20-byte value allocates 24 bytes and then evaluates value[20] at byte offset 40; the fallback buffer[cb_data] has the same unit mismatch. This is a static source finding, not a native registry exploit/ASan reproduction. Full native safety and deployment reachability are not closed."
+    }
+  ],
+  "requires_human_decision": [
+    "sqlcipher-src native safety and full upstream regeneration/provenance review, explicitly not certified",
+    "Future disposition of scoped exemptions under the unchanged zero-exemptions repository gate; no policy approval inferred"
+  ],
+  "requires_fixes": [
+    "dbus-secret-service cryptographic RNG/peer-input handling review",
+    "recvmsg ownership/lifetime transfer",
+    "serialize-to-javascript-impl replacement composition (publicly re-exported by serialize-to-javascript)",
+    "vswhom native producer byte/wchar_t bounds review"
+  ],
+  "confirmed_fixed_upgrade_available": [],
+  "lockfiles": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "6a8b1f7bd79c70be14f94ba7430e80e427a0683a30db804660dcf22ed70c595a",
+      "unchanged": true
+    },
+    {
+      "path": "app/src-tauri/Cargo.lock",
+      "sha256": "a2eeed10d769a05ff0a9c7843708ec86c58d5cb08cf24a93d2236eaa38041e17",
+      "unchanged": true
+    },
+    {
+      "path": "daemons/nw-netd/Cargo.lock",
+      "sha256": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+      "unchanged": true
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "sha256": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/llama-cpp-2/Cargo.lock",
+      "sha256": "447c65774c376341f2aad059bd96258dfd9f24787cc009c17b6b9465c1e7b3c3",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/rustls/Cargo.lock",
+      "sha256": "8fb66853b333f7bb99c0d1c0cfcecf15d1a08940f09c7ce26eb3626af81ee6fa",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/tor-key-forge/Cargo.lock",
+      "sha256": "0133558f1d8066b3e79376d356c24b099482a65462b0c8d5799477c311a2bed0",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/tor-llcrypto/Cargo.lock",
+      "sha256": "7177c761c926b44e00ab58258fa4af594cd94cbf975b2b118b5b66d748f0cccd",
+      "unchanged": true
+    },
+    {
+      "path": "vendor/tor-ptmgr/Cargo.lock",
+      "sha256": "40b783709a0ea5cc3c7c714629ce35de08753eaa9d26f4b70a9ea20ea9fd4c7f",
+      "unchanged": true
+    }
+  ],
+  "validation": {
+    "vet": {
+      "command": "node scripts/vet-dependencies.mjs desktop",
+      "conclusion": "fail (vetting)",
+      "gaps": 6,
+      "wrapper_exit_code": 1,
+      "report_sha256": "c46b8337d47f3d756bd6b5e9558a2a7869bc8d16c16e6dd9ede21af9ab3e7a08",
+      "receipt": {
+        "version": 1,
+        "scope": "desktop",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "a2eeed10d769a05ff0a9c7843708ec86c58d5cb08cf24a93d2236eaa38041e17",
+          "config": "85b050d54ab2e4d664d8ab40c323102e69c7a0b78dfc235b1fa4ccbe364456ef",
+          "audits": "03215e06004ad3fdcc4d37990cdceed9cfda8fa55647693bdcc20f37fbad1683",
+          "imports": "fe015fce18ea23cca3d2849c5ee6c1fdf68156c9d2ce715c70c140ad3aa60e86"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      }
+    },
+    "cargo_deny": {
+      "command": "cargo deny --manifest-path app/src-tauri/Cargo.toml check --hide-inclusion-graph",
+      "version": "0.22.0",
+      "exit_code": 0,
+      "checks": [
+        "advisories ok",
+        "bans ok",
+        "licenses ok",
+        "sources ok"
+      ],
+      "log_sha256": "53dfe8075faf9bb5ea6900bb0bb71aec3cb6599586e72d04b845970000106ffd"
+    },
+    "wrapper_tests": {
+      "command": "node --test scripts/tests/vet-dependencies.test.mjs",
+      "passed": 3
+    },
+    "workspace_test": {
+      "command": "cargo test --workspace --locked",
+      "exit_code": 101,
+      "reason": "OpenSSL build: perl not found",
+      "log_sha256": "8809f5d3d500c67470e334b291c8cba83e7adff8017411aee01bf76e14cc7b07"
+    },
+    "clippy": {
+      "command": "cargo clippy --locked -- -D warnings",
+      "exit_code": 101,
+      "reason": "OpenSSL build: perl not found",
+      "log_sha256": "980a54102a21b323e72d1616d669644377225b8704f036293e3bf931bf0140b4"
+    },
+    "leak_test": {
+      "command": "cargo test -p nw-leak-tests --locked",
+      "exit_code": 101,
+      "reason": "OpenSSL build: perl not found",
+      "log_sha256": "a968ed2e72bd515411f17cfb2aa6ac4353be3f03ba0d48d9b9d730c4d69fdd25"
+    },
+    "extension": {
+      "command": "npm test",
+      "cwd": "extension",
+      "exit_code": 1,
+      "reason": "tsc not found",
+      "log_sha256": "ef16e08c5b11732a61b78a68ee05cc8d9d6d641273a3c750517e0d98401aa189"
+    },
+    "source_probes": {
+      "command": "node supply-chain/desktop/review-tests-2026-11-26-desktop-5.mjs",
+      "exit_code": 0
+    },
+    "sqlcipher_provenance": {
+      "command": "node supply-chain/desktop/review-sqlcipher-2026-11-26-desktop-5.mjs --offline",
+      "exit_code": 0,
+      "limits": "partial supplier comparison only; not a native safety certificate"
+    },
+    "ci_run": false,
+    "push": false
+  },
+  "criteria_weakened": false,
+  "other_graphs_changed": false,
+  "integrity_checks": {
+    "all_locks_unchanged": true,
+    "implementation_other_sections_unchanged": true,
+    "audits_unchanged": true,
+    "imports_unchanged": true,
+    "gate_and_adr0073_unchanged": true,
+    "scope_exact": true,
+    "final_receipt_current": true,
+    "native_source_certificates_not_fabricated": true
+  },
+  "baseline_checkpoint": {
+    "command": "node scripts/vet-dependencies.mjs desktop",
+    "gaps": 9,
+    "report_sha256": "5bf6c3fc19cd058edd2630832f92f0633ad1a22b1d40ddd9138ca4be3164f59f",
+    "receipt": {
+      "version": 1,
+      "scope": "desktop",
+      "tool_version": "0.10.4",
+      "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+      "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+      "exit_code": 4294967295,
+      "locked_imports": true,
+      "refreshed_imports": false,
+      "input_hashes": {
+        "cargo_lock": "a2eeed10d769a05ff0a9c7843708ec86c58d5cb08cf24a93d2236eaa38041e17",
+        "config": "472c3a2dc62fa1a256a38aeda4391f63f16f7f1404edfa25a0a479b4e4b8d4e5",
+        "audits": "03215e06004ad3fdcc4d37990cdceed9cfda8fa55647693bdcc20f37fbad1683",
+        "imports": "fe015fce18ea23cca3d2849c5ee6c1fdf68156c9d2ce715c70c140ad3aa60e86"
+      },
+      "inputs_unchanged": true,
+      "status": "failed",
+      "evidence": {
+        "commit": null,
+        "run": null,
+        "attempt": null
+      }
+    }
+  },
+  "host_checks": [
+    {
+      "command": "rustc -vV",
+      "exit_code": 0,
+      "stdout": "rustc 1.100.0 (0ef1bc386 2026-11-09)\nbinary: rustc\ncommit-hash: 0ef1bc386059596dada8fb65b50425aab2ea637a\ncommit-date: 2026-11-09\nhost: x86_64-pc-windows-msvc\nrelease: 1.100.0\nLLVM version: 23.1.5\n"
+    },
+    {
+      "command": "rustup target list --installed",
+      "exit_code": 0,
+      "stdout": "aarch64-apple-darwin\nx86_64-pc-windows-msvc\nx86_64-unknown-linux-gnu\nx86_64-unknown-linux-musl\n"
+    }
+  ],
+  "target_configuration_files": [
+    {
+      "path": ".cargo/config.toml",
+      "sha256": "adabbea09dc35e5d6f3d564405e76c3546cf411a2caa62aa686c10bdc6424d65"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "8091566fd2894857b9bf62dec427c2eb607b7eea2b3506e2485fc892a0e98c24"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "sha256": "74f69563828f0c4b8f418da967435488ce2345113b3496f8071c74c7f364a407"
+    },
+    {
+      "path": ".github/workflows/reproducible.yml",
+      "sha256": "c8da0c90dcb17c1df4eddeb887fdad7c388086dc9a666a712fb74aa28630b8ba"
+    },
+    {
+      "path": "crates/nw-cred/Cargo.toml",
+      "sha256": "449395f4956d6806c6b49fa915b9469c4a1fdb6066f6cd8bd200bafe7e976781"
+    },
+    {
+      "path": "crates/nw-vault/Cargo.toml",
+      "sha256": "e1fe5a3f58080831e5914352afb020bbd91f79bf0223747e8d50eff81e497c29"
+    },
+    {
+      "path": "app/src-tauri/Cargo.toml",
+      "sha256": "a20881579112c24e28ed9e371b2c3afa52b8106a4fc0585af756f1d9abff7b2e"
+    }
+  ],
+  "test_harness_files": [
+    {
+      "path": "supply-chain/desktop/review-tests-2026-11-26-desktop-5.mjs",
+      "sha256": "cff6dcfb19d17986b767f92f10f8b7e3813615b5781bd5c28ce16f5d094a8d31"
+    },
+    {
+      "path": "supply-chain/desktop/review-sqlcipher-2026-11-26-desktop-5.mjs",
+      "sha256": "4e8afe4f2d09afa7c7e7a8cf638a11cd3e663bab873f3eefc3061ce19c6245d8"
+    }
+  ]
+}
