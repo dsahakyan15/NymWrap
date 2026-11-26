@@ -33,6 +33,7 @@ fn macos_probe_policy_is_offline_readonly_and_cannot_spawn() {
         .args([
             "--exact",
             "macos_probe_policy_is_offline_readonly_and_cannot_spawn",
+            "--nocapture",
         ])
         .env("NW_MAC_PROBE_CHILD", "1")
         .env("NW_MAC_PROBE_GIT", git)
