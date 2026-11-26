@@ -23,10 +23,12 @@ strict/paranoid не включены. Синтетический L1 в тест
 очереди, не является сетевым адаптером и не закрывает M7. Проверки находятся в
 `tests/leak/src/paranoid_queue.rs`, `tests/leak/tests/paranoid.rs` и `nw-cover`.
 Локально на Windows: `cargo test --workspace --locked` — 169 passed, 16 ignored;
-`npm test` в extension — 24 passed, в app — 13 passed. Полный Clippy и отдельный
-прогон leak-тестов проверяются дополнительно; Clippy сначала остановился из-за
-MSBuild MSB4166 в нативной зависимости. Итоги повторной проверки и ссылки на CI
-приводятся в отчёте задачи. Ignored native-тесты локально не запускались.
+`npm test` в extension — 24 passed, в app — 13 passed;
+`cargo test -p nw-leak-tests` — 33 passed, 1 ignored;
+`cargo clippy --workspace --all-targets --locked -- -D warnings` — зелёный после
+повтора нативной сборки с MSBuild node reuse off (первый запуск дал MSB4166).
+Ignored native-тесты локально не запускались. Результаты и ссылки на CI приводятся
+в итоговом отчёте задачи; наличие этих локальных проверок не закрывает M7.
 
 ## Задача 9: M6 cargo-vet, только fuzz; промежуточный результат — 2026-11-26
 
