@@ -25,3 +25,66 @@ url = "https://raw.githubusercontent.com/zcash/rust-ecosystem/ce132d7abdd52f2b3b
 [policy.llama-cpp-2]
 audit-as-crates-io = true
 notes = "Vendored third-party base still requires upstream audits; this does not audit local modifications or native llama.cpp. M6 remains open."
+
+[policy.nw-api]
+audit-as-crates-io = false
+
+[policy.nw-audit]
+audit-as-crates-io = false
+
+[policy.nw-bridge]
+audit-as-crates-io = false
+
+[policy.nw-core]
+audit-as-crates-io = false
+
+[policy.nw-cover]
+audit-as-crates-io = false
+
+[policy.nw-cred]
+audit-as-crates-io = false
+
+[policy.nw-drift]
+audit-as-crates-io = false
+
+[policy.nw-drift-host]
+audit-as-crates-io = false
+
+[policy.nw-ipc]
+audit-as-crates-io = false
+
+[policy.nw-leak-tests]
+audit-as-crates-io = false
+
+[policy.nw-llm]
+audit-as-crates-io = false
+
+[policy.nw-llmd]
+audit-as-crates-io = false
+
+[policy.nw-mirror]
+audit-as-crates-io = false
+
+[policy.nw-net]
+audit-as-crates-io = false
+
+[policy.nw-platform]
+audit-as-crates-io = false
+
+[policy.nw-probe]
+audit-as-crates-io = false
+
+[policy.nw-proto]
+audit-as-crates-io = false
+
+[policy.nw-purge]
+audit-as-crates-io = false
+
+[policy.nw-sandbox]
+audit-as-crates-io = false
+
+[policy.nw-shield]
+audit-as-crates-io = false
+
+[policy.nw-vault]
+audit-as-crates-io = false

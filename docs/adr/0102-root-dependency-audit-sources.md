@@ -134,3 +134,134 @@ Root dependency gate и M6 остаются **открытыми**; конечн
   Инструменты не устанавливались, зелёного результата этих проверок нет.
 - cargo vet fmt для root и git diff --check. Другие stores не менялись,
   пользовательское поведение не менялось; CI не запускался.
+
+## Продолжение от a05f078: 107 → 88
+
+2026-11-26, локальная ветка `agent/vet-root-2`. Продуктовый критерий
+**safe-to-deploy** и все прежние immutable imports сохранены. Версии и
+Cargo.lock не менялись, новых зависимостей, imports и exemptions нет.
+Все промежуточные результаты и первичные evidence находятся в
+[отчёте продолжения](../../supply-chain/root/review-2026-11-26-continuation.json).
+Предыдущие числа и ограничения выше относятся к первой партии.
+
+### Собственные крейты
+
+Для всех 21 `nw-*` из `cargo metadata --locked --offline` явно записано
+`policy.<name>.audit-as-crates-io=false`. Это собственный код workspace,
+проверяемый в репозитории; одноимённые crates.io пакеты не являются его
+источником. Аудиты собственных крейтов не добавлялись. **107 → 107**.
+Third-party policy для llama-cpp-2 остаётся `true`: его опубликованная база,
+локальная разница и native-код всё ещё требуют отдельных проверок.
+
+### Дополнительные продуктовые доверия
+
+Это решения доверять сопровождению конкретных production-инвариантов,
+а не новые независимые source audits. У каждой записи ровно свой пакет,
+верифицированный uploader/workflow и историческое окно публикации
+`[день, следующий день)`. Иные публикации/семейства и будущие релизы не
+разрешаются. SHA архива совпал с точной версией API, sparse index и Cargo.lock;
+API также подтвердил отсутствие yank, дату и числовой id или repository identity.
+Для workflow `published_by=null` человеческий id не придумывался.
+
+| Identity | Пакеты и основание safe-to-deploy | Остаток |
+|---|---|---:|
+| matklad (2699) | once_cell: single assignment, публикация значения между потоками, reentrancy/panic и владение; автор и документация проекта. | 106 |
+| github:wasm-bindgen/wasm-bindgen | wasm-bindgen, macro, macro-support, js-sys: согласованность Rust/JS ABI, владение памятью и сгенерированные интерфейсы; официальный Rust/Wasm проект и описанный процесс выпуска. | 102 |
+| github:google/zerocopy | zerocopy и derive: alignment/layout, validity/aliasing и soundness сгенерированных trait impls; явная soundness policy, Miri/Kani и работа Google-команды в этом домене. | 100 |
+| github:smallvec/smallvec | smallvec: inline/heap layout, инициализированная длина, перемещение, Drop/unwind и безопасные collection API; официальный upstream контейнера. | 99 |
+| Stebalien (280) | tempfile: безопасное создание/права/владение временными файлами и ограничения path-based cleanup; документация безопасности авторского проекта. | 98 |
+| github:rust-random/rand | rand: unbiased sampling, состояние RNG и границы crypto/noncrypto; официальный Rand и его security premises. | 97 |
+| tony-iqlusion (19631) | secrecy: явное раскрытие, редактированный Debug, clone/serialization ограничения и zeroization; авторство Tony Arcieri подтверждено отдельным iqlusion-аккаунтом. | 96 |
+| jplatte (6913) | axum-core: production request/response/body/extractor контракты над недоверенным HTTP; автор официального релиза Axum. | 95 |
+| notgull (69526) | concurrent-queue, futures-lite, piper: thread ownership, initialized storage, atomic/wakeup/cancellation контракты; авторство и сопровождение соответствующих smol-примитивов. | 92 |
+
+Итого **15 записей / 15 закрытых пар**, пять числовых user-id и четыре
+repository identities. Точные URL/SHA primary sources, версии и даты — в JSON;
+для wasm-bindgen, zerocopy, smallvec и Rand первичные документы взяты из
+конкретного registry-reported commit. SHA/run_id реестра сохранены как metadata;
+отдельного аудита workflows не заявляем. Для текущих веток других проектов
+сохранён хеш прочитанного текста; он подтверждает основание доверия, не
+подменяет проверку исторического uploader.
+
+Ограничения явно повторены в notes: публичные fixed-key хеши и не-CSPRNG не
+становятся аутентификацией; пользовательские unsafe impls, JS, closures и
+инициализаторы остаются кодом вызывающего; tempfile не заменяет шифрование
+диска или выбор безопасного каталога; секреты вне контейнеров не очищаются
+автоматически. Зависимости рассматриваются отдельно.
+
+Доверие `github:rust-random/getrandom` для 0.4.3 было проверено по тем же
+первичным источникам и реестру, но дало **98 → 98**: resolver не выбрал
+publisher evidence в imports.lock. Неиспользованная запись удалена после партии:
+**92 → 92**. Обоснование, metadata и история оставлены в deferred_publisher_trust.
+Период не расширяли, imports.lock вручную не заполняли. getrandom остаётся
+пробелом; причина выбора resolver не установлена.
+
+### Четыре исходных аудита агента
+
+Каждая запись — полный source audit точной опубликованной версии для
+`safe-to-deploy`, явно **«Проверено агентом, не человеком»**. SHA архивов и
+просмотренных файлов сохранены; файлы Cargo cache побайтно сверены с архивами.
+Последовательность: phf_shared 0.14.0 (**91**), tower-service 0.3.3 (**90**),
+tower-layer 0.3.3 (**89**), proc-macro-crate 3.5.0 (**88**).
+
+- phf_shared: весь runtime, hasher, optional ptrhash и макросы. Единственный
+  unsafe cast разделяет байты u8/i8/bool с сохранением длины/lifetime, без
+  изменения и padding. Проверены wrapping arithmetic, checked indexing,
+  portable integer hashing и Rust-literal escaping. Некорректные/пустые
+  generated tables могут паниковать; key equality и валидация генератора —
+  ответственность потребителя. FmtConst для одноэлементного tuple выдаёт
+  `(value)` без запятой: ограничение явно записано, точный round-trip не обещан.
+  Пользовательский FmtConst способен выдавать произвольный код и требует
+  доверенного вызывающего; эта проверка не сертифицирует consuming generators.
+- tower-service: весь trait и адаптеры &mut/Box. Вызовы передаются тому же
+  service без clone, обработки запроса или независимого владения ресурсами.
+  Readiness, cancellation и authorization должны обеспечивать реализации.
+- tower-layer: все пять модулей, Identity/LayerFn/Stack и tuple арностей 0–16.
+  Проверены порядок композиции и сокращение рекурсии, без unsafe и скрытого I/O.
+  Пользовательские closures/Debug/Layer остаются кодом вызывающего.
+- proc-macro-crate: весь helper, manifests, unit tests и packaged integration
+  test. Cargo TOML остаётся данными; библиотека возвращает имя, не исполняет
+  токены. CARGO вызывается без shell с фиксированными отдельными locate-project
+  аргументами; stdout используется только как путь к manifest. Env, Cargo и
+  local build files — доверенные входы сборки, не sandbox для чужих manifests.
+  Нормализация только заменяет дефисы; downstream macro обязан строить
+  проверенный identifier. Cache/mtime/duplicate-name ошибки могут испортить
+  сборку, и не должны использоваться как граница runtime-авторизации.
+
+Приоритеты вновь рассмотрены от наибольшего числа транзитивных потребителей:
+getrandom 0.2.17 — 40, typenum — 39, generic-array — 38, errno — 34.
+Для typenum сверены inventory/manifests/lib.rs/sealed marker structure, но
+объёмная арифметика и generated tables не проверены полностью. У generic-array
+сверены archive/source inventory, но unsafe layout/инициализация/Drop ещё не
+сертифицированы. У errno заново прочитаны все платформенные реализации и
+проверены GNU/Microsoft документы; переносимая гарантия NUL после ERANGE для
+всех Unix/WASI ABI не установлена. Его сертификата нет, подтверждённая
+уязвимость не заявляется. signal-hook-registry только инвентаризирован;
+signal-safety и конкурентное освобождение требуют отдельного чтения.
+Далее проверены меньшие узлы с 16/13/12/12 потребителями. Неизвестное
+не заменено exemptions; общий объём оставшихся 88 крейтов требует новой партии.
+
+### Проверка продолжения и остаток
+
+Финальный locked `node scripts/vet-dependencies.mjs root` — **failed, 88 gaps**;
+четыре входа неизменны. Каждое добавление и удаление измерено той же командой.
+Root `cargo deny check --hide-inclusion-graph`, cargo-deny 0.22.0 — exit 0:
+advisories/bans/licenses/sources ok, только предупреждения о duplicate versions
+и неиспользованных license exceptions. `cargo vet fmt`, rustfmt стенда и
+`git diff --check` выполнены.
+
+Прямой pinned rustc на Windows: 5 upstream-тестов phf_shared со std+ptrhash,
+1 unit test tower-layer и 5 проверок сохранённого
+[стенда](../../supply-chain/root/review-tests-2026-11-26.rs) прошли. Это тесты
+байтов/escaping/границ metadata, service forwarding и порядка Layer/tuple,
+не Miri и не cross-platform matrix. Optional uncased/unicase не тестировались.
+Тесты proc-macro-crate не запускались: опубликованный integration test требует
+не вошедший в архив nested workspace; исходный аудит не объявлен тестированием.
+Первую ошибку компиляции стенда (создание non_exhaustive Hashes) исправили,
+использовав публичный hash API, затем проверки прошли.
+
+Полные workspace tests, clippy, leak tests и расширение в этой партии не
+запускались согласно границам задачи для supply-chain/docs. Cargo test/clippy
+не вызывались, Perl не использовался. CI не запускался. **88 пробелов**, включая
+все три getrandom, typenum/generic-array/errno и native C/ASM/fork, перечислены
+в JSON с критериями и приоритетами. Root dependency gate и M6 остаются открытыми.
