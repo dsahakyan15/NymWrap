@@ -1,0 +1,2954 @@
+{
+  "schema_version": 1,
+  "scope": "netd",
+  "manifest": "daemons/nw-netd/Cargo.toml",
+  "date": "2026-11-26",
+  "branch": "agent/vet-netd-5",
+  "source_commit": "a1f689447598026fe29f87b54c7d28f41629243e",
+  "previous_review_commit": "79e0aa6",
+  "criterion": "safe-to-deploy",
+  "status": "incomplete: explicit coverage gaps and unchanged exemptions remain",
+  "initial_gaps": 26,
+  "final_gaps": 20,
+  "initial_exemptions": 18,
+  "final_exemptions": 18,
+  "new_exemptions": [],
+  "summary": "Four agent source audits plus two narrowly scoped publisher trust decisions close six coverage gaps. Four reproduced defects have concrete process/call-site/network reachability and verified latest-candidate status. Native/FFI decisions remain explicitly human work. No product version, manifest, lock or runtime changes; no push.",
+  "baseline_receipt": {
+    "version": 1,
+    "scope": "netd",
+    "tool_version": "0.10.4",
+    "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+    "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+    "exit_code": 4294967295,
+    "locked_imports": true,
+    "refreshed_imports": false,
+    "input_hashes": {
+      "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+      "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+      "audits": "8444099201c9777654c70a4b135135cbf6532f7d40f5eaa0bea47740a464a7ea",
+      "imports": "aeac414729fc6e10b4a6685a2145f40e79b13d4dd7b35fb212176e72436043e7"
+    },
+    "inputs_unchanged": true,
+    "status": "failed",
+    "evidence": {
+      "commit": null,
+      "run": null,
+      "attempt": null
+    }
+  },
+  "registry_verification": {
+    "method": "All 26 archives verified against netd lock, sparse-index checksum, fresh exact-version crates.io API checksum/non-yank; reviewed code extracted from these exact archives. Requests sequential within collection scripts, >=3.1 s before uncached requests; final stored responses are HTTP 200. Intermediate retry statuses were not separately instrumented.",
+    "packages": [
+      {
+        "name": "async_executors",
+        "version": "0.7.0",
+        "archive_sha256": "a982d2f86de6137cc05c9db9a915a19886c97911f9790d04f174cede74be01a5",
+        "index_checksum": "a982d2f86de6137cc05c9db9a915a19886c97911f9790d04f174cede74be01a5",
+        "lock_checksum": "a982d2f86de6137cc05c9db9a915a19886c97911f9790d04f174cede74be01a5",
+        "source_dir": "target/netd-review-5/src/async_executors-0.7.0",
+        "repository": "https://github.com/najamelan/async_executors",
+        "license": "Unlicense",
+        "vcs": {
+          "git": {
+            "sha1": "b7cf3e6483db53897cd046463c0e502b881d5d6c"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-07-22T13:38:39.184223Z",
+        "published_by": {
+          "id": 38159,
+          "login": "najamelan",
+          "name": "Naja Melan",
+          "avatar": "https://avatars.githubusercontent.com/u/449589?v=4",
+          "url": "https://github.com/najamelan",
+          "github_username_matches": true,
+          "created_at": "2010-10-22T10:54:45Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/async_executors/0.7.0",
+          "status": 200,
+          "sha256": "a5d82b8b3e61b2d6fc81744e6d31bc81831b6b66fbdb2aa03e26c936cdff3458",
+          "fetched_at": "2026-11-26T13:02:05.460Z"
+        }
+      },
+      {
+        "name": "asynchronous-codec",
+        "version": "0.7.0",
+        "archive_sha256": "a860072022177f903e59730004fb5dc13db9275b79bb2aef7ba8ce831956c233",
+        "index_checksum": "a860072022177f903e59730004fb5dc13db9275b79bb2aef7ba8ce831956c233",
+        "lock_checksum": "a860072022177f903e59730004fb5dc13db9275b79bb2aef7ba8ce831956c233",
+        "source_dir": "target/netd-review-5/src/asynchronous-codec-0.7.0",
+        "repository": "https://github.com/mxinden/asynchronous-codec",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "c818a83906891caf8aadcae8f899727c2c8393a8"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-10-11T16:03:12.245241Z",
+        "published_by": {
+          "id": 83100,
+          "login": "mxinden",
+          "name": "Max Inden",
+          "avatar": "https://avatars.githubusercontent.com/u/7047859?v=4",
+          "url": "https://github.com/mxinden",
+          "github_username_matches": true,
+          "created_at": "2014-03-24T14:11:44Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/asynchronous-codec/0.7.0",
+          "status": 200,
+          "sha256": "cc63b07d0d64e111caca93e365789eea3b1e884c60e4f779a8037b29dcfec636",
+          "fetched_at": "2026-11-26T13:02:09.182Z"
+        }
+      },
+      {
+        "name": "bitvec",
+        "version": "1.1.1",
+        "archive_sha256": "ddcec3d12c579d40898fe0a9a358a803c23e9c52ca3c425707f81c9436211837",
+        "index_checksum": "ddcec3d12c579d40898fe0a9a358a803c23e9c52ca3c425707f81c9436211837",
+        "lock_checksum": "ddcec3d12c579d40898fe0a9a358a803c23e9c52ca3c425707f81c9436211837",
+        "source_dir": "target/netd-review-5/src/bitvec-1.1.1",
+        "repository": "https://github.com/bitvecto-rs/bitvec",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "f90d81cac0eb1dfa24be848405d64f3a321b2502"
+          }
+        },
+        "published_at": "2026-06-18T19:47:24.730968Z",
+        "published_by": {
+          "id": 2945,
+          "login": "myrrlyn",
+          "name": "Alexander Payne",
+          "avatar": "https://avatars.githubusercontent.com/u/5921109?v=4",
+          "url": "https://github.com/myrrlyn",
+          "github_username_matches": true,
+          "created_at": "2013-11-12T16:11:54Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/bitvec/1.1.1",
+          "status": 200,
+          "sha256": "3a5a083e305eb12be9c7991aa1c6170dd7f7e2a5e99bbac489e18bda1f24141e",
+          "fetched_at": "2026-11-26T13:02:12.833Z"
+        }
+      },
+      {
+        "name": "blanket",
+        "version": "0.3.0",
+        "archive_sha256": "e0b121a9fe0df916e362fb3271088d071159cdf11db0e4182d02152850756eff",
+        "index_checksum": "e0b121a9fe0df916e362fb3271088d071159cdf11db0e4182d02152850756eff",
+        "lock_checksum": "e0b121a9fe0df916e362fb3271088d071159cdf11db0e4182d02152850756eff",
+        "source_dir": "target/netd-review-5/src/blanket-0.3.0",
+        "repository": "https://github.com/althonos/blanket",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "9ba34015cb509a774f6b8486ad3bf5c00c481b52"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-06-19T09:49:06.695690Z",
+        "published_by": {
+          "id": 5898,
+          "login": "althonos",
+          "name": "Martin Larralde",
+          "avatar": "https://avatars.githubusercontent.com/u/8660647?v=4",
+          "url": "https://github.com/althonos",
+          "github_username_matches": true,
+          "created_at": "2014-09-04T20:57:20Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/blanket/0.3.0",
+          "status": 200,
+          "sha256": "1b05b9fe8198aced186c0748e33cba816270420b4f59dd53c661522bf353ff65",
+          "fetched_at": "2026-11-26T13:02:16.484Z"
+        }
+      },
+      {
+        "name": "convert_case",
+        "version": "0.10.0",
+        "archive_sha256": "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9",
+        "index_checksum": "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9",
+        "lock_checksum": "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9",
+        "source_dir": "target/netd-review-5/src/convert_case-0.10.0",
+        "repository": "https://github.com/rutrum/convert-case",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "fbbca84796dfa288d5a7b8673858ca2867c0414a"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2025-11-23T12:24:56.780847Z",
+        "published_by": {
+          "id": 85906,
+          "login": "rutrum",
+          "name": "rutrum",
+          "avatar": "https://avatars.githubusercontent.com/u/23003873?v=4",
+          "url": "https://github.com/rutrum",
+          "github_username_matches": true,
+          "created_at": "2016-10-22T20:12:04Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/convert_case/0.10.0",
+          "status": 200,
+          "sha256": "05a9d789362d8c9e2a3b3f109103ac2f551ec3469ccca3fe80e2c0189c193427",
+          "fetched_at": "2026-11-26T13:02:19.777Z"
+        }
+      },
+      {
+        "name": "crypto-primes",
+        "version": "0.7.2",
+        "archive_sha256": "3633a51a39c69ebbaa4feaa694bd83d241e4093901c84a0963b19d9bb3f0cf8f",
+        "index_checksum": "3633a51a39c69ebbaa4feaa694bd83d241e4093901c84a0963b19d9bb3f0cf8f",
+        "lock_checksum": "3633a51a39c69ebbaa4feaa694bd83d241e4093901c84a0963b19d9bb3f0cf8f",
+        "source_dir": "target/netd-review-5/src/crypto-primes-0.7.2",
+        "repository": "https://github.com/entropyxyz/crypto-primes",
+        "license": "Apache-2.0 OR MIT",
+        "vcs": {
+          "git": {
+            "sha1": "46a94adf4fabc7ddebb1d3275ab5205b4ec3673f"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-06-10T22:24:37.044426Z",
+        "published_by": {
+          "id": 105941,
+          "login": "fjarri",
+          "name": "Bogdan Opanchuk",
+          "avatar": "https://avatars.githubusercontent.com/u/30720?v=4",
+          "url": "https://github.com/fjarri",
+          "github_username_matches": true,
+          "created_at": "2008-10-23T22:10:24Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/crypto-primes/0.7.2",
+          "status": 200,
+          "sha256": "6b192ca30581e6179576b2e2a5472aaf84afc342d19791be23da9a6fb1cbbc52",
+          "fetched_at": "2026-11-26T13:02:23.468Z"
+        }
+      },
+      {
+        "name": "data-encoding",
+        "version": "2.11.1",
+        "archive_sha256": "4583a4551df46e2792f82ceeac45e850d2e2d5debba0b91f102385cda5b11f06",
+        "index_checksum": "4583a4551df46e2792f82ceeac45e850d2e2d5debba0b91f102385cda5b11f06",
+        "lock_checksum": "4583a4551df46e2792f82ceeac45e850d2e2d5debba0b91f102385cda5b11f06",
+        "source_dir": "target/netd-review-5/src/data-encoding-2.11.1",
+        "repository": "https://github.com/ia0/data-encoding",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "834737d9c3dc957ce1b653959e3f35061dd77ade"
+          },
+          "path_in_vcs": "lib"
+        },
+        "published_at": "2026-08-03T10:39:52.996245Z",
+        "published_by": {
+          "id": 3036,
+          "login": "ia0",
+          "name": "Julien Cretin",
+          "avatar": "https://avatars.githubusercontent.com/u/969295?v=4",
+          "url": "https://github.com/ia0",
+          "github_username_matches": true,
+          "created_at": "2011-08-09T15:49:31Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/data-encoding/2.11.1",
+          "status": 200,
+          "sha256": "99006f7b6fe8a3d296ac6f2180d02b7119dccac0ef438b7d008194de3ad4bd75",
+          "fetched_at": "2026-11-26T13:02:27.109Z"
+        }
+      },
+      {
+        "name": "dirs-sys",
+        "version": "0.5.0",
+        "archive_sha256": "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab",
+        "index_checksum": "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab",
+        "lock_checksum": "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab",
+        "source_dir": "target/netd-review-5/src/dirs-sys-0.5.0",
+        "repository": "https://github.com/dirs-dev/dirs-sys-rs",
+        "license": "MIT OR Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "8bcd4aa2c35990d57a2cff2953793525fc42709c"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2025-01-11T22:10:02.119353Z",
+        "published_by": {
+          "id": 2022,
+          "login": "soc",
+          "name": null,
+          "avatar": "https://avatars.githubusercontent.com/u/42493?v=4",
+          "url": "https://github.com/soc",
+          "github_username_matches": true,
+          "created_at": "2008-12-24T14:00:15Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/dirs-sys/0.5.0",
+          "status": 200,
+          "sha256": "fc5ecfcbc50bac11e7a8a3e0cbeddea3a4da8fe1cc025984a460946360ffe324",
+          "fetched_at": "2026-11-26T13:02:30.751Z"
+        }
+      },
+      {
+        "name": "educe",
+        "version": "0.4.23",
+        "archive_sha256": "0f0042ff8246a363dbe77d2ceedb073339e85a804b9a47636c6e016a9a32c05f",
+        "index_checksum": "0f0042ff8246a363dbe77d2ceedb073339e85a804b9a47636c6e016a9a32c05f",
+        "lock_checksum": "0f0042ff8246a363dbe77d2ceedb073339e85a804b9a47636c6e016a9a32c05f",
+        "source_dir": "target/netd-review-5/src/educe-0.4.23",
+        "repository": "https://github.com/magiclen/educe",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "1871482dc4519e2064c0f0178130698bb8593f14"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-09-09T13:12:54.496758Z",
+        "published_by": {
+          "id": 19481,
+          "login": "magiclen",
+          "name": "Magic Len (Ron Li)",
+          "avatar": "https://avatars.githubusercontent.com/u/5851348?v=4",
+          "url": "https://github.com/magiclen",
+          "github_username_matches": true,
+          "created_at": "2013-11-04T14:07:17Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/educe/0.4.23",
+          "status": 200,
+          "sha256": "40388bfeefe74201d9da80b581018ea2231c7bd9058036a1134d9a36fc203e4a",
+          "fetched_at": "2026-11-26T13:02:34.403Z"
+        }
+      },
+      {
+        "name": "enum-ordinalize",
+        "version": "3.1.15",
+        "archive_sha256": "1bf1fa3f06bbff1ea5b1a9c7b14aa992a39657db60a2759457328d7e058f49ee",
+        "index_checksum": "1bf1fa3f06bbff1ea5b1a9c7b14aa992a39657db60a2759457328d7e058f49ee",
+        "lock_checksum": "1bf1fa3f06bbff1ea5b1a9c7b14aa992a39657db60a2759457328d7e058f49ee",
+        "source_dir": "target/netd-review-5/src/enum-ordinalize-3.1.15",
+        "repository": "https://github.com/magiclen/enum-ordinalize",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "268293799d185e146302ad1c68cd5f4713ed8d12"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-10-01T04:53:03.499907Z",
+        "published_by": {
+          "id": 19481,
+          "login": "magiclen",
+          "name": "Magic Len (Ron Li)",
+          "avatar": "https://avatars.githubusercontent.com/u/5851348?v=4",
+          "url": "https://github.com/magiclen",
+          "github_username_matches": true,
+          "created_at": "2013-11-04T14:07:17Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/enum-ordinalize/3.1.15",
+          "status": 200,
+          "sha256": "66f26891d4b60ac4ef266336b5afac5b62f1dd68940898245996ec01f90661cf",
+          "fetched_at": "2026-11-26T13:02:38.074Z"
+        }
+      },
+      {
+        "name": "enum_dispatch",
+        "version": "0.3.13",
+        "archive_sha256": "aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd",
+        "index_checksum": "aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd",
+        "lock_checksum": "aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd",
+        "source_dir": "target/netd-review-5/src/enum_dispatch-0.3.13",
+        "repository": "https://gitlab.com/antonok/enum_dispatch",
+        "license": "MIT OR Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "c20b482de9bcfd320ff5d0ad6a69e8c379094d9f"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2024-03-28T16:25:44.789544Z",
+        "published_by": {
+          "id": 35403,
+          "login": "antonok-edm",
+          "name": "Anton Lazarev",
+          "avatar": "https://avatars.githubusercontent.com/u/22821309?v=4",
+          "url": "https://github.com/antonok-edm",
+          "github_username_matches": true,
+          "created_at": "2016-10-13T16:56:40Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/enum_dispatch/0.3.13",
+          "status": 200,
+          "sha256": "9c26db019a80e2939e265695adfbda8dbc25a42a4f4a6241671f030859937cd1",
+          "fetched_at": "2026-11-26T13:02:41.727Z"
+        }
+      },
+      {
+        "name": "glob-match",
+        "version": "0.2.1",
+        "archive_sha256": "9985c9503b412198aa4197559e9a318524ebc4519c229bfa05a535828c950b9d",
+        "index_checksum": "9985c9503b412198aa4197559e9a318524ebc4519c229bfa05a535828c950b9d",
+        "lock_checksum": "9985c9503b412198aa4197559e9a318524ebc4519c229bfa05a535828c950b9d",
+        "source_dir": "target/netd-review-5/src/glob-match-0.2.1",
+        "repository": null,
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "d5a6c671b73ffdd3b5c5ea5777b6526dba66417a"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-02-07T05:39:01.158623Z",
+        "published_by": {
+          "id": 139030,
+          "login": "devongovett",
+          "name": "Devon Govett",
+          "avatar": "https://avatars.githubusercontent.com/u/19409?v=4",
+          "url": "https://github.com/devongovett",
+          "github_username_matches": true,
+          "created_at": "2008-08-03T13:39:41Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/glob-match/0.2.1",
+          "status": 200,
+          "sha256": "a66ebf62993ad7151b83eb4c3bc631d1f400e21786c6bf4ab9ff8abb24c33146",
+          "fetched_at": "2026-11-26T13:02:45.392Z"
+        }
+      },
+      {
+        "name": "imara-diff",
+        "version": "0.2.0",
+        "archive_sha256": "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c",
+        "index_checksum": "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c",
+        "lock_checksum": "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c",
+        "source_dir": "target/netd-review-5/src/imara-diff-0.2.0",
+        "repository": "https://github.com/pascalkuthe/imara-diff",
+        "license": "Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "c0b655a86b5b4fc05324e08b9c684368e7413e1f"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2025-06-14T18:29:26.570299Z",
+        "published_by": {
+          "id": 91593,
+          "login": "pascalkuthe",
+          "name": "Pascal Kuthe",
+          "avatar": "https://avatars.githubusercontent.com/u/61850714?v=4",
+          "url": "https://github.com/pascalkuthe",
+          "github_username_matches": true,
+          "created_at": "2020-03-05T21:32:20Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/imara-diff/0.2.0",
+          "status": 200,
+          "sha256": "02b9a3e339359ea7fd44a019283ba6225a8131904762d030f9c30905503e1814",
+          "fetched_at": "2026-11-26T13:02:49.032Z"
+        }
+      },
+      {
+        "name": "iprange",
+        "version": "0.6.7",
+        "archive_sha256": "37209be0ad225457e63814401415e748e2453a5297f9b637338f5fb8afa4ec00",
+        "index_checksum": "37209be0ad225457e63814401415e748e2453a5297f9b637338f5fb8afa4ec00",
+        "lock_checksum": "37209be0ad225457e63814401415e748e2453a5297f9b637338f5fb8afa4ec00",
+        "source_dir": "target/netd-review-5/src/iprange-0.6.7",
+        "repository": "https://github.com/sticnarf/iprange-rs",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "f1710d9b675499df8af618900047a6172c8258d1"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2022-01-17T11:54:07.804267Z",
+        "published_by": {
+          "id": 9232,
+          "login": "sticnarf",
+          "name": "Yilin Chen",
+          "avatar": "https://avatars.githubusercontent.com/u/17217495?v=4",
+          "url": "https://github.com/sticnarf",
+          "github_username_matches": true,
+          "created_at": "2016-02-13T13:00:15Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/iprange/0.6.7",
+          "status": 200,
+          "sha256": "1eda237f7f8d45137c76355d54737e030511201d37adf4560d9aba51bd1faab2",
+          "fetched_at": "2026-11-26T13:02:52.683Z"
+        }
+      },
+      {
+        "name": "kqueue",
+        "version": "1.2.1",
+        "archive_sha256": "8d763e5b24120b4ddf50de6c92308156765aabfbbccebf401da7cff2d70a41ea",
+        "index_checksum": "8d763e5b24120b4ddf50de6c92308156765aabfbbccebf401da7cff2d70a41ea",
+        "lock_checksum": "8d763e5b24120b4ddf50de6c92308156765aabfbbccebf401da7cff2d70a41ea",
+        "source_dir": "target/netd-review-5/src/kqueue-1.2.1",
+        "repository": "https://gitlab.com/rust-kqueue/rust-kqueue",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "07a7ca818473e72467a1aa09102579d124fd8dc1"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-08-04T14:04:27.587775Z",
+        "published_by": {
+          "id": 1640,
+          "login": "worr",
+          "name": "William Orr",
+          "avatar": "https://avatars.githubusercontent.com/u/183837?v=4",
+          "url": "https://github.com/worr",
+          "github_username_matches": true,
+          "created_at": "2010-01-17T01:23:07Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/kqueue/1.2.1",
+          "status": 200,
+          "sha256": "4b31a97db94afbf964f3cfece9e963a85dc3f01258d49dc062781dc86b9a157c",
+          "fetched_at": "2026-11-26T13:03:01.570Z"
+        }
+      },
+      {
+        "name": "kqueue-sys",
+        "version": "1.1.2",
+        "archive_sha256": "07293a4e297ac234359b510362495713f75ea345d5307140414f20c69ffeb087",
+        "index_checksum": "07293a4e297ac234359b510362495713f75ea345d5307140414f20c69ffeb087",
+        "lock_checksum": "07293a4e297ac234359b510362495713f75ea345d5307140414f20c69ffeb087",
+        "source_dir": "target/netd-review-5/src/kqueue-sys-1.1.2",
+        "repository": "https://gitlab.com/rust-kqueue/rust-kqueue-sys",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "64ff895bb38867e73ce056a6a8b5dfc29345c47d"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-05-14T08:11:34.035502Z",
+        "published_by": {
+          "id": 1640,
+          "login": "worr",
+          "name": "William Orr",
+          "avatar": "https://avatars.githubusercontent.com/u/183837?v=4",
+          "url": "https://github.com/worr",
+          "github_username_matches": true,
+          "created_at": "2010-01-17T01:23:07Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/kqueue-sys/1.1.2",
+          "status": 200,
+          "sha256": "003575b92e84a1ebf85b25b62bd7cd3ef6224225f8ec5925ef72ca2fe5c49fd0",
+          "fetched_at": "2026-11-26T13:03:05.245Z"
+        }
+      },
+      {
+        "name": "os_str_bytes",
+        "version": "6.6.1",
+        "archive_sha256": "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1",
+        "index_checksum": "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1",
+        "lock_checksum": "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1",
+        "source_dir": "target/netd-review-5/src/os_str_bytes-6.6.1",
+        "repository": "https://github.com/dylni/os_str_bytes",
+        "license": "MIT OR Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "7611c39da54e3255c78befcc31850097bcde67ec"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2023-10-14T20:57:50.233852Z",
+        "published_by": {
+          "id": 68756,
+          "login": "dylni",
+          "name": null,
+          "avatar": "https://avatars.githubusercontent.com/u/46035563?v=4",
+          "url": "https://github.com/dylni",
+          "github_username_matches": true,
+          "created_at": "2018-12-20T22:27:39Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/os_str_bytes/6.6.1",
+          "status": 200,
+          "sha256": "ca09659278d3cd0559f3da75759a13a6a7e7bd2384c999465c9bc566587208f4",
+          "fetched_at": "2026-11-26T13:03:09.021Z"
+        }
+      },
+      {
+        "name": "postage",
+        "version": "0.5.0",
+        "archive_sha256": "af3fb618632874fb76937c2361a7f22afd393c982a2165595407edc75b06d3c1",
+        "index_checksum": "af3fb618632874fb76937c2361a7f22afd393c982a2165595407edc75b06d3c1",
+        "lock_checksum": "af3fb618632874fb76937c2361a7f22afd393c982a2165595407edc75b06d3c1",
+        "source_dir": "target/netd-review-5/src/postage-0.5.0",
+        "repository": "https://github.com/austinjones/postage-rs",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "61fd1d8a78bf69a322026e4cc1afd7605e0017e7"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2022-04-14T20:44:00.067283Z",
+        "published_by": {
+          "id": 59679,
+          "login": "austinjones",
+          "name": "Austin Jones",
+          "avatar": "https://avatars.githubusercontent.com/u/2111479?v=4",
+          "url": "https://github.com/austinjones",
+          "github_username_matches": true,
+          "created_at": "2012-08-07T17:45:07Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/postage/0.5.0",
+          "status": 200,
+          "sha256": "786b0942870e1297debed508fb129866e34ae49dee35bbd545f14d2cec3d70d7",
+          "fetched_at": "2026-11-26T13:03:12.761Z"
+        }
+      },
+      {
+        "name": "rangemap",
+        "version": "1.8.0",
+        "archive_sha256": "a611d15b50743feb4c76b7d03edcb0e64f399c26961e4efe6975bc398be6aa3d",
+        "index_checksum": "a611d15b50743feb4c76b7d03edcb0e64f399c26961e4efe6975bc398be6aa3d",
+        "lock_checksum": "a611d15b50743feb4c76b7d03edcb0e64f399c26961e4efe6975bc398be6aa3d",
+        "source_dir": "target/netd-review-5/src/rangemap-1.8.0",
+        "repository": "https://github.com/jeffparsons/rangemap",
+        "license": "MIT/Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "26a5d2a95e93d18478a91ee2288ac232f67f414e"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-08-14T02:30:08.296445Z",
+        "published_by": {
+          "id": 5370,
+          "login": "jeffparsons",
+          "name": "Jeff Parsons",
+          "avatar": "https://avatars.githubusercontent.com/u/321861?v=4",
+          "url": "https://github.com/jeffparsons",
+          "github_username_matches": true,
+          "created_at": "2010-07-03T12:57:42Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/rangemap/1.8.0",
+          "status": 200,
+          "sha256": "e0bc9dc3d80da0b5ca33f54e9f72df75388acb33d9ccaf1465f0daf40ec3c5a1",
+          "fetched_at": "2026-11-26T13:03:16.258Z"
+        }
+      },
+      {
+        "name": "rdrand",
+        "version": "0.9.0",
+        "archive_sha256": "84448986e59427c795b929d8dbe12d176275c7d0887ee48098c35b7206f51bae",
+        "index_checksum": "84448986e59427c795b929d8dbe12d176275c7d0887ee48098c35b7206f51bae",
+        "lock_checksum": "84448986e59427c795b929d8dbe12d176275c7d0887ee48098c35b7206f51bae",
+        "source_dir": "target/netd-review-5/src/rdrand-0.9.0",
+        "repository": "https://github.com/nagisa/rust_rdrand/",
+        "license": "ISC",
+        "vcs": {
+          "git": {
+            "sha1": "e5585f6313b1071b9595a0aed061c3aff0072d9e"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-05-15T10:48:51.539994Z",
+        "published_by": {
+          "id": 726,
+          "login": "nagisa",
+          "name": "Simonas Kazlauskas",
+          "avatar": "https://avatars.githubusercontent.com/u/679122?v=4",
+          "url": "https://github.com/nagisa",
+          "github_username_matches": true,
+          "created_at": "2011-03-19T20:34:26Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/rdrand/0.9.0",
+          "status": 200,
+          "sha256": "717f7f2f951b5f308450e877bafab6e94809481f23ba84762d0fccebb4c85636",
+          "fetched_at": "2026-11-26T13:03:20.106Z"
+        }
+      },
+      {
+        "name": "recvmsg",
+        "version": "1.0.0",
+        "archive_sha256": "d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175",
+        "index_checksum": "d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175",
+        "lock_checksum": "d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175",
+        "source_dir": "target/netd-review-5/src/recvmsg-1.0.0",
+        "repository": null,
+        "license": "0BSD",
+        "vcs": {
+          "git": {
+            "sha1": "e68e3abdbb88313eea12bc2c87ce6a39de4e2ebe"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2024-01-12T18:50:56.356114Z",
+        "published_by": {
+          "id": 72501,
+          "login": "kotauskas",
+          "name": null,
+          "avatar": "https://avatars.githubusercontent.com/u/28248600?v=4",
+          "url": "https://github.com/kotauskas",
+          "github_username_matches": true,
+          "created_at": "2017-05-01T05:43:22Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/recvmsg/1.0.0",
+          "status": 200,
+          "sha256": "9d415837b5840c710be7ea1a9b20ee6521b60f7fa827940ee2f537e830f6e0fb",
+          "fetched_at": "2026-11-26T13:03:23.934Z"
+        }
+      },
+      {
+        "name": "reseeding_rng",
+        "version": "0.10.7",
+        "archive_sha256": "ecfc8e855ab517235426ec1290bfb0745e73fa478b29619eb66a2a81be9d8716",
+        "index_checksum": "ecfc8e855ab517235426ec1290bfb0745e73fa478b29619eb66a2a81be9d8716",
+        "lock_checksum": "ecfc8e855ab517235426ec1290bfb0745e73fa478b29619eb66a2a81be9d8716",
+        "source_dir": "target/netd-review-5/src/reseeding_rng-0.10.7",
+        "repository": "https://github.com/LiosK/reseeding_rng-rs",
+        "license": "Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "54cc0ac59eae11a446ed22c9900e829acc97e489"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-06-25T00:53:41.370767Z",
+        "published_by": {
+          "id": 81152,
+          "login": "LiosK",
+          "name": "LiosK",
+          "avatar": "https://avatars.githubusercontent.com/u/95567?v=4",
+          "url": "https://github.com/LiosK",
+          "github_username_matches": true,
+          "created_at": "2009-06-15T15:37:57Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/reseeding_rng/0.10.7",
+          "status": 200,
+          "sha256": "b6de2a055239f7c469c32c5521ed96bed5758fb766df3923777c616c16bdcf0c",
+          "fetched_at": "2026-11-26T13:03:27.435Z"
+        }
+      },
+      {
+        "name": "sanitize-filename",
+        "version": "0.6.0",
+        "archive_sha256": "bc984f4f9ceb736a7bb755c3e3bd17dc56370af2600c9780dcc48c66453da34d",
+        "index_checksum": "bc984f4f9ceb736a7bb755c3e3bd17dc56370af2600c9780dcc48c66453da34d",
+        "lock_checksum": "bc984f4f9ceb736a7bb755c3e3bd17dc56370af2600c9780dcc48c66453da34d",
+        "source_dir": "target/netd-review-5/src/sanitize-filename-0.6.0",
+        "repository": "https://github.com/kardeiz/sanitize-filename",
+        "license": "MIT",
+        "vcs": {
+          "git": {
+            "sha1": "9428a9485243e0ab45206246e8fa1e9d42256d8a"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2024-11-07T14:30:31.333813Z",
+        "published_by": {
+          "id": 3953,
+          "login": "kardeiz",
+          "name": "Jacob Brown",
+          "avatar": "https://avatars.githubusercontent.com/u/1401989?v=4",
+          "url": "https://github.com/kardeiz",
+          "github_username_matches": true,
+          "created_at": "2012-02-02T14:58:08Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/sanitize-filename/0.6.0",
+          "status": 200,
+          "sha256": "14ef1cdef9b1569bdb9407c7d3ec6b4cb2bc9ba93088695b993313f5f3dd2691",
+          "fetched_at": "2026-11-26T13:03:31.301Z"
+        }
+      },
+      {
+        "name": "slotmap",
+        "version": "1.1.1",
+        "archive_sha256": "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038",
+        "index_checksum": "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038",
+        "lock_checksum": "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038",
+        "source_dir": "target/netd-review-5/src/slotmap-1.1.1",
+        "repository": "https://github.com/orlp/slotmap",
+        "license": "Zlib",
+        "vcs": {
+          "git": {
+            "sha1": "2d56154b9b628f7d7a506f24ebc4f55a13ec8fed"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2025-12-06T12:30:22.308199Z",
+        "published_by": {
+          "id": 24326,
+          "login": "orlp",
+          "name": "Orson Peters",
+          "avatar": "https://avatars.githubusercontent.com/u/202547?v=4",
+          "url": "https://github.com/orlp",
+          "github_username_matches": true,
+          "created_at": "2010-02-12T16:09:53Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/slotmap/1.1.1",
+          "status": 200,
+          "sha256": "ffa7ab6eabe8d7642b29b388ad0b81d2bf6c8740ed66c30a2da2c9a66920d712",
+          "fetched_at": "2026-11-26T13:03:35.155Z"
+        }
+      },
+      {
+        "name": "strobe-rs",
+        "version": "0.13.0",
+        "archive_sha256": "83561175f0a962dea437885589480d216d8741debf853e0d36edd526344fd273",
+        "index_checksum": "83561175f0a962dea437885589480d216d8741debf853e0d36edd526344fd273",
+        "lock_checksum": "83561175f0a962dea437885589480d216d8741debf853e0d36edd526344fd273",
+        "source_dir": "target/netd-review-5/src/strobe-rs-0.13.0",
+        "repository": "https://github.com/rozbb/strobe-rs",
+        "license": "MIT/Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "bec419e2adb58e7ce666d92d3e00b9dbb40ad033"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-03-30T03:35:33.691932Z",
+        "published_by": {
+          "id": 6979,
+          "login": "rozbb",
+          "name": "Michael Rosenberg",
+          "avatar": "https://avatars.githubusercontent.com/u/752802?v=4",
+          "url": "https://github.com/rozbb",
+          "github_username_matches": true,
+          "created_at": "2011-04-26T16:15:08Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/strobe-rs/0.13.0",
+          "status": 200,
+          "sha256": "50830fcb49cb6fd8857d231f90f4af1dd1f2f482c2c788625edbdc0867d50399",
+          "fetched_at": "2026-11-26T13:03:39.023Z"
+        }
+      },
+      {
+        "name": "typed-index-collections",
+        "version": "3.5.0",
+        "archive_sha256": "898160f1dfd383b4e92e17f0512a7d62f3c51c44937b23b6ffc3a1614a8eaccd",
+        "index_checksum": "898160f1dfd383b4e92e17f0512a7d62f3c51c44937b23b6ffc3a1614a8eaccd",
+        "lock_checksum": "898160f1dfd383b4e92e17f0512a7d62f3c51c44937b23b6ffc3a1614a8eaccd",
+        "source_dir": "target/netd-review-5/src/typed-index-collections-3.5.0",
+        "repository": "https://github.com/zheland/typed-index-collections",
+        "license": "MIT OR Apache-2.0",
+        "vcs": {
+          "git": {
+            "sha1": "f87b25bb0c21c3b686b36d2b652ffab6312f3e68"
+          },
+          "path_in_vcs": ""
+        },
+        "published_at": "2026-01-18T07:52:32.627916Z",
+        "published_by": {
+          "id": 94445,
+          "login": "zheland",
+          "name": "Andrey Zheleznov",
+          "avatar": "https://avatars.githubusercontent.com/u/4979738?v=4",
+          "url": "https://github.com/zheland",
+          "github_username_matches": true,
+          "created_at": "2013-07-10T07:37:49Z"
+        },
+        "trustpub_data": null,
+        "yanked": false,
+        "registry_evidence": {
+          "url": "https://crates.io/api/v1/crates/typed-index-collections/3.5.0",
+          "status": 200,
+          "sha256": "4f13580dd99d9766763e1a6bf0ea0009036c878866659a0f14d3cd17becadd83",
+          "fetched_at": "2026-11-26T13:03:42.879Z"
+        }
+      }
+    ]
+  },
+  "new_agent_audits": [
+    {
+      "name": "blanket",
+      "version": "0.3.0",
+      "archive_sha256": "e0b121a9fe0df916e362fb3271088d071159cdf11db0e4182d02152850756eff",
+      "criterion": "safe-to-deploy",
+      "who": "Codex agent (проверено агентом, не человеком)",
+      "review": "Read both manifests and all production code in nine source modules: attribute parsing, five pointer/reference forwarding generators, default-module delegation and signature/generic helpers. Generated code uses Rust method calls and dereferences, preserves type/borrow checking and adds no runtime parser, unsafe block, filesystem, process or network access. Box by-value forwarding moves the owned value; Ref/Rc/Arc reject mutable or by-value receivers. Unsupported static/arbitrary receivers, const generics or lowercase-only trait names may fail during compilation; this is not runtime handling of network text. Compile-time trait bounds and caller-selected default functions remain caller obligations. Inspected emitted implementations, not merely the absence of unsafe markers. Original library tests in an isolated copy: 82 passed with a reduced test-only manifest using exact netd syn 2/proc-macro2/quote versions; external trybuild suites not run. Embedded tests were not all read as audit inputs.",
+      "reviewed_files": [
+        {
+          "path": "Cargo.toml",
+          "sha256": "225c4a79ae857b72400aa3291dbc0c9551bf0bfbed09cdbda2f7c66f5a673f2a",
+          "scope": "Entire file"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "sha256": "b761c6c381fb2f6396a893cd1231c7e1797089730a595198d800d1d47abc6488",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/default.rs",
+          "sha256": "330eca9030232fcc435664a9b41e63a68949047d39ce18f8be76f901feb36ba4",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/derive/arc.rs",
+          "sha256": "49bba93e58502b9d5f9c890829d3105ef288a9e689ef4747ac4d3da96cf97e28",
+          "scope": "Complete production code before cfg(test); embedded tests not all reviewed"
+        },
+        {
+          "path": "src/derive/box.rs",
+          "sha256": "a0890bb0a85a59f48f8f88721a7bd5e57d2ccaa2a9c9139850693a8494d8d61e",
+          "scope": "Complete production code before cfg(test); embedded tests not all reviewed"
+        },
+        {
+          "path": "src/derive/mod.rs",
+          "sha256": "36caa709c799fe132bbfdf413ef8862924d89f1fee4b791024d45a86582829c7",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/derive/mut.rs",
+          "sha256": "6af5c755bc5c199001b7b19a9e32fd8c3aa85d05148612166a450f19cb59d941",
+          "scope": "Complete production code before cfg(test); embedded tests not all reviewed"
+        },
+        {
+          "path": "src/derive/rc.rs",
+          "sha256": "9623b79a8be80173639a9a8ad9dd89936ab4b15af2e099fa7b44d134841df6a1",
+          "scope": "Complete production code before cfg(test); embedded tests not all reviewed"
+        },
+        {
+          "path": "src/derive/ref.rs",
+          "sha256": "c2000d4cb73ecc357525e94bbcaa7ab4dd3c97c1202e182b795710ec08d39664",
+          "scope": "Complete production code before cfg(test); embedded tests not all reviewed"
+        },
+        {
+          "path": "src/lib.rs",
+          "sha256": "d11cb75d20059ea1a6d657adcf1d7f63d1f60209da9b0d4e0803d488a1d39895",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/utils.rs",
+          "sha256": "9c5ce3331b8602a2799fcc650b1c4a6cd77055bd8d6c929aa089d765e135fed1",
+          "scope": "Complete production code before cfg(test); embedded tests not all reviewed"
+        }
+      ],
+      "notes": "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 e0b121a9fe0df916e362fb3271088d071159cdf11db0e4182d02152850756eff; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests and all production code in nine source modules: attribute parsing, five pointer/reference forwarding generators, default-module delegation and signature/generic helpers. Generated code uses Rust method calls and dereferences, preserves type/borrow checking and adds no runtime parser, unsafe block, filesystem, process or network access. Box by-value forwarding moves the owned value; Ref/Rc/Arc reject mutable or by-value receivers. Unsupported static/arbitrary receivers, const generics or lowercase-only trait names may fail during compilation; this is not runtime handling of network text. Compile-time trait bounds and caller-selected default functions remain caller obligations. Inspected emitted implementations, not merely the absence of unsafe markers. Original library tests in an isolated copy: 82 passed with a reduced test-only manifest using exact netd syn 2/proc-macro2/quote versions; external trybuild suites not run. Embedded tests were not all read as audit inputs. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+    },
+    {
+      "name": "async_executors",
+      "version": "0.7.0",
+      "archive_sha256": "a982d2f86de6137cc05c9db9a915a19886c97911f9790d04f174cede74be01a5",
+      "criterion": "safe-to-deploy",
+      "who": "Codex agent (проверено агентом, не человеком)",
+      "review": "Read both manifests, README, build.rs and all production code in all 19 src modules, including optional backend branches. Reviewed FutureObj/static/Send bounds, Rc-owned LocalSet versus Arc-owned multithread runtime, fallible runtime-flavor conversion, join-handle polling, cancellation-on-drop/detach, remote handles, blocking-task non-cancellation, timer pin projection and wake-once yield. No unsafe in this wrapper; build script only asks rustc_version for compiler channel and emits fixed cfg names. Runtime construction/thread spawning and optional Tokio I/O driver initialization are intended capabilities; no socket connection, command execution or content logging is added by this crate. Drop cancellation is cooperative, not an instantaneous revocation of task side effects. Nested block_on, task panic/runtime shutdown and some disabled backend combinations may panic or fail compilation as documented; do not treat this as a sandbox. Dependencies and executor internals require separate coverage. Isolated unchanged source compiled for Tokio current/multithread, native timers, I/O and futures local/thread pools; four synthetic behavior tests passed (non-Send local task, drop cancellation, detach, ready/expired timeout). Other backends source-reviewed, not executed; reduced test-only manifest and omitted unavailable optional runtime/test dependencies are disclosed in the report.",
+      "reviewed_files": [
+        {
+          "path": "Cargo.toml",
+          "sha256": "bf486636b68900c5e3d2739a011c169bed9bb8437038a1baf4f6697e551d0df2",
+          "scope": "Entire file"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "sha256": "9715f5daf1d49cf283f4bba1e6285248f75be97f254e52bbfb23d39548597472",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/async_global.rs",
+          "sha256": "24e457f312db757ca3b233cdda901790ce65f1d9dcff8de4b981c2f33d3b2c86",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/async_std.rs",
+          "sha256": "48dec095912df3731582e10aa672ec0a75216de7e89a352f2f9893e2d6f8a515",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/bindgen.rs",
+          "sha256": "bcefc8b2b28645089c085c857c12ce92bd23a6b1ba1f6fe2b06dfcb169d48681",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/glommio_ct.rs",
+          "sha256": "8bfbc94a1b8bf523e50ac04dd769e36a458d1251f34696d10ab69b6a54065e9a",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/localpool.rs",
+          "sha256": "b26fe402e60318edfa9efaf4bf97daa64f79add0274d5aa89834353d4a13222b",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/mod.rs",
+          "sha256": "936ce7aac7738ee5c166495f86aee62fd1d9ae4d5b7c83ae4671a74e87de4d3e",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/threadpool.rs",
+          "sha256": "616954cb71b16d16eea99cb637880d39d4f4ba3a44f8fbe4c852ac69774b3f39",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/tokio_ct.rs",
+          "sha256": "395767d16acd2db795a471708e5bbdc8b9818441bce5dcea1c950089eadb3a62",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/tokio_tp.rs",
+          "sha256": "87357104b223d18709ace4f04f86706c5687ee7ba1a208ed0f4f384fd0a48b37",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/exec/tracing.rs",
+          "sha256": "1c37a082c93a04450886ba2db7c2956b7e1ccab51745ce1eeb4bbce04269b18d",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/blocking_handle.rs",
+          "sha256": "45bec47d4e358f813ebb665b8dff9436ad4ad1cae6c5b927a5fd8e734bba9f22",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/join_handle.rs",
+          "sha256": "cf2caa523cebd022f68f8d00bb1cbfe30e097b2d769820c267fb98293a193f46",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/local_spawn_handle.rs",
+          "sha256": "ea2977d531fcd445aa4a6cb65a298934bdb9e01a8eebf88d871aaaaa88751087",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/mod.rs",
+          "sha256": "d1fc161643b1ae3512371a9da2b96f8dcb66509c3c76c3c895fcbb943426e2ec",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/spawn_blocking.rs",
+          "sha256": "5344bc9fbb1932a64b258a6deb8910adc05e442ec1ffa246e67b788768f9301d",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/spawn_handle.rs",
+          "sha256": "cca6d332c6d54576f9292c650169ec771bd0b3415e892c3e62a730db93dd1783",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/timer.rs",
+          "sha256": "43351018048669cf9f59f9aed5bfb7f67082a170afadf944c9f89ad4f642d753",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/iface/yield_now.rs",
+          "sha256": "ebad0e0d419da08e1b89a9470964c30b15b04db875646b644d21e6409323ce2b",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/lib.rs",
+          "sha256": "859912445fc4b0109b5e19e1ba320706ab8bcdaa9d21211bb33c00f1e5e4cbd7",
+          "scope": "Entire file"
+        },
+        {
+          "path": "build.rs",
+          "sha256": "30a7b83a6bf3a1801c29bea02b38d218fbf1b37f5ce77b774c05ad5b016881e4",
+          "scope": "Entire file"
+        },
+        {
+          "path": "README.md",
+          "sha256": "3591e9d7eb9fdc73f0a168f2cac5f0be044d89f49011908a25a609684e22ca8a",
+          "scope": "API, feature and security documentation read; remaining overview/administrative docs selective"
+        }
+      ],
+      "notes": "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 a982d2f86de6137cc05c9db9a915a19886c97911f9790d04f174cede74be01a5; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests, README, build.rs and all production code in all 19 src modules, including optional backend branches. Reviewed FutureObj/static/Send bounds, Rc-owned LocalSet versus Arc-owned multithread runtime, fallible runtime-flavor conversion, join-handle polling, cancellation-on-drop/detach, remote handles, blocking-task non-cancellation, timer pin projection and wake-once yield. No unsafe in this wrapper; build script only asks rustc_version for compiler channel and emits fixed cfg names. Runtime construction/thread spawning and optional Tokio I/O driver initialization are intended capabilities; no socket connection, command execution or content logging is added by this crate. Drop cancellation is cooperative, not an instantaneous revocation of task side effects. Nested block_on, task panic/runtime shutdown and some disabled backend combinations may panic or fail compilation as documented; do not treat this as a sandbox. Dependencies and executor internals require separate coverage. Isolated unchanged source compiled for Tokio current/multithread, native timers, I/O and futures local/thread pools; four synthetic behavior tests passed (non-Send local task, drop cancellation, detach, ready/expired timeout). Other backends source-reviewed, not executed; reduced test-only manifest and omitted unavailable optional runtime/test dependencies are disclosed in the report. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+    },
+    {
+      "name": "asynchronous-codec",
+      "version": "0.7.0",
+      "archive_sha256": "a860072022177f903e59730004fb5dc13db9275b79bb2aef7ba8ce831956c233",
+      "criterion": "safe-to-deploy",
+      "who": "Codex agent (проверено агентом, не человеком)",
+      "review": "Read both manifests and complete production code in all 13 source modules, including optional JSON/CBOR. Reviewed safe buffer slicing/splitting, pin_project_lite projections, read/decode/EOF/error transitions, partial writes/write-zero rejection, flush-before-close, backpressure, borrowed encoder items and from_parts buffer ownership. No own unsafe, build script, FFI or ambient socket creation. The codec is not a size/work limit: a decoder returning None indefinitely can grow the buffer; builtin line/JSON/CBOR/length codecs need caller limits on hostile input. LengthCodec casts u64 to usize (not portable protocol validation on 32-bit); supported NymWrap targets are 64-bit, and Arti uses its own bounded channel-cell decoder rather than these builtin codecs. Current Tor channel framing reads a u16 body length plus seven-byte header (or 514-byte fixed cell), and FramedRead appends at most 8192 bytes before decoding again. Source-review of this adapter does not certify the independent Tor cell/message parsers. Isolated unchanged-source library/integration tests with JSON: 14 passed; CBOR branch reviewed but not run because its optional dependency was uncached. Reduced test-only manifest uses exact netd dependency versions.",
+      "reviewed_files": [
+        {
+          "path": "Cargo.toml",
+          "sha256": "39cb67130998d1aca737ed41d3fd8f12dda1a2bb40a930bdb870ab19bc029bcc",
+          "scope": "Entire file"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "sha256": "77612ef7eedb925681c1b00013e08d08f7f5b6d5478697742a063df0e18efdb6",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/codec/bytes.rs",
+          "sha256": "1eecd32bfa4d946a32f93c2d8c76ed93a2cb7e43b304da3e2e60030c3bc55d54",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/codec/cbor.rs",
+          "sha256": "bffb051fb0d46faa44cd59c0482be24801af75c626d66c1d3d2be7b13ca6ce5d",
+          "scope": "Complete production code; test-only module not part of source audit"
+        },
+        {
+          "path": "src/codec/json.rs",
+          "sha256": "a946373937e25a34dad0ce25870ffc715782635c716b171ccfd9aba48606f68d",
+          "scope": "Complete production code; test-only module not part of source audit"
+        },
+        {
+          "path": "src/codec/length.rs",
+          "sha256": "1c193986008a0fab5b068dfe90b65caaeddefa396692bd108dddc2fdd2ca5048",
+          "scope": "Complete production code; test-only module not part of source audit"
+        },
+        {
+          "path": "src/codec/lines.rs",
+          "sha256": "c923ff322ae0273db92b864ad1bc372f7622fdc2253a1195005503e8fda97fc1",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/codec/mod.rs",
+          "sha256": "e5c96fe83d698657c2e4a5d9f38189c052170c9806ca066afd3f9e41ca70539c",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/decoder.rs",
+          "sha256": "63b348e24bb4b941a15fb4e6c27dbf3efedeb13f5a6274b4dab203d8e552734f",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/encoder.rs",
+          "sha256": "4f9bc3af5c136c4b06bfa44dec6506c09d6052268bc9e23e06d479ec55703769",
+          "scope": "Complete production code; test-only module not part of source audit"
+        },
+        {
+          "path": "src/framed.rs",
+          "sha256": "b45314733c34c5b0748ee0a783086999f09bb9bbe1111cfbd03a17a76f86960b",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/framed_read.rs",
+          "sha256": "02c01267306dfb335d96a74e76f452b3d4a527ec1655562c02fe0bbae5dea433",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/framed_write.rs",
+          "sha256": "656874393758ecddf1f1377c624919760247014589c97edc4f586a7b36583309",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/fuse.rs",
+          "sha256": "800c65dd15a2300fa9f2f85a56874970da7c5a6581d3f8354704085ffec671d9",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/lib.rs",
+          "sha256": "b058e01fc14034860ea2099e87b5bbd2ac33025d8b72a496584383c506322c51",
+          "scope": "Entire file"
+        }
+      ],
+      "notes": "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 a860072022177f903e59730004fb5dc13db9275b79bb2aef7ba8ce831956c233; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests and complete production code in all 13 source modules, including optional JSON/CBOR. Reviewed safe buffer slicing/splitting, pin_project_lite projections, read/decode/EOF/error transitions, partial writes/write-zero rejection, flush-before-close, backpressure, borrowed encoder items and from_parts buffer ownership. No own unsafe, build script, FFI or ambient socket creation. The codec is not a size/work limit: a decoder returning None indefinitely can grow the buffer; builtin line/JSON/CBOR/length codecs need caller limits on hostile input. LengthCodec casts u64 to usize (not portable protocol validation on 32-bit); supported NymWrap targets are 64-bit, and Arti uses its own bounded channel-cell decoder rather than these builtin codecs. Current Tor channel framing reads a u16 body length plus seven-byte header (or 514-byte fixed cell), and FramedRead appends at most 8192 bytes before decoding again. Source-review of this adapter does not certify the independent Tor cell/message parsers. Isolated unchanged-source library/integration tests with JSON: 14 passed; CBOR branch reviewed but not run because its optional dependency was uncached. Reduced test-only manifest uses exact netd dependency versions. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+    },
+    {
+      "name": "enum_dispatch",
+      "version": "0.3.13",
+      "archive_sha256": "aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd",
+      "criterion": "safe-to-deploy",
+      "who": "Codex agent (проверено агентом, не человеком)",
+      "review": "Read both manifests and all production code in all ten modules, with README API/limitations sections and selective crate-level overview docs. Reviewed typed token parsing/quoting, Mutex-protected host-side caches, enum field ownership and cfg propagation, match-based dispatch, generic/argument forwarding and renaming, async await generation, From/TryInto and Self-return wrapping. No runtime text evaluation, raw-pointer casts, FFI, filesystem/network access or build script. Cache identities are item name plus generic arity, not module paths; ambiguous/unsupported definitions can fail compilation and must not be generated from runtime text. The macro copies explicitly unsafe trait/method signatures; using it for an unsafe trait still requires the developer to prove that the wrapper preserves that trait invariant. No new runtime unsafe operations are synthesized to bypass type checking. Unchanged upstream library plus 22 integration binaries: 23 tests passed in a reduced test-only manifest using exact netd dependencies. Two obsolete/nightly suites were excluded explicitly: async-trait uses a stable-channel-rejected feature attribute and uncached smol; arg_patterns requests removed box_patterns. No RUSTC_BOOTSTRAP or source modification used.",
+      "reviewed_files": [
+        {
+          "path": "Cargo.toml",
+          "sha256": "ada87849fd822cd732f9533051f54d23a2d28904fe3096e024f85a87ee5eaa52",
+          "scope": "Entire file"
+        },
+        {
+          "path": "Cargo.toml.orig",
+          "sha256": "b928c2f0187543a7cfa4f77444aa189ec7129479adcf42e38bc6e0fe257b6ff0",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/attributed_parser.rs",
+          "sha256": "b5572e2b2050075f20bc735b4cef107dae65647d74bdba5c21f7ea295c9a8808",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/cache.rs",
+          "sha256": "2ece3aab24347ee2c9152b7c5bcbfa0f0b870114ccb67953103ef10b8be3fc36",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/enum_dispatch_arg_list.rs",
+          "sha256": "94cfd08357eba9e0b09af8c7fed9cde7c661cf4e9bc219d774785fee942457b8",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/enum_dispatch_item.rs",
+          "sha256": "8248a3d24bbd34f4cba3073fa58fd3270b3a1ab074859d498e9db89dc9a1ce20",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/enum_dispatch_variant.rs",
+          "sha256": "31d4bd9dd8769582d41f6bca6b57ee632b7efabcb27877009b8ba435b25775ef",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/expansion.rs",
+          "sha256": "fd429280120df73b32543c8f1ab2825c5879d7cb0ad332dd15cdbfdeba8cd785",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/filter_attrs.rs",
+          "sha256": "7538f1e48253df1defb686f1488da136eac89ff15059d9be4d341069e83c7f31",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/lib.rs",
+          "sha256": "c417340a33879f2867b67827a414f4058b73163e3818b5237b2a0201901220ab",
+          "scope": "All production code and API comments; crate-level overview docs selective"
+        },
+        {
+          "path": "src/supported_generics.rs",
+          "sha256": "61fcb4c6d9366423ec93f03b322adbbe8b99b8b8c6d69c40974a37d44e2ec76f",
+          "scope": "Entire file"
+        },
+        {
+          "path": "src/syn_utils.rs",
+          "sha256": "b51f709ce7f6ddb2c6ac32f789e349aa9efc81efb533a228691a3cc836661ea4",
+          "scope": "Entire file"
+        },
+        {
+          "path": "README.md",
+          "sha256": "46b26d242c9349673a4aca65e24463c1e682271165436cdd8f5a8ef88e1f549f",
+          "scope": "API and limitations sections; implementation overview selective"
+        }
+      ],
+      "notes": "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Exact archive SHA-256 aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd; freshly matched crates.io API, netd Cargo.lock and sparse index. Read both manifests and all production code in all ten modules, with README API/limitations sections and selective crate-level overview docs. Reviewed typed token parsing/quoting, Mutex-protected host-side caches, enum field ownership and cfg propagation, match-based dispatch, generic/argument forwarding and renaming, async await generation, From/TryInto and Self-return wrapping. No runtime text evaluation, raw-pointer casts, FFI, filesystem/network access or build script. Cache identities are item name plus generic arity, not module paths; ambiguous/unsupported definitions can fail compilation and must not be generated from runtime text. The macro copies explicitly unsafe trait/method signatures; using it for an unsafe trait still requires the developer to prove that the wrapper preserves that trait invariant. No new runtime unsafe operations are synthesized to bypass type checking. Unchanged upstream library plus 22 integration binaries: 23 tests passed in a reduced test-only manifest using exact netd dependencies. Two obsolete/nightly suites were excluded explicitly: async-trait uses a stable-channel-rejected feature attribute and uncached smol; arg_patterns requests removed box_patterns. No RUSTC_BOOTSTRAP or source modification used. Exact file SHA-256, reviewed scopes, reproduction sources and test limits: review-2026-11-26-fifth.json. This is an agent source review for safe-to-deploy, not an independent human audit; transitive dependencies retain separate requirements."
+    }
+  ],
+  "new_trusted_publishers": [
+    {
+      "name": "slotmap",
+      "version": "1.1.1",
+      "archive_sha256": "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038",
+      "index_checksum": "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038",
+      "lock_checksum": "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038",
+      "source_dir": "target/netd-review-5/src/slotmap-1.1.1",
+      "repository": "https://github.com/orlp/slotmap",
+      "license": "Zlib",
+      "vcs": {
+        "git": {
+          "sha1": "2d56154b9b628f7d7a506f24ebc4f55a13ec8fed"
+        },
+        "path_in_vcs": ""
+      },
+      "published_at": "2025-12-06T12:30:22.308199Z",
+      "published_by": {
+        "id": 24326,
+        "login": "orlp",
+        "name": "Orson Peters",
+        "avatar": "https://avatars.githubusercontent.com/u/202547?v=4",
+        "url": "https://github.com/orlp",
+        "github_username_matches": true,
+        "created_at": "2010-02-12T16:09:53Z"
+      },
+      "trustpub_data": null,
+      "yanked": false,
+      "registry_evidence": {
+        "url": "https://crates.io/api/v1/crates/slotmap/1.1.1",
+        "status": 200,
+        "sha256": "ffa7ab6eabe8d7642b29b388ad0b81d2bf6c8740ed66c30a2da2c9a66920d712",
+        "fetched_at": "2026-11-26T13:03:35.155Z"
+      },
+      "canonical_provenance": {
+        "name": "slotmap",
+        "repo": "orlp/slotmap",
+        "canonical_manifest": {
+          "url": "https://raw.githubusercontent.com/orlp/slotmap/2d56154b9b628f7d7a506f24ebc4f55a13ec8fed/Cargo.toml",
+          "status": 200,
+          "sha256": "c6ed7b91938ebf3aba4a788c24425bc67994ca912539151cac16cb8fc1dd796c",
+          "fetched_at": "2026-11-26T13:05:38.473Z"
+        },
+        "canonical_manifest_matches": true,
+        "owners_evidence": {
+          "url": "https://crates.io/api/v1/crates/slotmap/owners",
+          "status": 200,
+          "sha256": "aaabc4caac126b9309d800225075da750d548f9f4395091f51f10f6d1f6f8faf",
+          "fetched_at": "2026-11-26T13:05:42.242Z"
+        },
+        "owners": [
+          {
+            "id": 24326,
+            "login": "orlp",
+            "url": "https://github.com/orlp"
+          }
+        ]
+      },
+      "start": "2025-12-06",
+      "end": "2025-12-07",
+      "rationale": "Explicit production publisher trust in Orson Peters for the maintained Rust generational-container family, including unsafe initialization/drop/unwind, key generations, free-list ownership, secondary maps, serde validation and disjoint mutable access. Basis: exact publication is by the current official repository maintainer; canonical original manifest matches packaged VCS commit; Rust standard-library documentation independently credits Orson Peters for production slice-sorting algorithms and his official profile links the maintained Rust data-structure projects. This is an engineering trust judgment about the maintainer capability relevant to unsafe collections, not proof that sorting experience audits slotmap. Keys are handles, not authorization capabilities; documented generation wraparound and caller unsafe Key contracts remain limitations. No independent source audit of all slotmap implementations, serde or generated code is claimed.",
+      "notes": "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Explicit production publisher trust in Orson Peters for the maintained Rust generational-container family, including unsafe initialization/drop/unwind, key generations, free-list ownership, secondary maps, serde validation and disjoint mutable access. Basis: exact publication is by the current official repository maintainer; canonical original manifest matches packaged VCS commit; Rust standard-library documentation independently credits Orson Peters for production slice-sorting algorithms and his official profile links the maintained Rust data-structure projects. This is an engineering trust judgment about the maintainer capability relevant to unsafe collections, not proof that sorting experience audits slotmap. Keys are handles, not authorization capabilities; documented generation wraparound and caller unsafe Key contracts remain limitations. No independent source audit of all slotmap implementations, serde or generated code is claimed. Exact slotmap 1.1.1, archive SHA-256 bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038. One historical publication-day window only; no future or unrelated releases. Fresh registry/index/lock/archive and immutable canonical manifest checks: review-2026-11-26-fifth.json. Publisher trust for safe-to-deploy, not an agent or human line-by-line source audit."
+    },
+    {
+      "name": "imara-diff",
+      "version": "0.2.0",
+      "archive_sha256": "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c",
+      "index_checksum": "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c",
+      "lock_checksum": "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c",
+      "source_dir": "target/netd-review-5/src/imara-diff-0.2.0",
+      "repository": "https://github.com/pascalkuthe/imara-diff",
+      "license": "Apache-2.0",
+      "vcs": {
+        "git": {
+          "sha1": "c0b655a86b5b4fc05324e08b9c684368e7413e1f"
+        },
+        "path_in_vcs": ""
+      },
+      "published_at": "2025-06-14T18:29:26.570299Z",
+      "published_by": {
+        "id": 91593,
+        "login": "pascalkuthe",
+        "name": "Pascal Kuthe",
+        "avatar": "https://avatars.githubusercontent.com/u/61850714?v=4",
+        "url": "https://github.com/pascalkuthe",
+        "github_username_matches": true,
+        "created_at": "2020-03-05T21:32:20Z"
+      },
+      "trustpub_data": null,
+      "yanked": false,
+      "registry_evidence": {
+        "url": "https://crates.io/api/v1/crates/imara-diff/0.2.0",
+        "status": 200,
+        "sha256": "02b9a3e339359ea7fd44a019283ba6225a8131904762d030f9c30905503e1814",
+        "fetched_at": "2026-11-26T13:02:49.032Z"
+      },
+      "canonical_provenance": {
+        "name": "imara-diff",
+        "repo": "pascalkuthe/imara-diff",
+        "canonical_manifest": {
+          "url": "https://raw.githubusercontent.com/pascalkuthe/imara-diff/c0b655a86b5b4fc05324e08b9c684368e7413e1f/Cargo.toml",
+          "status": 200,
+          "sha256": "7f25624feb4cce9985b35e8a42be6145aa794d68f90eace5150f8fa9b6277689",
+          "fetched_at": "2026-11-26T13:05:29.899Z"
+        },
+        "canonical_manifest_matches": true,
+        "owners_evidence": {
+          "url": "https://crates.io/api/v1/crates/imara-diff/owners",
+          "status": 200,
+          "sha256": "d998df5f73655a4b8261e02abb4f95bfd885e69d93e557be4261a65361209dbb",
+          "fetched_at": "2026-11-26T13:05:34.208Z"
+        },
+        "owners": [
+          {
+            "id": 91593,
+            "login": "pascalkuthe",
+            "url": "https://github.com/pascalkuthe"
+          }
+        ]
+      },
+      "start": "2025-06-14",
+      "end": "2025-06-15",
+      "rationale": "Explicit production publisher trust in Pascal Kuthe for the maintained diff implementation, including hostile token sequences, Myers/histogram index bounds, compressed-pointer arithmetic and unsafe tokenization. Basis: exact registry publisher/current owner and canonical original manifest at packaged VCS commit agree; official Helix upstream records his diff-gutter implementation as a merged contribution from a project MEMBER and his official profile links imara-diff and the related maintained text tooling. This is trust in the responsible implementation/release maintainer, not an independent audit of this exact release or a claim that adoption proves safety. Caller must cap input/output/work and respect the documented maximum 2^31-2 tokens; diff results are data, not commands or an authenticity decision.",
+      "notes": "Проверено агентом, не человеком. ADR 0103 fifth netd batch. Explicit production publisher trust in Pascal Kuthe for the maintained diff implementation, including hostile token sequences, Myers/histogram index bounds, compressed-pointer arithmetic and unsafe tokenization. Basis: exact registry publisher/current owner and canonical original manifest at packaged VCS commit agree; official Helix upstream records his diff-gutter implementation as a merged contribution from a project MEMBER and his official profile links imara-diff and the related maintained text tooling. This is trust in the responsible implementation/release maintainer, not an independent audit of this exact release or a claim that adoption proves safety. Caller must cap input/output/work and respect the documented maximum 2^31-2 tokens; diff results are data, not commands or an authenticity decision. Exact imara-diff 0.2.0, archive SHA-256 2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c. One historical publication-day window only; no future or unrelated releases. Fresh registry/index/lock/archive and immutable canonical manifest checks: review-2026-11-26-fifth.json. Publisher trust for safe-to-deploy, not an agent or human line-by-line source audit."
+    }
+  ],
+  "identity_and_release_http_evidence": [
+    {
+      "url": "https://crates.io/api/v1/crates/kqueue/1.2.1",
+      "status": 200,
+      "sha256": "4b31a97db94afbf964f3cfece9e963a85dc3f01258d49dc062781dc86b9a157c",
+      "fetched_at": "2026-11-26T13:03:01.570Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/slotmap/1.1.1",
+      "status": 200,
+      "sha256": "ffa7ab6eabe8d7642b29b388ad0b81d2bf6c8740ed66c30a2da2c9a66920d712",
+      "fetched_at": "2026-11-26T13:03:35.155Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/os_str_bytes/6.6.1",
+      "status": 200,
+      "sha256": "ca09659278d3cd0559f3da75759a13a6a7e7bd2384c999465c9bc566587208f4",
+      "fetched_at": "2026-11-26T13:03:09.021Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/enum_dispatch/0.3.13",
+      "status": 200,
+      "sha256": "9c26db019a80e2939e265695adfbda8dbc25a42a4f4a6241671f030859937cd1",
+      "fetched_at": "2026-11-26T13:02:41.727Z"
+    },
+    {
+      "url": "https://blog.rust-lang.org/2024/09/05/Rust-1.81.0/",
+      "status": 200,
+      "sha256": "ddfd42047b17b2ce2a423d61a6e310a06d5aad77a2737b3d06303a3a602b8761",
+      "fetched_at": "2026-11-26T13:11:38.654Z"
+    },
+    {
+      "url": "https://github.com/pascalkuthe/imara-diff",
+      "status": 200,
+      "sha256": "3b7a86c31c908a599c78fba776a4baa044634e5e10fdc9bc14e49dfa51a9eea0",
+      "fetched_at": "2026-11-26T13:06:08.505Z"
+    },
+    {
+      "url": "https://github.com/orlp",
+      "status": 200,
+      "sha256": "3fd45a038780b98ded9cfca64cc9d7f4c6e19ca454e69a322d19fc01619f7d48",
+      "fetched_at": "2026-11-26T13:05:56.957Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/data-encoding/2.11.1",
+      "status": 200,
+      "sha256": "99006f7b6fe8a3d296ac6f2180d02b7119dccac0ef438b7d008194de3ad4bd75",
+      "fetched_at": "2026-11-26T13:02:27.109Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/educe/0.4.23",
+      "status": 200,
+      "sha256": "40388bfeefe74201d9da80b581018ea2231c7bd9058036a1134d9a36fc203e4a",
+      "fetched_at": "2026-11-26T13:02:34.403Z"
+    },
+    {
+      "url": "https://github.com/helix-editor/helix/issues/4974",
+      "status": 200,
+      "sha256": "116fc88cc75859a5f1a07adf897d1a0d236c7472721b571663cad30a32c629f7",
+      "fetched_at": "2026-11-26T13:11:46.585Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/enum-ordinalize/3.1.15",
+      "status": 200,
+      "sha256": "66f26891d4b60ac4ef266336b5afac5b62f1dd68940898245996ec01f90661cf",
+      "fetched_at": "2026-11-26T13:02:38.074Z"
+    },
+    {
+      "url": "https://blog.rust-lang.org/2024/07/25/Rust-1.80.0/",
+      "status": 200,
+      "sha256": "0e3e65d9b68461292d958563dc60ce480d65e625e3c9db88d56a6a291a051c18",
+      "fetched_at": "2026-11-26T13:09:05.349Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/asynchronous-codec/0.7.0",
+      "status": 200,
+      "sha256": "cc63b07d0d64e111caca93e365789eea3b1e884c60e4f779a8037b29dcfec636",
+      "fetched_at": "2026-11-26T13:02:09.182Z"
+    },
+    {
+      "url": "https://github.com/helix-editor/helix/pull/3890",
+      "status": 200,
+      "sha256": "cbc45c3f4721dd0a1cd822b0c69776be6d0872bc8cda75c717e1e2aa889c06f9",
+      "fetched_at": "2026-11-26T13:11:55.193Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/convert_case/0.10.0",
+      "status": 200,
+      "sha256": "05a9d789362d8c9e2a3b3f109103ac2f551ec3469ccca3fe80e2c0189c193427",
+      "fetched_at": "2026-11-26T13:02:19.777Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/recvmsg/1.0.0",
+      "status": 200,
+      "sha256": "9d415837b5840c710be7ea1a9b20ee6521b60f7fa827940ee2f537e830f6e0fb",
+      "fetched_at": "2026-11-26T13:03:23.934Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/bitvec/1.1.1",
+      "status": 200,
+      "sha256": "3a5a083e305eb12be9c7991aa1c6170dd7f7e2a5e99bbac489e18bda1f24141e",
+      "fetched_at": "2026-11-26T13:02:12.833Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/reseeding_rng/0.10.7",
+      "status": 200,
+      "sha256": "b6de2a055239f7c469c32c5521ed96bed5758fb766df3923777c616c16bdcf0c",
+      "fetched_at": "2026-11-26T13:03:27.435Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/slotmap/owners",
+      "status": 200,
+      "sha256": "aaabc4caac126b9309d800225075da750d548f9f4395091f51f10f6d1f6f8faf",
+      "fetched_at": "2026-11-26T13:05:42.242Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/rdrand/0.9.0",
+      "status": 200,
+      "sha256": "717f7f2f951b5f308450e877bafab6e94809481f23ba84762d0fccebb4c85636",
+      "fetched_at": "2026-11-26T13:03:20.106Z"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/pascalkuthe/imara-diff/c0b655a86b5b4fc05324e08b9c684368e7413e1f/Cargo.toml",
+      "status": 200,
+      "sha256": "7f25624feb4cce9985b35e8a42be6145aa794d68f90eace5150f8fa9b6277689",
+      "fetched_at": "2026-11-26T13:05:29.899Z"
+    },
+    {
+      "url": "https://github.com/orlp/slotmap",
+      "status": 200,
+      "sha256": "c3901099d3038c2aa7d26c022f9faff23fc729176c080aa0eda5e775fd95e02d",
+      "fetched_at": "2026-11-26T13:06:16.187Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/crypto-primes/0.7.2",
+      "status": 200,
+      "sha256": "6b192ca30581e6179576b2e2a5472aaf84afc342d19791be23da9a6fb1cbbc52",
+      "fetched_at": "2026-11-26T13:02:23.468Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/postage/0.5.0",
+      "status": 200,
+      "sha256": "786b0942870e1297debed508fb129866e34ae49dee35bbd545f14d2cec3d70d7",
+      "fetched_at": "2026-11-26T13:03:12.761Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/blanket/0.3.0",
+      "status": 200,
+      "sha256": "1b05b9fe8198aced186c0748e33cba816270420b4f59dd53c661522bf353ff65",
+      "fetched_at": "2026-11-26T13:02:16.484Z"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/devongovett/glob-match/d5a6c671b73ffdd3b5c5ea5777b6526dba66417a/Cargo.toml",
+      "status": 200,
+      "sha256": "a527b4a21d5d3e446cc95e08015f3f68b699ab983d5612b79305fc087db181ed",
+      "fetched_at": "2026-11-26T13:05:45.709Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/glob-match/0.2.1",
+      "status": 200,
+      "sha256": "a66ebf62993ad7151b83eb4c3bc631d1f400e21786c6bf4ab9ff8abb24c33146",
+      "fetched_at": "2026-11-26T13:02:45.392Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/sanitize-filename",
+      "status": 200,
+      "sha256": "328105089bde74ff985c753a3d83bb2fd7b25f63a9d671f206da9c89d83e8374",
+      "fetched_at": "2026-11-26T13:03:50.266Z"
+    },
+    {
+      "url": "https://helix-editor.com/news/release-23-05-highlights/",
+      "status": 404,
+      "sha256": "9a625ffd35866aaca71335559950fbe21a51f6b5c6474f61df05efaa81e78fcd",
+      "fetched_at": "2026-11-26T13:09:08.978Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/rdrand",
+      "status": 200,
+      "sha256": "ca16dd48d803883f4e3f40d40808fba0e17dc9fe00e8edc07add1a6b2b36f0b3",
+      "fetched_at": "2026-11-26T13:04:01.478Z"
+    },
+    {
+      "url": "https://static.crates.io/crates/sanitize-filename/sanitize-filename-0.8.0-beta.crate",
+      "status": 200,
+      "sha256": "937371a64f83e8adaf269ae1f9b5e6a48891fd1e1ba09f3a5bf0533e4937be42",
+      "fetched_at": "2026-11-26T13:05:21.968Z"
+    },
+    {
+      "url": "https://static.crates.io/crates/educe/educe-0.8.2.crate",
+      "status": 200,
+      "sha256": "a00371d2607edea062396ef1ce6ade65c8e915ac7a1277daa198208420f682c6",
+      "fetched_at": "2026-11-26T13:05:26.137Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/glob-match/owners",
+      "status": 200,
+      "sha256": "519764a44906176fcf6f05ba023b39d4d33ed9509392596d4636f0cb41b15846",
+      "fetched_at": "2026-11-26T13:05:49.415Z"
+    },
+    {
+      "url": "https://github.com/devongovett",
+      "status": 200,
+      "sha256": "bea57e44fb92b794ea3b5b23ef702f93a03824b04bcc39a8c7e792645545f048",
+      "fetched_at": "2026-11-26T13:06:00.950Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/strobe-rs/0.13.0",
+      "status": 200,
+      "sha256": "50830fcb49cb6fd8857d231f90f4af1dd1f2f482c2c788625edbdc0867d50399",
+      "fetched_at": "2026-11-26T13:03:39.023Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/enum-ordinalize",
+      "status": 200,
+      "sha256": "69110fa4ae1e071d024ddc406c35ad6ec256798559c6bf3528e0d793e68a9759",
+      "fetched_at": "2026-11-26T13:03:53.786Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/imara-diff/owners",
+      "status": 200,
+      "sha256": "d998df5f73655a4b8261e02abb4f95bfd885e69d93e557be4261a65361209dbb",
+      "fetched_at": "2026-11-26T13:05:34.208Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/educe",
+      "status": 200,
+      "sha256": "e238393c18aea413d21c45a4b1343da4f67e5f156da8831a19a7278c0b85e495",
+      "fetched_at": "2026-11-26T13:04:05.484Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/data-encoding",
+      "status": 200,
+      "sha256": "52d9ba2bc040e11d4a4a115792d835215fb7475e8bcac44ad407060a1024cef8",
+      "fetched_at": "2026-11-26T13:03:46.766Z"
+    },
+    {
+      "url": "https://github.com/pascalkuthe",
+      "status": 200,
+      "sha256": "6d96341b0c9dd114b662c2becb71839be85ac6ae11d5e3c15897220b22496639",
+      "fetched_at": "2026-11-26T13:05:53.228Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/sanitize-filename/0.6.0",
+      "status": 200,
+      "sha256": "14ef1cdef9b1569bdb9407c7d3ec6b4cb2bc9ba93088695b993313f5f3dd2691",
+      "fetched_at": "2026-11-26T13:03:31.301Z"
+    },
+    {
+      "url": "https://github.com/helix-editor/helix/wiki/Team",
+      "status": 200,
+      "sha256": "c2e04919dbeb795352ab3bf79c7455f8e393be86512cee395eb078b6eabb3a95",
+      "fetched_at": "2026-11-26T13:06:04.583Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/async_executors/0.7.0",
+      "status": 200,
+      "sha256": "a5d82b8b3e61b2d6fc81744e6d31bc81831b6b66fbdb2aa03e26c936cdff3458",
+      "fetched_at": "2026-11-26T13:02:05.460Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/enum-ordinalize-derive",
+      "status": 200,
+      "sha256": "dc30c503f167ae2a02ed96b2bdc26b3e3ab41b73e2e2d1e1558eaff6671a5f02",
+      "fetched_at": "2026-11-26T13:09:01.509Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/kqueue-sys/1.1.2",
+      "status": 200,
+      "sha256": "003575b92e84a1ebf85b25b62bd7cd3ef6224225f8ec5925ef72ca2fe5c49fd0",
+      "fetched_at": "2026-11-26T13:03:05.245Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/typed-index-collections/3.5.0",
+      "status": 200,
+      "sha256": "4f13580dd99d9766763e1a6bf0ea0009036c878866659a0f14d3cd17becadd83",
+      "fetched_at": "2026-11-26T13:03:42.879Z"
+    },
+    {
+      "url": "https://github.com/devongovett/glob-match",
+      "status": 200,
+      "sha256": "e33cc2364da3a25f088f8b81245dd918c54f5e2986da727542e3bbee7f605818",
+      "fetched_at": "2026-11-26T13:06:12.488Z"
+    },
+    {
+      "url": "https://helix-editor.com/news/release-25-07-highlights/",
+      "status": 200,
+      "sha256": "e7f756ef973e4ce27a729775750b00cff84d2c62def2da95b5e0ca36c6b13803",
+      "fetched_at": "2026-11-26T13:09:12.273Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/dirs-sys/0.5.0",
+      "status": 200,
+      "sha256": "fc5ecfcbc50bac11e7a8a3e0cbeddea3a4da8fe1cc025984a460946360ffe324",
+      "fetched_at": "2026-11-26T13:02:30.751Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/iprange/0.6.7",
+      "status": 200,
+      "sha256": "1eda237f7f8d45137c76355d54737e030511201d37adf4560d9aba51bd1faab2",
+      "fetched_at": "2026-11-26T13:02:52.683Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/rangemap/1.8.0",
+      "status": 200,
+      "sha256": "e0bc9dc3d80da0b5ca33f54e9f72df75388acb33d9ccaf1465f0daf40ec3c5a1",
+      "fetched_at": "2026-11-26T13:03:16.258Z"
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.slice.html",
+      "status": 200,
+      "sha256": "042d58d8c44bce7e64ce328dbf31503182a3b611eb0ea9e589fe35699f00d69d",
+      "fetched_at": "2026-11-26T13:11:42.135Z"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/orlp/slotmap/2d56154b9b628f7d7a506f24ebc4f55a13ec8fed/Cargo.toml",
+      "status": 200,
+      "sha256": "c6ed7b91938ebf3aba4a788c24425bc67994ca912539151cac16cb8fc1dd796c",
+      "fetched_at": "2026-11-26T13:05:38.473Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/dirs-sys",
+      "status": 200,
+      "sha256": "8c286fa1ef7a72c3719136c4078d8b2999531d826d6ac2f9a56d12194137ccac",
+      "fetched_at": "2026-11-26T13:03:57.605Z"
+    },
+    {
+      "url": "https://crates.io/api/v1/crates/imara-diff/0.2.0",
+      "status": 200,
+      "sha256": "02b9a3e339359ea7fd44a019283ba6225a8131904762d030f9c30905503e1814",
+      "fetched_at": "2026-11-26T13:02:49.032Z"
+    },
+    {
+      "url": "https://static.crates.io/crates/enum-ordinalize/enum-ordinalize-4.4.2.crate",
+      "status": 200,
+      "sha256": "89dd01549b09589510cf0647475075d12071456586d70f5c75c98ae2a5537677",
+      "fetched_at": "2026-11-26T13:05:17.845Z"
+    }
+  ],
+  "checkpoints": [
+    {
+      "step": "audit-blanket",
+      "exit_code": 1,
+      "gaps": 25,
+      "exemptions": 18,
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "ed60b7d4621045ce02e564f34a0c643fda5041a3bdc392d6cb9d569ac75d1d5b",
+          "imports": "aeac414729fc6e10b4a6685a2145f40e79b13d4dd7b35fb212176e72436043e7"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemption_count_origin": "unchanged config; not inferred from failure JSON"
+    },
+    {
+      "step": "audit-async_executors",
+      "exit_code": 1,
+      "gaps": 24,
+      "exemptions": 18,
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "77a4278f1cc8417383b0f0973eb662411ec1e9bb074eafd79f8df9b456139675",
+          "imports": "aeac414729fc6e10b4a6685a2145f40e79b13d4dd7b35fb212176e72436043e7"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemption_count_origin": "unchanged config; not inferred from failure JSON"
+    },
+    {
+      "step": "audit-asynchronous-codec",
+      "exit_code": 1,
+      "gaps": 23,
+      "exemptions": 18,
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "01c27c1d139f2ecdce426162f940fe0cc397898aac96c30b6c00c1e6f0e9df53",
+          "imports": "aeac414729fc6e10b4a6685a2145f40e79b13d4dd7b35fb212176e72436043e7"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemption_count_origin": "unchanged config; not inferred from failure JSON"
+    },
+    {
+      "step": "audit-enum_dispatch",
+      "exit_code": 1,
+      "gaps": 22,
+      "exemptions": 18,
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "08dccfb1c9a4aa78408662edc7e21969152ae8aa7ff882c6eac37b4e539f18a1",
+          "imports": "aeac414729fc6e10b4a6685a2145f40e79b13d4dd7b35fb212176e72436043e7"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemption_count_origin": "unchanged config; not inferred from failure JSON"
+    },
+    {
+      "step": "publisher-slotmap",
+      "exit_code": 1,
+      "gaps": 21,
+      "exemptions": 18,
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "d08eaa256746a8d92600e4dc0b4bda8c4d367d1ecf428f836921f0918c0942f5",
+          "imports": "9201b899ecc0d6c8487a661473b3dc1a70ba99b8de462ad0b3fe05788019949f"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemption_count_origin": "unchanged config; not inferred from failure JSON"
+    },
+    {
+      "step": "publisher-imara-diff",
+      "exit_code": 1,
+      "gaps": 20,
+      "exemptions": 18,
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "ce1c437ddd354633e2d9253c05f1a72d8d4465515ff943114c3cf1dc1e744f09",
+          "imports": "0511571d216d5c041116ff7a6d21fd84b21c632f410b9085a486c2debf5e3ddc"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      },
+      "exemption_count_origin": "unchanged config; not inferred from failure JSON"
+    }
+  ],
+  "defects": [
+    {
+      "name": "data-encoding",
+      "version": "2.11.1",
+      "process": "nw-netd, embedded Arti",
+      "path": "Tor::bootstrap_with_bridges/exchange -> Arti -> tor-hscrypto::pk::{HsId::from_str, DisplayRedacted, key formatting}; optional local C-Tor import tor-keymgr::parse_client_keypair",
+      "trigger": "Replace public Encoding.0 with 514 bytes 0xF6, then release encode; returned String has invalid UTF-8.",
+      "network_reachable": false,
+      "reason": "Both direct consumers use fixed BASE32_NOPAD. Address/key strings are operands, never the internal alphabet/dispatch table. No path from HTTP/Tor reply bytes to Encoding.0 found.",
+      "fixed_version": null,
+      "fix_evidence": "Fresh registry latest=2.11.1. Exact pinned release still reproduces; no newer published fix identified.",
+      "risk": "medium",
+      "risk_reason": "Latent soundness/UB defect; no current remote trigger. Do not certify. Reevaluate as high if network-controlled encoding construction is introduced."
+    },
+    {
+      "name": "sanitize-filename",
+      "version": "0.6.0",
+      "process": "nw-netd, embedded Arti",
+      "path": "server Initialize -> Tor::bootstrap_with_bridges -> TorClient::create_bootstrapped -> FsStateMgr -> GuardMgr/CircMgr typed storage handle -> FsStateMgr::rel_filename -> sanitize(key)+.json",
+      "trigger": "254 ASCII a plus .x, windows=true/truncate=true -> 255-byte name ending in dot, rejected by own is_sanitized.",
+      "network_reachable": false,
+      "reason": "Production state keys are fixed short constants guards and circuit_timeouts; vanguards feature path also uses a short constant. Network-influenced state is stored as JSON content, not filename key. No path traversal claimed.",
+      "fixed_version": null,
+      "fix_evidence": "Stable latest=0.6.0; downloaded max release 0.8.0-beta and replayed the same case: still 255/trailing_dot=true/is_sanitized=false.",
+      "risk": "low"
+    },
+    {
+      "name": "enum-ordinalize",
+      "version": "3.1.15",
+      "process": "rustc proc-macro host while building nw-netd, not runtime",
+      "path": "Arti/tor-* -> educe -> support_traits.rs::Trait Ordinalize derive",
+      "trigger": "#[repr(u8)] enum {First=1<<2, Next}: actual Next=5 but ordinal=8 and from_ordinal(5)=None. ToTokens emits expr + counter without parentheses.",
+      "network_reachable": false,
+      "reason": "Only direct parent is educe. Its Trait enum is sequential, no explicit shifted discriminant. Runtime network text is never compiled into macro input.",
+      "fixed_version": null,
+      "fix_evidence": "Reproduced with wrapper 4.4.2 and derive 4.4.1, then latest derive 4.4.2. Source int_wrapper.rs still contains quote!(#expr +). Not an upgrade-only remedy.",
+      "risk": "low"
+    },
+    {
+      "name": "dirs-sys",
+      "version": "0.5.0",
+      "process": "nw-netd on Linux (package also has other platform backends)",
+      "path": "Arti tor-config-path -> directories::{BaseDirs,ProjectDirs} -> home_dir; fs-mistrust/shellexpand -> dirs::home_dir. Defective unused branch: UserDirs/user-directory getter -> user_dirs/user_dir -> xdg_user_dirs::{all,single}::parse_user_dirs",
+      "trigger": "Local user-dirs.dirs containing XDG_MUSIC_DIR=\" -> slice 1..0 panic.",
+      "network_reachable": false,
+      "reason": "All direct directories/dirs users in resolved netd source use base/project/home directories, not UserDirs or user-directory getters. These do not read user-dirs.dirs. A malformed local config file is additionally required even if such a caller is added.",
+      "fixed_version": null,
+      "fix_evidence": "Fresh registry latest remains 0.5.0. Parser is unchanged and still reproduces with disclosed Windows-only OsStringExt shim.",
+      "risk": "low",
+      "portability": {
+        "original": {
+          "path": "target/netd-review-5/src/dirs-sys-0.5.0/src/xdg_user_dirs.rs",
+          "sha256": "4b02f72e6b1868fbe76ce910edb53130a4712e5ff9e61801d8719aaa81f7a617",
+          "review_scope": "Original exact archived parser"
+        },
+        "ported": {
+          "path": "target/netd-review-5/defects/src/ported_dirs.rs",
+          "sha256": "ea15f7242d2959180b7273fdbbfdf1a01fadc35c9ecbe1da0fe7ff616694c755",
+          "review_scope": "Only OsStringExt import replaced; all()/parser bodies unchanged"
+        },
+        "only_change": "use std::os::unix::ffi::OsStringExt; -> use crate::portable::OsStringExt;",
+        "shim": "ASCII-checked Vec<u8> -> String::from_utf8 -> OsString; native Linux execution not claimed."
+      }
+    }
+  ],
+  "release_status": [
+    {
+      "name": "data-encoding",
+      "max_version": "2.11.1",
+      "max_stable_version": "2.11.1",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/data-encoding",
+        "status": 200,
+        "sha256": "52d9ba2bc040e11d4a4a115792d835215fb7475e8bcac44ad407060a1024cef8",
+        "fetched_at": "2026-11-26T13:03:46.766Z"
+      }
+    },
+    {
+      "name": "sanitize-filename",
+      "max_version": "0.8.0-beta",
+      "max_stable_version": "0.6.0",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/sanitize-filename",
+        "status": 200,
+        "sha256": "328105089bde74ff985c753a3d83bb2fd7b25f63a9d671f206da9c89d83e8374",
+        "fetched_at": "2026-11-26T13:03:50.266Z"
+      }
+    },
+    {
+      "name": "enum-ordinalize",
+      "max_version": "4.4.2",
+      "max_stable_version": "4.4.2",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/enum-ordinalize",
+        "status": 200,
+        "sha256": "69110fa4ae1e071d024ddc406c35ad6ec256798559c6bf3528e0d793e68a9759",
+        "fetched_at": "2026-11-26T13:03:53.786Z"
+      }
+    },
+    {
+      "name": "dirs-sys",
+      "max_version": "0.5.0",
+      "max_stable_version": "0.5.0",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/dirs-sys",
+        "status": 200,
+        "sha256": "8c286fa1ef7a72c3719136c4078d8b2999531d826d6ac2f9a56d12194137ccac",
+        "fetched_at": "2026-11-26T13:03:57.605Z"
+      }
+    },
+    {
+      "name": "rdrand",
+      "max_version": "0.9.0",
+      "max_stable_version": "0.9.0",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/rdrand",
+        "status": 200,
+        "sha256": "ca16dd48d803883f4e3f40d40808fba0e17dc9fe00e8edc07add1a6b2b36f0b3",
+        "fetched_at": "2026-11-26T13:04:01.478Z"
+      }
+    },
+    {
+      "name": "educe",
+      "max_version": "0.8.2",
+      "max_stable_version": "0.8.2",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/educe",
+        "status": 200,
+        "sha256": "e238393c18aea413d21c45a4b1343da4f67e5f156da8831a19a7278c0b85e495",
+        "fetched_at": "2026-11-26T13:04:05.484Z"
+      }
+    }
+  ],
+  "candidate_archives": [
+    {
+      "name": "enum-ordinalize",
+      "version": "4.4.2",
+      "checksum": "89dd01549b09589510cf0647475075d12071456586d70f5c75c98ae2a5537677",
+      "yanked": false,
+      "evidence": {
+        "url": "https://static.crates.io/crates/enum-ordinalize/enum-ordinalize-4.4.2.crate",
+        "status": 200,
+        "sha256": "89dd01549b09589510cf0647475075d12071456586d70f5c75c98ae2a5537677",
+        "fetched_at": "2026-11-26T13:05:17.845Z"
+      }
+    },
+    {
+      "name": "sanitize-filename",
+      "version": "0.8.0-beta",
+      "checksum": "937371a64f83e8adaf269ae1f9b5e6a48891fd1e1ba09f3a5bf0533e4937be42",
+      "yanked": false,
+      "evidence": {
+        "url": "https://static.crates.io/crates/sanitize-filename/sanitize-filename-0.8.0-beta.crate",
+        "status": 200,
+        "sha256": "937371a64f83e8adaf269ae1f9b5e6a48891fd1e1ba09f3a5bf0533e4937be42",
+        "fetched_at": "2026-11-26T13:05:21.968Z"
+      }
+    },
+    {
+      "name": "educe",
+      "version": "0.8.2",
+      "checksum": "a00371d2607edea062396ef1ce6ade65c8e915ac7a1277daa198208420f682c6",
+      "yanked": false,
+      "evidence": {
+        "url": "https://static.crates.io/crates/educe/educe-0.8.2.crate",
+        "status": 200,
+        "sha256": "a00371d2607edea062396ef1ce6ade65c8e915ac7a1277daa198208420f682c6",
+        "fetched_at": "2026-11-26T13:05:26.137Z"
+      }
+    },
+    {
+      "name": "enum-ordinalize-derive",
+      "version": "4.4.2",
+      "checksum": "a65863d15a4ce2888bd2f0f543cc963d3879c3a022c8ee43f6141d479a3ac815",
+      "archive_sha256": "a65863d15a4ce2888bd2f0f543cc963d3879c3a022c8ee43f6141d479a3ac815",
+      "evidence": {
+        "url": "https://crates.io/api/v1/crates/enum-ordinalize-derive",
+        "status": 200,
+        "sha256": "dc30c503f167ae2a02ed96b2bdc26b3e3ab41b73e2e2d1e1558eaff6671a5f02",
+        "fetched_at": "2026-11-26T13:09:01.509Z"
+      }
+    }
+  ],
+  "reviewed_call_sites": [
+    {
+      "path": "daemons/nw-netd/src/server.rs",
+      "sha256": "2e761850f089c9160b4791a053f863d7f8f20a301215c8b8e793d383a31e3229",
+      "review_scope": "Initialize dispatch and factory -> bootstrap_with_bridges; authenticated IPC initialization, not provider response"
+    },
+    {
+      "path": "daemons/nw-netd/src/lib.rs",
+      "sha256": "8caf1f71ec585a0b8a818a15fe46be20a37b6821965a9b2f0c70699d460137c3",
+      "review_scope": "Tor bootstrap/config directories, create_bootstrapped, exchange and fixed provider/TLS path"
+    },
+    {
+      "package": "arti-client",
+      "version": "0.48.0",
+      "path": "src/client.rs",
+      "sha256": "793bfe9c2dc092cb07f1395a301cde5648474e9369a4c15778792026dec245ee",
+      "review_scope": "UsingStateMgr alias and FsStateMgr construction in initialization"
+    },
+    {
+      "package": "tor-persist",
+      "version": "0.48.0",
+      "path": "src/fs.rs",
+      "sha256": "1d491049d44b6883318c5adf959c315ad275df248ea5121237b6343c89e765f6",
+      "review_scope": "FsStateMgr key contract, rel_filename, load/store target construction; selective caller review, not whole crate audit"
+    },
+    {
+      "package": "tor-persist",
+      "version": "0.48.0",
+      "path": "src/lib.rs",
+      "sha256": "88fb474f876711bc7dea620f5caad8141eb9e134ea025c5a0d16bc631e4bd124",
+      "review_scope": "StateMgr::create_handle typed handle receives its key from caller"
+    },
+    {
+      "package": "tor-circmgr",
+      "version": "0.48.0",
+      "path": "src/lib.rs",
+      "sha256": "d52f9d7444d69aff01db5509bef42183fc1fb55b9a62f24dd08953e11acae369",
+      "review_scope": "PARETO_TIMEOUT_DATA_KEY=circuit_timeouts and storage.create_handle"
+    },
+    {
+      "package": "tor-guardmgr",
+      "version": "0.48.0",
+      "path": "src/lib.rs",
+      "sha256": "d0b47a886f0332ecbbbeee767a49de3f1696086d0d119b571333e15ef5edb0ad",
+      "review_scope": "STORAGE_KEY=guards and typed storage creation"
+    },
+    {
+      "package": "tor-guardmgr",
+      "version": "0.48.0",
+      "path": "src/vanguards.rs",
+      "sha256": "2c3c7dc0edd6427160aed57faa8191355364db17177ecd0862ba9c325bb61388",
+      "review_scope": "STORAGE_KEY=vanguards and typed storage creation"
+    },
+    {
+      "package": "tor-hscrypto",
+      "version": "0.48.0",
+      "path": "src/pk.rs",
+      "sha256": "639bb1364c7b93b04038e80854101d1f86d375e02f9f94eb320c850dbfbfe9eb",
+      "review_scope": "All data_encoding call sites: fixed BASE32_NOPAD encode/decode of HsId/key operands; no Encoding.0 construction/mutation"
+    },
+    {
+      "package": "tor-keymgr",
+      "version": "0.48.0",
+      "path": "src/keystore/ctor/client.rs",
+      "sha256": "772f45c5abcef6d5492a1288b3927f9fa82e31039a8bb4391bd417109fca0d38",
+      "review_scope": "parse_client_keypair base32 constant decoder for local C-Tor key text"
+    },
+    {
+      "package": "tor-config-path",
+      "version": "0.48.0",
+      "path": "src/arti_client_paths.rs",
+      "sha256": "7dd371dd9181487c360717a0f85030575b114513b11ef9be9b2635cdf1b8f9ef",
+      "review_scope": "arti_client_base_resolver, ProjectDirs::from and fixed application identity"
+    },
+    {
+      "package": "tor-config-path",
+      "version": "0.48.0",
+      "path": "src/lib.rs",
+      "sha256": "c058bdb17c21a458d184fa8770948c76c22acc0648d0514e7a461614a17f1f09",
+      "review_scope": "BaseDirs-backed home lazy resolution; no UserDirs"
+    },
+    {
+      "package": "directories",
+      "version": "6.0.0",
+      "path": "src/lin.rs",
+      "sha256": "3e30d0c0a04fdb4d58a380c742d4be30c4dd77b6bfec6b028edf16e95f7b5cd0",
+      "review_scope": "Separate BaseDirs/ProjectDirs/home_dir versus user_dirs parser; complete production functions"
+    },
+    {
+      "package": "dirs",
+      "version": "6.0.0",
+      "path": "src/lin.rs",
+      "sha256": "d0945677b631591374b2fcdd61947d85c5ed3ef0ecc871132ef96b9d3bfa1ac0",
+      "review_scope": "home_dir/config_dir forwarding versus XDG user-directory getters"
+    },
+    {
+      "package": "fs-mistrust",
+      "version": "0.16.1",
+      "path": "src/anon_home.rs",
+      "sha256": "e8c338ab32f0e9ee68e3b76bad6870a7d917fe1ab71611d058fca47d0a655c8b",
+      "review_scope": "dirs::home_dir use, not XDG user directories"
+    },
+    {
+      "package": "shellexpand",
+      "version": "3.1.2",
+      "path": "src/funcs.rs",
+      "sha256": "f53c90620a4b1e9161bff68925cd363e54b8030903970ac526a4a7d2791c9031",
+      "review_scope": "home_dir context function; no XDG user directories"
+    },
+    {
+      "package": "educe",
+      "version": "0.4.23",
+      "path": "src/support_traits.rs",
+      "sha256": "dd0bc4f66fa9aea38bd37e70bdaa00f9e3db2901196ed79ca946f45ba7533bad",
+      "review_scope": "Complete sequential Trait enum and Ordinalize use"
+    },
+    {
+      "package": "educe",
+      "version": "0.4.23",
+      "path": "src/trait_handlers/debug/debug_union.rs",
+      "sha256": "36b956109d735992b272416a0af71508d3d7bd9e43484a1f06163e9142d350a7",
+      "review_scope": "Complete union generator, raw byte slice including padding, missing caller unsafe opt-in"
+    },
+    {
+      "package": "enum-ordinalize",
+      "version": "3.1.15",
+      "path": "src/big_int_wrapper.rs",
+      "sha256": "e4df28475d5e076ce6027a1bf2072683ad366525c58ca18384a17a5e6ff252a1",
+      "review_scope": "Complete ToTokens expression expansion; missing parentheses around expression plus increment"
+    },
+    {
+      "package": "enum-ordinalize-derive",
+      "version": "4.4.2",
+      "path": "src/int_wrapper.rs",
+      "sha256": "280b067d9bc0889ac678e88b269a2c44c1a14e8f9da4b293ecb6b96f7a255ba8",
+      "review_scope": "Latest 4.4.2 ToTokens reproduces same unparenthesized expression; this is a test-only candidate, not product"
+    },
+    {
+      "package": "rdrand",
+      "version": "0.9.0",
+      "path": "src/lib.rs",
+      "sha256": "45e3f8b452ef2d1ea91630d5eccefac2462ed3db486deb2c8361779802e5ae9e",
+      "review_scope": "AArch64 RNDR/RNDRRS status, Windows detection, architecture cfg, new/availability and buffer/retry implementations; selected source review, not native hardware/FFI audit"
+    },
+    {
+      "path": "vendor/tor-llcrypto/src/rng.rs",
+      "sha256": "e09e40e6b7213fbc8b6d35866f4ef5fce62fd80fe4ba0d948df35328efb8652a",
+      "review_scope": "Complete production CautiousRng and backup module; supplemental rdrand mixed with mandatory SysRng; reseeding_rng threshold fixed 1024"
+    },
+    {
+      "package": "tor-proto",
+      "version": "0.48.0",
+      "path": "src/channel/handler.rs",
+      "sha256": "c4490b1b1ec504e6bf8c27dae4e6270b28a9a3d84d0dc33c442b02bda819e470",
+      "review_scope": "NewChannelHandler u16+5 handshake, OpenChannelHandler forwarding to bounded ChannelCodec; selective review"
+    },
+    {
+      "package": "tor-cell",
+      "version": "0.48.0",
+      "path": "src/chancell/codec.rs",
+      "sha256": "c6952866f15fbda3bfd6b5bd5f4d296778832af8ee515f94964332b7623bf921",
+      "review_scope": "Complete production ChannelCodec; u16+7 variable frame or 514-byte fixed frame"
+    },
+    {
+      "package": "tor-keymgr",
+      "version": "0.48.0",
+      "path": "src/key_specifier.rs",
+      "sha256": "7da52b29da2defaabe590753b2beec4bc4a8a213b603bb9c86e657ca7bf6f591",
+      "review_scope": "ArtiPath::matches -> glob_match_with_captures"
+    },
+    {
+      "package": "tor-keymgr",
+      "version": "0.48.0",
+      "path": "src/arti_path.rs",
+      "sha256": "ef37c3d5e0c763565006f9f82655daa64915c78bb23259ccec0ea19ae63de40a",
+      "review_scope": "ArtiPath::substring uses checked str::get"
+    },
+    {
+      "package": "tor-netdoc",
+      "version": "0.48.0",
+      "path": "src/types/policy/summary.rs",
+      "sha256": "3ccf5c511429a5f15ede9ee71366158efecf76b69be29d3818701f68d24a4be3",
+      "review_scope": "IpRange instantiated with built-in Ipv4Net/Ipv6Net, not arbitrary custom TraverseState from text"
+    }
+  ],
+  "educe_union_inventory": {
+    "method": "Lexical search for explicit union declarations in src of all 17 direct educe dependents in resolved netd graph. Not an audit of all possible generated code; no native/Miri UB test.",
+    "results": [
+      {
+        "package": "arti-client",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "safelog",
+        "version": "0.10.1",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-async-utils",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-basic-utils",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-bytes",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-cell",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-chanmgr",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-circmgr",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-config",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-dirmgr",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-guardmgr",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-llcrypto",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-memquota",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-netdoc",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-proto",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-rtcompat",
+        "version": "0.48.0",
+        "union_declarations": ""
+      },
+      {
+        "package": "tor-socksproto",
+        "version": "0.48.0",
+        "union_declarations": ""
+      }
+    ]
+  },
+  "source_only_findings": [
+    {
+      "name": "rdrand",
+      "version": "0.9.0",
+      "finding": "Exact source confirms AArch64 C versus Z flag status error and Windows constant/detection concerns. Requires human/native decision, no audit or publisher trust.",
+      "reachability": "CautiousRng supplemental entropy, mandatory independent SysRng; no claim of predictable Tor output",
+      "native_reproduction": false
+    },
+    {
+      "name": "educe",
+      "version": "0.4.23",
+      "finding": "Exact 0.4.23 union Debug reads all bytes/padding without unsafe opt-in. No union declarations found in src of 17 direct consumers (lexical inventory, not proof about all generated code). Candidate 0.8.2 requires explicit Debug(unsafe) but retains raw bytes. No Miri/native UB reproduction or general audit.",
+      "native_reproduction": false
+    },
+    {
+      "name": "iprange",
+      "version": "0.6.7",
+      "finding": "Source-only soundness concern: safe public IpNet/TraverseState can supply arbitrary raw pointer to unsafe dereference in IpRangeIter::next. Current Tor consumer uses built-in Ipv4Net/Ipv6Net; no runtime text can implement a new trait. No native UB repro or general audit.",
+      "native_reproduction": false
+    }
+  ],
+  "additional_reproduction": {
+    "name": "glob-match",
+    "version": "0.2.1",
+    "finding": "Reproduced UTF-8 capture ranges [0..1,1..2] for glob ?? against é; README slicing recommendation can panic. ArtiPath::matches caller located; substring uses checked str::get. General audit/trust withheld despite resolved canonical VCS provenance.",
+    "source_file": {
+      "path": "target/netd-review-5/src/glob-match-0.2.1/src/lib.rs",
+      "sha256": "8b08e3a32e938b0d94230dc94efc787a657e7c454cfd410943f341f4577f1b35",
+      "review_scope": "Complete production implementation before cfg(test), manifests and README inspected; no audit granted"
+    },
+    "probe": "target/netd-review-5/glob-unicode.rs",
+    "output": "glob-match 0.2.1: ?? matches UTF-8 bytes; ranges [0..1, 1..2] cannot both index original str safely",
+    "exit_code": 0
+  },
+  "native_reviews": [
+    {
+      "packages": [
+        "rdrand 0.9.0"
+      ],
+      "description": "ASM/CPU feature detection and platform FFI. Source-only AArch64 defects remain; no hardware execution or full ABI review.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    },
+    {
+      "packages": [
+        "dirs-sys 0.5.0"
+      ],
+      "description": "POSIX passwd buffer/lifetime and Windows KnownFolder allocation/free/ABI not line-reviewed; XDG parser defect is a separate finding.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    },
+    {
+      "packages": [
+        "kqueue 1.2.1",
+        "kqueue-sys 1.1.2"
+      ],
+      "description": "BSD/macOS kevent layout/constants, descriptor ownership and error paths not line-reviewed or tested on native OS.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    },
+    {
+      "packages": [
+        "ring 0.17.14"
+      ],
+      "description": "Packaged C/ASM and 17 prebuilt Windows objects were not independently rebuilt, instruction-reviewed or proven equivalent to source. Previous publisher trust is not a native audit.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    },
+    {
+      "packages": [
+        "libsqlite3-sys 0.40.0",
+        "rusqlite 0.43.0 base/local fork"
+      ],
+      "description": "SQLite C, bindings and local compatibility delta not fully reviewed. Previous build/publisher provenance is not a source audit.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    },
+    {
+      "packages": [
+        "zstd-sys 2.1.3+zstd.1.5.7",
+        "zstd-safe 8.3.0"
+      ],
+      "description": "Packaged zstd C, Rust FFI ownership and system/toolchain override paths not line-reviewed; no new trust granted.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    },
+    {
+      "packages": [
+        "liblzma-sys 0.4.9",
+        "liblzma 0.4.9"
+      ],
+      "description": "Packaged XZ/liblzma 5.8.4 tree, bindings/CMake and override paths not fully reviewed; stable version.h is not an audit.",
+      "status": "требует человеческого решения",
+      "requires_human_decision": true,
+      "new_audit_or_trust": false
+    }
+  ],
+  "remaining": [
+    {
+      "name": "bitvec",
+      "version": "1.1.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Expected publisher identity agrees, but canonical Cargo.toml at the packaged VCS SHA was unavailable at both declared and former official GitHub paths (404). Do not extend family trust without resolving provenance."
+    },
+    {
+      "name": "convert_case",
+      "version": "0.10.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Prior batch reproduced custom delimiter overlap panic and established that current derive_more call sites use built-in Case only. General source review remains incomplete; latest version existence is not proof of a fix."
+    },
+    {
+      "name": "crypto-primes",
+      "version": "0.7.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Prime-generation/testing arithmetic and cryptographic resource/parameter review unfinished."
+    },
+    {
+      "name": "data-encoding",
+      "version": "2.11.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Reproduced defect; exact application/network reachability and lack of verified fixed release documented under defects. No audit, trust or exemption."
+    },
+    {
+      "name": "dirs-sys",
+      "version": "0.5.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Reproduced defect; exact application/network reachability and lack of verified fixed release documented under defects. No audit, trust or exemption."
+    },
+    {
+      "name": "educe",
+      "version": "0.4.23",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Exact 0.4.23 union Debug reads all bytes/padding without unsafe opt-in. No union declarations found in src of 17 direct consumers (lexical inventory, not proof about all generated code). Candidate 0.8.2 requires explicit Debug(unsafe) but retains raw bytes. No Miri/native UB reproduction or general audit."
+    },
+    {
+      "name": "enum-ordinalize",
+      "version": "3.1.15",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Reproduced defect; exact application/network reachability and lack of verified fixed release documented under defects. No audit, trust or exemption."
+    },
+    {
+      "name": "glob-match",
+      "version": "0.2.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Reproduced UTF-8 capture ranges [0..1,1..2] for glob ?? against é; README slicing recommendation can panic. ArtiPath::matches caller located; substring uses checked str::get. General audit/trust withheld despite resolved canonical VCS provenance."
+    },
+    {
+      "name": "iprange",
+      "version": "0.6.7",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Source-only soundness concern: safe public IpNet/TraverseState can supply arbitrary raw pointer to unsafe dereference in IpRangeIter::next. Current Tor consumer uses built-in Ipv4Net/Ipv6Net; no runtime text can implement a new trait. No native UB repro or general audit."
+    },
+    {
+      "name": "kqueue",
+      "version": "1.2.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "BSD/macOS FFI requires human decision; no full review."
+    },
+    {
+      "name": "kqueue-sys",
+      "version": "1.1.2",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "BSD/macOS ABI/constants requires human decision; no full review."
+    },
+    {
+      "name": "os_str_bytes",
+      "version": "6.6.1",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Complete production source/generated-code/unsafe review or sufficiently grounded publisher decision not completed; no audit or exemption."
+    },
+    {
+      "name": "postage",
+      "version": "0.5.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Unsafe concurrent channel/state/lifetime review unfinished."
+    },
+    {
+      "name": "rangemap",
+      "version": "1.8.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Complete production source/generated-code/unsafe review or sufficiently grounded publisher decision not completed; no audit or exemption."
+    },
+    {
+      "name": "rdrand",
+      "version": "0.9.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Exact source confirms AArch64 C versus Z flag status error and Windows constant/detection concerns. Requires human/native decision, no audit or publisher trust."
+    },
+    {
+      "name": "recvmsg",
+      "version": "1.0.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Exact publisher is the already trusted Interprocess maintainer; package has no repository field and canonical VCS source was not established. Buffer/unsafe implementation was not source-reviewed; no trust or audit added."
+    },
+    {
+      "name": "reseeding_rng",
+      "version": "0.10.7",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Complete production implementation read, including documented silent reseed failure and no fork reseed. Current Tor backup caller uses threshold 1024 and mandatory independent SysRng remains. General threshold overflow/extreme-parameter/cryptographic review and tests not completed; no new audit."
+    },
+    {
+      "name": "sanitize-filename",
+      "version": "0.6.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Reproduced defect; exact application/network reachability and lack of verified fixed release documented under defects. No audit, trust or exemption."
+    },
+    {
+      "name": "strobe-rs",
+      "version": "0.13.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Cryptographic state machine/domain-separation review unfinished."
+    },
+    {
+      "name": "typed-index-collections",
+      "version": "3.5.0",
+      "missing_criteria": [
+        "safe-to-deploy"
+      ],
+      "reason": "Complete production source/generated-code/unsafe review or sufficiently grounded publisher decision not completed; no audit or exemption."
+    }
+  ],
+  "validation": [
+    {
+      "command": "node scripts/vet-dependencies.mjs netd",
+      "exit_code": 1,
+      "status": "failed",
+      "remaining_gaps": 20,
+      "exemptions": 18,
+      "exemption_count_origin": "unchanged exact config; failure JSON lacks vetted_with_exemptions",
+      "receipt": {
+        "version": 1,
+        "scope": "netd",
+        "tool_version": "0.10.4",
+        "tool_sha256": "6ad7c8981cb2233790980f14ccbb77d1900709d063b9b46eff4e9928d2b644c3",
+        "archive_sha256": "075cd60a4146b1dd82163f82abb4e4bf0897f5f46ed56b0b9ac4f056b2554478",
+        "exit_code": 4294967295,
+        "locked_imports": true,
+        "refreshed_imports": false,
+        "input_hashes": {
+          "cargo_lock": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+          "config": "4cfaa0978c4272a29ca0d76c9b96cedb625b50f6ff21d54ef3e7dc3c7c05ee29",
+          "audits": "ce1c437ddd354633e2d9253c05f1a72d8d4465515ff943114c3cf1dc1e744f09",
+          "imports": "0511571d216d5c041116ff7a6d21fd84b21c632f410b9085a486c2debf5e3ddc"
+        },
+        "inputs_unchanged": true,
+        "status": "failed",
+        "evidence": {
+          "commit": null,
+          "run": null,
+          "attempt": null
+        }
+      }
+    },
+    {
+      "command": "cargo deny --manifest-path daemons/nw-netd/Cargo.toml check --hide-inclusion-graph",
+      "exit_code": 0,
+      "categories": [
+        "advisories ok",
+        "bans ok",
+        "licenses ok",
+        "sources ok"
+      ],
+      "warnings": "Duplicate-version warnings retained",
+      "log": {
+        "path": "target/netd-review-5/cargo-deny.log",
+        "sha256": "7d9e74c4e979c2b200e1d88f123f5729e8e17acd9b878c0460e63c15e42bba3c"
+      }
+    },
+    {
+      "command": "cargo test --workspace --locked",
+      "exit_code": 0,
+      "status": "passed",
+      "passed": 169,
+      "failed": 0,
+      "ignored": 16,
+      "log": {
+        "path": "target/netd-review-5/workspace-tests-final.log",
+        "sha256": "338e372152e29c12a1d2efef4a27d25e46a6a0850e3c73256cb2309540209f79"
+      }
+    },
+    {
+      "command": "cargo clippy --locked -- -D warnings",
+      "exit_code": 0,
+      "status": "passed",
+      "log": {
+        "path": "target/netd-review-5/clippy.log",
+        "sha256": "c961cdf01c8fc7c29925ce99e508487c7ab6f9e0eba789de5e525de8144e1cf7"
+      }
+    },
+    {
+      "command": "npm ci --ignore-scripts; npm test (extension)",
+      "exit_code": 0,
+      "passed": 24,
+      "failed": 0,
+      "log": {
+        "path": "target/netd-review-5/extension-tests.log",
+        "sha256": "be777e5acabd60ff55a60467dc052689a3ec28bc0c5fd0a611f2f9254e589fa4"
+      }
+    },
+    {
+      "command": "cargo test --manifest-path target/netd-review-5/tests/blanket-0.3.0/Cargo.toml --offline --lib",
+      "exit_code": 0,
+      "passed": 82,
+      "failed": 0,
+      "ignored": 0,
+      "log": {
+        "path": "target/netd-review-5/blanket-library-tests.log",
+        "sha256": "19a6825309e321b2e1deb248dc423e2edb90250c58e95598039376498f8293d5"
+      },
+      "limit": "Original source; reduced test-only manifest; external trybuild suites not run"
+    },
+    {
+      "command": "cargo test --manifest-path target/netd-review-5/tests/asynchronous-codec-0.7.0/Cargo.toml --offline --lib --tests --features json",
+      "exit_code": 0,
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "log": {
+        "path": "target/netd-review-5/codec-library-tests.log",
+        "sha256": "f38f00f58deacc0f79fad3d29fe2045b805f71276216ad3be8ed5f782233a60f"
+      },
+      "limit": "Original source; reduced test-only manifest; CBOR optional dependency omitted and not run"
+    },
+    {
+      "command": "cargo test --manifest-path target/netd-review-5/tests/async_executors-0.7.0/Cargo.toml --offline --test behavior --features tokio_ct,tokio_tp,tokio_timer,tokio_io,localpool,threadpool",
+      "exit_code": 0,
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "log": {
+        "path": "target/netd-review-5/executor-behavior.log",
+        "sha256": "0c16f8c4226dfb569e2bfb43f471b3d6f2fd58d2fb71f8695e94593e90706a48"
+      },
+      "limit": "Original library/build source; reduced test-only manifest; four synthetic behavior tests, other optional runtimes not executed"
+    },
+    {
+      "command": "cargo test --manifest-path target/netd-review-5/tests/enum_dispatch-0.3.13/Cargo.toml --offline --lib and 22 named upstream integration binaries",
+      "exit_code": 0,
+      "passed": 23,
+      "failed": 0,
+      "ignored": 0,
+      "log": {
+        "path": "target/netd-review-5/enum-dispatch-tests-final.log",
+        "sha256": "cfb2ba5de1c79323d66342d4290344eea1606e024fcc6adf7548c3ab4d345e85"
+      },
+      "limit": "Original source; reduced test-only manifest. arg_patterns requires removed box_patterns and async-trait obsolete nightly feature/uncached smol: explicitly excluded, no RUSTC_BOOTSTRAP"
+    },
+    {
+      "command": "cargo run --manifest-path target/netd-review-5/defects/Cargo.toml --release",
+      "exit_code": 0,
+      "log": {
+        "path": "target/netd-review-5/defect-probes-final.log",
+        "sha256": "79e383cd9bd98a14a7b60616c4579437ef1937decd1d1939301402b6f5c23f86"
+      },
+      "result": "All expected baseline and candidate defects reproduced. dirs-sys panic caught deliberately; process exits 0. Not product tests."
+    },
+    {
+      "command": "workspace leak integration suites (part of cargo test --workspace --locked)",
+      "exit_code": 0,
+      "passed": 33,
+      "failed": 0,
+      "ignored": 1,
+      "suites": [
+        {
+          "suite": "attachments",
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "bridges",
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "canaries",
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "drift_execution",
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "hard_data",
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "legacy_linkage",
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "linkcheck_pipeline",
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "paranoid",
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "suite": "remote_pipeline",
+          "passed": 14,
+          "failed": 0,
+          "ignored": 1
+        }
+      ],
+      "log": {
+        "path": "target/netd-review-5/workspace-tests-final.log",
+        "sha256": "338e372152e29c12a1d2efef4a27d25e46a6a0850e3c73256cb2309540209f79"
+      },
+      "limit": "No separate feature-resolution rebuild or special ignored native-environment tests claimed."
+    }
+  ],
+  "reproduction_sources": [
+    {
+      "path": "target/netd-review-5/defects/Cargo.toml",
+      "sha256": "aedddc5fe53e1084a090fe5a449a346dad99dd9ef8c83b0b28fab25185a48ab9",
+      "text": "[package]\nname=\"netd-review-five-defects\"\nversion=\"0.0.0\"\nedition=\"2024\"\n[workspace]\n[dependencies]\nenum_old={package=\"enum-ordinalize\",path=\"../src/enum-ordinalize-3.1.15\"}\nenum_new={package=\"enum-ordinalize\",path=\"../src/enum-ordinalize-4.4.2\"}\nenum-ordinalize-derive=\"=4.4.2\"\nsanitize_old={package=\"sanitize-filename\",path=\"../src/sanitize-filename-0.6.0\"}\nsanitize_new={package=\"sanitize-filename\",path=\"../src/sanitize-filename-0.8.0-beta\"}\ndata-encoding={path=\"../src/data-encoding-2.11.1\"}\noption-ext=\"=0.2.0\"\n"
+    },
+    {
+      "path": "target/netd-review-5/defects/src/main.rs",
+      "sha256": "956308d660f453669cf43704d6ed7b03310a4d9b1fe40ea8414f702d323fbd54",
+      "text": "extern crate enum_new as enum_ordinalize;\nuse enum_new::Ordinalize as _;\n#[derive(enum_old::Ordinalize)] #[repr(u8)] enum Old { First=1<<2, Next }\n#[derive(enum_new::Ordinalize,Debug,PartialEq)] #[repr(u8)] enum New { First=1<<2, Next }\nmod portable {\n    pub trait OsStringExt { fn from_vec(bytes:Vec<u8>)->Self; }\n    impl OsStringExt for std::ffi::OsString {\n        fn from_vec(bytes:Vec<u8>)->Self { assert!(bytes.is_ascii()); String::from_utf8(bytes).unwrap().into() }\n    }\n}\nmod ported_dirs;\nfn main(){\n    assert_eq!(Old::Next as u8,5);assert_eq!(Old::Next.ordinal(),8);assert!(Old::from_ordinal(5).is_none());\n    println!(\"enum-ordinalize 3.1.15: actual=5 derived=8 from_ordinal(5)=None\");\n    println!(\"enum-ordinalize 4.4.2 / derive 4.4.2: actual={} derived={} roundtrip={:?}\",New::Next as u8,New::Next.ordinal(),New::from_ordinal(5));\n    assert_eq!(New::Next.ordinal(),8);assert_eq!(New::from_ordinal(5),None);\n    let name=format!(\"{}.x\",\"a\".repeat(254));\n    let old=sanitize_old::sanitize_with_options(&name,sanitize_old::Options{windows:true,truncate:true,replacement:\"\"});\n    assert_eq!(old.len(),255);assert!(old.ends_with('.'));assert!(!sanitize_old::is_sanitized_with_options(&old,sanitize_old::OptionsForCheck{windows:true,truncate:true}));\n    println!(\"sanitize-filename 0.6.0: length=255 trailing_dot=true own_check=false\");\n    let new=sanitize_new::sanitize_with_options(name.clone(),sanitize_new::Options{windows:true,truncate:true,replacement:\"\"});\n    println!(\"sanitize-filename 0.8.0-beta: length={} trailing_dot={} own_check={}\",new.len(),new.ends_with('.'),sanitize_new::is_sanitized_with_options(&new,sanitize_new::OptionsForCheck{windows:true,truncate:true}));\n    assert_eq!(new.len(),255);assert!(new.ends_with('.'));\n    for key in [\"guards\",\"circuit_timeouts\"] {assert_eq!(sanitize_old::sanitize(key),key);}\n    let mut bad=data_encoding::HEXLOWER;bad.0=vec![0xF6;514].into();\n    let output=bad.encode(&[1,2,3,4]);assert!(std::str::from_utf8(output.as_bytes()).is_err());\n    println!(\"data-encoding 2.11.1: safe public field mutation -> invalid UTF-8 String\");\n    let file=std::path::Path::new(\"target/netd-review-5/synthetic-user-dirs.dirs\");\n    std::fs::write(file,b\"XDG_MUSIC_DIR=\\\"\").unwrap();\n    let panics=std::panic::catch_unwind(||ported_dirs::all(std::path::Path::new(\"/synthetic-home\"),file)).is_err();assert!(panics);\n    println!(\"dirs-sys 0.5.0: single double quote panics; exact parser + ASCII-only OsStringExt portability shim\");\n}\n"
+    },
+    {
+      "path": "target/netd-review-5/tests/async_executors-0.7.0/tests/behavior.rs",
+      "sha256": "d905e55eaa191a539f95d9e69f78fd3086e4401d419bf23ffc134df394bed16a",
+      "text": "use async_executors::{LocalSpawnHandleExt, SpawnHandleExt, TimerExt};\nuse std::{future::pending, sync::{Arc, atomic::{AtomicBool, Ordering}}, time::Duration};\n\n#[test]\nfn local_future_keeps_rc_on_owning_thread() {\n    let exec=async_executors::TokioCt::new().unwrap();\n    exec.block_on(async {\n        let data=std::rc::Rc::new(42);\n        let h=exec.spawn_handle_local(async move { *data }).unwrap();\n        assert_eq!(h.await,42);\n    });\n}\n\n#[tokio::test]\nasync fn drop_cancels_after_first_poll() {\n    struct Mark(Arc<AtomicBool>);\n    impl Drop for Mark { fn drop(&mut self){self.0.store(true,Ordering::SeqCst);} }\n    let flag=Arc::new(AtomicBool::new(false));\n    let (started,wait)=tokio::sync::oneshot::channel();\n    let mark=Mark(flag.clone());\n    let exec=async_executors::TokioCt::try_current().unwrap();\n    let h=exec.spawn_handle(async move {let _mark=mark;started.send(()).unwrap();pending::<()>().await;}).unwrap();\n    wait.await.unwrap();drop(h);\n    tokio::time::timeout(Duration::from_secs(2),async {while !flag.load(Ordering::SeqCst){tokio::task::yield_now().await;}}).await.unwrap();\n}\n\n#[tokio::test]\nasync fn detach_preserves_task_and_output() {\n    let (send,receive)=tokio::sync::oneshot::channel();\n    let (finished,done)=tokio::sync::oneshot::channel();\n    let exec=async_executors::TokioCt::try_current().unwrap();\n    exec.spawn_handle(async move {finished.send(receive.await.unwrap()).unwrap();}).unwrap().detach();\n    send.send(17).unwrap();\n    assert_eq!(tokio::time::timeout(Duration::from_secs(2),done).await.unwrap().unwrap(),17);\n}\n\n#[test]\nfn timeout_reports_expiry_and_ready_value() {\n    let exec=async_executors::TokioTp::new().unwrap();\n    exec.block_on(async {\n        assert_eq!(exec.timeout(Duration::from_secs(1),async {42}).await.unwrap(),42);\n        assert!(exec.timeout(Duration::from_millis(1),pending::<()>()).await.is_err());\n    });\n}\n"
+    },
+    {
+      "path": "target/netd-review-5/tests/async_executors-0.7.0/Cargo.toml",
+      "sha256": "1e426235d4acc8c3c58ad422b36d3c8e5c9f4d0edb7e9f0472df1dcd03d99897",
+      "text": "[package]\nname=\"async_executors\"\nversion=\"0.7.0\"\nedition=\"2021\"\n[workspace]\n[dependencies]\nblanket={path=\"../blanket-0.3.0\"}\npin-project=\"=1.2.0\"\nfutures-core=\"=0.3.34\"\nfutures-task=\"=0.3.34\"\nfutures-util={version=\"=0.3.34\",features=[\"channel\"]}\ntokio={version=\"=1.54.1\",features=[\"rt-multi-thread\",\"macros\",\"time\",\"net\",\"process\",\"sync\"]}\nfutures-executor={version=\"=0.3.34\",features=[\"thread-pool\"]}\n[build-dependencies]\nrustc_version=\"=0.4.1\"\n[dev-dependencies]\nstatic_assertions=\"=1.1.0\"\n[features]\ndefault=[\"notwasm\"]\nnotwasm=[]\ntokio_ct=[]\ntokio_tp=[]\ntokio_timer=[]\ntokio_io=[]\ntimer=[]\nthreadpool=[]\nlocalpool=[]\nasync_global=[]\nasync_std=[]\nglommio=[]\nbindgen=[]\ntracing=[]\n"
+    },
+    {
+      "path": "target/netd-review-5/tests/blanket-0.3.0/Cargo.toml",
+      "sha256": "f787c3e1d02373dff292c0ee25fe41e30aae6ccc50739e6a562820673f1cdfa3",
+      "text": "[package]\nname=\"blanket\"\nversion=\"0.3.0\"\nedition=\"2018\"\n[lib]\nproc-macro=true\n[dependencies]\nproc-macro2=\"=1.0.107\"\nquote=\"=1.0.47\"\nsyn={version=\"=2.0.119\",features=[\"full\",\"extra-traits\"]}\n[features]\n_doc=[]\n[workspace]\n"
+    },
+    {
+      "path": "target/netd-review-5/tests/asynchronous-codec-0.7.0/Cargo.toml",
+      "sha256": "b5f22be503d43225be08bf4eaa4ffc624e2939f77a3d2e1a3460c8feac8e54b1",
+      "text": "[package]\nname=\"asynchronous-codec\"\nversion=\"0.7.0\"\nedition=\"2018\"\n[dependencies]\nbytes={version=\"=1.12.2\"}\nfutures-sink={version=\"=0.3.34\"}\nfutures-util={version=\"=0.3.34\",features=[\"io\"]}\nmemchr={version=\"=2.8.3\"}\npin-project-lite={version=\"=0.2.18\"}\nserde={version=\"=1.0.229\",features=[\"derive\"],optional=true}\nserde_json={version=\"=1.0.154\",optional=true}\n[dev-dependencies]\nfutures=\"=0.3.34\"\n[features]\njson=[\"serde\",\"serde_json\"]\ncbor=[]\n[workspace]\n"
+    },
+    {
+      "path": "target/netd-review-5/tests/enum_dispatch-0.3.13/Cargo.toml",
+      "sha256": "b8624d49ad9e80225b08cfeff6d8928d95ff6ded20bf43cb5d4c15eab4f3a2e8",
+      "text": "[package]\nname=\"enum_dispatch\"\nversion=\"0.3.13\"\nedition=\"2018\"\n[lib]\nproc-macro=true\n[workspace]\n[dependencies]\nonce_cell={version=\"=1.21.4\"}\nproc-macro2={version=\"=1.0.107\"}\nquote={version=\"=1.0.47\"}\nsyn={version=\"=2.0.119\",features=[\"full\"]}\n[dev-dependencies]\nserde={version=\"=1.0.229\",features=[\"derive\"]}\nserde_json=\"=1.0.154\"\n"
+    },
+    {
+      "path": "target/netd-review-5/glob-unicode.rs",
+      "sha256": "f8c2345050edecf00a7fd7a331e311ca59eb23bde02d0a2a80dc4ebd7aa7bb6c",
+      "text": "﻿extern crate glob_match;\nfn main(){let path=\"é\";let ranges=glob_match::glob_match_with_captures(\"??\",path).unwrap();assert_eq!(ranges,vec![0..1,1..2]);assert!(ranges.iter().any(|r|path.get(r.clone()).is_none()));println!(\"glob-match 0.2.1: ?? matches UTF-8 bytes; ranges {:?} cannot both index original str safely\",ranges);}\r\n"
+    }
+  ],
+  "lockfiles": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "6a8b1f7bd79c70be14f94ba7430e80e427a0683a30db804660dcf22ed70c595a",
+      "unchanged": true
+    },
+    {
+      "path": "app/src-tauri/Cargo.lock",
+      "sha256": "a2eeed10d769a05ff0a9c7843708ec86c58d5cb08cf24a93d2236eaa38041e17",
+      "unchanged": true
+    },
+    {
+      "path": "daemons/nw-netd/Cargo.lock",
+      "sha256": "024fcec53eb5c2db26d9c9e2d18aaf53b79872729e8f4a9e819e4333c1d41f84",
+      "unchanged": true
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "sha256": "a23650c51d47119096697881b5abdc179a7851a5493e3ac2821de8aa3798fac6",
+      "unchanged": true
+    }
+  ],
+  "integrity_checks": {
+    "all_four_lockfiles_unchanged": true,
+    "config_and_exemptions_unchanged": true,
+    "new_exemptions": 0,
+    "external_imported_audit_text_unchanged": true,
+    "implementation_only_netd_section_changed": true,
+    "criterion": "safe-to-deploy",
+    "gate_and_ADR_0073_unchanged": true,
+    "application_code_changed": false,
+    "other_graphs_changed": false
+  },
+  "infrastructure_events": [
+    {
+      "event": "Initial workspace test started after Perl bootstrap but before local libclang was prepared. Failed with missing libclang; final rerun dot-sourced build-env after successful pinned libclang bootstrap.",
+      "initial_exit_code": 101
+    },
+    {
+      "event": "Initial source test manifests could not resolve unused optional/dev dependencies offline. Reduced manifests only in target retained original production code and selected exact netd dependency versions; limits disclosed per test."
+    },
+    {
+      "event": "Initial latest-enum harness used a renamed dependency without the canonical crate alias, causing setup compile error; corrected alias before measurements. Then an assertion expecting a fix failed on both latest derive versions; final probe asserts/document the actual reproduced defect, not a successful fix."
+    },
+    {
+      "event": "Initial executor behavior fixture lacked Tokio sync feature; added to test-only manifest before the four successful tests."
+    },
+    {
+      "event": "Initial appended store was rejected as unformatted. No valid gap count was produced (an early local helper displayed 0 for absent failures; these are not measurements). Restored only own appended blocks after matching baseline SHA, formatted with pinned cargo-vet, and reran every sequential checkpoint: 25,24,23,22,21,20."
+    },
+    {
+      "event": "First full enum_dispatch upstream suite rejected obsolete nightly-only async-trait; subsequent attempt rejected removed box_patterns in arg_patterns. Both excluded explicitly, production and retained test source unchanged; 23 tests passed. No RUSTC_BOOTSTRAP."
+    }
+  ],
+  "execution": "Local Windows x86_64; Rust 1.100.0; cargo-vet pinned 0.10.4; CARGO_BUILD_JOBS=4 for Cargo test/clippy; pinned Perl/libclang bootstraps and build-env. Not CI. No push. Human native/FFI review remains open."
+}

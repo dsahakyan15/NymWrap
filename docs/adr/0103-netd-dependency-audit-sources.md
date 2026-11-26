@@ -680,50 +680,79 @@ Git blob SHA-1 официального winapi-rs на commit
 
 ### Требуют обновления
 
-Следующие дефекты точных активных пакетов воспроизведены в отдельном
-синтетическом harness в `target/`, без изменения продукта. **Достижимость
-пакета не означает доказанную возможность эксплуатации из NymWrap.** Поэтому
-ниже отдельно указаны ограничения call-site вывода; source audits и exemptions
-этим активным пакетам не добавлены.
+Уточнение пятой партии от `79e0aa6`, 2026-11-26. Все четыре дефекта
+повторены в изолированном release-harness с синтетическими данными.
+Процесс во всех runtime-путях — **nw-netd**, Arti встроен в него, отдельного
+процесса arti нет. Проверка различает недоверенные операнды и возможность
+сформировать **именно дефектный вход**; наличие пакета в сетевом демоне
+само по себе такой возможности не доказывает.
 
-| Пакет | Воспроизведение | Граница вывода |
-|---|---|---|
-| data-encoding 2.11.1 | Safe `Encoding.0` заменяется на `[0xF6; 514]`; release `encode` создаёт String, чьи bytes не проходят UTF-8 validation | Пакет активен; возможность входным сетевым текстом изменить Encoding.0 в NymWrap не установлена |
-| sanitize-filename 0.6.0 | 254 `a` + `.x`, Windows/truncate: результат 255 bytes оканчивается точкой и отвергается собственным is_sanitized | tor-persist добавляет `.json` и использует свои keys; конкретный trigger в приложении не установлен, path traversal не заявляется |
-| enum-ordinalize 3.1.15 | `#[repr(u8)] enum { First = 1 << 2, Next }`: discriminant Next равен 5, ordinal равен 8, from_ordinal(5) даёт None | Активный proc-macro через educe; найденный educe Trait enum последовательный, без этого выражения |
-| dirs-sys 0.5.0 | Файл `XDG_MUSIC_DIR="` вызывает slice panic 1..0 через public all() | На Windows заменён **только** импорт Unix OsStringExt на раскрытый checked ASCII shim; тело Linux-парсера не менялось. Нативный Linux запуск и triggering caller NymWrap не заявляются |
+| Крейт | Процесс и путь вызова | Достижимость дефектного входа из сети | Исправленная версия | Риск в текущем продукте |
+|---|---|---|---|---|
+| data-encoding 2.11.1 | nw-netd `Tor::bootstrap_with_bridges/exchange` → Arti; прямые потребители — tor-hscrypto `src/pk.rs` (`HsId::from_str`, форматирование HsId/ключей) и optional tor-keymgr `keystore/ctor/client.rs::parse_client_keypair` | **Нет найденного пути к подмене Encoding.0.** Эти callers используют фиксированный `BASE32_NOPAD`; строка адреса/ключа является операндом encode/decode, не таблицей кодировки. Воспроизведение требует программно заменить public `Encoding.0` на 514 байтов 0xF6, после чего encode создаёт невалидный UTF-8 String. Сетевые данные не записываются в это поле | Не подтверждена: свежий реестр по-прежнему сообщает latest 2.11.1 | **Средний**: дефект soundness с потенциальным UB, но удалённый trigger в проверенных callers отсутствует. Не выдавать общий аудит; переоценить при динамической/десериализуемой таблице |
+| sanitize-filename 0.6.0 | nw-netd: authenticated Initialize в `server.rs` → `Tor::bootstrap_with_bridges` → `TorClient::create_bootstrapped` → `FsStateMgr` → GuardMgr/CircMgr storage handle → `tor-persist::fs::FsStateMgr::rel_filename` | **Нет.** Имена — короткие константы `guards` и `circuit_timeouts`; также фиксированная `vanguards` в соответствующем feature-пути. Сеть влияет на содержимое сохраняемого состояния, не ключ. Затем добавляется `.json`. Дефект требует 254 `a` + `.x`: усечение до 255 bytes оставляет точку. Не заявляется path traversal | Не подтверждена: stable latest 0.6.0; в **0.8.0-beta тот же harness также даёт trailing dot и false от собственного is_sanitized** | **Низкий** для текущих констант; общий sanitizer остаётся непокрытым |
+| enum-ordinalize 3.1.15 | **Сборка nw-netd**, не runtime: Arti → educe proc-macro → `educe/src/support_traits.rs::Trait` → Ordinalize. Генератор исполняется в rustc proc-macro host | **Нет.** Единственный прямой consumer — educe; его Trait — последовательный enum без выражений discriminant. Недоверенный HTTP/Tor-текст не становится Rust-синтаксисом. Для `First=1<<2, Next` генератор выпускает `1<<2+1` без скобок: discriminant 5, ordinal 8, from_ordinal(5)=None | Не подтверждена: повторено с **enum-ordinalize 4.4.2 + enum-ordinalize-derive 4.4.2**; сочетание с derive 4.4.1 тоже не исправляет. Просмотр `int_wrapper.rs` подтвердил сохранённое `quote!(#expr +)` | **Низкий** в текущей сборке; обновление только номера версии не решает проверенный дефект |
+| dirs-sys 0.5.0 | nw-netd → Arti config resolver → directories `BaseDirs/ProjectDirs` → dirs-sys `home_dir`; дополнительно fs-mistrust/shellexpand → dirs `home_dir`. Дефектный Linux путь: `UserDirs::new`/dirs user-directory getter → `user_dirs/user_dir` → `xdg_user_dirs::{all,single}::parse_user_dirs` | **Нет.** Полный просмотр прямых consumers показал BaseDirs/ProjectDirs/home_dir, без вызовов UserDirs или XDG user-directory getters. Они не читают `user-dirs.dirs`. Trigger — локальный файл с единственной двойной кавычкой `XDG_MUSIC_DIR="`, не сетевой ответ; даже при добавлении такого caller нужен локальный файл | Не подтверждена: latest 0.5.0, дефект сохранён в закреплённом парсере | **Низкий** для текущего пути; возможен локальный DoS при будущем использовании UserDirs. FFI пакета требует отдельного человеческого решения |
 
-JSON содержит исходный harness, SHA логов, SHA исходного и ported файла,
-точную единственную замену и результаты. Неудачная первая компиляция harness
-из-за опечатки имени Base16 constant исправлена до этих замеров и не названа
-ошибкой зависимости.
+Это source/call-site анализ, а не динамический taint-анализ или доказательство
+отсутствия всех иных уязвимостей. Четырём пакетам **не добавлены** source
+audits, publisher trust или exemptions. Нет оснований назначить высокий
+сетевой риск именно этим четырём triggers; если появится путь от
+недоверенных сетевых данных к trigger, оценка становится **высокой**.
 
-Проверен текущий реестр: data-encoding latest остаётся 2.11.1; у
-sanitize-filename latest stable остаётся 0.6.0 (есть 0.8.0-beta). Для
-enum-ordinalize есть 4.4.2. **Исправляющий релиз ни для одного дефекта здесь не
-подтверждён исходным просмотром и повторным тестом**; обновление или локальная
-правка требуют отдельной задачи. Версии в продукте не менялись.
+Для dirs-sys на Windows заменён только импорт Unix OsStringExt на раскрытый
+ASCII-only portability shim; тело парсера и public all() совпадают с архивом.
+Native Linux выполнение не заявляется. SHA исходного/ported файлов, полный
+harness, SHA логов, exact-version registry/release metadata и перечень
+прочитанных call-site файлов — в
+[отчёте пятой партии](../../supply-chain/netd/review-2026-11-26-fifth.json).
+Candidate-архивы распаковывались только в target; версии продукта не менялись.
 
-Есть ещё два source-only препятствия, без заявления о нативном воспроизведении:
+Два прежних source-only препятствия заново проверены по точным исходникам:
 
-- **rdrand 0.9.0:** в AArch64 RNDR/RNDRRS status используется `cset ... cs`,
-  хотя приведённые в самом коде NZCV success/failure различаются Z, а C равен
-  нулю в обоих случаях. Это статический вывод, не аппаратный тест. Windows
-  detection задаёт 33 для флага, которому
-  [Microsoft документирует 34](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-isprocessorfeaturepresent).
-  Нужны исправление/объяснение и нативная AArch64 проверка; latest также 0.9.0.
-  Tor смешивает этот дополнительный источник с другими; предсказуемость его
-  итогового RNG не заявляется.
-- **educe 0.4.23:** Debug union generator читает весь union как bytes,
-  потенциально включая uninitialized padding, как в
-  [upstream issue 45](https://github.com/magiclen/educe/issues/45).
-  Miri/нативный UB repro и triggering union в NymWrap не установлены.
-  Наличие latest 0.8.2 не подтверждает исправление pinned-релиза.
+- **rdrand 0.9.0:** `arch::rand/seed` читает RNDR/RNDRRS и использует
+  `cset ... cs`, затем инвертирует результат. Приведённые в исходнике NZCV
+  0000/0100 различаются Z, а C=0 в обоих: код сообщает success даже для
+  отказа. Это статический вывод, **не аппаратное воспроизведение AArch64**.
+  Windows `has_rand` подставляет 33 для константы, которой
+  [Microsoft указывает 34](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-isprocessorfeaturepresent);
+  проверка atomic instructions сама по себе также не доказывает FEAT_RNG.
+  Реальный caller — vendor/tor-llcrypto `rng.rs::CautiousRng::try_fill_bytes`:
+  только дополнительная энтропия в Shake256; независимый SysRng обязателен и
+  при отказе вызывает panic. Предсказуемость итогового RNG не заявляется.
+  Latest остаётся 0.9.0; нужны решение по ASM/feature detection и нативные
+  AArch64 проверки. Общий аудит/доверие не выданы.
+- **educe 0.4.23:** `debug_union.rs` действительно формирует
+  `from_raw_parts(self as *const Self as *const u8, size_of::<Self>())` и
+  форматирует потенциально неинициализированные bytes/padding без unsafe
+  opt-in у вызывающего derive. Поиск явных объявлений union в src 17 прямых
+  consumers netd не нашёл совпадений; triggering union не установлен.
+  Это не аудит всех возможных генераторов union. Это генератор во время
+  сборки; сеть не может добавить union после компиляции. В candidate
+  **0.8.2** генератор требует `Debug(unsafe)`, но само чтение bytes
+  сохранено: это явное переложение контракта на автора union, не обещание
+  безопасно форматировать произвольный union. Не считать закрытый
+  [upstream issue 45](https://github.com/magiclen/educe/issues/45) или новый
+  номер версии полным исправлением. Miri/native UB reproduction не проводился.
 
-Старый convert_case 0.10.0 также остаётся без общего аудита: прошлый panic
-custom delimiter не вызывается текущими built-in Case call sites; наличие
-latest 0.12.0 само по себе не доказывает исправление. Ничего из этого не
-превращено в trust ради уменьшения счётчика.
+Дополнительно не сертифицированы:
+
+- **iprange 0.6.7:** source-only soundness проблема — публичные безопасные
+  `IpNet/TraverseState` позволяют пользовательской реализации возвратить
+  произвольный `*const IpTrieNode`, а `IpRangeIter::next` разыменовывает
+  его в unsafe. Trait не unsafe и не sealed; PhantomData не проверяет этот
+  контракт. Текущий tor-netdoc `types/policy/summary.rs` использует штатные
+  Ipv4Net/Ipv6Net: сетевой документ не создаёт новую реализацию Rust trait.
+  Нативное UB-воспроизведение не заявляется; общий аудит не выдан.
+- **glob-match 0.2.1:** `glob_match_with_captures("??", "é")` возвращает
+  `[0..1, 1..2]`; оба диапазона нельзя использовать для str slices, как
+  предлагает README. Воспроизведено без разыменования недопустимого str.
+  Caller tor-keymgr `ArtiPath::matches` найден; `ArtiPath::substring`
+  применяет checked `str::get`. Удалённый panic в NymWrap не доказан.
+  Происхождение exact archive разрешено по официальному VCS, но найденный
+  API-дефект не превращён в publisher trust ради счётчика.
+- Старый **convert_case 0.10.0**: прежний panic custom delimiter не вызывается
+  текущими built-in Case call sites; общего аудита по-прежнему нет.
 
 ### Итог проверок и остановка партии
 
@@ -749,3 +778,92 @@ recvmsg, контейнеры и concurrency. У bitvec 1.1.1 не разреш�
 на VCS SHA по текущему/прежнему официальным GitHub paths; у recvmsg нет
 repository metadata, canonical VCS source не установлен. Доверие им не
 угадывалось. Работа остановлена с явным остатком, без полного закрытия 109.
+
+## Продолжение от 79e0aa6: шесть закрытых пробелов и достижимость дефектов
+
+2026-11-26, ветка `agent/vet-netd-5` от merge `a1f6894`.
+Результат: **26 → 20 пробелов**, по шагам **25, 24, 23, 22, 21, 20**.
+Все **18 прежних exemptions сохранены**, новых нет. Критерий продукта —
+`safe-to-deploy`; config/policies, внешние imports, версии, манифесты и
+все Cargo.lock не менялись. Store netd дополнен четырьмя исходными аудитами
+и двумя решениями о доверии публикатору. Каждый шаг измерен прежним locked
+wrapper после штатного форматирования закреплённым cargo-vet 0.10.4.
+
+Все 26 exact archives заново сверены с netd Cargo.lock, sparse index и свежим
+crates.io API (uploader/date/checksum/non-yank); прочитанные исходники извлечены
+из этих архивов. Registry-запросы шли последовательно с паузами и кэшем,
+без новых imports или предположений об uploader.
+
+### Четыре исходных аудита агента
+
+Каждая запись имеет пометку **«проверено агентом, не человеком»**, SHA-256
+архива, точный перечень файлов/областей просмотра и SHA каждого файла в JSON.
+Это не независимый человеческий аудит и не сертификация зависимостей пакета.
+
+| Пакет | Полный просмотр production-кода | Проверка и ограничения |
+|---|---|---|
+| blanket 0.3.0 | Девять модулей: разбор атрибутов, Box/Ref/Mut/Rc/Arc forwarding, default-module delegation, generics/signature helpers, сгенерированные вызовы и заимствования | 82 исходных library tests; unsupported syntax может завершить сборку ошибкой/panic, runtime-текст макрос не исполняет. Внешние trybuild suites не запускались |
+| async_executors 0.7.0 | Все 19 src modules и build.rs: static/Send, Rc/Arc/runtime flavor, cancel/drop/detach, remote/blocking handles, pinning, timers/yield, optional backend branches | Четыре synthetic tests: local !Send, cancel-on-drop, detach, ready/expired timeout; Tokio current/multithread и futures pools скомпилированы. Остальные backend branches не исполнялись. Drop cancellation кооперативен, blocking-task не отменяется |
+| asynchronous-codec 0.7.0 | Все 13 модулей: framing/EOF/errors, буферы, projection, partial write/flush/close, borrowed Encoder и JSON/CBOR | 14 upstream tests с JSON; CBOR source-reviewed, не запущен. Сам adapter не задаёт size/work limit; встроенные codecs требуют лимитов caller. Arti применяет собственный bounded u16 channel codec (initial header 5 bytes, обычный 7; fixed cell 514). LengthCodec u64→usize не является переносимой проверкой протокола для 32-bit targets |
+| enum_dispatch 0.3.13 | Все десять модулей: typed parsing/quoting, cache locks, generics/argument hygiene, ownership/cfg, match dispatch, async, From/TryInto, Self return | 23 upstream tests в 22 integration binaries. async-trait требует отвергаемый stable feature и отсутствующий smol; arg_patterns использует удалённый box_patterns — оба явно исключены без RUSTC_BOOTSTRAP. Unsafe trait forwarding требует проверки инварианта автором trait |
+
+Тестовые копии сохраняют production source bytes; сокращённые манифесты
+только в target убирают недоступные test-only/optional зависимости и используют
+точные версии соответствующих зависимостей netd. Это раскрыто в JSON вместе
+с первыми неуспешными попытками; продуктовые манифесты не переписывались.
+
+### Два узких доверия публикаторам
+
+| Пакет | Identity / UTC окно | Основание production trust |
+|---|---|---|
+| slotmap 1.1.1 | orlp, user-id 24326; 2025-12-06 → 2025-12-07 | Exact uploader/current owner и original manifest совпадают с официальным VCS commit. Опыт Orson Peters с production algorithms независимо подтверждён [документацией Rust slice](https://doc.rust-lang.org/std/primitive.slice.html); official profile связывает его с slotmap/другими data structures. Явное доверие unsafe ownership, generations, drop/unwind, serde и mutable access; это эвристика сопровождения, не вывод, что sort является аудитом slotmap |
+| imara-diff 0.2.0 | pascalkuthe, user-id 91593; 2025-06-14 → 2025-06-15 | Exact uploader/current owner и original manifest совпадают с официальным VCS commit; [Helix diff implementation](https://github.com/helix-editor/helix/pull/3890) подтверждает работу Pascal Kuthe с этим направлением как MEMBER. Доверие bounds/unsafe токенизации/Myers/histogram на недоверенном вводе; ограничение 2^31−2 tokens и лимиты работы остаются за caller |
+
+Обе записи относятся только к соответствующему пакету и историческому окну.
+Это **publisher trust для safe-to-deploy**, не независимый исходный аудит.
+В imports.lock добавлены только два publisher-блока из свежих API-ответов;
+внешние audit-блоки не изменились. Immutable VCS SHA, URL/SHA ответов и честное
+обоснование/ограничения находятся в JSON. Репутация сама по себе не выдаётся
+за доказательство безопасности точного релиза.
+
+### Native/FFI: требует человеческого решения
+
+**Требует человеческого решения** каждый из следующих не завершённых
+построчных native/FFI просмотров. Нового доверия или исходного аудита для них
+эта партия не добавляет. Прежние publisher-записи остаются историческим
+решением о сопровождении и **не заменяют** это требование M6.
+
+| Область netd | Что остаётся проверить человеком |
+|---|---|
+| rdrand 0.9.0 | AArch64 ASM status/feature detection и ABI системных probes; исправление/объяснение найденных source-only дефектов и аппаратные проверки |
+| dirs-sys 0.5.0 | POSIX passwd buffers/pointers и Windows KnownFolder allocation/free/ABI; XDG-ошибка описана отдельно |
+| kqueue 1.2.1 / kqueue-sys 1.1.2 | BSD/macOS kevent layout, target constants, descriptor lifetime/ownership и error paths; на этой Windows-машине не проверены |
+| ring 0.17.14 | C/ASM и 17 поставляемых Windows object files; ни построчный/инструкционный аудит, ни воспроизводимая эквивалентность объектов исходникам не выполнены |
+| libsqlite3-sys 0.40.0 / rusqlite 0.43.0 base и local fork | SQLite C, bindings и локальная compatibility-разница; известное происхождение архива/публикатор не является построчным аудитом |
+| zstd-sys 2.1.3+zstd.1.5.7 / zstd-safe 8.3.0 | Вложенный zstd C, Rust/FFI ownership и системные overrides; только прежний build-script/publisher review |
+| liblzma-sys 0.4.9 / liblzma 0.4.9 | Полный вложенный XZ/liblzma 5.8.4, bindings, CMake/toolchain и системные overrides; stable version.h не доказывает безопасность дерева |
+
+recvmsg 1.0.0 остаётся отдельным unsafe-buffer пробелом: корректность
+инициализации/роста MsgBuf и lifetime не проверена полностью, canonical VCS
+по package metadata не установлен. Для остальных непокрытых контейнеров,
+генераторов и crypto (включая crypto-primes/strobe-rs) нет заявления о полном
+аудите. Честный остаток всех 20 версий и причины — в JSON.
+
+### Проверки пятой партии
+
+- `node scripts/vet-dependencies.mjs netd`: **failed, 20 gaps**, locked
+  imports, inputs unchanged. Отдельно **18 exemptions** в неизменённом config;
+  failure JSON cargo-vet не перечисляет vetted_with_exemptions, поэтому их
+  число посчитано по exact config, не выведено из отсутствующего поля JSON.
+- `cargo deny --manifest-path daemons/nw-netd/Cargo.toml check --hide-inclusion-graph`:
+  exit 0, advisories/bans/licenses/sources ok; duplicate warnings сохранены.
+- `cargo test --workspace --locked`: exit 0, **169 passed / 16 ignored**;
+  в том числе девять leak suites: **33 passed / 1 ignored**.
+- `cargo clippy --locked -- -D warnings`: exit 0.
+- Расширение: `npm ci --ignore-scripts` и `npm test`, exit 0, **24/24**.
+  SHA логов и ограничения проверок — в JSON; это локальные Windows результаты,
+  не CI.
+
+Runtime-код, сетевая граница и видимое пользователю поведение не менялись.
+Новых canary tests не требуется для неизменённого runtime; leak suites входят
+в workspace verification. Gate/ADR 0073 не менялись, M6 остаётся открытым.
