@@ -46,44 +46,55 @@ preflight в 24 часа не входит. Это 24 часа с перезап
 
 ## cargo-vet: граф desktop
 
-2026-11-26: предыдущие проходы дали **514 → 343 → 292 пробела**; третий
-проход от a1cb2f1 — **292 → 100 → 89**, закрыто ещё **203**.
-safe-to-deploy сохранён, exemptions нет, версии и все Cargo.lock неизменны.
+2026-11-26: история **514 → 343 → 292 → 89**; четвёртый проход от `2791eb5`
+в `agent/vet-desktop-4` дал **89 → 10 → 9 пробелов**. Добавлены **77 решений
+доверия 60 identities**, **2 source audits** и **1 точечное exemption**.
+Критерий `safe-to-deploy`, версии, все tracked Cargo.lock и другие графы сохранены.
 
-Все 292 публикации сгруппированы по точному публикатору и типу; archive SHA
-сверены с exact-version API, sparse index и desktop lockfile, yank исключён.
-Для 192 выбранных версий рассмотрены официальные project/release identities;
-добавлено 190 однодневных исторических trusted-записей (55 identities,
-39 групп), две уже существовали. Крупные семейства — GTK/GNOME, Tauri,
-ICU4X, objc2, Servo, PHF, wasm-bindgen и zbus. Это обоснованное product
-maintainer trust с границами для unsafe/FFI/generated code, не собственные
-аудиты этих семейств. Последние commits audit-файлов всех шести imports
-совпадают с закреплёнными: новых imports нет, desktop config.toml сохранён.
+У каждой новой записи — «Проверено агентом, не человеком», SHA архива,
+прочитанный материал и ограничения. Registry evidence повторно взято из
+закоммиченного третьего отчёта; архивы сверены с desktop lockfile и cached
+sparse index. Publisher snapshots обновлены cargo-vet и сверены с решениями.
+77 однодневных записей — product publisher trust, не независимые построчные
+проверки этих пакетов. Source pins шести imports и их audit sections сохранены.
 
-Затем добавлено 11 собственных полных production source audits с явным
-«проверено агентом, не человеком», SHA архива и перечнем прочитанного:
-android_system_properties, cesu8, dirs, dtoa-short, endi, idna_adapter,
-new_debug_unreachable, secrecy, static_vcruntime, tower-layer, tower-service.
-Файлы побайтно сверены с архивами. Прошли 15 upstream tests и synthetic
-проверки Unicode/ошибок/округления/secret cleanup, в том числе release
-dtoa-short. Ограничения serde/Android/platform execution описаны честно.
+Собственные аудиты: `version-compare 0.2.1` (весь production-код;
+best-effort ordering, ограничения CPU и build-time consumer отражены в notes)
+и `foreign-types-macros 0.2.4` (все source modules и generated unsafe contracts).
+Прошли **30 upstream tests**, Unicode/overflow/bounds probe и synthetic
+owner/borrow/Clone/borrowed-ToOwned/Drop integration test макросов.
 
-Финальный node scripts/vet-dependencies.mjs desktop с locked imports:
-**89 пробелов**, входы неизменны, gate красный. cargo-deny 0.22.0 desktop
-зелёный. Остаток отсортирован по fanout: среди приоритетов siphasher,
-version-compare, system-deps, GNU winapi import libraries и errno.
-Отдельно отложены portable-atomic (workflow/archive SHA mismatch),
-dirs-sys (возможные panics при разборе malformed XDG), native
-SQLCipher/libtomcrypt и неполные чтения; аудиты для них не выданы.
+`portable-atomic 1.15.0`: все **66 негenerated-файлов** архива совпали с тегом.
+VCS SHA — release commit, OIDC SHA — его родитель, на котором workflow
+запустился до создания release commit; прочитан pinned release workflow.
+Расхождение объяснено, добавлено ограниченное доверие официальному workflow.
+Все **9 DLL/LIB WebView2** совпали с upstream и Microsoft-owned NuGet package;
+инструкции бинарей построчно не проверялись, signature chain не проверялась.
 
-Метод, identities и обоснования — [ADR 0104](adr/0104-desktop-dependency-audit-sources.md);
-история — [первый отчёт](../supply-chain/desktop/review-2026-11-26.json) и
-[второй](../supply-chain/desktop/review-2026-11-26-continuation.json);
-проверенные registry fields/SHA, замеры и полный остаток —
-[третий отчёт](../supply-chain/desktop/review-2026-11-26-desktop-3.json).
-Workspace tests/clippy/leak tests запущены, но сборка vendored OpenSSL
-остановилась из-за отсутствующего perl; extension npm test — из-за
-отсутствующего tsc. Эти запуски не зелёные. M6 и CI gate остаются открытыми.
+`dirs-sys 0.5.0`: две slice panics воспроизведены на published parser с ASCII
+OS-string shim на Windows. Native Unix run не заявляется. В текущем deployment
+нет вызывающих native path calls, core path permissions и download handler;
+дополнительный путь Wry проверен. Safe-to-deploy audit не выдан; добавлено
+exemption только для этой версии со ссылкой на анализ и условиями пересмотра.
+Registry latest остаётся 0.5.0, исправленной опубликованной версии не найдено.
+Обязательное обновление по завершённому анализу не установлено; остаток ещё
+может выявить проблемы, версии для него не выдумывались.
+
+Финальный `node scripts/vet-dependencies.mjs desktop` — **failed, 9 gaps**,
+locked inputs неизменны. **Wrapper дополнительно отвергает любое exemption**;
+его правило сохранено, поэтому даже устранение девяти пробелов недостаточно
+для зелёного gate. Desktop `cargo-deny 0.22.0` — **exit 0**, все четыре checks ok.
+
+Остаток: `dbus-secret-service`, `ordered-stream`, `recvmsg`, оба
+`serialize-to-javascript*`, `sqlcipher-src`, `vswhom`, два GNU winapi packages.
+Причины, версии, SHA, checkpoints и дальнейшая работа — в
+[четвёртом отчёте](../supply-chain/desktop/review-2026-11-26-desktop-4.json);
+решения и раздел «Требуют обновления» — в
+[ADR 0104](adr/0104-desktop-dependency-audit-sources.md).
+История сохранена в [третьем отчёте](../supply-chain/desktop/review-2026-11-26-desktop-3.json).
+Workspace tests/clippy/leak tests и extension tests в этом проходе **не запускались**
+по указанному пользователем scope metadata/docs; прежние failures не объявляются
+зелёными. CI не запускался, результат неполный, M6 и gate остаются открытыми.
 
 ## cargo-vet: граф root
 
