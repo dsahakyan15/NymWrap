@@ -227,7 +227,9 @@ sudo env -i PATH=/usr/bin:/bin GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" "$
   printf '#!/bin/bash\nset -euo pipefail\ntest "$#" = 2 && test "$1" = --socket\n'
   printf 'export GITHUB_ACTIONS=true NW_TEST_SOCKET="$2"\n'
   printf 'export NW_TEST_TOR_FIXTURE=%q NW_TEST_NETNS_COOKIE=%q SSLKEYLOGFILE=%q\n' "$fixture_root" "$netns_cookie" "$fixture_root/tls.keys"
-  printf 'exec %q --exact local_tor_tests::netd_process_worker --ignored --test-threads=1 > %q 2>&1\n' "$test_binary" "$fixture_root/worker.log"
+  # The coordinator owns this long-running worker and may stop it before the
+  # test harness flushes captured output. Preserve content-free startup codes.
+  printf 'exec %q --exact local_tor_tests::netd_process_worker --ignored --test-threads=1 --nocapture > %q 2>&1\n' "$test_binary" "$fixture_root/worker.log"
 } > "$fixture_root/bin/nw-netd"
 chmod 700 -- "$fixture_root/bin/nw-netd"
 sudo ip netns exec "$client_ns" tcpdump -Z root -i "$client_if" -s 0 -U -w "$fixture_root/client.pcap" > "$fixture_root/tcpdump-client.log" 2>&1 &
