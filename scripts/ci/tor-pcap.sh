@@ -160,7 +160,7 @@ sudo ip netns exec "$client_ns" nft -f "$fixture_root/client.nft"
 test -z "$(sudo ip -n "$client_ns" route show default)"
 test -z "$(sudo ip -n "$relay_ns" route show default)"
 netns_cookie=$(sudo ip netns exec "$client_ns" readlink /proc/self/ns/net)
-relay_env=(env -i PATH="$fixture_root/bin:/usr/bin:/bin" PYTHON="$chutney_python" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" CHUTNEY_PATH="$chutney" CHUTNEY_DATA_DIR="$fixture_root/chutney" CHUTNEY_LISTEN_ADDRESS=192.0.2.2 CHUTNEY_DNS_CONF="$fixture_root/resolv.conf" CHUTNEY_START_TIME=180)
+relay_env=(env -i PATH="$fixture_root/bin:/usr/bin:/bin" PYTHON="$chutney_python" TZ=UTC LANG=C.UTF-8 GITHUB_ACTIONS=true RUNNER_TEMP="$RUNNER_TEMP" RUNNER_TRACKING_ID="${RUNNER_TRACKING_ID:-}" CHUTNEY_PATH="$chutney" CHUTNEY_DATA_DIR="$fixture_root/chutney" CHUTNEY_LISTEN_ADDRESS=192.0.2.2 CHUTNEY_DNS_CONF="$fixture_root/resolv.conf" CHUTNEY_START_TIME=300)
 relay() { sudo ip netns exec "$relay_ns" setpriv --reuid "$runner_uid" --regid "$runner_gid" --init-groups "${relay_env[@]}" "$@"; }
 relay "$node_binary" "$project_root/scripts/ci/tor-provider.mjs" "$fixture_root" > "$fixture_root/provider.log" 2>&1 &
 for attempt in $(seq 1 100); do test -f "$fixture_root/provider-ready" && break; sleep 0.1; done
