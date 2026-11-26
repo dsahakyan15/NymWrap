@@ -67,6 +67,9 @@ host env, отказ TCP/UDP IPv4/IPv6 и DNS, чтение ответа чер�
 
 Реиспользуются уже закреплённые `serde`, `serde_json`, `sha2`, `tempfile`,
 `zeroize` и `libc` (последний только в существующей OS-границе nw-platform).
+`tempfile` остаётся только dev-dependency: приватный каталог Unix sockets
+создаётся атомарным `DirBuilder` с 0700, существующие имена не используются.
+Так desktop/fuzz сохраняют свои ранее закреплённые версии транзитивных crates.
 Новых crates/версий нет; Cargo.lock меняет только рёбра своих пакетов.
 Новые сторонние cargo-vet exemptions не нужны; существующий cargo-vet gate
 остаётся обязательным. Небезопасный код ограничен новым OS-модулем memfd/fd.

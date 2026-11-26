@@ -172,7 +172,7 @@ mod linux {
         os::{
             fd::AsRawFd,
             unix::{
-                fs::{FileTypeExt, MetadataExt, OpenOptionsExt, PermissionsExt},
+                fs::{DirBuilderExt, FileTypeExt, MetadataExt, OpenOptionsExt},
                 net::{UnixListener, UnixStream},
             },
         },
@@ -180,13 +180,42 @@ mod linux {
         process::{Child, Command, Stdio},
         sync::{
             Arc,
-            atomic::{AtomicBool, Ordering},
+            atomic::{AtomicBool, AtomicU64, Ordering},
         },
         thread,
         time::{Duration, Instant},
     };
     use zeroize::Zeroizing;
     const TOOLS: &str = include_str!("../../../scripts/microvm-binaries.json");
+    struct SocketDirectory(PathBuf);
+    impl SocketDirectory {
+        fn new() -> Result<Self, MicroVmError> {
+            static NEXT: AtomicU64 = AtomicU64::new(0);
+            for _ in 0..64 {
+                let path = PathBuf::from(format!(
+                    "/tmp/nw-vm-{}-{}",
+                    std::process::id(),
+                    NEXT.fetch_add(1, Ordering::Relaxed)
+                ));
+                // Atomic create, owner-only from the outset. Existing names are
+                // never followed or reused, including after a crashed session.
+                match std::fs::DirBuilder::new().mode(0o700).create(&path) {
+                    Ok(()) => return Ok(Self(path)),
+                    Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
+                    Err(_) => return Err(MicroVmError::Launch),
+                }
+            }
+            Err(MicroVmError::Launch)
+        }
+        fn path(&self) -> &Path {
+            &self.0
+        }
+    }
+    impl Drop for SocketDirectory {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
     #[derive(Deserialize)]
     struct Manifest {
         files: Vec<Asset>,
@@ -483,12 +512,7 @@ mod linux {
         let initrd = files
             .insert(&image(&work, program, args, tools)?)
             .map_err(|_| MicroVmError::Launch)?;
-        let directory = tempfile::Builder::new()
-            .prefix("nw-vm-")
-            .tempdir_in("/tmp")
-            .map_err(|_| MicroVmError::Launch)?;
-        std::fs::set_permissions(directory.path(), std::fs::Permissions::from_mode(0o700))
-            .map_err(|_| MicroVmError::Launch)?;
+        let directory = SocketDirectory::new()?;
         let socket = directory.path().join("v");
         let api_listener =
             UnixListener::bind(directory.path().join("v_8000")).map_err(|_| MicroVmError::Api)?;
@@ -584,6 +608,21 @@ mod linux {
                 return Err(MicroVmError::Timeout);
             }
             thread::sleep(Duration::from_millis(5));
+        }
+    }
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        #[test]
+        fn socket_directory_is_private_and_removed_on_drop() {
+            let directory = SocketDirectory::new().unwrap();
+            let path = directory.path().to_owned();
+            assert_eq!(
+                std::fs::symlink_metadata(&path).unwrap().mode() & 0o777,
+                0o700
+            );
+            drop(directory);
+            assert!(!path.exists());
         }
     }
 }
