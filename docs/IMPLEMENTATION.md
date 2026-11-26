@@ -87,52 +87,59 @@ Workspace tests/clippy/leak tests запущены, но сборка vendored O
 
 ## cargo-vet: граф root
 
-Задача 9, четвёртая партия от `df9dcc3` — 2026-11-26: **67 → 50 пробелов**.
-Добавлены **14 точных доверий публикаторам**, **один исходный аудит libloading
-0.8.9** и **два поштучных exemptions** для доказанно неактивного backend.
-Критерий **safe-to-deploy**, версии, все девять Cargo.lock, исходные policy,
-шесть закреплённых импортов и остальные графы сохранены. Publisher metadata
-в imports.lock обновлена штатной командой, новых import sources нет.
+Задача 9, пятая партия от `41fc8a3`, 2026-11-26: **50 → 10 → 9 пробелов**.
+Добавлены **27 точных доверий публикаторам**, **один исходный аудит
+phf_generator 0.14.0** и **13 отдельных exemptions по доказанной недостижимости**.
+Критерий **safe-to-deploy**, версии, все девять Cargo.lock, manifests, прежние
+policy, шесть immutable imports и остальные графы сохранены. Publisher metadata
+в imports.lock обновлена штатно, новых import sources нет.
 
-История: **268 → 107 → 88 → 67**; третья партия `55cbae9` добавила 21 исходный
-аудит. Предыдущие отчёты сохранены. [Четвёртый отчёт](../supply-chain/root/review-2026-11-26-batch-4.json)
-содержит точные API metadata, SHA архивов/просмотренных файлов, основания
-доверий, достижимость ошибок и полный остаток **50** пар с дальнейшей работой.
-Метод и ограничения продолжены в [ADR 0102](adr/0102-root-dependency-audit-sources.md).
+История: **268 → 107 → 88 → 67 → 50**.
+[Пятый отчёт](../supply-chain/root/review-2026-11-26-batch-5.json) содержит
+exact-version API всех 50 пар, SHA архивов и прочитанных файлов, trust rationale,
+100 inverse-tree результатов и полный остаток с next actions. Метод продолжен
+в [ADR 0102](adr/0102-root-dependency-audit-sources.md).
 
-Каждая новая запись явно помечена «Проверено агентом, не человеком».
-Для доверий проверены uploader/workflow точной версии, checksum, отсутствие
-yank и исторические UTC-сутки; это не исходные аудиты этих 14 пакетов.
-Архивы всех 17 затронутых пар совпали с Cargo.lock и sparse index.
-API responses кэшировались в target/, запросы шли с паузами/backoff;
-HTTP 429 в этой партии не было. У libloading прочитан весь исполняемый Rust
-обеих платформ: lifetime/ownership, handles, ABI, NUL и loader contracts.
+Каждая новая запись помечена «Проверено агентом, не человеком». Доверия
+ограничены 22 проверенными identities, конкретными пакетами и UTC-сутками
+публикации; это не независимые source audits. **41** затронутый архив совпал
+с Cargo.lock/sparse index, **1749** распакованных файлов — с архивами. API
+кэшировался в target/, запросы шли последовательно с паузами и поддержкой
+backoff; HTTP 429 не было. Ошибки TLS/403/404 не выданы за evidence; альтернативные
+официальные primary sources и ограничения поздних GitHub API 403 отражены в JSON.
 
-Ошибки async-broadcast 0.7.2 и zvariant_derive 4.2.0 повторно воспроизведены,
-**safe-to-deploy audits им не даны**. Root выбирает синхронный
-`keyring → dbus-secret-service`, а проблемная цепочка optional
-`secret-service → zbus` неактивна. Для обоих пакетов inverse cargo tree
-по всем targets пуст также с workspace --all-features: ни один текущий
-root-процесс не достигает ошибки. Каждое exemption содержит SHA, точную
-причину, ссылку на анализ и условия пересмотра при изменении features.
+Для каждой из 13 неактивных пар обе точные команды cargo tree с --locked,
+--offline, --target all и normal/build/dev, с --all-features и без него, дали
+exit 0 и пустую stdout. У каждого exemption свой SHA, причина и условие
+отмены при изменении features/backend/lockfile. В частности, openssl Rust
+wrapper неактивен, но активные openssl-src/openssl-sys **не исключены**;
+nix 0.29.0 неактивен, активная 0.32.0 отдельно получила publisher trust.
 
-Раздел ADR «Требуют обновления»: для этих двух случаев обязательное обновление
-не установлено — активного пути нет, исправленной публикации не подтверждено.
-Latest async-broadcast остаётся 0.7.2, а latest zvariant_derive 5.15.1 через
-helper сохраняет remove(0) без проверки арности. Непроверенный остаток не
-объявлен безопасным: native/FFI, крупные парсеры и unsafe-контейнеры,
-typenum/generic-array/errno, blocking/phf_generator/siphasher,
-OpenSSL/SQLite/SQLCipher и llama-cpp-2 base/fork остаются открытыми.
+У phf_generator прочитан весь production Rust, оба manifests и packaged
+binary. Проверены алгоритмы, возвращаемые таблицы и deployed lookup.
+Бесконечный seed search не объявлен исправленным: рассмотренное root
+использование ограничено небольшими distinct build-time keys; caller guards
+phf_macros/phf_codegen и BTreeSet string_cache_codegen проверены отдельно.
+Runtime-ввод и custom colliding hashes требуют нового рассмотрения.
 
-Проверки: `node scripts/vet-dependencies.mjs root` — **failed, 50 gaps**,
-locked imports и входы неизменны. Cargo-deny — exit 0,
-advisories/bans/licenses/sources ok. [Новый стенд](../supply-chain/root/review-tests-2026-11-26-batch-4.mjs)
-прошёл четыре проверки недостижимости и **3/3** Rust tests в debug и release.
-Root vet fmt, rustfmt и git diff --check выполнены. Workspace tests, clippy,
-leak suite и расширение **не запускались** согласно объёму supply-chain/docs;
-Perl bootstrap не потребовался. CI и push не запускались.
-Exemptions не являются аудитами; требование wrapper о нуле exemptions для
-полного pass сохранено. Root gate и M6 остаются открытыми.
+**Осталось 9:** errno 0.3.15, siphasher 1.0.4, libdbus-sys 0.2.7,
+libsqlite3-sys 0.40.0, openssl-sys 0.9.118, openssl-src 300.6.1+3.6.3,
+sqlcipher-src 420.0.0+sqlcipher-4.20.0-sqlite-3.54.1-libtomcrypt-1.18.2,
+llama-cpp-2 и llama-cpp-sys-2 0.1.161. Native/FFI, base/fork delta и
+нерешённые errno/siphasher contracts не сертифицированы. Новых воспроизведённых
+проблем на активном пути нет; обязательное обновление версии не установлено.
+
+Проверки: финальный `node scripts/vet-dependencies.mjs root` — **failed, 9 gaps**,
+locked imports и неизменные входы; cargo-deny — **exit 0**, все четыре группы ok.
+[Стенд](../supply-chain/root/review-tests-2026-11-26-batch-5.mjs): **26/26** проверок
+недостижимости, **4/4 debug + 4/4 release**; wrapper tests **3/3**, расширение
+**24/24**. Workspace tests, clippy и leak suite запущены, но завершились **exit 101**
+на Configure OpenSSL: Perl отсутствует в PATH. Инструменты не устанавливались.
+Root vet fmt, rustfmt и git diff --check выполнены; CI и push не запускались.
+
+Всего root содержит **15 отдельных exemptions**, включая два исходных.
+Требование wrapper о нуле vetted_with_exemptions сохранено. Все 50 закрыть
+не удалось; **root gate и M6 остаются открытыми**.
 
 
 ## cargo-vet: граф netd
