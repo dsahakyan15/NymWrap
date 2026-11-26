@@ -524,3 +524,228 @@ exemption или ослабления product criterion нет. Локальны
 не заявляется, отдельное feature combination не проверено. Ранние попытки
 без Perl/libclang не прошли; финальные workspace/clippy использовали штатные
 bootstrap scripts и build-env.ps1. SHA логов и фактические статусы — в JSON.
+
+## Четвёртая партия от 037d027: 109 → 26
+
+2026-11-26, ветка `agent/vet-netd-4`. Добавлены **59 узких записей доверия,
+6 исходных аудитов агента и 18 индивидуальных exemptions по недостижимости**.
+Остаётся **26 непокрытых версий**. Общая цепочка — **499 → 312 → 253 → 109 → 26**.
+Критерий продукта остаётся `safe-to-deploy`; версии, манифесты, четыре
+Cargo.lock, остальные stores, импортированные аудиты, скрипт gate и ADR 0073
+не меняются. Gate красный: помимо оставшихся пробелов он отвергает любые
+exemptions. M6 и dependency-audits netd не закрыты.
+
+Полные записи, SHA, команды, stdout и ограничения находятся в
+[четвёртом отчёте](../../supply-chain/netd/review-2026-11-26-fourth.json).
+Последовательность обычного locked wrapper: **109 → 60 → 38 → 28 → 26**.
+Исходные 109 дополнительно воспроизведены закреплённым cargo-vet на копии
+трёх исходных store-файлов из `git show HEAD:...`; это явно отмеченный replay,
+а не восстановленный задним числом receipt первого запуска wrapper.
+
+### Источники доверия и точность происхождения
+
+Все **109** точных версий заново проверены через crates.io API: uploader либо
+Trusted Publishing, дата, yank и checksum. Архивы заново хешированы и сверены
+с текущими sparse cache и netd Cargo.lock. Запросы последовательные, пауза
+перед некэшированным запросом — 2,5 секунды, backoff — 10/20/40/60 секунд;
+кэш в `target/netd-review-4/`. HTTP 429 не наблюдался. Текущие owners проверены
+отдельно: это подтверждение текущего сопровождения, не доказательство
+исторического uploader. Для исторической публикации используется exact-version API.
+
+Каждое новое доверие ограничено **пакетом, проверенным identity и одними
+историческими UTC-сутками**. Original Cargo.toml сопоставлен с immutable VCS
+commit официального репозитория; нормализованы только CRLF. Это сравнение
+манифеста, не доказательство совпадения каждого исходного файла с Git tree.
+У crc32fast дополнительно совпали repository и SHA Trusted Publishing с VCS
+архива; полного аудита workflow/actions не заявляется.
+
+Решения охватывают typenum/once_cell/generic-array, оставшиеся derive и
+container/helper-семейства, Rust Amplify, inotify, signal-hook, файлы и строки,
+а также явно перечисленные ниже native-семейства. У каждой версии собственное
+основание для production, включая unsafe и сгенерированный код. Это доверие
+сопровождению, **не независимый исходный аудит**. Контекст прежних решений
+root/desktop и старых аудитов Mozilla/Wasmtime/Google/ISRG/Zcash не переносит
+автоматически их версии, окна или критерии на netd. Например, safe-to-run
+запись strum_macros 0.28.0 не повышалась: принято отдельное узкое решение о
+доверии официальному публикатору Strum для safe-to-deploy.
+
+Дополнительные связи личности проверены по официальным профилям и проектам:
+Paho Lurie-Gregg/typenum, Alex Kladov/once_cell, Michal Vaner/signal-hook,
+Brian Smith/ring, Steven Allen/tempfile, Alexandre Bury/zstd-rs,
+Sergio Benitez/Figment, madsmtm/objc2 и jswrenn/itertools.
+Nick Mathewson связан с Tor по [странице команды](https://www.torproject.org/about/people/),
+профилю `nmathewson` и authors точного weak-table. Его публикация weak-table
+не приписывается Gabi или первоначальному автору Jesse Tov.
+
+Заново просмотрены все девять источников из реестра cargo-vet: три ещё не
+подключённых store actix/ariel-os/fermyon не содержали записей для этих 109
+имён. Более новые audit-файлы HEAD Wasmtime/Embark/ISRG также не добавили
+подходящих записей. Поэтому новых imports и смены старых pins нет.
+GitHub commit API дал 403; HEAD закреплялся через `git ls-remote`.
+
+### Шесть исходных аудитов агента
+
+Все записи имеют `safe-to-deploy`, SHA точного архива, SHA прочитанных файлов
+и пометку **«проверено агентом, не человеком»**. Просмотр исходников не
+подменялся поиском строки unsafe.
+
+| Пакет | Прочитано и проверено | Проверка исполнения |
+|---|---|---|
+| fluid-let 1.0.0 | Манифесты и весь единственный Rust-файл: TLS, HRTB callback lifetime, UnsafeCell, LIFO guards, unwind, оба macro feature variants; unsafe set_guard требует соблюдения своего контракта | 8 исходных tests со static-init прошли |
+| proc-macro-crate 3.5.0 | Манифесты и оба Rust-файла: TOML/renames/workspace/target tables, cache, фиксированный CARGO locate-project без shell, только build-time чтение | 13 исходных library tests прошли; прочитанный integration launcher не запускался |
+| dirs 6.0.0 | Манифесты и пять модулей: forwarding, абсолютные XDG overrides, фиксированные joins, KnownFolder wrappers и WASM None | Отдельные tests не запускались |
+| getset 0.1.7 | Манифесты и все три production-модуля с примерами: шесть derives, generics/bounds, visibility, skip, unary tuples, raw identifiers и quoted diagnostics | Непросмотренные внешние tests/examples не запускались |
+| directories 6.0.0 | Манифесты, вся реализация пяти модулей и constructor benchmark; документационные таблицы выборочно. Constructors/getters, joins и нормализация app names; без unsafe/FFI в wrapper | Отдельные tests не запускались |
+| nonany 0.3.0 | Манифесты, весь production lib.rs и README: XOR-bijection, единственный явно unsafe NonZero constructor, conversions, ordering/formatting и checked_abs | 131072 синтетические пары u8/i8 value/niche и signed checked_abs прошли |
+
+Wrapper-аудиты dirs/directories **не покрывают dirs-sys** и его найденный ниже
+panic. Пути из окружения и имена приложений не являются авторизацией или
+песочницей. Getset не добавляет validation к намеренно открытым caller-полям.
+Nonany `abs` сохраняет overflow-поведение примитива; для недоверенного signed
+minimum нужен checked_abs. Его upstream test-only модуль не объявлен
+прочитанным или выполненным. Все эти границы записаны в audits.toml и JSON.
+
+### Индивидуальные exemptions по недостижимости
+
+Из `daemons/nw-netd` для **каждой из 109 версий** выполнены обе команды:
+
+```text
+cargo tree --locked --offline --target all -e normal,build,dev -i <crate>@<version>
+cargo tree --locked --offline --target all -e normal,build,dev -i <crate>@<version> --all-features
+```
+
+Десять точных версий дали exit 0 и пустой stdout в обоих случаях:
+
+| Версия | Неактивный путь; условие отмены |
+|---|---|
+| android_system_properties 0.1.6 | Android helper недостижимого iana-time-zone; включение clock/Android helper |
+| base64 0.23.1 | Не включены optional adapters hyper-util/serde_with; включение adapter или прямой 0.23 dependency. Активный 0.22.1 покрыт отдельно |
+| bincode 2.0.1 | Не включены bincode adapters smallvec/typed-index-collections; их включение или прямой dependency |
+| bs58 0.5.1 | Не включён serde_with bs58 adapter; его включение |
+| iana-time-zone 0.1.65 | Не включён chrono clock; включение clock или прямой dependency |
+| num-bigint-dig 0.8.6 | Неактивны старые RSA/SSH paths; Tor migration использует rsa 0.10. Включение legacy path или отмена migration |
+| schemars 0.9.0 и 1.2.3 | Не включены соответствующие optional schema adapters; включение любого из них |
+| spin 0.9.9 | Не включён lazy_static spin_no_std; его включение или прямой dependency |
+| unty 0.0.4 | Неактивны bincode и optional smallvec unty; включение любого пути |
+
+Ещё восемь — только для неподдерживаемых target backends. Их `--target all`
+дерево **не пустое**; это не выдаётся за отсутствие ребра. Обе команды
+повторены с каждым из шести targets: x86_64/aarch64 Linux GNU, Windows MSVC
+и macOS. Все 12 вызовов на пакет дали exit 0 и пустой stdout. Дополнительно
+прочитаны target cfg соответствующих parents:
+
+- **r-efi 5.3.0 и 6.0.0:** getrandom выбирает их только при UEFI + efi_rng.
+  Добавление UEFI/backend отменяет исключения.
+- **libredox 0.1.25, redox_users 0.5.3, redox_syscall 0.5.18:** Redox backends
+  dirs-sys/parking_lot_core. Поддержка Redox или изменение target selection
+  отменяет исключения.
+- **wasix 0.13.2:** WASI/WASIX backend coarsetime. Включение этих ОС отменяет
+  исключение.
+- **winapi-i686-pc-windows-gnu и winapi-x86_64-pc-windows-gnu 0.4.0:** GNU
+  import libraries, не выбираемые поддерживаемыми Windows MSVC сборками.
+  Добавление Windows GNU отменяет исключения.
+
+В каждой отдельной записи config.toml есть точные команды, версия, причина,
+условие отмены, ссылка на полные результаты и запрет трактовать exemption как
+исходный аудит. Прямое добавление пакета или изменение разрешения/feature/target
+также требует повторной проверки. Политика gate и критерии не ослаблены.
+
+### Native/FFI и готовые объекты
+
+Для ring, libsqlite3-sys, zstd-sys, zstd-safe и liblzma-sys прочитаны полные
+build scripts: источник native-кода, target dispatch, bindgen/cc/CMake,
+записи в OUT_DIR и пути системных overrides. Для liblzma проверен version.h:
+в архиве stable **XZ/liblzma 5.8.4**, готовых .a/.o/.obj/.lib/.exe/.dll нет.
+Это не полный аудит вложенного C и не сравнение всего XZ tree с upstream.
+Native implementation принимается только через явно записанное доверие
+соответствующему проверенному release maintainer. Caller обязан ограничивать
+объём/работу распаковки; system-library/toolchain overrides остаются отдельной
+границей build environment.
+
+**ring 0.17.14 содержит 17 готовых Windows object files.** Exact-version API,
+текущий owner, original manifest и официальный профиль подтверждают
+`briansmith`, user-id 2342. Объекты **не проверены по инструкциям, не пересобраны
+и не доказаны эквивалентными ASM**. Это честно записано в trust note, исходный
+аудит ring не создавался.
+
+Для двух старых winapi import-пакетов прочитаны оба манифеста, весь build.rs
+и пустой no_std wrapper. Все **1387 + 1416 = 2803** `.a` побайтно соответствуют
+Git blob SHA-1 официального winapi-rs на commit
+`30ed8e3b86f4a8a55e68865843c19800f57bcd7f` от 16 января 2018, перед обеими
+публикациями 18 января. Сравнение с более поздним tag 0.3.9 сначала не совпало;
+оно не использовано как доказательство точной публикации. Реестр **не сообщает
+исторический uploader** обоих 0.4.0: официальное происхождение содержимого
+подтверждено, аккаунт загрузившего — нет. Бинарные инструкции и подписи Git
+не проверялись. Пакеты остаются только платформенными exemptions, не аудитами.
+
+### Требуют обновления
+
+Следующие дефекты точных активных пакетов воспроизведены в отдельном
+синтетическом harness в `target/`, без изменения продукта. **Достижимость
+пакета не означает доказанную возможность эксплуатации из NymWrap.** Поэтому
+ниже отдельно указаны ограничения call-site вывода; source audits и exemptions
+этим активным пакетам не добавлены.
+
+| Пакет | Воспроизведение | Граница вывода |
+|---|---|---|
+| data-encoding 2.11.1 | Safe `Encoding.0` заменяется на `[0xF6; 514]`; release `encode` создаёт String, чьи bytes не проходят UTF-8 validation | Пакет активен; возможность входным сетевым текстом изменить Encoding.0 в NymWrap не установлена |
+| sanitize-filename 0.6.0 | 254 `a` + `.x`, Windows/truncate: результат 255 bytes оканчивается точкой и отвергается собственным is_sanitized | tor-persist добавляет `.json` и использует свои keys; конкретный trigger в приложении не установлен, path traversal не заявляется |
+| enum-ordinalize 3.1.15 | `#[repr(u8)] enum { First = 1 << 2, Next }`: discriminant Next равен 5, ordinal равен 8, from_ordinal(5) даёт None | Активный proc-macro через educe; найденный educe Trait enum последовательный, без этого выражения |
+| dirs-sys 0.5.0 | Файл `XDG_MUSIC_DIR="` вызывает slice panic 1..0 через public all() | На Windows заменён **только** импорт Unix OsStringExt на раскрытый checked ASCII shim; тело Linux-парсера не менялось. Нативный Linux запуск и triggering caller NymWrap не заявляются |
+
+JSON содержит исходный harness, SHA логов, SHA исходного и ported файла,
+точную единственную замену и результаты. Неудачная первая компиляция harness
+из-за опечатки имени Base16 constant исправлена до этих замеров и не названа
+ошибкой зависимости.
+
+Проверен текущий реестр: data-encoding latest остаётся 2.11.1; у
+sanitize-filename latest stable остаётся 0.6.0 (есть 0.8.0-beta). Для
+enum-ordinalize есть 4.4.2. **Исправляющий релиз ни для одного дефекта здесь не
+подтверждён исходным просмотром и повторным тестом**; обновление или локальная
+правка требуют отдельной задачи. Версии в продукте не менялись.
+
+Есть ещё два source-only препятствия, без заявления о нативном воспроизведении:
+
+- **rdrand 0.9.0:** в AArch64 RNDR/RNDRRS status используется `cset ... cs`,
+  хотя приведённые в самом коде NZCV success/failure различаются Z, а C равен
+  нулю в обоих случаях. Это статический вывод, не аппаратный тест. Windows
+  detection задаёт 33 для флага, которому
+  [Microsoft документирует 34](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-isprocessorfeaturepresent).
+  Нужны исправление/объяснение и нативная AArch64 проверка; latest также 0.9.0.
+  Tor смешивает этот дополнительный источник с другими; предсказуемость его
+  итогового RNG не заявляется.
+- **educe 0.4.23:** Debug union generator читает весь union как bytes,
+  потенциально включая uninitialized padding, как в
+  [upstream issue 45](https://github.com/magiclen/educe/issues/45).
+  Miri/нативный UB repro и triggering union в NymWrap не установлены.
+  Наличие latest 0.8.2 не подтверждает исправление pinned-релиза.
+
+Старый convert_case 0.10.0 также остаётся без общего аудита: прошлый panic
+custom delimiter не вызывается текущими built-in Case call sites; наличие
+latest 0.12.0 само по себе не доказывает исправление. Ничего из этого не
+превращено в trust ради уменьшения счётчика.
+
+### Итог проверок и остановка партии
+
+- `node scripts/vet-dependencies.mjs netd`: **failed, 26 gaps**, pinned
+  cargo-vet 0.10.4, locked imports, inputs unchanged. Отдельно **18 exemptions**;
+  даже при нуле остальных пробелов существующий gate остаётся красным.
+- `cargo deny --manifest-path daemons/nw-netd/Cargo.toml check --hide-inclusion-graph`:
+  exit 0, advisories/bans/licenses/sources ok; duplicate warnings сохранены.
+- `cargo test --workspace --locked`: exit 0, **169 passed / 16 ignored**.
+  В том числе девять leak suites: **33 passed / 1 ignored**; отдельная
+  standalone feature-resolution пересборка leak-пакета не заявляется.
+- `cargo clippy --locked -- -D warnings`: exit 0.
+- Расширение `npm ci --ignore-scripts`, `npm test`: exit 0, **24/24**.
+
+Это локальные Windows результаты с проверенными штатными bootstrap
+Perl/libclang и build-env.ps1, не CI. Все четыре lockfiles и внешняя audit-часть
+imports.lock сверены с исходным commit. Runtime-код и сетевая граница не
+менялись; новых canary tests для неизменённого кода не добавлялось.
+
+**26 оставшихся версий** полностью перечислены с причинами в JSON. Помимо
+указанных дефектов — async/codecs/макросы, crypto-primes/strobe, BSD kqueue,
+recvmsg, контейнеры и concurrency. У bitvec 1.1.1 не разрешён original manifest
+на VCS SHA по текущему/прежнему официальным GitHub paths; у recvmsg нет
+repository metadata, canonical VCS source не установлен. Доверие им не
+угадывалось. Работа остановлена с явным остатком, без полного закрытия 109.

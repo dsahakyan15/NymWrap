@@ -20,6 +20,41 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.amplify]]
+version = "4.9.0"
+when = "2025-05-19"
+user-id = 73753
+user-login = "dr-orlovsky"
+user-name = "Dr. Maxim Orlovsky"
+
+[[publisher.amplify_derive]]
+version = "4.0.1"
+when = "2024-08-01"
+user-id = 73753
+user-login = "dr-orlovsky"
+user-name = "Dr. Maxim Orlovsky"
+
+[[publisher.amplify_num]]
+version = "0.5.4"
+when = "2026-05-14"
+user-id = 73753
+user-login = "dr-orlovsky"
+user-name = "Dr. Maxim Orlovsky"
+
+[[publisher.amplify_syn]]
+version = "2.0.1"
+when = "2023-05-01"
+user-id = 73753
+user-login = "dr-orlovsky"
+user-name = "Dr. Maxim Orlovsky"
+
+[[publisher.arrayvec]]
+version = "0.7.8"
+when = "2026-07-02"
+user-id = 356
+user-login = "bluss"
+user-name = "bluss"
+
 [[publisher.arti-client]]
 version = "0.48.0"
 when = "2026-11-04"
@@ -108,6 +143,13 @@ when = "2026-01-03"
 user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
+
+[[publisher.base64]]
+version = "0.22.1"
+when = "2024-04-30"
+user-id = 5563
+user-login = "marshallpierce"
+user-name = "Marshall Pierce"
 
 [[publisher.base64ct]]
 version = "1.8.3"
@@ -218,6 +260,13 @@ version = "0.5.4"
 when = "2026-05-28"
 trusted-publisher = "github:RustCrypto/utils"
 
+[[publisher.coarsetime]]
+version = "0.1.38"
+when = "2026-09-25"
+user-id = 468
+user-login = "jedisct1"
+user-name = "Frank Denis"
+
 [[publisher.compression-codecs]]
 version = "0.4.48"
 when = "2026-11-21"
@@ -240,6 +289,13 @@ version = "0.10.3"
 when = "2026-11-10"
 trusted-publisher = "github:RustCrypto/formats"
 
+[[publisher.cookie-factory]]
+version = "0.3.3"
+when = "2024-03-21"
+user-id = 959
+user-login = "Geal"
+user-name = "Geoffroy Couprie"
+
 [[publisher.cpubits]]
 version = "0.1.1"
 when = "2026-04-28"
@@ -258,6 +314,11 @@ when = "2026-08-26"
 user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
+
+[[publisher.crc32fast]]
+version = "1.5.5"
+when = "2026-11-10"
+trusted-publisher = "github:srijs/rust-crc32fast"
 
 [[publisher.crossbeam-queue]]
 version = "0.3.14"
@@ -403,6 +464,20 @@ user-id = 43093
 user-login = "ijackson"
 user-name = "Ian Jackson"
 
+[[publisher.derive_more]]
+version = "2.1.1"
+when = "2025-12-22"
+user-id = 3797
+user-login = "JelteF"
+user-name = "Jelte Fennema-Nio"
+
+[[publisher.derive_more-impl]]
+version = "2.1.1"
+when = "2025-12-22"
+user-id = 3797
+user-login = "JelteF"
+user-name = "Jelte Fennema-Nio"
+
 [[publisher.digest]]
 version = "0.10.7"
 when = "2023-05-19"
@@ -414,6 +489,12 @@ user-name = "Tony Arcieri"
 version = "0.11.3"
 when = "2026-05-03"
 trusted-publisher = "github:RustCrypto/traits"
+
+[[publisher.doctest-file]]
+version = "1.1.1"
+when = "2026-03-16"
+user-id = 72501
+user-login = "kotauskas"
 
 [[publisher.dyn-clone]]
 version = "1.0.20"
@@ -455,6 +536,27 @@ user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
+[[publisher.enumset]]
+version = "1.1.15"
+when = "2026-10-23"
+user-id = 7163
+user-login = "Lymia"
+user-name = "Rimi Kanokawa"
+
+[[publisher.enumset_derive]]
+version = "0.15.1"
+when = "2026-10-23"
+user-id = 7163
+user-login = "Lymia"
+user-name = "Rimi Kanokawa"
+
+[[publisher.errno]]
+version = "0.3.15"
+when = "2026-11-12"
+user-id = 684
+user-login = "lambda-fairy"
+user-name = "Chris Wong"
+
 [[publisher.event-listener]]
 version = "5.4.2"
 when = "2026-07-27"
@@ -475,6 +577,13 @@ when = "2025-03-09"
 user-id = 6289
 user-login = "str4d"
 user-name = "Jack Grigg"
+
+[[publisher.figment]]
+version = "0.10.19"
+when = "2024-05-17"
+user-id = 3864
+user-login = "SergioBenitez"
+user-name = "Sergio Benitez"
 
 [[publisher.filetime]]
 version = "0.2.30"
@@ -514,6 +623,20 @@ user-id = 31201
 user-login = "gabi-250"
 user-name = "Gabi Moldovan"
 
+[[publisher.funty]]
+version = "2.0.0"
+when = "2021-11-28"
+user-id = 2945
+user-login = "myrrlyn"
+user-name = "Alexander Payne"
+
+[[publisher.futures-rustls]]
+version = "0.26.0"
+when = "2024-03-22"
+user-id = 4286
+user-login = "quininer"
+user-name = "quininer"
+
 [[publisher.futures-task]]
 version = "0.3.34"
 when = "2026-08-11"
@@ -527,6 +650,13 @@ when = "2026-08-11"
 user-id = 33035
 user-login = "taiki-e"
 user-name = "Taiki Endo"
+
+[[publisher.generic-array]]
+version = "0.14.7"
+when = "2023-03-28"
+user-id = 5704
+user-login = "novacrazy"
+user-name = "Nova"
 
 [[publisher.getrandom]]
 version = "0.2.17"
@@ -719,6 +849,20 @@ user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
 
+[[publisher.inotify]]
+version = "0.11.5"
+when = "2026-08-14"
+user-id = 754
+user-login = "hannobraun"
+user-name = "Hanno Braun"
+
+[[publisher.inotify-sys]]
+version = "0.1.8"
+when = "2026-07-07"
+user-id = 754
+user-login = "hannobraun"
+user-name = "Hanno Braun"
+
 [[publisher.inout]]
 version = "0.1.4"
 when = "2025-02-21"
@@ -731,12 +875,31 @@ version = "0.2.6"
 when = "2026-11-07"
 trusted-publisher = "github:RustCrypto/utils"
 
+[[publisher.interprocess]]
+version = "2.4.9"
+when = "2026-11-18"
+user-id = 72501
+user-login = "kotauskas"
+
 [[publisher.inventory]]
 version = "0.3.25"
 when = "2026-10-07"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.ipnet]]
+version = "2.12.2"
+when = "2026-09-06"
+user-id = 8197
+user-login = "krisprice"
+
+[[publisher.itertools]]
+version = "0.15.0"
+when = "2026-06-16"
+user-id = 1442
+user-login = "jswrenn"
+user-name = "Jack Wrenn"
 
 [[publisher.itoa]]
 version = "1.0.19"
@@ -818,12 +981,31 @@ version = "0.2.191"
 when = "2026-10-16"
 trusted-publisher = "github:rust-lang/libc"
 
+[[publisher.liblzma]]
+version = "0.4.9"
+when = "2026-10-19"
+user-id = 201429
+user-login = "ChanTsune"
+
+[[publisher.liblzma-sys]]
+version = "0.4.9"
+when = "2026-09-14"
+user-id = 201429
+user-login = "ChanTsune"
+
 [[publisher.libm]]
 version = "0.2.16"
 when = "2026-01-24"
 user-id = 55123
 user-login = "rust-lang-owner"
 user-name = ""
+
+[[publisher.libsqlite3-sys]]
+version = "0.40.0"
+when = "2026-11-11"
+user-id = 5062
+user-login = "gwenn"
+user-name = "gwenn"
 
 [[publisher.linux-raw-sys]]
 version = "0.12.1"
@@ -851,6 +1033,13 @@ version = "0.4.35"
 when = "2026-10-30"
 trusted-publisher = "github:rust-lang/log"
 
+[[publisher.matchit]]
+version = "0.8.4"
+when = "2024-07-11"
+user-id = 103448
+user-login = "ibraheemdev"
+user-name = "Ibraheem Ahmed"
+
 [[publisher.memchr]]
 version = "2.8.3"
 when = "2026-07-08"
@@ -858,12 +1047,32 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.memmap2]]
+version = "0.9.12"
+when = "2026-10-21"
+user-id = 35980
+user-login = "de-vri-es"
+user-name = "Maarten de Vries"
+
 [[publisher.mime]]
 version = "0.3.18"
 when = "2026-11-05"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
+
+[[publisher.minimal-lexical]]
+version = "0.2.1"
+when = "2021-10-04"
+user-id = 31684
+user-login = "Alexhuszagh"
+user-name = "Alexander Huszagh"
+
+[[publisher.miniz_oxide]]
+version = "0.9.1"
+when = "2026-03-13"
+user-id = 4968
+user-login = "oyvindln"
 
 [[publisher.mio]]
 version = "1.2.5"
@@ -886,6 +1095,12 @@ user-id = 51017
 user-login = "JohnTitor"
 user-name = "Yuki Okushi"
 
+[[publisher.ntapi]]
+version = "0.4.3"
+when = "2026-02-10"
+user-id = 27926
+user-login = "MSxDOS"
+
 [[publisher.num-bigint]]
 version = "0.4.8"
 when = "2026-07-05"
@@ -907,12 +1122,47 @@ user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
 
+[[publisher.num_enum]]
+version = "0.7.6"
+when = "2026-03-15"
+user-id = 14455
+user-login = "illicitonion"
+user-name = "Daniel Wagner-Hall"
+
+[[publisher.num_enum_derive]]
+version = "0.7.6"
+when = "2026-03-15"
+user-id = 14455
+user-login = "illicitonion"
+user-name = "Daniel Wagner-Hall"
+
+[[publisher.objc2-io-kit]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.once_cell]]
+version = "1.21.4"
+when = "2026-03-12"
+user-id = 2699
+user-login = "matklad"
+user-name = "Alex Kladov"
+
 [[publisher.oneshot-fused-workaround]]
 version = "0.8.1"
 when = "2026-11-04"
 user-id = 31201
 user-login = "gabi-250"
 user-name = "Gabi Moldovan"
+
+[[publisher.ordered-float]]
+version = "2.10.1"
+when = "2023-10-10"
+user-id = 2017
+user-login = "mbrubeck"
+user-name = "Matt Brubeck"
 
 [[publisher.p256]]
 version = "0.13.2"
@@ -1068,6 +1318,13 @@ user-id = 15682
 user-login = "jhpratt"
 user-name = "Jacob Pratt"
 
+[[publisher.ppv-lite86]]
+version = "0.2.21"
+when = "2025-03-09"
+user-id = 12840
+user-login = "kazcw"
+user-name = "Keziah Wesley"
+
 [[publisher.primeorder]]
 version = "0.13.6"
 when = "2023-11-16"
@@ -1081,6 +1338,20 @@ when = "2025-11-05"
 user-id = 43093
 user-login = "ijackson"
 user-name = "Ian Jackson"
+
+[[publisher.quick-xml]]
+version = "0.42.0"
+when = "2026-08-22"
+user-id = 129150
+user-login = "dralley"
+user-name = "Daniel Alley"
+
+[[publisher.radium]]
+version = "0.7.0"
+when = "2021-11-10"
+user-id = 2945
+user-login = "myrrlyn"
+user-name = "Alexander Payne"
 
 [[publisher.rand]]
 version = "0.8.8"
@@ -1162,6 +1433,13 @@ user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
+[[publisher.ring]]
+version = "0.17.14"
+when = "2025-03-11"
+user-id = 2342
+user-login = "briansmith"
+user-name = "Brian Smith"
+
 [[publisher.rsa]]
 version = "0.9.10"
 when = "2026-01-06"
@@ -1173,6 +1451,13 @@ user-name = "Friedel Ziegelmayer"
 version = "0.10.0"
 when = "2026-11-08"
 trusted-publisher = "github:RustCrypto/RSA"
+
+[[publisher.rusqlite]]
+version = "0.43.0"
+when = "2026-11-15"
+user-id = 5062
+user-login = "gwenn"
+user-name = "gwenn"
 
 [[publisher.rusticata-macros]]
 version = "4.1.0"
@@ -1356,6 +1641,13 @@ user-id = 43093
 user-login = "ijackson"
 user-name = "Ian Jackson"
 
+[[publisher.signal-hook-registry]]
+version = "1.4.8"
+when = "2025-12-25"
+user-id = 5906
+user-login = "vorner"
+user-name = "Michal 'vorner' Vaner"
+
 [[publisher.signature]]
 version = "2.2.0"
 when = "2023-11-12"
@@ -1367,6 +1659,20 @@ user-name = "Tony Arcieri"
 version = "3.0.0"
 when = "2026-05-02"
 trusted-publisher = "github:RustCrypto/traits"
+
+[[publisher.simd-adler32]]
+version = "0.3.10"
+when = "2026-07-14"
+user-id = 100904
+user-login = "mcountryman"
+user-name = "Marvin Countryman"
+
+[[publisher.siphasher]]
+version = "1.0.4"
+when = "2026-09-25"
+user-id = 468
+user-login = "jedisct1"
+user-name = "Frank Denis"
 
 [[publisher.slab]]
 version = "0.4.12"
@@ -1432,6 +1738,13 @@ user-id = 31201
 user-login = "gabi-250"
 user-name = "Gabi Moldovan"
 
+[[publisher.strum_macros]]
+version = "0.28.0"
+when = "2026-02-22"
+user-id = 3173
+user-login = "Peternator7"
+user-name = "Peter Glotfelty"
+
 [[publisher.syn]]
 version = "1.0.109"
 when = "2023-02-24"
@@ -1452,6 +1765,34 @@ when = "2026-11-09"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.synstructure]]
+version = "0.13.2"
+when = "2025-04-30"
+user-id = 1947
+user-login = "mystor"
+user-name = "Nika Layzell"
+
+[[publisher.synstructure]]
+version = "0.14.0"
+when = "2026-07-30"
+user-id = 1947
+user-login = "mystor"
+user-name = "Nika Layzell"
+
+[[publisher.sysinfo]]
+version = "0.38.4"
+when = "2026-03-09"
+user-id = 111
+user-login = "GuillaumeGomez"
+user-name = "Guillaume Gomez"
+
+[[publisher.tempfile]]
+version = "3.27.0"
+when = "2026-03-11"
+user-id = 280
+user-login = "Stebalien"
+user-name = "Steven Allen"
 
 [[publisher.thiserror]]
 version = "1.0.69"
@@ -1855,6 +2196,20 @@ user-id = 172786
 user-login = "hds"
 user-name = "Hayden Stainsby"
 
+[[publisher.typenum]]
+version = "1.20.1"
+when = "2026-05-29"
+user-id = 243
+user-login = "paholg"
+user-name = "Paho Lurie-Gregg"
+
+[[publisher.uncased]]
+version = "0.9.10"
+when = "2024-01-22"
+user-id = 3864
+user-login = "SergioBenitez"
+user-name = "Sergio Benitez"
+
 [[publisher.unicode-ident]]
 version = "1.0.27"
 when = "2026-10-12"
@@ -1935,6 +2290,13 @@ version = "0.2.130"
 when = "2026-10-30"
 trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
 
+[[publisher.weak-table]]
+version = "0.4.0"
+when = "2026-08-04"
+user-id = 122288
+user-login = "nmathewson"
+user-name = "Nick Mathewson"
+
 [[publisher.web-time-compat]]
 version = "0.3.1"
 when = "2026-11-04"
@@ -1948,6 +2310,20 @@ when = "2026-11-10"
 user-id = 2751
 user-login = "ctz"
 user-name = "Joe Birr-Pixton"
+
+[[publisher.widestring]]
+version = "1.2.1"
+when = "2025-10-09"
+user-id = 3416
+user-login = "VoidStarKat"
+user-name = "Kathryn Long"
+
+[[publisher.winapi]]
+version = "0.3.9"
+when = "2020-06-26"
+user-id = 63
+user-login = "retep998"
+user-name = "Peter Atashian"
 
 [[publisher.winapi-util]]
 version = "0.1.11"
@@ -2136,6 +2512,13 @@ user-id = 128408
 user-login = "sffc"
 user-name = "Shane F. Carr"
 
+[[publisher.wyz]]
+version = "0.5.1"
+when = "2022-11-16"
+user-id = 2945
+user-login = "myrrlyn"
+user-name = "Alexander Payne"
+
 [[publisher.x25519-dalek]]
 version = "3.0.0"
 when = "2026-07-06"
@@ -2225,6 +2608,27 @@ when = "2026-07-13"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.zstd]]
+version = "0.14.4"
+when = "2026-11-12"
+user-id = 3203
+user-login = "gyscos"
+user-name = "Alexandre Bury"
+
+[[publisher.zstd-safe]]
+version = "8.3.0"
+when = "2026-11-12"
+user-id = 3203
+user-login = "gyscos"
+user-name = "Alexandre Bury"
+
+[[publisher.zstd-sys]]
+version = "2.1.3+zstd.1.5.7"
+when = "2026-11-12"
+user-id = 3203
+user-login = "gyscos"
+user-name = "Alexandre Bury"
 
 [[audits.bytecode-alliance.wildcard-audits.bumpalo]]
 who = "Nick Fitzgerald <fitzgen@gmail.com>"
