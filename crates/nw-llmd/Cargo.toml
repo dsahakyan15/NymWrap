@@ -13,6 +13,7 @@ inference = ["dep:llama-cpp-2"]
 nw-proto.workspace = true
 nw-ipc.workspace = true
 nw-platform.workspace = true
+nw-sandbox.workspace = true
 nw-llm.workspace = true
 tokio = { workspace = true, features = ["signal"] }
 axum.workspace = true

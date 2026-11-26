@@ -5,6 +5,7 @@ use std::{
     process::Command,
 };
 use thiserror::Error;
+pub mod daemon;
 #[derive(Debug, Error, Eq, PartialEq)]
 pub enum SandboxError {
     #[error("sandbox_not_available_use_linux")]
@@ -29,6 +30,42 @@ pub fn parser_exchange(
         std::time::Duration::from_secs(30),
     )
     .map_err(|_| SandboxError::Launch)
+}
+/// Legacy typed model client uses the same repository model profile. Native
+/// parsing is always in a fresh LPAC; there is no unconfined inference fallback.
+#[cfg(windows)]
+pub fn model_exchange(
+    program: &Path,
+    args: &[OsString],
+    files: &[(&str, &std::fs::File)],
+    input: zeroize::Zeroizing<Vec<u8>>,
+    output_limit: usize,
+    timeout: std::time::Duration,
+) -> std::io::Result<nw_platform::SandboxOutput> {
+    let profiles: serde_json::Value =
+        serde_json::from_str(include_str!("../profiles/daemons.json"))?;
+    let policy = &profiles["model"];
+    if policy["lane"] != "shadow"
+        || policy["network"] != false
+        || policy["children"] != false
+        || output_limit > 4 * 1024 * 1024 + 4
+        || timeout > std::time::Duration::from_secs(240)
+        || files.len() > 2
+        || files
+            .iter()
+            .any(|(label, _)| !["chat", "embedding"].contains(label))
+    {
+        return Err(std::io::Error::other("invalid_model_sandbox_profile"));
+    }
+    nw_platform::appcontainer_exchange_with_files(
+        program,
+        args,
+        files,
+        input,
+        output_limit,
+        timeout,
+        8 * 1024 * 1024 * 1024,
+    )
 }
 /// Probe has no network capabilities. Git is an inherited read-only regular file.
 #[cfg(windows)]

@@ -349,8 +349,29 @@ impl Paths {
         Ok(Self {
             core_shadow: endpoint("core-shadow"),
             core_cover: endpoint("core-cover"),
-            api: endpoint("api"),
-            model: endpoint("llm"),
+            api: {
+                #[cfg(not(target_os = "linux"))]
+                {
+                    endpoint("api")
+                }
+                #[cfg(target_os = "linux")]
+                {
+                    runtime.join("api/api.sock").to_string_lossy().into_owned()
+                }
+            },
+            model: {
+                #[cfg(not(target_os = "linux"))]
+                {
+                    endpoint("llm")
+                }
+                #[cfg(target_os = "linux")]
+                {
+                    runtime
+                        .join("model/llm.sock")
+                        .to_string_lossy()
+                        .into_owned()
+                }
+            },
             net: endpoint("net"),
             data,
             runtime,

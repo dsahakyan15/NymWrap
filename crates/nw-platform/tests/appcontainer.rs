@@ -5,6 +5,52 @@ use std::{
     time::Duration,
 };
 #[test]
+fn appcontainer_lpac_boundary_probe() {
+    if !nw_platform::is_appcontainer().unwrap() {
+        return;
+    }
+    let result = nw_platform::verify_lpac_boundary();
+    println!("lpac_boundary_result={result:?}");
+    println!("NYMWRAP_LPAC_BOUNDARY_{}", result.is_ok());
+}
+#[test]
+#[ignore = "creates ordinary and less privileged AppContainers to check the kernel access boundary"]
+fn actual_lpac_boundary_differs_from_an_ordinary_appcontainer() {
+    let program = std::env::current_exe().unwrap();
+    let args = [
+        "--exact".into(),
+        "appcontainer_lpac_boundary_probe".into(),
+        "--nocapture".into(),
+        "--test-threads=1".into(),
+    ];
+    let ordinary = nw_platform::appcontainer_probe_exchange(
+        &program,
+        &args,
+        &[],
+        zeroize::Zeroizing::new(vec![]),
+    )
+    .unwrap();
+    assert_eq!(ordinary.exit_code, 0);
+    assert!(String::from_utf8_lossy(&ordinary.stdout).contains("NYMWRAP_LPAC_BOUNDARY_false"));
+    assert!(
+        String::from_utf8_lossy(&ordinary.stdout).contains("lpac_all_application_packages_allowed")
+    );
+    let restricted = nw_platform::appcontainer_exchange(
+        &program,
+        &args,
+        zeroize::Zeroizing::new(vec![]),
+        8192,
+        Duration::from_secs(30),
+    )
+    .unwrap();
+    assert_eq!(restricted.exit_code, 0);
+    assert!(
+        String::from_utf8_lossy(&restricted.stdout).contains("NYMWRAP_LPAC_BOUNDARY_true"),
+        "{}",
+        String::from_utf8_lossy(&restricted.stdout)
+    );
+}
+#[test]
 fn appcontainer_child_probe() {
     if !nw_platform::is_appcontainer().unwrap() {
         return;

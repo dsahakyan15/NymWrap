@@ -64,12 +64,15 @@ pub enum IpcError {
 pub struct Endpoint {
     value: String,
     lane: Lane,
+    #[cfg(windows)]
+    sandboxed: bool,
 }
 impl Endpoint {
     pub fn new(value: String, lane: Lane) -> Result<Self, IpcError> {
         #[cfg(windows)]
         {
             let name = value.strip_prefix(r"\\.\pipe\").unwrap_or(&value);
+            let name = name.strip_prefix(r"LOCAL\").unwrap_or(name);
             if !name.starts_with("nymwrap-")
                 || name.len() > 180
                 || !name
@@ -79,8 +82,9 @@ impl Endpoint {
                 return Err(IpcError::Endpoint);
             }
             Ok(Self {
-                value: name.into(),
+                value: name.to_owned(),
                 lane,
+                sandboxed: name.ends_with("-api") || name.ends_with("-llm"),
             })
         }
         #[cfg(unix)]
@@ -100,12 +104,31 @@ impl Endpoint {
     pub fn value(&self) -> &str {
         &self.value
     }
-    fn name(&self) -> Result<local::Name<'_>, IpcError> {
+    pub fn sandboxed(mut self) -> Self {
         #[cfg(windows)]
         {
-            self.value
-                .as_str()
-                .to_ns_name::<local::GenericNamespaced>()
+            self.sandboxed = true;
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = &mut self;
+        }
+        self
+    }
+    fn name(&self, _server: bool) -> Result<local::Name<'_>, IpcError> {
+        #[cfg(windows)]
+        {
+            let name = if self.sandboxed {
+                if _server {
+                    format!(r"LOCAL\{}", self.value)
+                } else {
+                    nw_platform::appcontainer_pipe_address(&self.value)
+                        .map_err(|_| IpcError::Endpoint)?
+                }
+            } else {
+                self.value.clone()
+            };
+            name.to_ns_name::<local::GenericNamespaced>()
                 .map_err(|_| IpcError::Endpoint)
         }
         #[cfg(unix)]
@@ -117,10 +140,11 @@ impl Endpoint {
         }
     }
     pub async fn connect(&self) -> Result<Stream, IpcError> {
-        let stream = tokio::time::timeout(Duration::from_secs(5), Stream::connect(self.name()?))
-            .await
-            .map_err(|_| IpcError::Timeout)?
-            .map_err(|_| IpcError::Io)?;
+        let stream =
+            tokio::time::timeout(Duration::from_secs(5), Stream::connect(self.name(false)?))
+                .await
+                .map_err(|_| IpcError::Timeout)?
+                .map_err(|_| IpcError::Io)?;
         authenticate(&stream)?;
         Ok(stream)
     }
@@ -175,7 +199,7 @@ impl Listener {
             }
         }
         let options = ListenerOptions::new()
-            .name(endpoint.name()?)
+            .name(endpoint.name(true)?)
             .try_overwrite(false);
         #[cfg(windows)]
         let options = {
@@ -183,8 +207,12 @@ impl Listener {
                 local_socket::ListenerOptionsExt, security_descriptor::SecurityDescriptor,
             };
             let sid = nw_platform::current_user_id().map_err(|_| IpcError::Peer)?;
-            let sddl = widestring::U16CString::from_str(format!("O:{sid}D:P(A;;GA;;;{sid})"))
-                .map_err(|_| IpcError::Peer)?;
+            let capability =
+                nw_platform::appcontainer_pipe_acl(endpoint.value()).map_err(|_| IpcError::Peer)?;
+            let sddl = widestring::U16CString::from_str(format!(
+                "O:{sid}D:P(D;;GA;;;NU)(A;;GA;;;{sid}){capability}S:(ML;;NW;;;LW)"
+            ))
+            .map_err(|_| IpcError::Peer)?;
             options.security_descriptor(
                 SecurityDescriptor::deserialize(&sddl).map_err(|_| IpcError::Peer)?,
             )

@@ -1,6 +1,8 @@
 //! Local model connection has no TCP connector, resolver, URL input or redirects.
 //! Windows uses authenticated named pipes; Unix uses private filesystem sockets.
 pub mod embedding;
+#[cfg(windows)]
+pub mod windows_worker;
 use nw_proto::MAX_TEXT_BYTES;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
@@ -167,6 +169,9 @@ pub struct UnixModel {
     pub embedding_model: String,
     expected_peer_image: Option<PathBuf>,
     expected_peer_child: Option<Weak<Mutex<tokio::process::Child>>>,
+    expected_sandbox_child: Option<Weak<Mutex<nw_sandbox::daemon::Child>>>,
+    #[cfg(windows)]
+    windows_worker: Option<Weak<windows_worker::WindowsModel>>,
     background: bool,
 }
 impl UnixModel {
@@ -193,6 +198,9 @@ impl UnixModel {
             embedding_model,
             expected_peer_image: None,
             expected_peer_child: None,
+            expected_sandbox_child: None,
+            #[cfg(windows)]
+            windows_worker: None,
             background: false,
         })
     }
@@ -207,6 +215,11 @@ impl UnixModel {
         }
         self.expected_peer_image = Some(image);
         self.expected_peer_child = None;
+        self.expected_sandbox_child = None;
+        #[cfg(windows)]
+        {
+            self.windows_worker = None;
+        }
         Ok(self)
     }
     /// Bind every connection to a child launched and retained by the trusted
@@ -215,6 +228,29 @@ impl UnixModel {
     pub fn expect_spawned_peer(mut self, child: &Arc<Mutex<tokio::process::Child>>) -> Self {
         self.expected_peer_child = Some(Arc::downgrade(child));
         self.expected_peer_image = None;
+        self.expected_sandbox_child = None;
+        #[cfg(windows)]
+        {
+            self.windows_worker = None;
+        }
+        self
+    }
+    pub fn expect_sandboxed_peer(mut self, child: &Arc<Mutex<nw_sandbox::daemon::Child>>) -> Self {
+        self.expected_sandbox_child = Some(Arc::downgrade(child));
+        self.expected_peer_child = None;
+        self.expected_peer_image = None;
+        #[cfg(windows)]
+        {
+            self.windows_worker = None;
+        }
+        self
+    }
+    #[cfg(windows)]
+    pub fn expect_windows_worker(mut self, worker: &Arc<windows_worker::WindowsModel>) -> Self {
+        self.windows_worker = Some(Arc::downgrade(worker));
+        self.expected_peer_image = None;
+        self.expected_peer_child = None;
+        self.expected_sandbox_child = None;
         self
     }
     async fn post(
@@ -222,6 +258,14 @@ impl UnixModel {
         path: &'static str,
         value: serde_json::Value,
     ) -> Result<serde_json::Value, ModelError> {
+        #[cfg(windows)]
+        if let Some(worker) = &self.windows_worker {
+            return worker
+                .upgrade()
+                .ok_or(ModelError::Peer)?
+                .post(path, value, self.background)
+                .await;
+        }
         {
             use http_body_util::{BodyExt, Full, Limited};
             use hyper::body::Bytes;
@@ -233,11 +277,26 @@ impl UnixModel {
                     nw_proto::Lane::Shadow,
                 )
                 .map_err(|_| ModelError::Invalid)?;
+                let endpoint = if self.expected_sandbox_child.is_some() {
+                    endpoint.sandboxed()
+                } else {
+                    endpoint
+                };
                 let stream = endpoint
                     .connect()
                     .await
                     .map_err(|_| ModelError::Unavailable)?;
-                if let Some(receipt) = &self.expected_peer_child {
+                if let Some(receipt) = &self.expected_sandbox_child {
+                    let owner = receipt.upgrade().ok_or(ModelError::Peer)?;
+                    let mut child = owner.lock().map_err(|_| ModelError::Peer)?;
+                    if child.try_wait().map_err(|_| ModelError::Peer)?.is_some()
+                        || nw_ipc::peer_process(&stream).map_err(|_| ModelError::Peer)?
+                            != child.id().ok_or(ModelError::Peer)?
+                        || child.try_wait().map_err(|_| ModelError::Peer)?.is_some()
+                    {
+                        return Err(ModelError::Peer);
+                    }
+                } else if let Some(receipt) = &self.expected_peer_child {
                     let owner = receipt.upgrade().ok_or(ModelError::Peer)?;
                     let mut child = owner.lock().map_err(|_| ModelError::Peer)?;
                     if child.try_wait().map_err(|_| ModelError::Peer)?.is_some()

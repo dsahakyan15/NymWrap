@@ -7,12 +7,16 @@ license.workspace = true
 [dependencies]
 thiserror.workspace = true
 nw-platform.workspace = true
+tokio = { workspace = true, features = ["fs"] }
+serde_json.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 zeroize.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+nw-ipc.workspace = true
+nw-proto.workspace = true
 
 [lints]
 workspace = true

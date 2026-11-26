@@ -25,6 +25,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
         if flag == "--help" {
+            #[cfg(windows)]
+            println!(
+                "nw-llmd --worker-stdio\nStarted only by nw-sandbox with private stdio and inherited read-only model handles. Use Start Model in NymWrap."
+            );
+            #[cfg(not(windows))]
             println!(
                 "nw-llmd --socket PRIVATE_ENDPOINT --model ABSOLUTE_GGUF --sha256 HASH --embed-model ABSOLUTE_GGUF --embed-sha256 HASH"
             );
@@ -60,40 +65,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(not(windows))]
         return Err("worker_platform_unsupported".into());
     }
-    if chat_handle.is_some() || embed_handle.is_some() {
-        return Err("invalid_argument".into());
-    }
-    let endpoint = nw_ipc::Endpoint::new(socket.ok_or("socket_required")?, nw_proto::Lane::Shadow)?;
-    if parent_stdio {
-        std::thread::spawn(|| {
-            use std::io::Read;
-            let mut byte = [0];
-            let _ = std::io::stdin().read(&mut byte);
-            std::process::exit(0);
-        });
-    }
-    #[cfg(not(windows))]
-    use nw_llmd::inference::Cpu as Backend;
     #[cfg(windows)]
-    use nw_llmd::isolation::Isolated as Backend;
-    let backend = Backend::load(
-        std::path::Path::new(&model.ok_or("model_required")?),
-        &hash.ok_or("model_hash_required")?,
-        std::path::Path::new(&embed.ok_or("embedding_model_required")?),
-        &embed_hash.ok_or("embedding_hash_required")?,
-    )?;
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()?
-        .block_on(async {
-            let listener = nw_ipc::Listener::bind(endpoint)?;
-            axum::serve(listener, nw_llmd::router(backend))
-                .with_graceful_shutdown(async {
-                    let _ = tokio::signal::ctrl_c().await;
-                })
-                .await?;
-            Ok(())
-        })
+    return Err("model_requires_one_shot_worker".into());
+    #[cfg(not(windows))]
+    {
+        if chat_handle.is_some() || embed_handle.is_some() {
+            return Err("invalid_argument".into());
+        }
+        #[cfg(any(windows, target_os = "linux"))]
+        nw_sandbox::daemon::seal().map_err(|_| "model_sandbox_unavailable")?;
+        let endpoint =
+            nw_ipc::Endpoint::new(socket.ok_or("socket_required")?, nw_proto::Lane::Shadow)?;
+        if parent_stdio {
+            std::thread::spawn(|| {
+                use std::io::Read;
+                let mut byte = [0];
+                let _ = std::io::stdin().read(&mut byte);
+                std::process::exit(0);
+            });
+        }
+        #[cfg(not(windows))]
+        use nw_llmd::inference::Cpu as Backend;
+        #[cfg(not(windows))]
+        let backend = Backend::load(
+            std::path::Path::new(&model.ok_or("model_required")?),
+            &hash.ok_or("model_hash_required")?,
+            std::path::Path::new(&embed.ok_or("embedding_model_required")?),
+            &embed_hash.ok_or("embedding_hash_required")?,
+        )?;
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()?
+            .block_on(async {
+                let listener = nw_ipc::Listener::bind(endpoint)?;
+                axum::serve(listener, nw_llmd::router(backend))
+                    .with_graceful_shutdown(async {
+                        let _ = tokio::signal::ctrl_c().await;
+                    })
+                    .await?;
+                Ok(())
+            })
+    }
 }
 #[cfg(not(feature = "inference"))]
 fn main() {

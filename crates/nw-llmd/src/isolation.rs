@@ -153,7 +153,7 @@ impl Isolated {
     }
     fn exchange(&self, command: Command) -> Result<Reply, Error> {
         let input = encode(command, MAX_FRAME_BYTES)?;
-        let output = nw_platform::appcontainer_exchange_with_files(
+        let output = nw_sandbox::model_exchange(
             &self.program,
             &[
                 "--worker-stdio".into(),
@@ -170,7 +170,6 @@ impl Isolated {
             input,
             OUTPUT_LIMIT + 4,
             Duration::from_secs(240),
-            8 * 1024 * 1024 * 1024,
         )
         .map_err(|error| match error.kind() {
             std::io::ErrorKind::TimedOut => Error::Timeout,
@@ -246,9 +245,7 @@ pub fn worker(
     embed_handle: usize,
     embed_hash: &str,
 ) -> Result<(), Error> {
-    if !nw_platform::is_appcontainer().map_err(|_| Error::Load)? {
-        return Err(Error::Invalid);
-    }
+    nw_sandbox::daemon::seal().map_err(|_| Error::Invalid)?;
     let command: Command = decode(std::io::stdin().lock(), MAX_FRAME_BYTES)?;
     match &command {
         Command::Complete {

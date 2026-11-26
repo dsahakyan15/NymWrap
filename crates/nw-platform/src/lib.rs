@@ -20,6 +20,8 @@ pub use sys::open_device_config;
 pub use sys::{
     ChildIdentity, drop_process_identity, enter_child_network_namespace, isolate_core_network,
 };
+#[cfg(target_os = "linux")]
+pub use sys::{SandboxIdentity, confine_leaf_daemon, sandbox_leaf_filter, sandbox_status_stream};
 #[cfg(target_os = "macos")]
 pub use sys::{confine_device_probe, inherited_probe_file, macos_probe_command};
 #[cfg(target_os = "linux")]
@@ -81,8 +83,9 @@ pub fn encrypted_directory(path: &std::path::Path) -> io::Result<()> {
 }
 #[cfg(windows)]
 pub use sys::{
-    SandboxOutput, appcontainer_exchange, appcontainer_exchange_with_files,
-    appcontainer_probe_exchange, inherited_read_file, is_appcontainer,
+    AppContainerProcess, SandboxOutput, appcontainer_daemon, appcontainer_exchange,
+    appcontainer_exchange_with_files, appcontainer_pipe_acl, appcontainer_pipe_address,
+    appcontainer_probe_exchange, inherited_read_file, is_appcontainer, verify_lpac_boundary,
 };
 #[cfg(windows)]
 pub use sys::{kernel_object_owner, private_directory};
@@ -108,6 +111,29 @@ pub fn create_private_directory_all(path: &std::path::Path) -> io::Result<()> {
         sys::create_private_directory(directory)?;
     }
     private_directory(path)
+}
+#[cfg(unix)]
+pub fn create_private_directory_all(path: &std::path::Path) -> io::Result<()> {
+    use std::os::unix::fs::{DirBuilderExt, MetadataExt};
+    if !path.is_absolute() {
+        return Err(io::Error::other("invalid_private_directory"));
+    }
+    for ancestor in path.ancestors() {
+        if let Ok(meta) = std::fs::symlink_metadata(ancestor) {
+            if !meta.is_dir() || meta.file_type().is_symlink() {
+                return Err(io::Error::other("invalid_private_directory"));
+            }
+        }
+    }
+    std::fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o700)
+        .create(path)?;
+    let meta = std::fs::symlink_metadata(path)?;
+    if meta.mode() & 0o077 != 0 || meta.uid().to_string() != current_user_id()? {
+        return Err(io::Error::other("invalid_private_directory"));
+    }
+    Ok(())
 }
 
 static LOCKS: LazyLock<Mutex<BTreeMap<usize, usize>>> =

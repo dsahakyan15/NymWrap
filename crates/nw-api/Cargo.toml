@@ -17,6 +17,7 @@ axum.workspace = true
 tower.workspace = true
 nw-ipc.workspace = true
 nw-platform.workspace = true
+nw-sandbox.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

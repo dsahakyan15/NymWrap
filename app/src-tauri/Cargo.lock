@@ -2739,6 +2739,7 @@ dependencies = [
  "hyper-util",
  "nw-ipc",
  "nw-proto",
+ "nw-sandbox",
  "nw-shield",
  "secrecy",
  "serde",
@@ -2823,7 +2824,9 @@ name = "nw-sandbox"
 version = "0.1.0"
 dependencies = [
  "nw-platform",
+ "serde_json",
  "thiserror 2.0.21",
+ "tokio",
  "zeroize",
 ]
 

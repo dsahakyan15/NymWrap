@@ -879,12 +879,20 @@ impl Client {
     pub fn from_parent(
         parent: ParentSession,
     ) -> Result<(Self, tokio::sync::oneshot::Receiver<()>), String> {
-        if parent.grant.role != RpcRole::Api {
-            return Err("ipc_authorization_failed".into());
-        }
         let paths = crate::config::Paths::discover().map_err(|e| e.to_string())?;
         let endpoint =
             Endpoint::new(paths.core_shadow, Lane::Shadow).map_err(|error| error.to_string())?;
+        Self::from_parent_endpoint(parent, endpoint)
+    }
+    /// The trusted supervisor supplies the endpoint explicitly; AppContainer may
+    /// virtualize application-data environment variables independently of core.
+    pub fn from_parent_endpoint(
+        parent: ParentSession,
+        endpoint: Endpoint,
+    ) -> Result<(Self, tokio::sync::oneshot::Receiver<()>), String> {
+        if parent.grant.role != RpcRole::Api || endpoint.lane() != Lane::Shadow {
+            return Err("ipc_authorization_failed".into());
+        }
         let peer = Peer::Parent(parent.grant.pid);
         Ok((
             Self::authorized(endpoint, parent.grant, peer),

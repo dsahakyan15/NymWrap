@@ -15,6 +15,19 @@ def status(pid):
     return dict(line.split(":", 1) for line in Path(f"/proc/{pid}/status").read_text().splitlines())
 
 
+def descendants(pid):
+    found = set()
+    pending = [pid]
+    for _ in range(4):
+        level = set()
+        for parent in pending:
+            for thread in Path(f"/proc/{parent}/task").iterdir():
+                level.update(map(int, (thread / "children").read_text().split()))
+        found.update(level)
+        pending = list(level)
+    return found
+
+
 def main():
     assert sys.platform == "linux" and os.geteuid() == 0
     assert os.environ["GITHUB_ACTIONS"] == "true"
@@ -40,7 +53,7 @@ def main():
         # no vault/keyring, no remote initialization or user data.
         process.stdin.write(b"NWRPC\x00\x01\x00" + b"\x00" + struct.pack("<I", os.getpid()) + os.urandom(32))
         process.stdin.flush()
-        api = fixture / "daemon-runtime/nymwrap/api.sock"
+        api = fixture / "daemon-runtime/nymwrap/api/api.sock"
         deadline = time.monotonic() + 20
         while not api.exists():
             assert process.poll() is None, "production_core_start_failed"
@@ -63,9 +76,14 @@ def main():
             assert not details["Groups"].strip()
             assert details["NoNewPrivs"].strip() == "1"
             assert details["Seccomp"].strip() == "2"
-        children = list({int(pid) for thread in threads for pid in (thread / "children").read_text().split()})
+        children = list(descendants(process.pid))
         child_handles = [os.pidfd_open(pid) for pid in children]
         images = {Path(os.readlink(f"/proc/{pid}/exe")).name: pid for pid in children}
+        expected_api = (binary.parent / "nw-api").stat()
+        for pid in children:
+            executable = Path(f"/proc/{pid}/exe").stat()
+            if (executable.st_dev, executable.st_ino) == (expected_api.st_dev, expected_api.st_ino):
+                images["nw-api"] = pid
         assert "nw-netd" in images and "nw-api" in images
         for name, pid in images.items():
             details = status(pid)
@@ -73,7 +91,16 @@ def main():
             assert details["Gid"].split() == [group] * 4
             assert not details["Groups"].strip()
             assert details["NoNewPrivs"].strip() == "1"
-            assert os.readlink(f"/proc/{pid}/ns/net") == (transport_ns if name == "nw-netd" else core_ns)
+            if name == "nw-netd":
+                assert os.readlink(f"/proc/{pid}/ns/net") == transport_ns
+        api_pid = images["nw-api"]
+        api_ns = os.readlink(f"/proc/{api_pid}/ns/net")
+        assert api_ns not in {core_ns, host_ns, transport_ns}
+        assert os.readlink(f"/proc/{api_pid}/ns/mnt") != os.readlink(f"/proc/{process.pid}/ns/mnt")
+        api_root = Path(f"/proc/{api_pid}/root")
+        assert not (api_root / "proc").exists() and not (api_root / "sys").exists()
+        assert not (api_root / str(fixture / "data/nymwrap/store").lstrip("/")).exists()
+        assert status(api_pid)["Seccomp"].strip() == "2"
         # Enter the actual core netns from outside, without its seccomp filter:
         # IPv4/IPv6 TCP and UDP cannot reach even our otherwise live relay.
         probe = """
@@ -100,7 +127,7 @@ for family,address in [(socket.AF_INET,('192.0.2.2',5000)),(socket.AF_INET6,('20
             assert time.monotonic() < deadline, "retained_child_survived_core"
             time.sleep(0.05)
         result = dict(complete=True, actual_production_daemon=True, separate_namespaces=True,
-                      core_namespace_unreachable=True, all_threads_dropped=True, api_inherits_core_namespace=True,
+                      core_namespace_unreachable=True, all_threads_dropped=True, api_private_offline_namespace=True,
                       netd_in_transport_namespace=True, parent_eof_stops_children=True, invalid_setup_rejected=True)
         report = fixture / "daemon-result.json"
         report.write_text(json.dumps(result) + "\n")

@@ -53,8 +53,18 @@ impl Session {
     }
 }
 struct OwnedModel {
-    child: Arc<Mutex<tokio::process::Child>>,
-    _lifetime: tokio::process::ChildStdin,
+    #[cfg(not(windows))]
+    child: Arc<Mutex<nw_sandbox::daemon::Child>>,
+    #[cfg(not(windows))]
+    _lifetime: nw_sandbox::daemon::Input,
+    #[cfg(windows)]
+    worker: Arc<nw_llm::windows_worker::WindowsModel>,
+}
+#[cfg(windows)]
+impl Drop for OwnedModel {
+    fn drop(&mut self) {
+        self.worker.stop();
+    }
 }
 #[derive(Clone)]
 pub(super) struct State {
@@ -144,7 +154,16 @@ pub(super) fn refresh_engine(session: &mut Session) -> Result<(), String> {
 fn local_model(session: &mut Session) -> Result<UnixModel, String> {
     let model = require_background(session)?.model().map_err(code)?;
     Ok(match &session.model {
-        Some(owned) => model.expect_spawned_peer(&owned.child),
+        Some(owned) => {
+            #[cfg(windows)]
+            {
+                model.expect_windows_worker(&owned.worker)
+            }
+            #[cfg(not(windows))]
+            {
+                model.expect_sandboxed_peer(&owned.child)
+            }
+        }
         None => model,
     })
 }
@@ -325,17 +344,25 @@ pub(super) async fn start_model(state: &State) -> Result<StorageStatus, String> 
     let (epoch, config) = {
         let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
         if let Some(model) = s.model.as_mut() {
-            if model
-                .child
-                .lock()
-                .map_err(|_| "model_start_failed")?
-                .try_wait()
-                .map_err(|_| "model_start_failed")?
-                .is_none()
+            #[cfg(windows)]
             {
+                let _ = model;
                 return Err("model_already_running".into());
             }
-            s.model = None;
+            #[cfg(not(windows))]
+            {
+                if model
+                    .child
+                    .lock()
+                    .map_err(|_| "model_start_failed")?
+                    .try_wait()
+                    .map_err(|_| "model_start_failed")?
+                    .is_none()
+                {
+                    return Err("model_already_running".into());
+                }
+                s.model = None;
+            }
         }
         (s.epoch, require(&mut s)?.config.llm.clone())
     };
@@ -352,8 +379,10 @@ pub(super) async fn start_model(state: &State) -> Result<StorageStatus, String> 
     if config.model != "default" || config.embed_model != "nomic-embed-text" {
         return Err("invalid_model_aliases".into());
     }
+    #[cfg(not(windows))]
     let endpoint =
         nw_ipc::Endpoint::new(config.endpoint.clone(), nw_proto::Lane::Shadow).map_err(code)?;
+    #[cfg(not(windows))]
     if endpoint.connect().await.is_ok() {
         return Err("model_already_running".into());
     }
@@ -362,67 +391,120 @@ pub(super) async fn start_model(state: &State) -> Result<StorageStatus, String> 
         .parent()
         .ok_or("model_component_missing")?
         .join(format!("nw-llmd{}", std::env::consts::EXE_SUFFIX));
-    let mut command = tokio::process::Command::new(&binary);
-    command
-        .args([
-            "--parent-stdio",
-            "--socket",
-            &config.endpoint,
-            "--model",
-            model,
-            "--sha256",
-            hash,
-            "--embed-model",
-            embed,
-            "--embed-sha256",
-            embed_hash,
-        ])
-        .env_clear()
-        .current_dir(binary.parent().ok_or("model_component_missing")?)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .kill_on_drop(true);
-    for name in ["SystemRoot", "WINDIR", "TEMP", "TMP"] {
-        if let Some(value) = std::env::var_os(name) {
-            command.env(name, value);
-        }
-    }
     #[cfg(windows)]
-    command.creation_flags(0x08000000);
-    let mut child = command.spawn().map_err(|_| "model_start_failed")?;
-    let lifetime = child.stdin.take().ok_or("model_start_failed")?;
-    let operation = async {
-        loop {
-            if child
-                .try_wait()
-                .map_err(|_| "model_start_failed")?
-                .is_some()
-            {
-                return Err("model_start_failed");
+    let owned = OwnedModel {
+        worker: Arc::new(
+            nw_llm::windows_worker::WindowsModel::load(
+                &binary,
+                std::path::Path::new(model),
+                hash,
+                std::path::Path::new(embed),
+                embed_hash,
+            )
+            .await
+            .map_err(|_| "model_sandbox_unavailable")?,
+        ),
+    };
+    #[cfg(not(windows))]
+    let owned = {
+        let mut command = tokio::process::Command::new(&binary);
+        command
+            .args([
+                "--parent-stdio",
+                "--socket",
+                &config.endpoint,
+                "--model",
+                model,
+                "--sha256",
+                hash,
+                "--embed-model",
+                embed,
+                "--embed-sha256",
+                embed_hash,
+            ])
+            .env_clear()
+            .current_dir(binary.parent().ok_or("model_component_missing")?)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .kill_on_drop(true);
+        for name in ["SystemRoot", "WINDIR", "TEMP", "TMP"] {
+            if let Some(value) = std::env::var_os(name) {
+                command.env(name, value);
             }
-            if let Ok(stream) = endpoint.connect().await {
-                if nw_ipc::peer_process(&stream).map_err(|_| "ipc_wrong_peer")?
-                    != child.id().ok_or("model_start_failed")?
+        }
+        #[cfg(target_os = "linux")]
+        let mut child = {
+            let mut arguments: Vec<std::ffi::OsString> = vec![
+                "--parent-stdio".into(),
+                "--socket".into(),
+                config.endpoint.clone().into(),
+                "--sha256".into(),
+                hash.into(),
+                "--embed-sha256".into(),
+                embed_hash.into(),
+            ];
+            #[cfg(target_os = "linux")]
+            arguments.extend([
+                "--model".into(),
+                "@file:chat".into(),
+                "--embed-model".into(),
+                "@file:embedding".into(),
+            ]);
+            nw_sandbox::daemon::Launch {
+                profile: nw_sandbox::daemon::Profile::Model,
+                binary: binary.clone(),
+                arguments,
+                listener: Some(config.endpoint.clone().into()),
+                upstream: vec![],
+                files: vec![
+                    ("chat".into(), model.into()),
+                    ("embedding".into(), embed.into()),
+                ],
+                environment: vec![],
+            }
+            .spawn()
+            .await
+            .map_err(|_| "model_sandbox_unavailable")?
+        };
+        #[cfg(not(any(windows, target_os = "linux")))]
+        let mut child = nw_sandbox::daemon::Child::coordinator(
+            command.spawn().map_err(|_| "model_start_failed")?,
+        );
+        let lifetime = child.stdin.take().ok_or("model_start_failed")?;
+        let operation = async {
+            loop {
+                if child
+                    .try_wait()
+                    .map_err(|_| "model_start_failed")?
+                    .is_some()
                 {
-                    return Err("ipc_wrong_peer");
+                    return Err("model_start_failed");
                 }
-                return Ok(());
+                if let Ok(stream) = endpoint.connect().await {
+                    if nw_ipc::peer_process(&stream).map_err(|_| "ipc_wrong_peer")?
+                        != child.id().ok_or("model_start_failed")?
+                    {
+                        return Err("ipc_wrong_peer");
+                    }
+                    return Ok(());
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
             }
-            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        };
+        tokio::time::timeout(std::time::Duration::from_secs(120), operation)
+            .await
+            .map_err(|_| "model_start_timeout")??;
+        OwnedModel {
+            child: Arc::new(Mutex::new(child)),
+            _lifetime: lifetime,
         }
     };
-    tokio::time::timeout(std::time::Duration::from_secs(120), operation)
-        .await
-        .map_err(|_| "model_start_timeout")??;
     let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
     if s.epoch != epoch || s.workspace.is_none() {
         return Err("session_changed".into());
     }
-    s.model = Some(OwnedModel {
-        child: Arc::new(Mutex::new(child)),
-        _lifetime: lifetime,
-    });
+    s.model = Some(owned);
     state.invalidate(&mut s);
     refresh_engine(&mut s)?;
     storage_status(&mut s, state.egress.is_some())

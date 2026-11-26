@@ -1,0 +1,5 @@
+{
+  "api": { "lane": "shadow", "network": false, "children": false, "file_labels": [], "upstream_sockets": 1, "listener": true },
+  "model": { "lane": "shadow", "network": false, "children": false, "file_labels": ["chat", "embedding"], "upstream_sockets": 0, "listener": true },
+  "drift_host": { "lane": "cover", "network": false, "children": false, "file_labels": [], "upstream_sockets": 1, "listener": false }
+}

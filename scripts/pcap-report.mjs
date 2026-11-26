@@ -84,7 +84,7 @@ export function auditCapture({pdml,client,provider,rust,health,daemon,circuits,w
       ![rust.core_namespace,rust.worker_namespace,rust.host_namespace].every(value=>typeof value==='string'&&/^net:\[\d+\]$/.test(value))||
       new Set([rust.core_namespace,rust.worker_namespace,rust.host_namespace]).size!==3)throw Error('missing_process_isolation_evidence');
     const required=['complete','actual_production_daemon','separate_namespaces','core_namespace_unreachable','all_threads_dropped',
-      'api_inherits_core_namespace','netd_in_transport_namespace','parent_eof_stops_children','invalid_setup_rejected'];
+      'api_private_offline_namespace','netd_in_transport_namespace','parent_eof_stops_children','invalid_setup_rejected'];
     if(required.some(key=>daemon?.[key]!==true))throw Error('missing_production_daemon_evidence');
     const first='0'.repeat(32),second='0'.repeat(31)+'1';
     if(!circuits||Object.keys(circuits).length!==expected||Array.from({length:expected},(_,i)=>circuits[i.toString(16).padStart(32,'0')]).some(value=>typeof value!=='string'||!value)||

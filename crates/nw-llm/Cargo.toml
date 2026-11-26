@@ -13,6 +13,7 @@ secrecy.workspace = true
 zeroize.workspace = true
 thiserror.workspace = true
 nw-ipc.workspace = true
+nw-sandbox.workspace = true
 tokio.workspace = true
 hyper.workspace = true
 hyper-util.workspace = true
