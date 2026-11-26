@@ -62,22 +62,37 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             serde_json::json!({"template":nw_purge::deletion_template(),"sent":false})
         }
         "run" => {
-            if args.get(1).and_then(|s| s.to_str()) != Some("--") {
-                return Err("usage: nymwrap run -- /absolute/program [args]".into());
+            let microvm = args.get(1).and_then(|s| s.to_str()) == Some("--microvm");
+            let separator = if microvm { 3 } else { 1 };
+            if args.get(separator).and_then(|s| s.to_str()) != Some("--") {
+                return Err(
+                    "usage: nymwrap run [--microvm /absolute/tools] -- /guest/program [args]"
+                        .into(),
+                );
             }
-            let program = args.get(2).ok_or("missing_program")?;
+            let program = args.get(separator + 1).ok_or("missing_program")?;
             let paths = nw_core::config::Paths::discover()?;
-            let code = nw_sandbox::run_agent(
-                &std::env::current_dir()?,
-                std::path::Path::new(program),
-                &args[3..],
-                std::path::Path::new(&paths.api),
-            )?;
+            let code = if microvm {
+                nw_sandbox::microvm::run(
+                    &std::env::current_dir()?,
+                    std::path::Path::new(program),
+                    &args[separator + 2..],
+                    std::path::Path::new(&paths.api),
+                    std::path::Path::new(args.get(2).ok_or("missing_microvm_tools")?),
+                )?
+            } else {
+                nw_sandbox::run_agent(
+                    &std::env::current_dir()?,
+                    std::path::Path::new(program),
+                    &args[separator + 2..],
+                    std::path::Path::new(&paths.api),
+                )?
+            };
             std::process::exit(code);
         }
         "help" | "--help" | "-h" => {
             println!(
-                "nymwrap status | demo | shield < input.json | audit [takeout|chatgpt|claude|gemini|browser|chrome|firefox|safari] < export | purge-template | run -- /absolute/program [args]\nPrivileged workspace operations require the desktop session. Secrets are accepted on stdin, never command arguments."
+                "nymwrap status | demo | shield < input.json | audit [takeout|chatgpt|claude|gemini|browser|chrome|firefox|safari] < export | purge-template | run [--microvm /absolute/tools] -- /guest/program [args]\nPrivileged workspace operations require the desktop session. Secrets are accepted on stdin, never command arguments."
             );
             return Ok(());
         }

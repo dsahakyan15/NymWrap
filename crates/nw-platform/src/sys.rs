@@ -930,3 +930,7 @@ mod windows {
 }
 #[cfg(windows)]
 pub use windows::*;
+#[cfg(target_os = "linux")]
+mod microvm;
+#[cfg(target_os = "linux")]
+pub use microvm::{MicroVmFiles, microvm_connect_api, microvm_open_child};

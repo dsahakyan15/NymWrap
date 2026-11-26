@@ -5,6 +5,8 @@ use std::{
     io,
     sync::{LazyLock, Mutex},
 };
+#[cfg(target_os = "linux")]
+pub use sys::{MicroVmFiles, microvm_connect_api, microvm_open_child};
 use zeroize::Zeroize;
 #[allow(unsafe_code)]
 mod sys;
