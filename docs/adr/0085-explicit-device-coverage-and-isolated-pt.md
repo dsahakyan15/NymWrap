@@ -82,6 +82,14 @@ CI создаёт в закрытом fixture-каталоге две свере
 закреплённого бинарника завершает job; поиск неуправляемого PT и fallback
 запрещены.
 
+Run 45770464485 подтвердил следующий независимый pre-log отказ Tor 0.4.9.11:
+его встроенный `Sandbox 1` несовместим с любым managed
+`ServerTransportPlugin`. Поэтому `Sandbox 0` задан только синтетическому
+Chutney bridge-серверу внутри relay netns без default route. Это не production
+PT и не проверяемая клиентская граница: production Lyrebird всё равно обязан
+пройти отдельные bwrap, namespace, UID/capability/NNP и stop-with-live-Tor
+проверки; fallback без этой песочницы не добавляется.
+
 ## Границы
 
 Новый CI ещё не запускался, M3H открыт. Нативный macOS sandbox, Linux PT/pcap и
