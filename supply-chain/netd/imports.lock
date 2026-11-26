@@ -15,6 +15,13 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.arti-client]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
 [[publisher.async-trait]]
 version = "0.1.92"
 when = "2026-08-08"
@@ -104,6 +111,13 @@ user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
 
+[[publisher.caret]]
+version = "0.11.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
 [[publisher.cc]]
 version = "1.11.3"
 when = "2026-11-20"
@@ -134,6 +148,11 @@ user-name = "Artyom Pavlov"
 version = "0.5.4"
 when = "2026-05-28"
 trusted-publisher = "github:RustCrypto/utils"
+
+[[publisher.const-oid]]
+version = "0.10.3"
+when = "2026-11-10"
+trusted-publisher = "github:RustCrypto/formats"
 
 [[publisher.cpubits]]
 version = "0.1.1"
@@ -194,6 +213,11 @@ user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
+[[publisher.digest]]
+version = "0.11.3"
+when = "2026-05-03"
+trusted-publisher = "github:RustCrypto/traits"
+
 [[publisher.dyn-clone]]
 version = "1.0.20"
 when = "2025-07-27"
@@ -246,6 +270,20 @@ version = "1.1.11"
 when = "2026-11-06"
 trusted-publisher = "github:rust-lang/flate2-rs"
 
+[[publisher.fs-mistrust]]
+version = "0.16.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.fslock-guard]]
+version = "0.9.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
 [[publisher.futures-task]]
 version = "0.3.34"
 when = "2026-08-11"
@@ -266,6 +304,11 @@ when = "2026-01-11"
 user-id = 5059
 user-login = "newpavlov"
 user-name = "Artyom Pavlov"
+
+[[publisher.getrandom]]
+version = "0.4.3"
+when = "2026-06-17"
+trusted-publisher = "github:rust-random/getrandom"
 
 [[publisher.hashbrown]]
 version = "0.12.3"
@@ -320,6 +363,11 @@ when = "2025-03-03"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
+
+[[publisher.hybrid-array]]
+version = "0.4.15"
+when = "2026-09-08"
+trusted-publisher = "github:RustCrypto/hybrid-array"
 
 [[publisher.hyper]]
 version = "1.12.0"
@@ -388,10 +436,27 @@ when = "2026-07-06"
 user-id = 55123
 user-login = "rust-lang-owner"
 
+[[publisher.js-sys]]
+version = "0.3.107"
+when = "2026-10-30"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+
+[[publisher.keccak]]
+version = "0.2.2"
+when = "2026-08-21"
+trusted-publisher = "github:RustCrypto/sponges"
+
 [[publisher.libc]]
 version = "0.2.191"
 when = "2026-10-16"
 trusted-publisher = "github:rust-lang/libc"
+
+[[publisher.libm]]
+version = "0.2.16"
+when = "2026-01-24"
+user-id = 55123
+user-login = "rust-lang-owner"
+user-name = ""
 
 [[publisher.linux-raw-sys]]
 version = "0.12.1"
@@ -453,6 +518,13 @@ when = "2026-07-07"
 user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
+
+[[publisher.oneshot-fused-workaround]]
+version = "0.8.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
 
 [[publisher.p256]]
 version = "0.13.2"
@@ -578,6 +650,13 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.retry-error]]
+version = "0.14.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
 [[publisher.rfc6979]]
 version = "0.4.0"
 when = "2023-02-28"
@@ -599,12 +678,26 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.safelog]]
+version = "0.10.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
 [[publisher.same-file]]
 version = "1.0.6"
 when = "2020-01-11"
 user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
+
+[[publisher.saturating-time]]
+version = "0.6.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
 
 [[publisher.scopeguard]]
 version = "1.2.0"
@@ -711,6 +804,18 @@ when = "2026-01-31"
 user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
+
+[[publisher.slotmap-careful]]
+version = "0.9.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.smallvec]]
+version = "1.16.6"
+when = "2026-11-18"
+trusted-publisher = "github:smallvec/smallvec"
 
 [[publisher.socket2]]
 version = "0.6.5"
@@ -857,6 +962,251 @@ user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
+[[publisher.tor-async-utils]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-basic-utils]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-bytes]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-cell]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-cert]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-chanmgr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-checkable]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-circmgr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-config]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-config-path]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-consdiff]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-dirclient]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-dircommon]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-dirmgr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-error]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-general-addr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-guardmgr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-hscrypto]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-key-forge]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-keymgr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-linkspec]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-llcrypto]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-log-ratelim]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-memquota]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-memquota-cost]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-netdir]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-netdoc]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-persist]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-proto]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-protover]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-ptmgr]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-relay-selection]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-rtcompat]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-socksproto]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
+[[publisher.tor-units]]
+version = "0.48.0"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
+
 [[publisher.tower]]
 version = "0.5.3"
 when = "2026-01-12"
@@ -919,6 +1269,23 @@ when = "2026-06-12"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
+
+[[publisher.wasm-bindgen]]
+version = "0.2.130"
+when = "2026-10-30"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+
+[[publisher.wasm-bindgen-macro-support]]
+version = "0.2.130"
+when = "2026-10-30"
+trusted-publisher = "github:wasm-bindgen/wasm-bindgen"
+
+[[publisher.web-time-compat]]
+version = "0.3.1"
+when = "2026-11-04"
+user-id = 31201
+user-login = "gabi-250"
+user-name = "Gabi Moldovan"
 
 [[publisher.windows-sys]]
 version = "0.52.0"
@@ -1015,6 +1382,16 @@ user-name = "Ed Page"
 version = "0.57.1"
 when = "2026-04-17"
 trusted-publisher = "github:bytecodealliance/wit-bindgen"
+
+[[publisher.zerocopy]]
+version = "0.8.64"
+when = "2026-11-21"
+trusted-publisher = "github:google/zerocopy"
+
+[[publisher.zerocopy-derive]]
+version = "0.8.64"
+when = "2026-11-21"
+trusted-publisher = "github:google/zerocopy"
 
 [[publisher.zeroize]]
 version = "1.9.2"
