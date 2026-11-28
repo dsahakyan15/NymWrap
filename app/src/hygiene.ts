@@ -35,7 +35,7 @@ export function createHygienePanel():HTMLElement{
   const inventory=document.createElement("div");inventory.className="surface";const heading=document.createElement("h2");heading.textContent="Секреты устройства";
   const status=document.createElement("div");status.id="device-probe-status";renderDeviceProbe(status,undefined);
   const refresh=document.createElement("button");refresh.id="run-device-probe";refresh.className="secondary";refresh.textContent="Повторить проверку устройства";
-  const edit=document.createElement("p");edit.textContent="Найденные значения добавляются в список секретов Shield. Их можно посмотреть и удалить там. Удалённые вами значения не возвращаются при автоматической проверке. Недоступные источники остаются отмеченными; добавление значения вручную не считается проверкой источника.";
+  const edit=document.createElement("p");edit.textContent="Найденные значения добавляются в список «Что скрывать» на странице «Чат». Их можно посмотреть и удалить там. Удалённые вами значения не возвращаются при автоматической проверке. Недоступные источники остаются отмеченными; добавление значения вручную не считается проверкой источника.";
   inventory.append(heading,status,refresh,edit);
   const observed=document.createElement("div"),observedTitle=document.createElement("h2"),observedStatus=document.createElement("div");observed.className="surface";observedTitle.textContent="Наблюдения настроек ОС";observedStatus.id="hygiene-checks";renderHygiene(observedStatus,undefined);observed.append(observedTitle,observedStatus);
   const manual=document.createElement("div");manual.className="surface";const manualTitle=document.createElement("h2");manualTitle.textContent="Проверьте настройки ОС вручную";

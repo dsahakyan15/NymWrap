@@ -32,6 +32,11 @@ let activeRemoteJob:string|undefined;
 let histories:{id:string;title:string;resumable:boolean}[]=[];
 let storedSecrets:Secret[]=[];
 let deviceProbe:DeviceProbeStatus|undefined;
+type Stage="unlock"|"model"|"app";
+let stage:Stage="unlock";
+let modelManaged=false;
+let routeLabel="L0 · локально";
+let lastOverview:Overview|undefined;
 interface Config {hard?:{device_secrets:boolean;defer_max_hours:number;background_tail?:boolean}}
 interface Plan {activity?:ActivitySchedule|null}
 let dayHash:string|undefined;
@@ -46,7 +51,7 @@ interface Task {plan_hash:string;stage:number;day:number;action_index:number;ser
 interface DayReview {hash:string;approved:boolean;day:{stage:number;day:number;actions:{service:string;text:string}[]}}
 // Numeric summaries only; the chart never receives raw snapshot text.
 interface Overview {profile:string;paused:boolean;has_import:boolean;confirmed_traits:number;has_plan:boolean;plan_approved:boolean;completed_days:number;metrics:{shadow_share:number|null;cover_ratio:number|null;challenge_rate:number|null;leak_blocks:number};observations:Observation[]}
-interface StorageStatus {exists:boolean;unlocked:boolean;egress_available:boolean;path:string;overview:Overview|null}
+interface StorageStatus {exists:boolean;unlocked:boolean;egress_available:boolean;model_managed?:boolean;path:string;overview:Overview|null}
 interface Config {profile:string;drift:{mode:string;[key:string]:unknown};llm:{endpoint:string;model:string;embed_model:string;[key:string]:unknown};shield:{history_retention_days:number;min_trust:string;[key:string]:unknown};net:{transport:string;provider_host:string|null;provider_path:string|null;credential_ref:string|null;provider_model:string|null;max_request_cost_microusd:number|null};cover:{max_requests_per_day:number;max_spend_per_day_usd:number;[key:string]:unknown};[key:string]:unknown}
 interface NetworkUsage {day:number;requests:number;reserved_microusd:number}
 interface TrafficStatus {enabled:boolean;next_slot:number|null;jobs:{id:string;created_at:number;state:string;purpose?:string;code:string|null}[]}
@@ -58,19 +63,44 @@ interface RemoteJobInfo {id:string;conversation:string;created_at:number;updated
 interface RemoteJobView {info:RemoteJobInfo;reply:ChatReply|null}
 interface RemoteReview {approval_id:string;hash:string;conversation:string;transcript:string;max_tokens:number;trust:string;expires_in_s:number}
 type RemoteReviewResponse={status:"chat";reply:ChatReply}|{status:"review";review:RemoteReview;provider_host:string;provider_path:string;provider_model:string;cost_microusd:number};
-const modelFileFields=[['model_path','chat-model-file','GGUF модели диалога'],['model_sha256','chat-model-sha','SHA-256 модели диалога'],['embed_path','embed-model-file','GGUF nomic-embed-text'],['embed_sha256','embed-model-sha','SHA-256 модели эмбеддингов']] as const;
+const modelFileFields=[['model_path','chat-model-file','Модель диалога — файл .gguf'],['model_sha256','chat-model-sha','SHA-256 модели диалога'],['embed_path','embed-model-file','Модель эмбеддингов (nomic-embed-text) — файл .gguf'],['embed_sha256','embed-model-sha','SHA-256 модели эмбеддингов']] as const;
 
-const names:Record<string,string>={overview:"Обзор",shield:"Shield",drift:"Drift",audit:"Исследование",purge:"Purge",mirror:"Mirror",hygiene:"Гигиена",settings:"Настройки"};
-document.querySelector("main")!.insertBefore(createHygienePanel(),$("notification"));
-const hygieneNav=document.createElement("button");hygieneNav.dataset.view="hygiene";hygieneNav.textContent="Гигиена";document.querySelector('[data-view="settings"]')!.before(hygieneNav);
+const names:Record<string,string>={shield:"Чат",drift:"Легенда",purge:"Следы",mirror:"Результат",hygiene:"Гигиена устройства",settings:"Настройки"};
+const hygienePanel=createHygienePanel();
+const hygieneBack=document.createElement("button");hygieneBack.className="quiet back";hygieneBack.dataset.view="settings";hygieneBack.textContent="← Настройки";
+hygienePanel.prepend(hygieneBack);$("app").append(hygienePanel);
 function show(view:string) {
   if(!Object.hasOwn(names,view))return;
   document.querySelectorAll<HTMLElement>("[data-panel]").forEach(p=>{p.hidden=p.dataset.panel!==view;});
   document.querySelectorAll<HTMLElement>("[data-view]").forEach(b=>{if(b.dataset.view===view)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
-  $("breadcrumb").textContent=`Пространство / ${names[view]}`;window.scrollTo({top:0});
+  if(view==="drift")driftStep(suggestedStep());
+  window.scrollTo({top:0});
 }
-document.querySelectorAll<HTMLElement>("[data-view],[data-goto]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view??b.dataset.goto??"overview")));
-document.querySelector(".brand")!.addEventListener("click",()=>show("overview"));
+document.querySelectorAll<HTMLElement>("[data-view]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view??"shield")));
+// Drift is one stepper: import → traits → plan → today. Any step can be opened; the core enforces order.
+function driftStep(step:number){
+  document.querySelectorAll<HTMLElement>("[data-step-pane]").forEach(p=>{p.hidden=p.dataset.stepPane!==String(step);});
+  document.querySelectorAll<HTMLElement>("[data-step]").forEach(b=>{if(b.dataset.step===String(step))b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");});
+}
+function suggestedStep():number{
+  const o=lastOverview;if(!o||!o.has_import)return 1;if(!o.confirmed_traits)return 2;if(!o.plan_approved)return 3;return 4;
+}
+document.querySelectorAll<HTMLElement>("[data-step]").forEach(b=>b.addEventListener("click",()=>driftStep(Number(b.dataset.step))));
+// The model form is one set of fields: shown in the first-run card, otherwise in settings.
+function setStage(next:Stage){
+  stage=next;document.body.dataset.stage=next;
+  $("onboarding").hidden=next==="app";$("app").hidden=next!=="app";
+  $("unlock-panel").hidden=next!=="unlock";$("model-step").hidden=next!=="model";
+  $("main-nav").hidden=next!=="app";$("app-controls").hidden=next!=="app";
+  const setup=$("model-setup");
+  if(next==="model")$("model-step-slot").append(setup);else $("settings-model-slot").append(setup);
+}
+function renderStatusChip(){
+  const chip=$("status-chip");
+  if(!unlocked){chip.textContent="Заблокировано";chip.dataset.state="locked";return;}
+  chip.textContent=`${routeLabel} · ${modelManaged?"модель запущена":"модель не запущена"}`;chip.dataset.state=modelManaged?"ok":"warn";
+}
+$("skip-model").addEventListener("click",()=>{setStage("app");show("shield");});
 document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>("input,textarea").forEach(i=>{i.autocomplete="off";i.spellcheck=false;});
 let noticeTimer:ReturnType<typeof setTimeout>;
 function notify(message:string,error=false) {
@@ -85,7 +115,7 @@ function friendly(error:unknown):string {
   const code=error instanceof Error?error.message:String(error);
   const map:Record<string,string>={
     desktop_required:"Для обработки данных запустите десктопное приложение: npm run desktop.",
-    workspace_locked:"Сначала откройте пространство на странице «Обзор».",
+    workspace_locked:"Сначала откройте пространство.",
     workspace_already_open:"Пространство уже открыто.",
     workspace_locked_or_busy:"Хранилище открыто другим процессом.",
     ipc_wrong_peer:"Не удалось подтвердить процесс ядра. Закройте другое окно NymWrap или дождитесь окончания фонового хвоста.",
@@ -97,19 +127,19 @@ function friendly(error:unknown):string {
     invalid_vault_key:"Пароль неверен или ключ хранилища недоступен.",
     os_secret_unavailable:"Хранилище ключей ОС недоступно. Разблокируйте его и повторите.",
     password_too_short:"Для этого профиля нужен пароль длиной не менее 12 байт.",
-    shield_blocked:"Shield заблокировал результат: найден секрет, PII или некорректный плейсхолдер.",
-    plan_checks_failed:"За три попытки модель не построила план, прошедший проверки схемы, безопасности и эмбеддингов. Повторите или выберите более сильную локальную модель.",
-    local_model_unavailable:"Локальная модель недоступна. Проверьте приватный канал и запущенный nw-llmd.",
+    shield_blocked:"Защита остановила текст: в нём остался секрет, личные данные или испорченная заглушка.",
+    plan_checks_failed:"За три попытки модель не построила план, который прошёл проверки формата, безопасности и смысла. Повторите или выберите в настройках более сильную модель.",
+    local_model_unavailable:"Локальная модель недоступна. Запустите её в настройках (значок шестерёнки).",
     invalid_local_model_response:"Модель вернула некорректный ответ. Операция остановлена.",
     local_model_timeout:"Локальная модель не ответила вовремя.",
     invalid_import:"Неверная структура файла для выбранного формата.",
     import_too_large:"Файл или число записей превышает лимит импорта.",
     wal_snapshot_requires_backup:"SQLite-файл использует WAL. Создайте согласованный SQLite backup или выберите JSON-экспорт браузера.",
-    import_required:"Сначала импортируйте экспорт в разделе «Исследование».",
+    import_required:"Сначала загрузите экспорт: «Легенда» → шаг 1.",
     day_not_ready:"Следующий день откроется через 12 часов после начала предыдущего.",
-    execution_paused:"Drift на паузе. Продолжите его кнопкой в верхней панели.",
-    plan_approval_required:"Сначала подтвердите интересы, постройте и одобрите план.",
-    mirror_observation_required:"Перед следующим этапом нужен свежий снимок Mirror, достигший позиции прошлого этапа.",
+    execution_paused:"Легенда на паузе. Продолжите её кнопкой в верхней панели.",
+    plan_approval_required:"Сначала подтвердите черты, постройте и одобрите план («Легенда», шаги 2–3).",
+    mirror_observation_required:"Перед следующим этапом добавьте свежий снимок в «Результат»: он должен достичь позиции прошлого этапа.",
     authentication_failed:"Пароль неверен или зашифрованные данные повреждены.",
     key_derivation_failed:"Для strict нужен пароль длиной от 12 байт. Проверьте пароль.",
     store_locked:"Хранилище уже открыто другим процессом.",
@@ -129,12 +159,12 @@ function friendly(error:unknown):string {
     remote_transport_unavailable:"Tor или провайдер недоступен. Запрос автоматически не повторяется. При необходимости заблокируйте и откройте пространство заново.",
     approval_required:"Нужно новое одобрение исходящего запроса: предыдущее истекло, отменено или уже использовано.",
     trust_policy_violation:"Этот маршрут L3 не соответствует выбранному минимальному уровню доверия.",
-    model_files_required:"Укажите полные пути и SHA-256 обоих GGUF в настройках.",
+    model_files_required:"Укажите полные пути и SHA-256 обоих файлов GGUF.",
     model_already_running:"Приватный канал модели уже используется.",
     model_start_failed:"Модель не запущена. Проверьте файлы, SHA-256 и наличие nw-llmd рядом с ядром.",
     invalid_conversation:"Разговор недоступен. Начните новый разговор.",
     session_changed:"Сессия изменилась. Предыдущая операция отменена."
-    ,device_probe_required:"Проверка устройства не завершена полностью. Откройте «Гигиена». Локальная модель доступна."
+    ,device_probe_required:"Проверка устройства не завершена. Откройте «Настройки» → «Гигиена устройства». Локальная модель доступна."
     ,outside_activity_window:"Сейчас вне одобренного окна активности легенды. Посмотрите время UTC в плане; действия автоматически не догоняются."
     ,invalid_activity_window:"Укажите целые часы UTC от 0 до 23 и длительность окна от 1 до 12 часов."
   };
@@ -147,15 +177,17 @@ async function busy(button:HTMLButtonElement,work:()=>Promise<void>){
 function on(id:string,work:()=>Promise<void>){$(id).addEventListener("click",e=>void busy(e.currentTarget as HTMLButtonElement,work));}
 function secrets():Secret[]{return lines("secrets").map(value=>storedSecrets.find(s=>s.value===value)??{kind:"SECRET",value,local_only:false});}
 function renderOverview(o:Overview){
-  paused=o.paused;$("pause").textContent=paused?"▷ Продолжить Drift":"Ⅱ Пауза Drift";
-  $("overview-state").textContent=`${o.profile} · подтверждённых черт: ${o.confirmed_traits} · завершено дней: ${o.completed_days} · ${o.plan_approved?"план одобрен":o.has_plan?"план ждёт одобрения":"плана ещё нет"}`;
+  paused=o.paused;lastOverview=o;$("pause").textContent=paused?"Продолжить легенду":"Пауза легенды";
+  $("overview-state").textContent=`Черт подтверждено: ${o.confirmed_traits} · дней выполнено: ${o.completed_days} · ${o.plan_approved?"план одобрен":o.has_plan?"план ждёт одобрения":"плана ещё нет"}`;
+  const done=[o.has_import,o.confirmed_traits>0,o.plan_approved,false];
+  document.querySelectorAll<HTMLElement>("[data-step]").forEach(b=>{b.dataset.done=String(done[Number(b.dataset.step)-1]===true);});
   $("shadow-share").textContent=o.metrics.shadow_share===null?"—":`${Math.round(o.metrics.shadow_share*100)}%`;
   $("leak-blocks").textContent=String(o.metrics.leak_blocks);
   $("cover-ratio").textContent=o.metrics.cover_ratio==null?"—":`${o.metrics.cover_ratio.toLocaleString("ru",{maximumFractionDigits:2})}×`;
   $("challenge-rate").textContent=o.metrics.challenge_rate==null?"—":`${Math.round(o.metrics.challenge_rate*100)}%`;
   $("feed-position").textContent=o.observations.length?o.observations.at(-1)!.position.toFixed(2):"—";
   const out=$("observations");out.replaceChildren();
-  if(!o.observations.length){const p=document.createElement("p");p.className="hint";p.textContent="Пока нет наблюдений.";out.append(p);return;}
+  if(!o.observations.length){const p=document.createElement("p");p.className="hint";p.textContent="Пока нет снимков.";out.append(p);return;}
   out.append(mirrorChart(o.observations));
   const table=document.createElement("table");const heading=document.createElement("tr");
   for(const text of ["Время","Источник","Позиция"]){const th=document.createElement("th");th.textContent=text;heading.append(th);}table.append(heading);
@@ -163,31 +195,33 @@ function renderOverview(o:Overview){
     const row=document.createElement("tr");
     for(const text of [new Date(observation.captured_at*1000).toLocaleString(),sourceName(observation.kind),observation.position.toFixed(3)]){const td=document.createElement("td");td.textContent=text;row.append(td);}table.append(row);
   }
-  out.append(table);
+  const tableFold=document.createElement("details"),tableSummary=document.createElement("summary");tableFold.className="table-fold";tableSummary.textContent="Все снимки";
+  tableFold.append(tableSummary,table);out.append(tableFold);
 }
 function renderStorage(s:StorageStatus){
-  storageExists=s.exists;unlocked=s.unlocked;egressAvailable=s.egress_available;updateChatButtons();
-  $("unlock-panel").hidden=s.unlocked;$("workspace-summary").hidden=!s.unlocked;
-  $("unlock-title").textContent=s.exists?"Откройте личное пространство":"Создайте личное пространство";
+  storageExists=s.exists;unlocked=s.unlocked;egressAvailable=s.egress_available;modelManaged=s.model_managed===true;updateChatButtons();
+  $("unlock-title").textContent=s.exists?"Откройте пространство":"Создайте пространство";
+  $("unlock-hint").textContent=s.exists?"Введите пароль пространства. Пустой — если вы его не задавали.":"Всё хранится зашифрованным только на этом компьютере.";
   $("create-options").hidden=s.exists;
-  $("open-workspace").textContent=s.exists?"Разблокировать →":"Создать пространство →";
-  $("storage-badge").textContent=s.unlocked?"Хранилище открыто":"Хранилище заблокировано";
+  $("open-workspace").textContent=s.exists?"Открыть":"Создать";
   $("storage-location").textContent=s.path;
-  $("storage-description").textContent=s.unlocked?"Изменения сохраняются зашифрованными на этом компьютере.":"Отдельные ключи доменов. SQLCipher и XChaCha20-Poly1305.";
   if(s.overview)renderOverview(s.overview);
-  document.querySelector<HTMLElement>(".offline-badge")!.textContent=s.unlocked&&remoteAllowed()?"● L0 / Tor · L3":"● L0 · локальная модель";
+  routeLabel=s.unlocked&&remoteAllowed()?"L0 / Tor · L3":"L0 · локально";
+  if(!s.unlocked)setStage("unlock");else if(stage==="unlock")setStage(modelManaged?"app":"model");
+  renderStatusChip();
 }
 async function refreshOverview(){renderStorage(await invoke<StorageStatus>("workspace_status"));}
 function renderSummary(result:Summary){
   const out=$("audit-result");out.replaceChildren();
-  const h=document.createElement("h2");h.textContent=`Записей: ${result.records} · доменов: ${Object.keys(result.domains).length}`;
-  const p=document.createElement("p");p.className="hint";p.textContent="Заголовки — недоверенные данные. Локальный анализ запускается вашей кнопкой."+(result.skipped_files?" Пропущено файлов вне поддерживаемых форматов: "+result.skipped_files+".":"");
+  const h=document.createElement("h3");h.textContent=`Записей: ${result.records} · сайтов: ${Object.keys(result.domains).length}`;
+  const p=document.createElement("p");p.className="hint";p.textContent="Примеры записей из файла. Дальше — шаг 2."+(result.skipped_files?" Пропущено файлов неподдерживаемого формата: "+result.skipped_files+".":"");
   const list=document.createElement("ol");list.className="checklist";
   for(const title of [...result.searches,...result.titles,...result.prompt_samples].slice(0,20)){const li=document.createElement("li");li.textContent=title;list.append(li);}
   out.append(h,p,list);
 }
 function renderPersona(next:Persona){
   persona=next;const out=$("persona-traits");out.replaceChildren();$("persona-panel").hidden=!next.traits.length;
+  const research=$("research-persona");research.className=next.traits.length?"secondary":"primary";research.textContent=next.traits.length?"Найти заново":"Найти черты";
   for(const trait of next.traits){
     const row=document.createElement("div");row.className="choice";const label=document.createElement("label");const check=document.createElement("input");check.type="checkbox";check.checked=trait.confirmed===true;check.dataset.trait=trait.id;
     const text=document.createElement("span");text.textContent=trait.claim;label.append(check,text);row.append(label);
@@ -196,16 +230,17 @@ function renderPersona(next:Persona){
   $<HTMLTextAreaElement>("interests").value=next.traits.filter(t=>t.confirmed===true).map(t=>t.claim).join("\n");
 }
 function renderPlan(review:PlanReview|null){
-  displayedHash=review?.hash;$("plan-review").hidden=!review;$("daily").hidden=!review?.approved;
+  displayedHash=review?.hash;$("plan-review").hidden=!review;setDailyOpen(review?.approved===true);
+  const generate=$("generate-plan");generate.className=review&&!review.approved?"secondary":"primary";generate.textContent=review?"Построить заново":"Построить план";
   if(!review)return;
   const stages=$("plan-stages");stages.replaceChildren();
   review.plan.stages.forEach((stage,index)=>{
     const timing=document.createElement("p");timing.className="hint";timing.textContent=activityLabel(review.plan.activity,index);
     const row=document.createElement("div");row.className="stage";const h=document.createElement("h3");h.textContent=`${index+1}. ${stage.theme}`;
-    const p=document.createElement("p");p.className="hint";p.textContent=`Мост: ${stage.bridge} · ${review.plan.days_per_stage} дней`;
+    const p=document.createElement("p");p.className="hint";p.textContent=`Связь с прошлым: ${stage.bridge} · ${review.plan.days_per_stage} дн.`;
     const list=document.createElement("ol");for(const action of stage.actions){const li=document.createElement("li");li.textContent=`${action.service}: ${action.text}`;list.append(li);}row.append(h,p,timing,list);stages.append(row);
   });
-  $("plan-hash").textContent=`${review.approved?"Одобрен":"Ожидает одобрения"} · ${review.hash} · покрытие оси: ${Math.round(review.checks.coverage*100)}%`;
+  $("plan-hash").textContent=`${review.approved?"Одобрен":"Ждёт одобрения"} · покрытие пути: ${Math.round(review.checks.coverage*100)}% · ${review.hash}`;
   $("approve-plan").hidden=review.approved;
 }
 async function hydrate(){
@@ -237,7 +272,7 @@ async function hydrate(){
   $<HTMLSelectElement>("traffic-mode").value=String(c.cover.mode);
   renderTraffic(await invoke<TrafficStatus>("traffic_status"));
   $("send-remote").toggleAttribute("disabled",!remoteAllowed());renderNetworkUsage(await invoke<NetworkUsage>("load_network_usage"));
-  document.querySelector<HTMLElement>(".offline-badge")!.textContent=remoteAllowed()?"● L0 / Tor · L3":"● L0 · локальная модель";
+  routeLabel=remoteAllowed()?"L0 / Tor · L3":"L0 · локально";renderStatusChip();
   $<HTMLTextAreaElement>("secrets").value=s.map(s=>s.value).join("\n");
   if(summary)renderSummary(summary);else $("audit-result").replaceChildren();
   renderPersona(p);renderPlan(plan);
@@ -261,25 +296,25 @@ function renderProviderKeys(keys:CredentialInfo[]){
 on("open-workspace",async()=>{
   const password=value("workspace-password");$<HTMLInputElement>("workspace-password").value="";
   renderStorage(await invoke<StorageStatus>("open_workspace",{password,create:!storageExists,profile:value("workspace-profile")}));
-  await hydrate();notify("Пространство открыто. Изменения сохраняются зашифрованными.");
+  await hydrate();notify(stage==="model"?"Пространство открыто. Теперь подключите модель.":"Пространство открыто.");
 });
 $("sample").addEventListener("click",()=>{
   $<HTMLTextAreaElement>("prompt").value="Я Синтетик Тестов из Синтеграда. Напиши на demo@example.test про садоводство.";
   $<HTMLTextAreaElement>("secrets").value="Синтетик Тестов\nСинтеграда";
 });
 on("preview",async()=>{
-  $("preview-result").textContent="Проверка…";$("preview-info").textContent="Проверка ещё не завершена.";
+  $("preview-box").hidden=false;$("preview-result").textContent="Проверка…";$("preview-info").textContent="Проверка ещё не завершена.";
   try{const result=await invoke<{minimized:string;sensitivity:string;replacements:number}>("preview_shield",{input:{text:value("prompt"),secrets:secrets()}});
-    $("preview-result").textContent=result.minimized;$("preview-info").textContent=`Замен: ${result.replacements} · leakcheck пройден · ${result.sensitivity==="local_only"?"только локально":"remote_ok после предварительной проверки"}`;
+    $("preview-result").textContent=result.minimized;$("preview-info").textContent=`Заменено: ${result.replacements} · проверка утечек пройдена · ${result.sensitivity==="local_only"?"только локально":"можно отправить после просмотра"}`;
   }catch(e){$("preview-result").textContent="Результат заблокирован или недоступен.";$("preview-info").textContent="Успешной проверки нет.";throw e;}
 });
-on("save-secrets",async()=>{await invoke("save_secrets",{secrets:secrets()});resetChat();notify("Список секретов сохранён. Новый список применяется к новым разговорам.");});
+on("save-secrets",async()=>{await invoke("save_secrets",{secrets:secrets()});resetChat();notify("Список сохранён. Он действует в новых разговорах.");});
 function remoteAllowed(){return unlocked&&egressAvailable&&config?.net.transport==="tor"&&config.shield.min_trust==="L3"&&(config.hard?.device_secrets===false||deviceInventoryReady(deviceProbe));}
 function updateChatButtons(){
   $<HTMLButtonElement>("send-chat").disabled=!unlocked||chatSending||chatReadOnly;
-  $<HTMLButtonElement>("send-remote").disabled=chatSending||chatReadOnly||!remoteAllowed();
+  $<HTMLButtonElement>("send-remote").disabled=chatSending||chatReadOnly||!remoteAllowed();$("send-remote").hidden=!remoteAllowed();jobsPanel.hidden=config?.net.transport!=="tor";
 }
-function resetChat(cancelOnServer=true){activeRemoteReview?.(cancelOnServer);if(activeRemoteJob){if(cancelOnServer)void invoke("cancel_remote_job",{id:activeRemoteJob}).catch(()=>{});activeRemoteJob=undefined;}chatEpoch++;chatSending=false;conversation="new";messages=[];chatReadOnly=false;$("chat-messages").replaceChildren();updateChatButtons();$("chat-history-info").textContent="Новый отдельный разговор.";}
+function resetChat(cancelOnServer=true){activeRemoteReview?.(cancelOnServer);if(activeRemoteJob){if(cancelOnServer)void invoke("cancel_remote_job",{id:activeRemoteJob}).catch(()=>{});activeRemoteJob=undefined;}chatEpoch++;chatSending=false;conversation="new";messages=[];chatReadOnly=false;$("chat-messages").replaceChildren();updateChatButtons();$("chat-history-info").textContent="Новый разговор.";}
 async function confirmRemote(response:Extract<RemoteReviewResponse,{status:"review"}>,original:Message[]):Promise<boolean>{
   const {review}=response;
   const dialog=document.createElement("dialog"),heading=document.createElement("h2"),details=document.createElement("p"),privacy=document.createElement("p"),body=document.createElement("pre"),approve=document.createElement("button"),cancel=document.createElement("button");
@@ -336,12 +371,12 @@ async function sendChat(remote:boolean){
   if(epoch!==chatEpoch)throw new Error("session_changed");
   conversation=reply.conversation;messages=[...next,{role:"assistant",content:reply.text}];renderChat();if(value("prompt").trim()===text)$<HTMLTextAreaElement>("prompt").value="";await refreshOverview();await refreshHistory();
   $("chat-history-info").textContent=chatStatusLabel(reply);
-  document.querySelector<HTMLElement>(".offline-badge")!.textContent=reply.trust==="L0"?"● L0 · локальная модель":"● L3 · Tor / ключ";
+  routeLabel=reply.trust==="L0"?"L0 · локально":"L3 · Tor / ключ";renderStatusChip();
   renderNetworkUsage(await invoke<NetworkUsage>("load_network_usage"));
   }finally{if(epoch===chatEpoch)chatSending=false;updateChatButtons();}
 }
 on("send-chat",()=>sendChat(false));
-async function loadSummary(content:string,format:string,encoding?:string){renderSummary(await invoke<Summary>("audit_import",{content,format,encoding}));await refreshOverview();notify("Импорт обработан и сохранён зашифрованным.");}
+async function loadSummary(content:string,format:string,encoding?:string){renderSummary(await invoke<Summary>("audit_import",{content,format,encoding}));await refreshOverview();notify("Импорт сохранён зашифрованным. Следующий шаг — черты персоны.");}
 on("import-sample",async()=>loadSummary(takeoutExample,"takeout"));
 $("import-file").addEventListener("change",async()=>{
   const input=$<HTMLInputElement>("import-file"),file=input.files?.[0];if(!file)return;
@@ -353,16 +388,16 @@ $("import-file").addEventListener("change",async()=>{
       await loadSummary(btoa(chunks.join("")),value("import-format"),"base64");
   }catch(e){notify(friendly(e),true);}finally{input.value="";}
 });
-on("research-persona",async()=>{renderPersona(await invoke<Persona>("research_persona"));notify("Исследование готово. Проверьте доказательства каждой черты.");});
+on("research-persona",async()=>{renderPersona(await invoke<Persona>("research_persona"));notify("Черты найдены. Отметьте те, что про вас.");});
 on("confirm-persona",async()=>{
   const choices=Array.from(document.querySelectorAll<HTMLInputElement>("[data-trait]")).map(c=>[c.dataset.trait,c.checked]);
-  renderPersona(await invoke<Persona>("confirm_traits",{choices}));await refreshOverview();notify("Подтверждённые черты сохранены.");
+  renderPersona(await invoke<Persona>("confirm_traits",{choices}));await refreshOverview();driftStep(3);notify("Черты сохранены. Теперь постройте план.");
 });
 const activityControls=document.createElement("div"),activityTitle=document.createElement("h2"),activityHint=document.createElement("p");
-activityTitle.textContent="Часы активности легенды";activityHint.className="hint";activityHint.textContent="Укажите часы UTC для исходного образа и цели. Постепенное расписание будет показано в плане перед одобрением. Существующий план меняется только после нового построения и одобрения.";
+activityTitle.textContent="Часы активности";activityHint.className="hint";activityHint.textContent="Часы UTC сейчас и в конце пути. Расписание покажется в плане до одобрения.";
 activityControls.append(activityTitle,activityHint);
 for(const [id,title,initial,min,max]of [["activity-start","Начало исходного окна, час UTC",12,0,23],["activity-target","Начало целевого окна, час UTC",12,0,23],["activity-width","Длительность окна, часов",6,1,12]]as const){const label=document.createElement("label"),input=document.createElement("input");label.htmlFor=id;label.textContent=title;input.id=id;input.type="number";input.min=String(min);input.max=String(max);input.step="1";input.value=String(initial);activityControls.append(label,input);}
-$("generate-plan").before(activityControls);
+$("plan-advanced").append(activityControls);
 on("generate-plan",async()=>{
   const activity=activityTransition($<HTMLInputElement>("activity-start").valueAsNumber,$<HTMLInputElement>("activity-target").valueAsNumber,$<HTMLInputElement>("activity-width").valueAsNumber);
   const review=await invoke<PlanReview>("generate_plan",{input:{confirmed_interests:lines("interests"),cover:value("cover"),sensitive_consent:false,activity},socket:value("model-socket"),secrets:secrets()});
@@ -378,15 +413,17 @@ async function refreshTasks(){
     button.addEventListener("click",()=>void busy(button,async()=>{await invoke("complete_task",{task});row.remove();await refreshOverview();if(!list.children.length)notify("День завершён. Следующий откроется не раньше чем через 12 часов.");}));
     row.append(label,service,button);list.append(row);
   }
-  $("daily").hidden=false;
+  setDailyOpen(true);
 }
-on("approve-plan",async()=>{if(!displayedHash)throw new Error("invalid_request");await invoke("approve_plan",{hash:displayedHash});$("approve-plan").hidden=true;$("daily").hidden=false;renderDay(null);await refreshOverview();notify("План одобрен. Подготовьте формулировки на первый день.");});
+function setDailyOpen(open:boolean){$("daily").hidden=!open;$("daily-locked").hidden=open;}
+on("approve-plan",async()=>{if(!displayedHash)throw new Error("invalid_request");await invoke("approve_plan",{hash:displayedHash});$("approve-plan").hidden=true;$("generate-plan").className="secondary";setDailyOpen(true);renderDay(null);await refreshOverview();driftStep(4);notify("План одобрен. Подготовьте задания на первый день.");});
 on("refresh-tasks",refreshTasks);
-on("pause",async()=>{await invoke("pause",{paused:!paused});await refreshOverview();notify(paused?"Drift приостановлен.":"Drift продолжен.");});
+on("pause",async()=>{await invoke("pause",{paused:!paused});await refreshOverview();notify(paused?"Легенда на паузе.":"Легенда продолжена.");});
 on("prepare-template",async()=>{$("purge-template").textContent=await invoke<string>("purge_template");});
 on("rank-purge",async()=>{
   preparedPurge=undefined;$("approve-purge").hidden=true;purgeItems=await invoke<PurgeCandidate[]>("purge_candidates");
   const out=$("purge-candidates");out.replaceChildren();$("purge-review").hidden=!purgeItems.length;
+  const rank=$("rank-purge");rank.className=purgeItems.length?"secondary":"primary";rank.textContent=purgeItems.length?"Найти заново":"Найти записи";
   for(const item of purgeItems){
     const row=document.createElement("div");row.className="choice";const label=document.createElement("label");const check=document.createElement("input");check.type="checkbox";check.dataset.purge=item.id;const text=document.createElement("span");text.textContent=`${item.title} · сила ${item.score.toFixed(2)}`;label.append(check,text);row.append(label);out.append(row);
     check.addEventListener("change",()=>{preparedPurge=undefined;$("approve-purge").hidden=true;$("purge-batch").textContent="Выбор изменён. Просмотрите партию заново.";});
@@ -400,8 +437,8 @@ on("prepare-purge",async()=>{
   preparedPurge={batch,hash};
   $("purge-batch").textContent=`Сервис: ${batch.service}\n${purgeItems.filter(i=>ids.includes(i.id)).map(i=>i.title).join("\n")}\n\nХеш: ${hash}`;$("approve-purge").hidden=false;
 });
-on("approve-purge",async()=>{if(!preparedPurge)throw new Error("invalid_request");await invoke("approve_purge",preparedPurge);$("approve-purge").hidden=true;await refreshPurgeBatches();notify("Партия одобрена и сохранена. Удалите выбранные записи вручную в указанном сервисе.");});
-on("save-snapshot",async()=>{await invoke("save_snapshot",{kind:value("snapshot-kind"),items:lines("snapshot-items")});$<HTMLTextAreaElement>("snapshot-items").value="";await refreshOverview();notify("Снимок измерен и сохранён зашифрованным.");});
+on("approve-purge",async()=>{if(!preparedPurge)throw new Error("invalid_request");await invoke("approve_purge",preparedPurge);$("approve-purge").hidden=true;await refreshPurgeBatches();notify("Партия одобрена. Удалите эти записи в сервисе сами.");});
+on("save-snapshot",async()=>{await invoke("save_snapshot",{kind:value("snapshot-kind"),items:lines("snapshot-items")});$<HTMLTextAreaElement>("snapshot-items").value="";await refreshOverview();notify("Снимок измерен и сохранён.");});
 on("record-account",async()=>{await invoke("account_activity",{count:Number(value("account-count"))});await refreshOverview();});
 async function saveSettings(){
   if(!config)throw new Error("workspace_locked");
@@ -412,7 +449,7 @@ async function saveSettings(){
   next.net={transport,provider_host:value("net-host").trim()||null,provider_path:value("net-path").trim()||null,provider_model:value("net-model").trim()||null,credential_ref:transport==="local"?null:"keyring:pool",max_request_cost_microusd:value("net-cost").trim()?Math.ceil(Number(value("net-cost"))*1_000_000):null};
   next.cover={...config.cover,mode:value("traffic-mode"),enabled:$<HTMLInputElement>("traffic-enabled").checked,mean_interval_s:Number(value("traffic-interval")),max_requests_per_day:Number(value("net-daily-count")),max_spend_per_day_usd:Number(value("net-daily-budget"))};
   next.hard={device_secrets:config.hard?.device_secrets??true,defer_max_hours:config.hard?.defer_max_hours??0,background_tail:$<HTMLInputElement>("background-tail").checked};
-  await invoke("save_config",{config:next});config=next;$<HTMLInputElement>("model-socket").value=next.llm.endpoint;resetChat();notify("Настройки сохранены.");
+  await invoke("save_config",{config:next});config=next;$<HTMLInputElement>("model-socket").value=next.llm.endpoint;resetChat();routeLabel=remoteAllowed()?"L0 / Tor · L3":"L0 · локально";renderStatusChip();notify("Настройки сохранены.");
 }
 on("save-settings",saveSettings);
 function clearSensitiveUi(){
@@ -424,12 +461,12 @@ function clearSensitiveUi(){
   document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>("input,textarea").forEach(i=>{i.value="";});
   for(const id of ["audit-result","plan-stages","daily-tasks","persona-traits","purge-candidates","purge-batch","purge-results","observations","provider-keys","remote-jobs"])$(id).replaceChildren();
   $("network-usage").textContent="Пространство заблокировано.";$("traffic-status").replaceChildren();$<HTMLButtonElement>("send-remote").disabled=true;
-  for(const id of ["plan-review","daily","persona-panel","purge-review"])$(id).hidden=true;
+  for(const id of ["plan-review","persona-panel","purge-review","preview-box"])$(id).hidden=true;setDailyOpen(false);
   for(const id of ["shadow-share","feed-position","leak-blocks","cover-ratio","challenge-rate"])$(id).textContent="—";
   $("preview-result").textContent="Ожидает вашего текста";$("preview-info").textContent="Пространство заблокировано.";
   renderDay(null);
 }
-on("clear-session",async()=>{sessionEpoch++;await invoke("clear_session");clearSensitiveUi();await refreshOverview();show("overview");notify("Пространство заблокировано. Зашифрованные данные сохранены.");});
+on("clear-session",async()=>{sessionEpoch++;await invoke("clear_session");clearSensitiveUi();await refreshOverview();show("shield");notify("Пространство заблокировано. Данные сохранены зашифрованными.");});
 on("run-device-probe",async()=>{
   deviceProbe=await invoke<DeviceProbeStatus>("run_device_probe");renderDeviceProbe($("device-probe-status"),deviceProbe);
   renderHygiene($("hygiene-checks"),deviceProbe);
@@ -438,20 +475,20 @@ on("run-device-probe",async()=>{
 });
 on("erase-data",async()=>{
   const confirmation=value("erase-confirmation"),domain=value("erase-domain");$<HTMLInputElement>("erase-confirmation").value="";
-  if(domain==="all"){await invoke("destroy_data",{confirmation});sessionEpoch++;clearSensitiveUi();await refreshOverview();show("overview");}
+  if(domain==="all"){await invoke("destroy_data",{confirmation});sessionEpoch++;clearSensitiveUi();await refreshOverview();show("shield");}
   else {await invoke("shred_domain",{domain,confirmation});clearSensitiveUi();await refreshOverview();await hydrate();}
-  notify("Выбранные ключи и данные уничтожены.");
+  notify("Данные удалены.");
 });
 const dayControls=document.createElement("div");
 const historyControls=document.createElement("div");historyControls.className="button-row";
 const historySelect=document.createElement("select");historySelect.id="chat-history";historySelect.setAttribute("aria-label","Сохранённые разговоры");
-const openHistory=document.createElement("button");openHistory.id="open-history";openHistory.className="secondary";openHistory.textContent="Открыть разговор";
+const openHistory=document.createElement("button");openHistory.id="open-history";openHistory.className="quiet";openHistory.textContent="Открыть";
 const historyInfo=document.createElement("p");historyInfo.id="chat-history-info";historyInfo.className="hint";
-historyControls.append(historySelect,openHistory);$("chat-messages").before(historyControls,historyInfo);
+historyControls.className="button-row history-row";historyControls.append(historySelect,openHistory);$("chat-messages").before(historyControls,historyInfo);
 async function refreshHistory(){
   histories=await invoke<typeof histories>("list_conversations");historySelect.replaceChildren();
   for(const history of histories){const option=document.createElement("option");option.value=history.id;option.textContent=history.title;historySelect.append(option);}
-  openHistory.disabled=!histories.length;
+  openHistory.disabled=!histories.length;historyControls.hidden=!histories.length;
 }
 on("open-history",async()=>{
   const id=historySelect.value,history=histories.find(h=>h.id===id);if(!history)throw new Error("invalid_request");const epoch=++chatEpoch;
@@ -460,22 +497,23 @@ on("open-history",async()=>{
 });
 for(const [id,label]of [["chrome_sqlite","Chrome / Edge — SQLite backup"],["firefox_sqlite","Firefox — places.sqlite backup"],["safari_sqlite","Safari — History.db backup"]]){const option=document.createElement("option");option.value=id!;option.textContent=label!;$("import-format").append(option);}
 $<HTMLInputElement>("import-file").accept=".json,.html,.htm,.zip,.sqlite,.db,application/octet-stream";
-const generateDay=document.createElement("button");generateDay.id="generate-day";generateDay.className="secondary";generateDay.textContent="Подготовить формулировки дня";
+const generateDay=document.createElement("button");generateDay.id="generate-day";generateDay.className="primary";generateDay.textContent="Подготовить задания дня";
 const variants=document.createElement("div");variants.id="day-variants";
 const dayHashLabel=document.createElement("p");dayHashLabel.id="day-hash";dayHashLabel.className="hint mono";
-const approveDay=document.createElement("button");approveDay.id="approve-day";approveDay.className="primary";approveDay.textContent="Одобряю действия этого дня";approveDay.hidden=true;
+const approveDay=document.createElement("button");approveDay.id="approve-day";approveDay.className="primary";approveDay.textContent="Одобряю задания дня";approveDay.hidden=true;
 dayControls.append(generateDay,variants,dayHashLabel,approveDay);$("daily-tasks").before(dayControls);
 function renderDay(review:DayReview|null){
-  dayHash=review?.hash;variants.replaceChildren();dayHashLabel.textContent=review?review.hash:"Сначала подготовьте и одобрите формулировки на сегодня.";approveDay.hidden=!review||review.approved;
+  dayHash=review?.hash;variants.replaceChildren();dayHashLabel.textContent=review?review.hash:"";approveDay.hidden=!review||review.approved;
+  generateDay.className=review&&!review.approved?"secondary":"primary";generateDay.hidden=review?.approved===true;
   if(review){const h=document.createElement("h3");h.textContent=`Этап ${review.day.stage+1}, день ${review.day.day+1}`;variants.append(h);const list=document.createElement("ol");list.className="checklist";for(const a of review.day.actions){const li=document.createElement("li");li.textContent=`${a.service}: ${a.text}`;list.append(li);}variants.append(list);}
 }
 on("generate-day",async()=>{renderDay(await invoke<DayReview>("generate_day"));});
 on("approve-day",async()=>{if(!dayHash)throw new Error("invalid_request");await invoke("approve_day",{hash:dayHash});approveDay.hidden=true;await refreshTasks();await refreshOverview();});
-const credentialPanel=document.createElement("div");credentialPanel.className="surface";
-const remoteSend=document.createElement("button");remoteSend.id="send-remote";remoteSend.className="secondary";remoteSend.textContent="Спросить через Tor · L3";remoteSend.disabled=true;$("send-chat").after(remoteSend);on("send-remote",()=>sendChat(true));
-const jobsPanel=document.createElement("section"),jobsHeading=document.createElement("h2"),jobsHint=document.createElement("p"),jobsList=document.createElement("div"),jobsRefresh=document.createElement("button");
-jobsPanel.className="surface";jobsHeading.textContent="Запросы к провайдеру";jobsHint.className="hint";jobsHint.textContent="Состояния сохраняются зашифрованными. Отмена после начала отправки не отзывает уже отправленные байты. Исходный текст можно вернуть в новый разговор; повтор потребует нового просмотра.";
-jobsList.id="remote-jobs";jobsRefresh.className="secondary";jobsRefresh.textContent="Обновить список";jobsRefresh.addEventListener("click",()=>void busy(jobsRefresh,refreshRemoteJobs));jobsPanel.append(jobsHeading,jobsHint,jobsList,jobsRefresh);document.querySelector('[data-panel="shield"]')!.append(jobsPanel);
+const credentialPanel=document.createElement("div");credentialPanel.className="card";
+const remoteSend=document.createElement("button");remoteSend.id="send-remote";remoteSend.className="secondary";remoteSend.textContent="Спросить через Tor · L3";remoteSend.disabled=true;remoteSend.hidden=true;$("send-chat").after(remoteSend);on("send-remote",()=>sendChat(true));
+const jobsPanel=document.createElement("details"),jobsHeading=document.createElement("summary"),jobsHint=document.createElement("p"),jobsList=document.createElement("div"),jobsRefresh=document.createElement("button");
+jobsPanel.className="fold";jobsHeading.textContent="Запросы к провайдеру через Tor";jobsHint.className="hint";jobsHint.textContent="Отмена после начала отправки не отзывает уже отправленное. Повтор требует нового просмотра.";
+jobsList.id="remote-jobs";jobsRefresh.className="quiet";jobsRefresh.textContent="Обновить список";jobsRefresh.addEventListener("click",()=>void busy(jobsRefresh,refreshRemoteJobs));jobsPanel.append(jobsHeading,jobsHint,jobsList,jobsRefresh);document.querySelector('[data-panel="shield"]')!.append(jobsPanel);
 async function refreshRemoteJobs(){
   const list=$("remote-jobs");const jobs=await invoke<RemoteJobInfo[]>("load_remote_jobs");list.replaceChildren();
   if(!jobs.length){list.textContent="Удалённых заданий пока нет.";return;}
@@ -490,8 +528,8 @@ async function refreshRemoteJobs(){
     list.append(row);
   }
 }
-const networkPanel=document.createElement("div");networkPanel.className="surface";
-const networkHeading=document.createElement("h2");networkHeading.textContent="Удалённый маршрут Shield";
+const networkPanel=document.createElement("div");networkPanel.className="card";
+const networkHeading=document.createElement("h2");networkHeading.textContent="Удалённый маршрут чата";
 const networkHint=document.createElement("p");networkHint.className="hint";networkHint.textContent="Tor + ключ даёт L3: провайдер видит связь с оплатой. Для Strict/Paranoid этот маршрут запрещён. Поддерживается OpenAI chat API по HTTPS. При смене провайдера переоткройте пространство и начните новый разговор.";
 const transportLabel=document.createElement("label");transportLabel.htmlFor="net-transport";transportLabel.textContent="Маршрут";
 const transportSelect=document.createElement("select");transportSelect.id="net-transport";
@@ -506,16 +544,16 @@ for(const [id,title,type]of [["net-host","Хост HTTPS провайдера","
 const networkPriceHint=document.createElement("p");networkPriceHint.className="hint";networkPriceHint.textContent="Укажите запас по тарифу провайдера для полного входа и ответа до 2048 токенов. Резервирование — локальная оценка, а не банковский лимит. Неопределённая попытка тоже учитывается. Дополнительно ограничьте расходы в кабинете провайдера.";
 const networkUsage=document.createElement("p");networkUsage.id="network-usage";networkUsage.className="hint";networkUsage.textContent="Откройте пространство для просмотра бюджета.";
 const networkSave=document.createElement("button");networkSave.id="save-network";networkSave.className="secondary";networkSave.textContent="Сохранить маршрут и лимиты";
-networkPanel.append(networkPriceHint,networkUsage,networkSave);document.querySelector('[data-panel="settings"]')!.append(networkPanel);on("save-network",saveSettings);
+networkPanel.append(networkPriceHint,networkUsage,networkSave);$("settings-advanced").append(networkPanel);on("save-network",saveSettings);
 const bridgePanel=document.createElement("section"),bridgeHeading=document.createElement("h2"),bridgeHint=document.createElement("p"),bridgeKindLabel=document.createElement("label"),bridgeKind=document.createElement("select"),bridgeLinesLabel=document.createElement("label"),bridgeLines=document.createElement("textarea"),bridgeStatus=document.createElement("p"),bridgeSave=document.createElement("button");
-bridgePanel.className="surface";bridgeHeading.textContent="Мосты Tor";bridgeHint.className="hint";bridgeHint.textContent="Мост скрывает обычное подключение Tor от оператора сети; сам мост видит ваш IP. В paranoid рекомендуется мост. Доступность L1/L2 и поддержка профиля проверяются отдельно. Вставьте строки полученных мостов одного типа. Используется только закреплённый Lyrebird; при ошибке обхода через прямой Tor нет. После изменения переоткройте пространство и начните новый разговор.";
+bridgePanel.className="card";bridgeHeading.textContent="Мосты Tor";bridgeHint.className="hint";bridgeHint.textContent="Мост скрывает обычное подключение Tor от оператора сети; сам мост видит ваш IP. В paranoid рекомендуется мост. Доступность L1/L2 и поддержка профиля проверяются отдельно. Вставьте строки полученных мостов одного типа. Используется только закреплённый Lyrebird; при ошибке обхода через прямой Tor нет. После изменения переоткройте пространство и начните новый разговор.";
 bridgeKind.id="bridge-transport";bridgeKindLabel.textContent="Транспорт моста";for(const [id,title]of [["disabled","Без мостов"],["obfs4","obfs4"],["snowflake","Snowflake"],["webtunnel","WebTunnel"]]){const option=document.createElement("option");option.value=id!;option.textContent=title!;bridgeKind.append(option);}bridgeKindLabel.append(bridgeKind);
 bridgeLines.id="bridge-lines";bridgeLines.rows=4;bridgeLines.maxLength=65536;bridgeLines.autocomplete="off";bridgeLines.spellcheck=false;bridgeLinesLabel.textContent="Новые строки мостов (до 16). Сохранённые строки не показываются.";bridgeLinesLabel.append(bridgeLines);
 bridgeStatus.id="bridge-status";bridgeStatus.textContent="Состояние мостов ещё не получено.";bridgeSave.textContent="Сохранить мосты";bridgeSave.className="secondary";
 bridgeSave.addEventListener("click",()=>void busy(bridgeSave,async()=>{if(!config)throw new Error("workspace_locked");const status=await invoke<BridgeStatus>("save_bridges",{config:bridgeInput(bridgeKind.value,bridgeLines.value)});bridgeLines.value="";bridgeStatus.textContent=bridgeStatusLabel(status);resetChat();notify("Мосты сохранены. Заблокируйте и снова откройте пространство перед удалённой отправкой.");}));
-bridgePanel.append(bridgeHeading,bridgeHint,bridgeKindLabel,bridgeLinesLabel,bridgeStatus,bridgeSave);document.querySelector('[data-panel="settings"]')!.append(bridgePanel);
+bridgePanel.append(bridgeHeading,bridgeHint,bridgeKindLabel,bridgeLinesLabel,bridgeStatus,bridgeSave);$("settings-advanced").append(bridgePanel);
 const trafficPanel=document.createElement("section"),trafficHeading=document.createElement("h2"),trafficConsent=document.createElement("label"),trafficCheckbox=document.createElement("input"),trafficIntervalLabel=document.createElement("label"),trafficInterval=document.createElement("input"),trafficHint=document.createElement("p"),trafficStatus=document.createElement("div"),trafficRefresh=document.createElement("button");
-trafficPanel.className="surface";trafficHeading.textContent="Ритм теневого трафика";
+trafficPanel.className="card";trafficHeading.textContent="Ритм теневого трафика";
 trafficCheckbox.type="checkbox";trafficCheckbox.id="traffic-enabled";trafficConsent.append(trafficCheckbox,document.createTextNode(" Разрешаю автоматические платные запросы из независимых синтетических тем (standard, Tor L3)."));
 const tailConsent=document.createElement("label"),tailCheckbox=document.createElement("input"),sessionTiming=document.createElement("p");
 tailCheckbox.type="checkbox";tailCheckbox.id="background-tail";tailConsent.append(tailCheckbox,document.createTextNode(" Разрешаю после закрытия окна ещё 10–60 минут держать ядро, локальную модель и ключи в памяти для платных независимых приманок в пределах бюджета. Требуются включённые автоматические приманки. «Заблокировать» останавливает всё сразу."));
@@ -525,7 +563,7 @@ trafficInterval.type="number";trafficInterval.id="traffic-interval";trafficInter
 const trafficModeLabel=document.createElement("label"),trafficMode=document.createElement("select");trafficModeLabel.textContent="Режим";trafficMode.id="traffic-mode";for(const [mode,title]of [["poisson","Приманки по Пуассону"],["constant","Постоянные слоты: реальные запросы ждут"]]){const option=document.createElement("option");option.value=mode!;option.textContent=title!;trafficMode.append(option);}trafficModeLabel.append(trafficMode);
 trafficHint.className="hint";trafficHint.textContent="Каждая приманка занимает отдельный ключ и разговор. В постоянном режиме задания ждут слота; без бюджета остаются в очереди. Сеть и модель могут задержать слот. Оставьте ключи для своих вопросов. Прерванные попытки не повторяются. L3 запрещён в strict/paranoid; автоматические приманки недоступны при обязательном просмотре каждого запроса. Изменения сохраняются кнопкой маршрута выше.";
 trafficStatus.id="traffic-status";trafficRefresh.textContent="Обновить состояние приманок";trafficRefresh.className="secondary";trafficRefresh.addEventListener("click",()=>void busy(trafficRefresh,async()=>{renderTraffic(await invoke<TrafficStatus>("traffic_status"));sessionTiming.textContent=sessionTimingLabel(await invoke<SessionTiming>("session_timing"));}));
-trafficPanel.append(trafficHeading,trafficConsent,tailConsent,sessionHint,sessionTiming,trafficModeLabel,trafficIntervalLabel,trafficHint,trafficStatus,trafficRefresh);document.querySelector('[data-panel="settings"]')!.append(trafficPanel);
+trafficPanel.append(trafficHeading,trafficConsent,tailConsent,sessionHint,sessionTiming,trafficModeLabel,trafficIntervalLabel,trafficHint,trafficStatus,trafficRefresh);$("settings-advanced").append(trafficPanel);
 function renderTraffic(status:TrafficStatus){
   const out=$("traffic-status");out.replaceChildren();const summary=document.createElement("p");summary.textContent=status.enabled?`${config?.cover.mode==="constant"?"Постоянные слоты включены":"Пуассоновский режим включён"}. Следующий слот: ${status.next_slot?new Date(status.next_slot*1000).toLocaleString():"ожидает планирования"}.`:"Фоновые запросы выключены.";out.append(summary);
   const list=document.createElement("ul");for(const job of status.jobs.slice(-8).reverse()){const item=document.createElement("li");item.textContent=`${new Date(job.created_at*1000).toLocaleString()} · ${job.purpose==="real"?"запрос":"приманка"} · ${{preparing:"подготовка / отправка",succeeded:"получен ответ",uncertain:"результат неизвестен, повтор запрещён",blocked:"остановлено"}[job.state]??job.state}${job.code?" · "+job.code:""}`;list.append(item);}out.append(list);
@@ -537,15 +575,17 @@ driftMode.id="drift-mode";driftModeLabel.htmlFor=driftMode.id;driftModeLabel.tex
 for(const [id,title]of [["assisted","Вручную (по умолчанию)"],["extension","Поиск Google / YouTube через расширение"]]){const option=document.createElement("option");option.value=id!;option.textContent=title!;driftMode.append(option);}
 driftModeHint.className="hint";driftModeHint.textContent="В режиме расширения каждое действие запускается вашей кнопкой с разрешением на сайт. Ввод идёт в отдельной вкладке, затем 20–90 секунд чтения. CAPTCHA, вход, закрытие вкладки или пауза останавливают действие; прерванные попытки не повторяются. Новые адаптеры видео и веб-чатов ИИ доступны только на синтетических локальных HTTPS-страницах; настоящие видео и ИИ-чаты выполняйте вручную.";
 const {label:aiWebLabel,input:aiWebConsent}=createAiWebConsent();
-modelFiles.append(driftModeLabel,driftMode,driftModeHint,aiWebLabel);
+$("save-settings").before(driftModeLabel,driftMode,driftModeHint,aiWebLabel);
+modelFiles.className="model-fields";
 for(const [field,id,title]of modelFileFields){
   const label=document.createElement("label");label.htmlFor=id;label.textContent=title;
-  const input=document.createElement("input");input.id=id;input.maxLength=field.endsWith('sha256')?64:4096;input.spellcheck=false;input.autocomplete="off";input.placeholder=field.endsWith('sha256')?"64 шестнадцатеричных символа":"Полный путь к локальному файлу";modelFiles.append(label,input);
+  const input=document.createElement("input");input.id=id;input.maxLength=field.endsWith('sha256')?64:4096;input.spellcheck=false;input.autocomplete="off";input.placeholder=field.endsWith('sha256')?"64 шестнадцатеричных символа":"Полный путь к файлу .gguf";if(field.endsWith('sha256'))input.className="mono-input";
+  const cell=document.createElement("div");cell.className="field";cell.append(label,input);modelFiles.append(cell);
 }
-const modelStart=document.createElement("button");modelStart.id="start-model";modelStart.className="secondary";modelStart.textContent="Запустить проверенные модели";
-const modelHint=document.createElement("p");modelHint.className="hint";modelHint.textContent="Файлы не скачиваются автоматически. Проверка SHA-256 и загрузка могут занять до двух минут. При блокировке пространства запущенные здесь модели завершаются.";
-modelFiles.append(modelStart,modelHint);$("save-settings").after(modelFiles);
-on("start-model",async()=>{await saveSettings();notify("Проверка и загрузка локальных моделей…");renderStorage(await invoke<StorageStatus>("start_model"));notify("Модели запущены. Можно открыть Shield или исследование.");});
+const modelStart=document.createElement("button");modelStart.id="start-model";modelStart.className="primary";modelStart.textContent="Запустить проверенные модели";
+const modelHint=document.createElement("p");modelHint.className="hint";modelHint.textContent="Ничего не скачивается. Проверка и загрузка — до двух минут. При блокировке модели останавливаются.";
+$("model-setup").append(modelFiles,modelStart,modelHint);
+on("start-model",async()=>{await saveSettings();notify("Проверяем и загружаем модели…");renderStorage(await invoke<StorageStatus>("start_model"));if(stage==="model"){setStage("app");show("shield");}notify("Модели запущены. Можно задавать вопросы в чате.");});
 const credentialHeading=document.createElement("h2");credentialHeading.textContent="Ключи провайдеров";
 const credentialHint=document.createElement("p");credentialHint.className="hint";credentialHint.textContent="Ключи хранятся в хранилище ОС. Они дают L3: провайдер может связать их с плательщиком. Удаление здесь не отзывает ключ у провайдера.";
 const credentialLabel=document.createElement("label");credentialLabel.htmlFor="provider-key";credentialLabel.textContent="Новый API-ключ";
@@ -553,25 +593,27 @@ const credentialInput=document.createElement("input");credentialInput.id="provid
 const credentialButton=document.createElement("button");credentialButton.id="add-provider-key";credentialButton.className="secondary";credentialButton.textContent="Сохранить в хранилище ОС";
 const credentialList=document.createElement("ul");credentialList.id="provider-keys";credentialList.className="checklist";credentialList.textContent="Откройте пространство для просмотра ключей.";
 credentialPanel.append(credentialHeading,credentialHint,credentialLabel,credentialInput,credentialButton,credentialList);
-document.querySelector('[data-panel="settings"]')!.append(credentialPanel);
+$("settings-advanced").append(credentialPanel);
 on("add-provider-key",async()=>{const key=credentialInput.value;credentialInput.value="";renderProviderKeys(await invoke<CredentialInfo[]>("add_provider_key",{key}));notify("Ключ сохранён. Его значение больше не показывается.");});
-const metricGrid=$("shadow-share").closest(".metric-grid")!;
+const metricGrid=document.createElement("div");metricGrid.className="metric-grid small";
+const moreMetrics=document.createElement("details"),moreMetricsSummary=document.createElement("summary");moreMetrics.className="fold";moreMetricsSummary.textContent="Ещё показатели";
+moreMetrics.append(moreMetricsSummary,metricGrid);document.querySelector('[data-panel="mirror"]')!.append(moreMetrics);
 for(const [id,label,hint] of [
-  ["cover-ratio","Приманки / удалённые запросы","Только подтверждённые ответы транспорта за период наблюдения. L0 и неизвестные исходы не входят."],
-  ["challenge-rate","Остановки CAPTCHA / вход","Учтённые остановки / (остановки + выполненные действия легенды) за период наблюдения."],
+  ["cover-ratio","Приманки / удалённые запросы","Только подтверждённые ответы транспорта. L0 и неизвестные исходы не входят."],
+  ["challenge-rate","Остановки на CAPTCHA и входе","Доля остановок среди действий легенды."],
 ]){
-  const card=document.createElement("div");card.className="surface";
+  const card=document.createElement("div");card.className="metric";
   const title=document.createElement("span");title.className="metric-label";title.textContent=label!;
   const number=document.createElement("strong");number.id=id!;number.className="metric-value";number.textContent="—";
   const description=document.createElement("p");description.className="hint";description.textContent=hint!;
   card.append(title,number,description);metricGrid.append(card);
 }
-const refreshMetrics=document.createElement("button");refreshMetrics.className="quiet";refreshMetrics.textContent="Обновить метрики и паузу из ядра";
+const refreshMetrics=document.createElement("button");refreshMetrics.className="quiet";refreshMetrics.textContent="Обновить цифры";
 refreshMetrics.addEventListener("click",()=>void busy(refreshMetrics,refreshOverview));metricGrid.after(refreshMetrics);
-const purgeHelp=document.createElement("section"),purgeHelpHeading=document.createElement("h2"),purgeGuideSelect=document.createElement("select"),purgeGuideLabel=document.createElement("label"),purgeGuideBody=document.createElement("div"),purgeResults=document.createElement("div"),purgeResultsHeading=document.createElement("h2"),purgeResultsRefresh=document.createElement("button");
-purgeHelp.className="surface";purgeHelpHeading.textContent="Инструкции по сервисам";purgeGuideSelect.id="purge-guide-service";purgeGuideLabel.htmlFor=purgeGuideSelect.id;purgeGuideLabel.textContent="Сервис";
+const purgeHelp=document.createElement("details"),purgeHelpHeading=document.createElement("summary"),purgeGuideSelect=document.createElement("select"),purgeGuideLabel=document.createElement("label"),purgeGuideBody=document.createElement("div"),purgeResults=document.createElement("div"),purgeResultsHeading=document.createElement("h3"),purgeResultsRefresh=document.createElement("button");
+purgeHelp.className="fold";purgeHelpHeading.textContent="Как удалить в сервисе и мои отметки";purgeGuideSelect.id="purge-guide-service";purgeGuideLabel.htmlFor=purgeGuideSelect.id;purgeGuideLabel.textContent="Сервис";
 for(const [id,title]of [["google","Google"],["youtube","YouTube"],["chatgpt","ChatGPT"],["claude","Claude"],["gemini","Gemini"]]){const option=document.createElement("option");option.value=id!;option.textContent=title!;purgeGuideSelect.append(option);}
-purgeGuideBody.textContent="Откройте пространство и обновите инструкции.";purgeResults.id="purge-results";purgeResultsHeading.textContent="Одобренные партии и мои отметки";purgeResultsRefresh.textContent="Обновить партии и инструкции";purgeResultsRefresh.className="secondary";
+purgeGuideBody.textContent="Откройте пространство и обновите инструкции.";purgeResults.id="purge-results";purgeResultsHeading.textContent="Одобренные партии";purgeResultsRefresh.textContent="Обновить";purgeResultsRefresh.className="quiet";
 purgeHelp.append(purgeHelpHeading,purgeGuideLabel,purgeGuideSelect,purgeGuideBody,purgeResultsHeading,purgeResultsRefresh,purgeResults);document.querySelector('[data-panel="purge"]')!.append(purgeHelp);
 const purgeGuides=new Map<string,PurgeGuide>();
 async function loadPurgeGuide(service:string){let guide=purgeGuides.get(service);if(!guide){guide=await invoke<PurgeGuide>("purge_guide",{service});purgeGuides.set(service,guide);}return guide;}
@@ -588,6 +630,7 @@ async function refreshPurgeBatches(){
 }
 purgeGuideSelect.addEventListener("change",()=>{const selected=purgeGuideSelect.value;void loadPurgeGuide(selected).then(guide=>{if(purgeGuideSelect.value===selected)renderPurgeGuide(purgeGuideBody,guide);}).catch(error=>notify(friendly(error),true));});
 purgeResultsRefresh.addEventListener("click",()=>void busy(purgeResultsRefresh,refreshPurgeBatches));
+setStage("unlock");renderStatusChip();
 if(window.__TAURI__)void (async()=>{await refreshOverview();if(unlocked)await hydrate();})().catch(e=>notify(friendly(e),true));
 else notify("Это статический интерфейс. Для обработки данных запустите десктопное приложение.");
 export {};
