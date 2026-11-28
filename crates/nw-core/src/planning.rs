@@ -17,6 +17,23 @@ pub struct PlanInput {
     pub sensitive_consent: bool,
 }
 
+/// Instruct models often wrap "only JSON" in one Markdown code fence. Accept
+/// exactly that wrapper; any other surrounding text still fails strict parsing.
+pub(crate) fn fenced_json(output: &str) -> &str {
+    let trimmed = output.trim();
+    let Some(inner) = trimmed
+        .strip_prefix("```json")
+        .or_else(|| trimmed.strip_prefix("```"))
+        .and_then(|rest| rest.strip_suffix("```"))
+    else {
+        return trimmed;
+    };
+    if inner.contains("```") || !inner.starts_with(['\n', '\r']) {
+        return trimmed;
+    }
+    inner.trim()
+}
+
 pub async fn generate<M: LocalModel>(
     model: &M,
     shield: &Shield,
@@ -61,10 +78,10 @@ pub async fn generate<M: LocalModel>(
             Message{role:Role::User,content:serde_json::to_string(&serde_json::json!({"untrusted_source":source.expose_secret(),"sensitive_consent":input.sensitive_consent,"validation_feedback":feedback})).map_err(|_|CoreError::Request)?},
         ];
         let output = model
-            .complete_with_limit(&messages, 8192)
+            .complete_structured(&messages, 8192, nw_llm::OutputSchema::PlanV1)
             .await
             .map_err(|_| CoreError::Model)?;
-        let Ok(mut plan) = serde_json::from_str::<Plan>(output.expose_secret()) else {
+        let Ok(mut plan) = serde_json::from_str::<Plan>(fenced_json(output.expose_secret())) else {
             feedback = "invalid_json_schema";
             continue;
         };
@@ -141,6 +158,7 @@ mod tests {
     struct Model {
         calls: AtomicUsize,
         attack: bool,
+        fenced: bool,
     }
     impl LocalModel for Model {
         async fn complete(
@@ -171,9 +189,16 @@ mod tests {
                 stages,
                 sensitive_consent: false,
             };
-            Ok(secrecy::SecretString::from(
-                serde_json::to_string(&plan).unwrap(),
-            ))
+            let json = serde_json::to_string_pretty(&plan).unwrap();
+            Ok(secrecy::SecretString::from(if self.fenced {
+                format!(
+                    "```json
+{json}
+```"
+                )
+            } else {
+                json
+            }))
         }
         async fn embed(&self, texts: &[String]) -> Result<Vec<Vec<f64>>, nw_llm::ModelError> {
             texts
@@ -210,6 +235,7 @@ mod tests {
         let model = Model {
             calls: AtomicUsize::new(0),
             attack: false,
+            fenced: false,
         };
         let checked = generate(&model, &Shield::new(vec![]).unwrap(), &input())
             .await
@@ -225,6 +251,7 @@ mod tests {
         let model = Model {
             calls: AtomicUsize::new(0),
             attack: true,
+            fenced: false,
         };
         let shield = Shield::new(vec![
             nw_shield::Secret::new(
@@ -242,10 +269,57 @@ mod tests {
         assert_eq!(model.calls.load(Ordering::SeqCst), 3);
     }
     #[tokio::test]
+    async fn a_fenced_plan_is_parsed_and_still_fully_checked() {
+        let model = Model {
+            calls: AtomicUsize::new(0),
+            attack: false,
+            fenced: true,
+        };
+        let checked = generate(&model, &Shield::new(vec![]).unwrap(), &input())
+            .await
+            .unwrap();
+        assert!(checked.checks().valid);
+        assert_eq!(model.calls.load(Ordering::SeqCst), 1);
+        let attack = Model {
+            calls: AtomicUsize::new(0),
+            attack: true,
+            fenced: true,
+        };
+        let shield = Shield::new(vec![
+            nw_shield::Secret::new(
+                nw_shield::SecretKind::Secret,
+                "SYNTHETIC_PRIVATE_PLAN_CANARY_5419".into(),
+                false,
+            )
+            .unwrap(),
+        ])
+        .unwrap();
+        assert_eq!(
+            generate(&attack, &shield, &input()).await.err(),
+            Some(CoreError::Blocked)
+        );
+    }
+    #[test]
+    fn only_a_single_markdown_json_fence_is_removed() {
+        assert_eq!(fenced_json("```json\n{\"a\":1}\n```"), "{\"a\":1}");
+        assert_eq!(fenced_json("  ```\r\n{}\r\n```\n"), "{}");
+        assert_eq!(fenced_json("{\"a\":1}"), "{\"a\":1}");
+        for kept in [
+            "Here it is: ```json\n{}\n```",
+            "```json {}```",
+            "```json\n{}\n```\n```json\n{}\n```",
+            "```json\n{}",
+        ] {
+            assert_eq!(fenced_json(kept), kept.trim());
+            assert!(serde_json::from_str::<serde_json::Value>(fenced_json(kept)).is_err());
+        }
+    }
+    #[tokio::test]
     async fn failed_plan_checks_are_not_reported_as_a_shield_block() {
         let model = Model {
             calls: AtomicUsize::new(0),
             attack: false,
+            fenced: false,
         };
         let mut other_cover = input();
         other_cover.cover = "history and museums".into();

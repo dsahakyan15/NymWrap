@@ -376,6 +376,45 @@ mod tests {
     #[cfg(feature = "inference")]
     #[tokio::test]
     #[ignore = "requires the verified GGUF files from scripts/fetch-test-models.ps1"]
+    async fn actual_plan_grammar_yields_compact_ten_by_five_json() {
+        let _serial = crate::CPU_TEST_LOCK.lock().await;
+        let root =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/test-models");
+        let mut backend = crate::inference::Cpu::load(
+            &root.join("qwen2.5-0.5b-instruct-q4_k_m.gguf"),
+            "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+            &root.join("nomic-embed-text-v1.5.Q4_K_M.gguf"),
+            "d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac",
+        )
+        .unwrap();
+        let text = backend
+            .complete_structured(
+                &[Message {
+                    role: nw_llm::Role::User,
+                    content: "Write a Markdown essay about gardening with 3 stages, then a chatgpt action."
+                        .into(),
+                }],
+                8192,
+                Some(nw_llm::OutputSchema::PlanV1),
+            )
+            .unwrap();
+        let plan: serde_json::Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(plan["days_per_stage"], 5);
+        let stages = plan["stages"].as_array().unwrap();
+        assert_eq!(stages.len(), 10);
+        for stage in stages {
+            let actions = stage["actions"].as_array().unwrap();
+            assert_eq!(actions.len(), 5);
+            assert!(
+                actions
+                    .iter()
+                    .all(|a| a["service"] == "google" || a["service"] == "youtube")
+            );
+        }
+    }
+    #[cfg(feature = "inference")]
+    #[tokio::test]
+    #[ignore = "requires the verified GGUF files from scripts/fetch-test-models.ps1"]
     async fn actual_cpu_model_over_private_ipc() {
         let _serial = crate::CPU_TEST_LOCK.lock().await;
         use nw_llm::LocalModel;

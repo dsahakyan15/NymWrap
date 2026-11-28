@@ -1,0 +1,6 @@
+root ::= "{\"cover\":" text ",\"days_per_stage\":5,\"sensitive_consent\":" boolean ",\"stages\":[" stage ("," stage){9} "]}"
+boolean ::= "true" | "false"
+stage ::= "{\"theme\":" text ",\"bridge\":" text ",\"actions\":[" action ("," action){4} "]}"
+action ::= "{\"service\":" service ",\"text\":" text "}"
+service ::= "\"google\"" | "\"youtube\""
+text ::= "\"" [^"\\x00-\x1F]{1,120} "\""

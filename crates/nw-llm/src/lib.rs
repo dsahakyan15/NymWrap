@@ -52,6 +52,9 @@ pub enum OutputSchema {
     PrivacyV1,
     LinkageV1,
     LinkageFactsV1,
+    /// Drift plan shape only: 10 stages x 5 Google/YouTube actions, compact JSON.
+    /// Every value is still checked by nw-core (schema, safety, leakcheck, embeddings).
+    PlanV1,
 }
 #[derive(zeroize::Zeroize, zeroize::ZeroizeOnDrop)]
 pub struct EmbeddingBatch {

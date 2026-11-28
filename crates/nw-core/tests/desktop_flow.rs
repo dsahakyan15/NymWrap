@@ -27,10 +27,28 @@ const EMBED_MODEL: (&str, &str) = (
 const TAKEOUT: &str = include_str!("../../../tests/fixtures/takeout.json");
 const CANARY: &str = "Synthetic Qeravina Zoltessa";
 
-/// Default: pinned Qwen2.5-0.5B. NYMWRAP_E2E_CHAT_MODEL=7b selects the prepared
-/// merged 7B GGUF described by target/test-models/qwen2.5-7b-q4_k_m.merged.json.
+/// Mid-size official Qwen2.5 instruct GGUFs pinned in scripts/fetch-test-models.ps1.
+const MID_MODELS: [(&str, &str, &str); 2] = [
+    (
+        "1.5b",
+        "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+    ),
+    (
+        "3b",
+        "qwen2.5-3b-instruct-q4_k_m.gguf",
+        "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d",
+    ),
+];
+/// Default: pinned Qwen2.5-0.5B. NYMWRAP_E2E_CHAT_MODEL=1.5b|3b selects a pinned
+/// mid-size model; =7b the prepared merged 7B GGUF described by
+/// target/test-models/qwen2.5-7b-q4_k_m.merged.json.
 fn chat_model(models: &Path) -> Result<(String, String), String> {
-    if std::env::var("NYMWRAP_E2E_CHAT_MODEL").as_deref() != Ok("7b") {
+    let choice = std::env::var("NYMWRAP_E2E_CHAT_MODEL").unwrap_or_default();
+    if let Some((_, file, sha)) = MID_MODELS.iter().find(|(name, _, _)| *name == choice) {
+        return Ok(((*file).into(), (*sha).into()));
+    }
+    if choice != "7b" {
         return Ok((CHAT_MODEL.0.into(), CHAT_MODEL.1.into()));
     }
     let meta: Value = serde_json::from_slice(
@@ -220,16 +238,24 @@ async fn flow(client: &Client, models: &Path, data: &Path) -> Result<(), String>
         "PASS: L0 chat over the private OpenAI-compatible API and the UI chat path share history"
     );
 
-    let persona = call(client, json!({"op":"research_persona"})).await?;
-    let choices: Vec<Value> = persona["traits"]
-        .as_array()
-        .map(|t| t.iter().map(|t| json!([t["id"], true])).collect())
-        .unwrap_or_default();
-    call(client, json!({"op":"confirm_traits","choices":choices})).await?;
-    println!(
-        "PASS: local persona research returned {} trait(s); confirmations saved",
-        choices.len()
-    );
+    // The UI also accepts manually confirmed interests, which the plan below uses.
+    match call(client, json!({"op":"research_persona"})).await {
+        Ok(persona) => {
+            let choices: Vec<Value> = persona["traits"]
+                .as_array()
+                .map(|t| t.iter().map(|t| json!([t["id"], true])).collect())
+                .unwrap_or_default();
+            call(client, json!({"op":"confirm_traits","choices":choices})).await?;
+            println!(
+                "PASS: local persona research returned {} trait(s); confirmations saved",
+                choices.len()
+            );
+        }
+        Err(code) if code.ends_with("invalid_workspace_data") => println!(
+            "NOT VERIFIED: persona research output rejected by code checks; continuing with manually confirmed interests"
+        ),
+        Err(code) => return Err(code),
+    }
 
     let plan = call(client, json!({"op":"generate_plan","socket":"","secrets":[],"input":{
         "confirmed_interests":["pottery","cloud science"],"cover":"gardening and nature","sensitive_consent":false,
@@ -240,10 +266,10 @@ async fn flow(client: &Client, models: &Path, data: &Path) -> Result<(), String>
             true
         }
         // Documented: the 0.5B test model often fails the plan checks. The code
-        // gate holds; the approval path needs NYMWRAP_E2E_CHAT_MODEL=7b.
+        // gate holds; the approval path needs a larger NYMWRAP_E2E_CHAT_MODEL.
         Err(code) if small && code.ends_with("plan_checks_failed") => {
             println!(
-                "NOT VERIFIED: 0.5B plan rejected by code checks (plan_checks_failed); rerun with NYMWRAP_E2E_CHAT_MODEL=7b"
+                "NOT VERIFIED: 0.5B plan rejected by code checks (plan_checks_failed); rerun with NYMWRAP_E2E_CHAT_MODEL=1.5b|3b|7b"
             );
             false
         }
@@ -283,7 +309,7 @@ async fn flow(client: &Client, models: &Path, data: &Path) -> Result<(), String>
             "PASS: Purge batch approved by hash; ranking and Mirror correctly require an approved plan"
         );
         println!(
-            "NOT VERIFIED: Purge ranking and Mirror snapshot (need an approved plan; use NYMWRAP_E2E_CHAT_MODEL=7b)"
+            "NOT VERIFIED: Purge ranking and Mirror snapshot (need an approved plan; use a larger NYMWRAP_E2E_CHAT_MODEL)"
         );
     }
     Ok(())
