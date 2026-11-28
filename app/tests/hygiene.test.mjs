@@ -29,9 +29,13 @@ test('hygiene UI keeps untrusted source labels as text and distinguishes manual 
   try{
     const root=new Element('div');renderDeviceProbe(root,{last_attempt:0,last_success:0,protected_values:0,unavailable:['<script>synthetic</script>'],code:'<img>'});
     assert.equal(root.all('script').length,0);assert.equal(root.all('img').length,0);
+    assert.ok(root.all('p').every(item=>!item.textContent.includes('<img>')));
+    assert.ok(root.all('p').some(item=>item.textContent.includes('Повторите проверку устройства')));
     assert.ok(root.all('li').some(item=>item.textContent.includes('<script>synthetic</script>')));
     const page=createHygienePanel();assert.equal(page.dataset.panel,'hygiene');assert.equal(page.all('input').length,0);
     assert.ok(page.all('p').some(p=>p.textContent.includes('остаются неизвестными')));assert.equal(page.all('li').length,6);
     renderDeviceProbe(root,undefined);assert.equal(root.all('li').length,0);
+    renderDeviceProbe(root,{last_attempt:0,last_success:0,protected_values:0,unavailable:[],code:'probe_failed'});
+    assert.ok(root.all('p').every(item=>!item.textContent.includes('probe_failed')));
   }finally{globalThis.document=previous;}
 });

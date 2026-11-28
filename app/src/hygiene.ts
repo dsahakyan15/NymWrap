@@ -26,7 +26,7 @@ export function renderDeviceProbe(root:HTMLElement,status:DeviceProbeStatus|unde
   root.append(summary,coverage);
   const unknown=[...new Set([...Object.keys(sources).filter(source=>!status.observed?.includes(source)),...status.unavailable])];
   if(unknown.length){const list=document.createElement("ul");for(const source of unknown){const item=document.createElement("li");item.textContent=`Неизвестно, источник не прочитан полностью: ${sources[source]??source}.`;list.append(item);}root.append(list);}
-  if(status.code){const issue=document.createElement("p");issue.textContent=`Проверка не завершилась. Код: ${status.code}`;root.append(issue);}
+  if(status.code){const issue=document.createElement("p");issue.textContent="Проверка не завершилась. Повторите проверку устройства. Если ошибка сохраняется, проверьте доступ к данным ОС и наличие nw-probe в сборке.";root.append(issue);}
 }
 export function createHygienePanel():HTMLElement{
   const panel=document.createElement("section");panel.dataset.panel="hygiene";panel.hidden=true;

@@ -14,6 +14,7 @@ const $ = <T extends HTMLElement>(id: string): T => {
 const value=(id:string)=>$<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>(id).value;
 const lines=(id:string)=>value(id).split("\n").map(s=>s.trim()).filter(Boolean);
 let sessionEpoch=0;
+let previewEpoch=0;
 let storageExists=false;
 let unlocked=false;
 let egressAvailable=false;
@@ -122,6 +123,9 @@ function friendly(error:unknown):string {
     ipc_authentication_failed:"Сессионное разрешение не прошло проверку. Операция остановлена.",
     ipc_forbidden:"Этому компоненту не разрешено выполнять выбранное действие.",
     daemon_start_failed:"Не удалось запустить компоненты приложения. Проверьте комплектность сборки и другие открытые сессии.",
+    runtime_component_missing:"В сборке отсутствует нужный компонент. Проверьте наличие демонов рядом с приложением.",
+    ipc_unavailable:"Ядро приложения недоступно. Закройте и снова запустите NymWrap.",
+    ipc_timeout:"Ядро не ответило вовремя. Дождитесь завершения текущей операции и повторите.",
     invalid_password:"Пароль неверен или зашифрованные данные повреждены.",
     vault_authentication_failed:"Пароль неверен или данные повреждены.",
     invalid_vault_key:"Пароль неверен или ключ хранилища недоступен.",
@@ -162,13 +166,17 @@ function friendly(error:unknown):string {
     model_files_required:"Укажите полные пути и SHA-256 обоих файлов GGUF.",
     model_already_running:"Приватный канал модели уже используется.",
     model_start_failed:"Модель не запущена. Проверьте файлы, SHA-256 и наличие nw-llmd рядом с ядром.",
+    model_component_missing:"Не найден nw-llmd. Проверьте комплектность сборки приложения.",
+    model_sandbox_unavailable:"Проверка или загрузка моделей в песочнице не удалась. Проверьте пути к GGUF, их SHA-256 и наличие nw-llmd; модель не запущена.",
+    model_start_timeout:"Проверка и загрузка модели не завершились вовремя. Модель не запущена; дождитесь окончания сборок и повторите.",
+    invalid_model_aliases:"Для встроенного запуска укажите имя модели диалога «default», а эмбеддингов — «nomic-embed-text» в дополнительных настройках.",
     invalid_conversation:"Разговор недоступен. Начните новый разговор.",
     session_changed:"Сессия изменилась. Предыдущая операция отменена."
     ,device_probe_required:"Проверка устройства не завершена. Откройте «Настройки» → «Гигиена устройства». Локальная модель доступна."
     ,outside_activity_window:"Сейчас вне одобренного окна активности легенды. Посмотрите время UTC в плане; действия автоматически не догоняются."
     ,invalid_activity_window:"Укажите целые часы UTC от 0 до 23 и длительность окна от 1 до 12 часов."
   };
-  return map[code]??`Операция остановлена. Проверьте данные, пароль и состояние локальной модели.${/^[a-z0-9_]+$/.test(code)?" Код: "+code:""}`;
+  return Object.hasOwn(map,code)?map[code]!:"Операция остановлена. Проверьте данные, пароль и состояние локальной модели.";
 }
 async function busy(button:HTMLButtonElement,work:()=>Promise<void>){
   button.disabled=true;button.setAttribute("aria-busy","true");
@@ -299,14 +307,22 @@ on("open-workspace",async()=>{
   await hydrate();notify(stage==="model"?"Пространство открыто. Теперь подключите модель.":"Пространство открыто.");
 });
 $("sample").addEventListener("click",()=>{
+  clearPreview();
   $<HTMLTextAreaElement>("prompt").value="Я Синтетик Тестов из Синтеграда. Напиши на demo@example.test про садоводство.";
   $<HTMLTextAreaElement>("secrets").value="Синтетик Тестов\nСинтеграда";
 });
+function clearPreview(){
+  previewEpoch++;
+  $("preview-box").hidden=true;$("preview-result").textContent="Ожидает вашего текста";$("preview-info").textContent="Проверьте текущий текст заново.";
+}
+for(const id of ["prompt","secrets"])$(id).addEventListener("input",clearPreview);
 on("preview",async()=>{
+  const epoch=++previewEpoch;
   $("preview-box").hidden=false;$("preview-result").textContent="Проверка…";$("preview-info").textContent="Проверка ещё не завершена.";
   try{const result=await invoke<{minimized:string;sensitivity:string;replacements:number}>("preview_shield",{input:{text:value("prompt"),secrets:secrets()}});
-    $("preview-result").textContent=result.minimized;$("preview-info").textContent=`Заменено: ${result.replacements} · проверка утечек пройдена · ${result.sensitivity==="local_only"?"только локально":"можно отправить после просмотра"}`;
-  }catch(e){$("preview-result").textContent="Результат заблокирован или недоступен.";$("preview-info").textContent="Успешной проверки нет.";throw e;}
+    if(epoch!==previewEpoch)return;
+    $("preview-result").textContent=result.minimized;$("preview-info").textContent=`Заменено: ${result.replacements} · предварительная проверка утечек пройдена · ${result.sensitivity==="local_only"?"только локально":"маршрут проверяется при запросе"}`;
+  }catch(e){if(epoch!==previewEpoch)return;$("preview-result").textContent="Результат заблокирован или недоступен.";$("preview-info").textContent="Успешной проверки нет.";throw e;}
 });
 on("save-secrets",async()=>{await invoke("save_secrets",{secrets:secrets()});resetChat();notify("Список сохранён. Он действует в новых разговорах.");});
 function remoteAllowed(){return unlocked&&egressAvailable&&config?.net.transport==="tor"&&config.shield.min_trust==="L3"&&(config.hard?.device_secrets===false||deviceInventoryReady(deviceProbe));}
@@ -314,7 +330,7 @@ function updateChatButtons(){
   $<HTMLButtonElement>("send-chat").disabled=!unlocked||chatSending||chatReadOnly;
   $<HTMLButtonElement>("send-remote").disabled=chatSending||chatReadOnly||!remoteAllowed();$("send-remote").hidden=!remoteAllowed();jobsPanel.hidden=config?.net.transport!=="tor";
 }
-function resetChat(cancelOnServer=true){activeRemoteReview?.(cancelOnServer);if(activeRemoteJob){if(cancelOnServer)void invoke("cancel_remote_job",{id:activeRemoteJob}).catch(()=>{});activeRemoteJob=undefined;}chatEpoch++;chatSending=false;conversation="new";messages=[];chatReadOnly=false;$("chat-messages").replaceChildren();updateChatButtons();$("chat-history-info").textContent="Новый разговор.";}
+function resetChat(cancelOnServer=true){clearPreview();activeRemoteReview?.(cancelOnServer);if(activeRemoteJob){if(cancelOnServer)void invoke("cancel_remote_job",{id:activeRemoteJob}).catch(()=>{});activeRemoteJob=undefined;}chatEpoch++;chatSending=false;conversation="new";messages=[];chatReadOnly=false;$("chat-messages").replaceChildren();updateChatButtons();$("chat-history-info").textContent="Новый разговор.";}
 async function confirmRemote(response:Extract<RemoteReviewResponse,{status:"review"}>,original:Message[]):Promise<boolean>{
   const {review}=response;
   const dialog=document.createElement("dialog"),heading=document.createElement("h2"),details=document.createElement("p"),privacy=document.createElement("p"),body=document.createElement("pre"),approve=document.createElement("button"),cancel=document.createElement("button");
@@ -369,7 +385,7 @@ async function sendChat(remote:boolean){
     }
   }else reply=await invoke<ChatReply>("chat",{conversation,messages:next});
   if(epoch!==chatEpoch)throw new Error("session_changed");
-  conversation=reply.conversation;messages=[...next,{role:"assistant",content:reply.text}];renderChat();if(value("prompt").trim()===text)$<HTMLTextAreaElement>("prompt").value="";await refreshOverview();await refreshHistory();
+  conversation=reply.conversation;messages=[...next,{role:"assistant",content:reply.text}];renderChat();if(value("prompt").trim()===text){$<HTMLTextAreaElement>("prompt").value="";clearPreview();}await refreshOverview();await refreshHistory();
   $("chat-history-info").textContent=chatStatusLabel(reply);
   routeLabel=reply.trust==="L0"?"L0 · локально":"L3 · Tor / ключ";renderStatusChip();
   renderNetworkUsage(await invoke<NetworkUsage>("load_network_usage"));
@@ -391,7 +407,9 @@ $("import-file").addEventListener("change",async()=>{
 on("research-persona",async()=>{renderPersona(await invoke<Persona>("research_persona"));notify("Черты найдены. Отметьте те, что про вас.");});
 on("confirm-persona",async()=>{
   const choices=Array.from(document.querySelectorAll<HTMLInputElement>("[data-trait]")).map(c=>[c.dataset.trait,c.checked]);
-  renderPersona(await invoke<Persona>("confirm_traits",{choices}));await refreshOverview();driftStep(3);notify("Черты сохранены. Теперь постройте план.");
+  renderPersona(await invoke<Persona>("confirm_traits",{choices}));await refreshOverview();
+  const confirmed=persona.traits.some(t=>t.confirmed===true);driftStep(confirmed?3:2);
+  notify(confirmed?"Черты сохранены. Теперь постройте план.":"Черты сохранены. Подтвердите хотя бы одну черту или найдите их заново.");
 });
 const activityControls=document.createElement("div"),activityTitle=document.createElement("h2"),activityHint=document.createElement("p");
 activityTitle.textContent="Часы активности";activityHint.className="hint";activityHint.textContent="Часы UTC сейчас и в конце пути. Расписание покажется в плане до одобрения.";
@@ -449,7 +467,7 @@ async function saveSettings(){
   next.net={transport,provider_host:value("net-host").trim()||null,provider_path:value("net-path").trim()||null,provider_model:value("net-model").trim()||null,credential_ref:transport==="local"?null:"keyring:pool",max_request_cost_microusd:value("net-cost").trim()?Math.ceil(Number(value("net-cost"))*1_000_000):null};
   next.cover={...config.cover,mode:value("traffic-mode"),enabled:$<HTMLInputElement>("traffic-enabled").checked,mean_interval_s:Number(value("traffic-interval")),max_requests_per_day:Number(value("net-daily-count")),max_spend_per_day_usd:Number(value("net-daily-budget"))};
   next.hard={device_secrets:config.hard?.device_secrets??true,defer_max_hours:config.hard?.defer_max_hours??0,background_tail:$<HTMLInputElement>("background-tail").checked};
-  await invoke("save_config",{config:next});config=next;$<HTMLInputElement>("model-socket").value=next.llm.endpoint;resetChat();routeLabel=remoteAllowed()?"L0 / Tor · L3":"L0 · локально";renderStatusChip();notify("Настройки сохранены.");
+  await invoke("save_config",{config:next});config=next;$<HTMLInputElement>("model-socket").value=next.llm.endpoint;resetChat();await refreshOverview();notify("Настройки сохранены.");
 }
 on("save-settings",saveSettings);
 function clearSensitiveUi(){
@@ -459,6 +477,7 @@ function clearSensitiveUi(){
   renderHygiene($("hygiene-checks"),undefined);
   config=undefined;persona={traits:[]};storedSecrets=[];histories=[];historySelect.replaceChildren();dayHash=undefined;displayedHash=undefined;purgeItems=[];preparedPurge=undefined;resetChat(false);paused=false;unlocked=false;
   document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>("input,textarea").forEach(i=>{i.value="";});
+  $<HTMLInputElement>("account-count").value="1";
   for(const id of ["audit-result","plan-stages","daily-tasks","persona-traits","purge-candidates","purge-batch","purge-results","observations","provider-keys","remote-jobs"])$(id).replaceChildren();
   $("network-usage").textContent="Пространство заблокировано.";$("traffic-status").replaceChildren();$<HTMLButtonElement>("send-remote").disabled=true;
   for(const id of ["plan-review","persona-panel","purge-review","preview-box"])$(id).hidden=true;setDailyOpen(false);
@@ -470,7 +489,7 @@ on("clear-session",async()=>{sessionEpoch++;await invoke("clear_session");clearS
 on("run-device-probe",async()=>{
   deviceProbe=await invoke<DeviceProbeStatus>("run_device_probe");renderDeviceProbe($("device-probe-status"),deviceProbe);
   renderHygiene($("hygiene-checks"),deviceProbe);
-  storedSecrets=await invoke<Secret[]>("load_secrets");$<HTMLTextAreaElement>("secrets").value=storedSecrets.map(s=>s.value).join("\n");
+  storedSecrets=await invoke<Secret[]>("load_secrets");$<HTMLTextAreaElement>("secrets").value=storedSecrets.map(s=>s.value).join("\n");clearPreview();
   updateChatButtons();notify(deviceInventoryReady(deviceProbe)?"Источники устройства проверены; список секретов обновлён.":"Результат сохранён. Проверьте список недоступных источников.");
 });
 on("erase-data",async()=>{
@@ -566,7 +585,7 @@ trafficStatus.id="traffic-status";trafficRefresh.textContent="Обновить �
 trafficPanel.append(trafficHeading,trafficConsent,tailConsent,sessionHint,sessionTiming,trafficModeLabel,trafficIntervalLabel,trafficHint,trafficStatus,trafficRefresh);$("settings-advanced").append(trafficPanel);
 function renderTraffic(status:TrafficStatus){
   const out=$("traffic-status");out.replaceChildren();const summary=document.createElement("p");summary.textContent=status.enabled?`${config?.cover.mode==="constant"?"Постоянные слоты включены":"Пуассоновский режим включён"}. Следующий слот: ${status.next_slot?new Date(status.next_slot*1000).toLocaleString():"ожидает планирования"}.`:"Фоновые запросы выключены.";out.append(summary);
-  const list=document.createElement("ul");for(const job of status.jobs.slice(-8).reverse()){const item=document.createElement("li");item.textContent=`${new Date(job.created_at*1000).toLocaleString()} · ${job.purpose==="real"?"запрос":"приманка"} · ${{preparing:"подготовка / отправка",succeeded:"получен ответ",uncertain:"результат неизвестен, повтор запрещён",blocked:"остановлено"}[job.state]??job.state}${job.code?" · "+job.code:""}`;list.append(item);}out.append(list);
+  const list=document.createElement("ul");for(const job of status.jobs.slice(-8).reverse()){const item=document.createElement("li");item.textContent=`${new Date(job.created_at*1000).toLocaleString()} · ${job.purpose==="real"?"запрос":"приманка"} · ${{preparing:"подготовка / отправка",succeeded:"получен ответ",uncertain:"результат неизвестен, повтор запрещён",blocked:"остановлено"}[job.state]??job.state}${job.code?" · "+friendly(job.code):""}`;list.append(item);}out.append(list);
 }
 function renderNetworkUsage(usage:NetworkUsage){networkUsage.textContent=`Учёт за ${new Date(usage.day*86400*1000).toISOString().slice(0,10)} UTC: запросов ${usage.requests}, зарезервировано ${(usage.reserved_microusd/1_000_000).toFixed(6)} USD.`;}
 const modelFiles=document.createElement("div");
