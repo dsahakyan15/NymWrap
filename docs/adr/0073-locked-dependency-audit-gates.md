@@ -1,5 +1,7 @@
 # Закреплённая проверка аудитов зависимостей
 
+> Изменено [ADR 0111](0111-scoped-cargo-vet-exemptions.md) (2026-11-28): запрет exemptions заменён поштучным allowlist принятых рисков.
+
 THREAT_MODEL §9 требует cargo-vet вместе с cargo-deny. Инструмент добавляется
 как отдельный build/CI tool, без зависимости в приложении: cargo-vet 0.10.4,
 официальный tag a9bde85910409be3d2d61e6f6ff6ba7a521f0412, MIT/Apache-2.0.

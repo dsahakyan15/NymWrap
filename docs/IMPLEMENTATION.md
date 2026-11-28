@@ -1,6 +1,6 @@
 # Состояние реализации
 
-Обновлено: 2026-11-26. Работа продолжается по SPEC. Этапы закрываются только после
+Обновлено: 2026-11-28. Работа продолжается по SPEC. Этапы закрываются только после
 проверки всех критериев в CI. Tor с ключом провайдера (L3) требует standard и
 полной проверки секретов устройства либо явного отключения автоматического сбора
 в конфигурации. Текущий Windows probe сообщает недоступные user/Wi-Fi источники;
@@ -17,6 +17,15 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 не заменяют CI, испытание настоящих аккаунтов или изоляцию всего desktop.
 Разделы ниже этой сверки — история работ; прежние числа пробелов и обещания
 будущих проверок не являются итоговым статусом.
+
+**Дополнение 2026-11-28.** Владелец разрешил поштучные exemptions cargo-vet
+([ADR 0111](adr/0111-scoped-cargo-vet-exemptions.md)); пункты 8 и 10
+THREAT_MODEL §9, строка M6 и решения владельца ниже обновлены. Vet проверен
+локально закреплённым cargo-vet 0.10.4; CI на новой ревизии ещё не запускался.
+Итог фаззинга сверен по `gh run view 45813366602 --json jobs,conclusion` и
+скачанным receipts 2026-11-28. Для этой правки (supply-chain, gate, документы)
+выполнены `node --test scripts/tests/*.test.mjs` — 75/75 — и gate vet;
+`cargo test`/`clippy` не перезапускались, код приложения не менялся.
 
 **SPEC §9 — каждый критерий приёмки.** M0, M1, M2 (Linux), M3, M3H, M4 и M5
 закрыты по перечисленным критериям; M6 и M7 частичны. Это не подтверждение
@@ -47,7 +56,7 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 | M4: шаблоны удаления генерируются без сети | выполнено | [core Linux][ci-core-linux]: `service_guides_are_offline_distinct_and_use_only_official_sources`, `strongest_first_neutral_retained_and_approval_bound` | Фактическое удаление и исчезновение данных проверяет владелец; обучение модели этим не отменяется. |
 | M5: математика совпадает с anti.py selftest | выполнено | [drift-math-parity][ci-math]: `scripts/drift-math-parity.py`, [ADR 0101](adr/0101-drift-reference-parity.md) | Это проверка математики; не измерение изменения реального профиля сервиса. |
 | M5: расширение останавливается на CAPTCHA | выполнено | [frontends][ci-frontends]: CAPTCHA/login tests; [extension-browser Linux][ci-browser-linux] и [Windows][ci-browser-windows]: реальные браузеры на синтетических страницах | Живые аккаунты не проверены. [ADR 0100](adr/0100-local-drift-adapters.md), [чек-лист владельца](ACCOUNT_ADAPTER_CHECKLIST.md). |
-| M6: THREAT_MODEL §9 выполнен полностью | частично | Постатейная сверка во второй таблице; зелёные [core Linux][ci-core-linux], [Windows][ci-core-windows], [macOS][ci-core-macos], [Seatbelt][ci-seatbelt], [MicroVM][ci-microvm] | Общая изоляция, проверка дампов, зависимости, подписанный выпуск и 24 ч фаззинга не закрыты. [ADR 0093](adr/0093-core-key-and-launch-broker.md), [0094](adr/0094-macos-seatbelt-process-profiles.md), [0073](adr/0073-locked-dependency-audit-gates.md), [0099](adr/0099-owner-signed-release-handoff.md), [0096](adr/0096-task10-hosted-fuzz-campaign.md). |
+| M6: THREAT_MODEL §9 выполнен полностью | частично | Постатейная сверка во второй таблице; зелёные [core Linux][ci-core-linux], [Windows][ci-core-windows], [macOS][ci-core-macos], [Seatbelt][ci-seatbelt], [MicroVM][ci-microvm] | Общая изоляция, проверка дампов и подписанный выпуск не закрыты. Vet зелёный только через 70 принятых exemptions ([ADR 0111](adr/0111-scoped-cargo-vet-exemptions.md)), native review не выполнен; фаззинг 6×4 ч завершён без падений, но на более раннем SHA (пункт 10). [ADR 0093](adr/0093-core-key-and-launch-broker.md), [0094](adr/0094-macos-seatbelt-process-profiles.md), [0073](adr/0073-locked-dependency-audit-gates.md), [0099](adr/0099-owner-signed-release-handoff.md), [0096](adr/0096-task10-hosted-fuzz-campaign.md). |
 | M7: флаги и явная экспериментальная маркировка | выполнено (ограждение эксперимента) | [core Linux][ci-core-linux]: `experimental_unavailable_upstream_never_offers_l1_l2_approval_or_blocks_l0`; [network Linux][ci-network-linux]: `--all-features ... zkapi`; [frontends][ci-frontends] | Эти jobs подтверждают запреты и синтетический протокол, а не рабочую защиту. |
 | M7: Nym-транспорт и zkAPI-адаптер | частично | [ADR 0107](adr/0107-experimental-zkapi-client.md), [ADR 0108](adr/0108-nym-sdk-qualification.md); зелёная синтетика [network Linux][ci-network-linux] | zkAPI только за флагом, production connector закрыт, upstream не развёрнут; Nym — недоступный интерфейс без SDK/mixnet. Реального L1/L2 нет. Paranoid только L0/отказ, [ADR 0090](adr/0090-paranoid-slotted-dispatch.md). |
 
@@ -64,9 +73,9 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 | 5. В файлах данных нет открытого текста тестовых промптов | выполнено | [core Linux][ci-core-linux]: `domain_files_never_contain_plaintext`, SQLCipher reopen/shred tests | Область — файлы данных приложения, не все файлы ОС. |
 | 6. Core dump запрещены, ключи mlock, проверено тестом | частично | [core Linux][ci-core-linux], [Windows][ci-core-windows], [macOS][ci-core-macos]: `keys_are_locked_and_independent_drops_retain_other_locks`; код `harden_process` | Нет отдельного CI-доказательства запрета/отсутствия дампа всех production-процессов и его содержимого. Наличие RLIMIT_CORE/PR_SET_DUMPABLE/WER в коде этого не заменяет. [ADR 0003](adr/0003-os-security-boundary.md). |
 | 7. IPC отвергает чужую полосу | выполнено | [core Linux][ci-core-linux]: `private_roundtrip_rejects_foreign_lane_and_oversize`, `rejects_forged_lane_version_unknown_fields_and_oversize`, процессный RPC suite | Проверка протокола не закрывает общую OS-изоляцию пункта 1. |
-| 8. cargo-deny + cargo-vet зелёные, SBOM в релизе | частично | [dependencies][ci-deny] и [sbom][ci-sbom] зелёные; [vet fuzz][ci-vet-fuzz] зелёный, 0 пробелов. [vet root][ci-vet-root] — 7, [netd][ci-vet-netd] — 20, [desktop][ci-vet-desktop] — 5 пробелов, все три красные | Поштучные exemptions не разрешены gate по [ADR 0073](adr/0073-locked-dependency-audit-gates.md), решение владельца не принято. Остались native C/C++/ASM/FFI (OpenSSL, SQLCipher/SQLite, llama.cpp, libdbus и другие) и находки: [0102](adr/0102-root-dependency-audit-sources.md), [0103](adr/0103-netd-dependency-audit-sources.md), [0104](adr/0104-desktop-dependency-audit-sources.md), [0109](adr/0109-secret-service-openssl.md), [0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md). Source SBOM есть в CI/неподписанном кандидате, опубликованного подписанного релиза нет. |
+| 8. cargo-deny + cargo-vet зелёные, SBOM в релизе | частично | [dependencies][ci-deny] и [sbom][ci-sbom] зелёные. На ревизии CI-сверки [vet root][ci-vet-root] — 7, [netd][ci-vet-netd] — 20, [desktop][ci-vet-desktop] — 5 пробелов, [fuzz][ci-vet-fuzz] — 0. 2026-11-28 по [ADR 0111](adr/0111-scoped-cargo-vet-exemptions.md) эти 32 версии добавлены поштучными exemptions к 38 прежним записям недостижимости; локально `node scripts/vet-dependencies.mjs`: все четыре store `check_passed`, exemptions root 22, desktop 10, netd 38, fuzz 0 | **Это принятые риски, не аудиты.** Native C/C++/ASM/FFI (OpenSSL, SQLCipher/SQLite, llama.cpp, libdbus и другие) не проверены построчно, известные дефекты [0103](adr/0103-netd-dependency-audit-sources.md)/[0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md) не исправлены; источники — также [0102](adr/0102-root-dependency-audit-sources.md), [0104](adr/0104-desktop-dependency-audit-sources.md), [0109](adr/0109-secret-service-openssl.md). Gate принимает только точный allowlist, новый непроверенный пакет снова красный. Зелёный CI vet на новой ревизии ещё нужен. Source SBOM есть в CI/неподписанном кандидате, опубликованного подписанного релиза нет. |
 | 9. Подписанный релиз и воспроизводимость на двух машинах | частично | На том же SHA зелёные [clean-linux-a][ci-repro-a], [clean-linux-b][ci-repro-b], [compare][ci-repro-compare]: `identical=true`; [frontends][ci-frontends] проверяет механизм подписи | Только Linux x86_64 и два независимых hosted runner. Первый выпуск ещё не подписан; владелец должен локально пересобрать, сравнить, подписать и проверить полный набор. [ADR 0080](adr/0080-release-signing-with-tauri-signer.md), [0098](adr/0098-reproducible-linux-release.md), [0099](adr/0099-owner-signed-release-handoff.md). |
-| 10. Импортеры и IPC: 24 ч фаззинга без падений | частично — идёт, падений пока нет | Проверка 2026-11-26 15:43 UTC: [run 45813366602][ci-fuzz24], SHA `916a5e8`, `in_progress`; build трёх целей зелёный, [audit_import segment0][ci-fuzz-audit] и [ipc_frames segment0][ci-fuzz-ipc] ещё идут | По опубликованным jobs падений нет; полные логи текущих сегментов и итог ещё недоступны. Ориентир окончания — 2026-11-27 около 13:30 UTC, не гарантия. Нужны все 18 receipts и зелёный итог; это 6×4 ч с перезапусками каждой цели и более ранний SHA, не суточная проверка `7bc1ca3`. [ADR 0096](adr/0096-task10-hosted-fuzz-campaign.md). |
+| 10. Импортеры и IPC: 24 ч фаззинга без падений | выполнено для SHA `916a5e8` (сегментами) | [run 45813366602][ci-fuzz24], `conclusion: success`, 2026-11-26 11:45 → 2026-11-27 12:23 UTC: 3 build, 18 segment jobs (6×4 ч на audit_import, ipc_frames, shield_roundtrip) и [complete][ci-fuzz-complete] зелёные. Все 18 receipts: `status: passed`, `crash_files: 0`, `engine_seconds: 14401`, один source SHA-256. Итог `complete_segmented_campaign`: по 86400 с на цель, runs 32 676 518 / 203 887 549 / 11 034 794 | `continuous_process: false`: это 6 перезапусков с сохранённым corpus, не один непрерывный процесс. Итог сам пишет `m6_acceptance: not_declared_other_checklist_items_required`. После `916a5e8` менялись `crates/nw-ipc/src/lib.rs`, nw-core и `fuzz/Cargo.lock`; текущий код этой кампанией не покрыт. Artifacts хранятся ограниченное время. [ADR 0096](adr/0096-task10-hosted-fuzz-campaign.md). |
 | 11. CSP запрещает inline-скрипты/внешние источники | выполнено | [frontends][ci-frontends]: `local UI has restrictive CSP and no network or content persistence`; [desktop][ci-desktop]: сборка с Tauri CSP | CSP не является полным аудитом Tauri/JS зависимостей; находки остаются в пункте 8, [ADR 0110](adr/0110-cargo-vet-findings-and-ipc-reachability.md). |
 | 12. Все Device/детекторы отсутствуют в трафике | выполнено | [tor-pcap (tor)][ci-pcap-tor], [tor-pcap (obfs4)][ci-pcap-obfs4]: все 9 источников и 7 детекторов, ноль канареек | Приёмка M3H на синтетике; неполный probe на настоящем устройстве не становится полным. |
 | 13. HTTP/ClientHello одинаковы на всех ОС CI | выполнено | [protocol-golden][ci-golden]: сравнение artifacts [Windows][ci-network-windows], [Linux][ci-network-linux], [macOS][ci-network-macos] | Только нормализованные поля, кроме TLS random/key share. |
@@ -75,18 +84,20 @@ strict/paranoid отклоняют маршрут L3. Интерфейс пок�
 
 **Решения владельца**
 
-- Решить, сохраняется ли абсолютный запрет exemptions ADR 0073 или допустимы
-  проверяемые поштучные исключения с условиями отмены. Решение пока не принято;
-  сами записи недостижимости не являются аудитом и не делают gate зелёным.
+- Принято 2026-11-28: поштучные exemptions cargo-vet допустимы только по
+  allowlist ADR 0111, с причиной, ссылкой на ADR и условием отмены. Gate зелёный
+  за счёт принятого риска; 70 записей не являются аудитом. При смене версий или
+  условий в notes записи нужно пересматривать, а не продлевать молча.
 - По ADR 0102/0103/0104/0109/0110 определить дальнейший native/FFI review,
   исправления/обновления и review локальных forks. Известные дефекты нельзя
   считать исправленными административным принятием риска.
 - Согласовать жизненный цикл доменных ключей и границы брокера ADR 0093;
   определить объём следующей работы по полной изоляции desktop, интеграции
   macOS launcher и jailer VMM. Текущая сверка не разрешает ослаблять инварианты.
-- После окончания фаззинга проверить итог и сохранить manifests/receipts до
-  истечения retention (итог — 7 дней); решить, нужен ли повтор на более новом
-  коде. Приёмку отрицательного linkcheck не объявлять успешной: для новой оценки
+- Фаззинг run 45813366602 завершён `success`, 18/18 receipts без crash files.
+  Сохранить manifests/receipts до истечения retention (итог — 7 дней) и решить,
+  нужен ли повтор на текущем коде: nw-ipc и fuzz lock изменились после
+  `916a5e8`. Приёмку отрицательного linkcheck не объявлять успешной: для новой оценки
   нужны новый development и ещё не просмотренный held-out (ADR 0086/0087).
 - Перед первым выпуском выполнить свою пересборку/сравнение, локально подписать
   набор и заново проверить скачанные assets по ADR 0080/0099. Ключ остаётся у
@@ -132,8 +143,7 @@ warnings`, `cargo test -p nw-leak-tests --locked` и `npm test --prefix extensio
 [ci-repro-b]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/139989955276
 [ci-repro-compare]: https://github.com/dsahakyan15/NymWrap/actions/runs/45843190109/job/140000018889
 [ci-fuzz24]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602
-[ci-fuzz-audit]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602/job/139895321700
-[ci-fuzz-ipc]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602/job/139895321678
+[ci-fuzz-complete]: https://github.com/dsahakyan15/NymWrap/actions/runs/45813366602/job/140502981332
 
 ## Стабилизация CI
 
