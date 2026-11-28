@@ -10,6 +10,8 @@ if (-not (Test-Path -LiteralPath $archivePath)) {
     Invoke-WebRequest -Uri 'https://files.pythonhosted.org/packages/0b/2d/3f480b1e1d31eb3d6de5e3ef641954e5c67430d5ac93b7fa7e07589576c7/libclang-18.1.1-py2.py3-none-win_amd64.whl' -OutFile $archivePath
 }
 if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'libclang archive hash mismatch' }
+# Windows PowerShell 5.1 does not load ZipFile by default.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead($archivePath)
 try {
     foreach ($entry in $archive.Entries) {

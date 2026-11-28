@@ -78,10 +78,19 @@ Get-Content -Raw export.json | cargo run -p nw-core --bin nymwrap -- audit takeo
 cargo run -p nw-api -- --help
 ```
 
-`nymwrap rpc` принимает типизированную команду JSON на stdin. Пароли и ключи не
-передаются в аргументах. API требует открытого пространства и работающей локальной
-модели. После Lock/DestroyData runtime-сессия core завершается. UI запускает её
-снова; для CLI отдельно запустите nymwrapd.
+`nymwrap rpc` отключён (ADR 0076): открытым пространством управляет только
+приложение через авторизованную сессию nymwrapd. API требует открытого
+пространства и работающей локальной модели. После Lock/DestroyData runtime-сессия
+core завершается; UI запускает её снова.
+
+Сквозная проверка того же пути, что использует UI (пространство Standard,
+импорт синтетического Takeout, проверенные модели, L0 через named pipe, Drift,
+Purge, Mirror), — `node tests/e2e/local.mjs --with-os-keystore`. Обёртка собирает
+демоны и запускает `crates/nw-core/tests/desktop_flow.rs` во временном каталоге;
+пространство и запись в хранилище ключей ОС удаляются в конце. Перед запуском
+закройте приложение и выполните scripts/fetch-test-models.ps1. С 0.5B план Drift
+обычно не проходит проверки кода (`plan_checks_failed`, тест пишет NOT VERIFIED);
+полное одобрение плана проверяется с `--model-7b`.
 
 Полная инструкция, импорт SQLite WAL, подключение расширения и ограничения:
 [USER_GUIDE](docs/USER_GUIDE.md). Требования безопасности:

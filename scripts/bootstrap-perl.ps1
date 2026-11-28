@@ -10,6 +10,8 @@ if (-not (Test-Path -LiteralPath $archivePath)) {
     Invoke-WebRequest -Uri 'https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/SP_54051_64bit/strawberry-perl-5.40.5.1-64bit-portable.zip' -OutFile $archivePath
 }
 if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'Perl archive hash mismatch' }
+# Windows PowerShell 5.1 does not load ZipFile by default.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead($archivePath)
 try {
     foreach ($entry in $archive.Entries) {

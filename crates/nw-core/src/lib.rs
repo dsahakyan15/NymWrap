@@ -58,6 +58,9 @@ pub enum CoreError {
     Unsupported,
     #[error("invalid_request")]
     Request,
+    /// The local model never produced a plan that passed the code checks.
+    #[error("plan_checks_failed")]
+    PlanChecks,
 }
 struct Conversation {
     force_local: bool,

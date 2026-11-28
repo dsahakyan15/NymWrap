@@ -103,20 +103,12 @@ async fn spawn_egress(
     paths: &nw_core::config::Paths,
     launch: Launch,
 ) -> Result<Option<std::sync::Arc<nw_net::client::Client>>, Box<dyn std::error::Error>> {
-    let name = format!("nw-netd{}", std::env::consts::EXE_SUFFIX);
-    let mut candidates = vec![
+    let candidates = egress_candidates(
         std::env::current_exe()?
             .parent()
-            .ok_or("runtime_path_unavailable")?
-            .join(&name),
-    ];
-    if cfg!(debug_assertions) {
-        candidates.push(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../../daemons/nw-netd/target/debug")
-                .join(name),
-        );
-    }
+            .ok_or("runtime_path_unavailable")?,
+        cfg!(debug_assertions),
+    );
     let binary = candidates
         .iter()
         .find(|p| p.is_file())
@@ -133,4 +125,41 @@ async fn spawn_egress(
         nw_net::client::Client::spawn(binary, endpoint).await.ok()
     };
     Ok(client.map(std::sync::Arc::new))
+}
+/// nw-netd is outside the root workspace, so `cargo build --workspace` never
+/// refreshes target/debug/nw-netd. In debug builds the separately built netd
+/// comes first; a stale sibling left by an older layout must not shadow it.
+fn egress_candidates(exe_dir: &std::path::Path, debug: bool) -> Vec<std::path::PathBuf> {
+    let name = format!("nw-netd{}", std::env::consts::EXE_SUFFIX);
+    let sibling = exe_dir.join(&name);
+    if !debug {
+        return vec![sibling];
+    }
+    vec![
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../daemons/nw-netd/target/debug")
+            .join(name),
+        sibling,
+    ]
+}
+#[cfg(test)]
+mod tests {
+    use super::egress_candidates;
+    #[test]
+    fn debug_prefers_separately_built_netd_over_stale_workspace_sibling() {
+        let exe_dir = std::path::Path::new("synthetic-target").join("debug");
+        let debug = egress_candidates(&exe_dir, true);
+        assert_eq!(debug.len(), 2);
+        assert!(
+            debug[0].ends_with(
+                std::path::Path::new("daemons/nw-netd/target/debug")
+                    .join(format!("nw-netd{}", std::env::consts::EXE_SUFFIX))
+            )
+        );
+        assert_eq!(debug[1].parent(), Some(exe_dir.as_path()));
+        assert_eq!(
+            egress_candidates(&exe_dir, false),
+            vec![exe_dir.join(format!("nw-netd{}", std::env::consts::EXE_SUFFIX))]
+        );
+    }
 }

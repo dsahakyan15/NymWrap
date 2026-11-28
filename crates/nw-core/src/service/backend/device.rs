@@ -31,6 +31,31 @@ pub(in crate::service) fn maybe_device_probe(state: &State) {
         let _ = collect_device_probe(&state, epoch).await;
     });
 }
+/// Runs a due probe before open_workspace reports the space as unlocked. A
+/// first probe that adds device secrets rebuilds Shield and advances the epoch;
+/// in the background it cancelled the user's first import, research or plan as
+/// session_changed. The result is recorded in the probe status either way, and
+/// device_probe_ready still gates remote sends.
+pub(in crate::service) async fn probe_if_due(state: &State) {
+    let _gate = state.probe_start.lock().await;
+    let epoch = {
+        let Ok(mut session) = state.session.lock() else {
+            return;
+        };
+        let epoch = session.epoch;
+        if session.in_tail() {
+            return;
+        }
+        let Some(w) = session.workspace.as_mut() else {
+            return;
+        };
+        if !matches!(w.device_probe_due(), Ok(true)) {
+            return;
+        }
+        epoch
+    };
+    let _ = collect_device_probe(state, epoch).await;
+}
 pub(in crate::service) async fn run_device_probe(
     state: &State,
 ) -> Result<workspace::DeviceProbeStatus, String> {

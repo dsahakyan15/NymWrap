@@ -240,16 +240,20 @@ pub(super) async fn open_workspace(
     .await
     .map_err(|_| "workspace_unavailable")?
     .map_err(code)?;
-    let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
-    if s.epoch != epoch {
-        return Err("session_changed".into());
+    {
+        let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
+        if s.epoch != epoch {
+            return Err("session_changed".into());
+        }
+        s.workspace = Some(workspace);
+        s.timing = Some(nw_cover::session::Clock::new(
+            std::time::Instant::now(),
+            &mut rand::rngs::OsRng,
+        ));
+        refresh_engine(&mut s)?;
     }
-    s.workspace = Some(workspace);
-    s.timing = Some(nw_cover::session::Clock::new(
-        std::time::Instant::now(),
-        &mut rand::rngs::OsRng,
-    ));
-    refresh_engine(&mut s)?;
+    device::probe_if_due(state).await;
+    let mut s = state.session.lock().map_err(|_| "session_unavailable")?;
     storage_status(&mut s, state.egress.is_some())
 }
 pub(super) fn clear_session(state: &State) -> Result<(), String> {
