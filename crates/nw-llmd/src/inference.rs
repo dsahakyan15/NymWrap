@@ -261,7 +261,7 @@ impl Inference for Cpu {
                 nw_llm::OutputSchema::PrivacyV1 => include_str!("privacy.gbnf"),
                 nw_llm::OutputSchema::LinkageV1 => include_str!("linkage.gbnf"),
                 nw_llm::OutputSchema::LinkageFactsV1 => include_str!("linkage-facts.gbnf"),
-                nw_llm::OutputSchema::PlanV1 => include_str!("plan.gbnf"),
+                nw_llm::OutputSchema::StageV1 => include_str!("stage.gbnf"),
             };
             LlamaSampler::chain_simple([
                 LlamaSampler::grammar(&self.chat, grammar, "root").map_err(|_| Error::Inference)?,

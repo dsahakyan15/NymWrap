@@ -41,6 +41,19 @@ Strict/Paranoid требуют пароль. Ключ также зависит 
 до двух минут. Для проверки разработчика есть scripts/fetch-test-models.ps1 с
 закреплёнными официальными Qwen2.5-0.5B и nomic. Модели не входят в репозиторий.
 
+Для полного демо (исследование, план Drift, ранжирование Purge, снимок Mirror)
+загрузите модели командой `./scripts/fetch-test-models.ps1 -IncludeMidSizeChat`
+и укажите в настройках:
+
+- chat: `target\test-models\qwen2.5-3b-instruct-q4_k_m.gguf`, SHA-256
+  `626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d`;
+- embeddings: `target\test-models\nomic-embed-text-v1.5.Q4_K_M.gguf`, SHA-256
+  `d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac`.
+
+Пути указываются абсолютные, от корня репозитория. На CPU план строится несколько
+минут: модель загружается в песочницу на каждый вызов. 0.5B подходит только для
+проверки движка, её план не проходит проверки.
+
 ## Что работает
 
 - SQLCipher по отдельным доменам, XChaCha20-Poly1305, OS key store + Argon2id,
@@ -91,8 +104,9 @@ Purge, Mirror), — `node tests/e2e/local.mjs --with-os-keystore`. Обёртк�
 закройте приложение и выполните scripts/fetch-test-models.ps1. С 0.5B план Drift
 обычно не проходит проверки кода (`plan_checks_failed`, тест пишет NOT VERIFIED);
 `--model-1.5b`, `--model-3b` (`fetch-test-models.ps1 -IncludeMidSizeChat`) и
-`--model-7b` выбирают более крупные модели. На CPU этой машины ни одна пока не
-строит план, проходящий проверки (1.5B/3B — геометрия этапов, 7B — лимит времени).
+`--model-7b` выбирают более крупные модели. С `--model-3b` весь сценарий проходит
+без NOT VERIFIED (на CPU около 19 минут). 1.5B проходит Drift, Purge и Mirror, но её
+исследование персоны отклоняется кодом. 7B не укладывается в лимит одного вызова.
 
 Полная инструкция, импорт SQLite WAL, подключение расширения и ограничения:
 [USER_GUIDE](docs/USER_GUIDE.md). Требования безопасности:

@@ -1,0 +1,4 @@
+root ::= "{\"theme\":" text ",\"bridge\":" text ",\"actions\":[" action ("," action){4} "]}"
+action ::= "{\"service\":" service ",\"text\":" text "}"
+service ::= "\"google\"" | "\"youtube\""
+text ::= "\"" [^"\\x00-\x1F]{1,120} "\""

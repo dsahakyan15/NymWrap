@@ -376,7 +376,7 @@ mod tests {
     #[cfg(feature = "inference")]
     #[tokio::test]
     #[ignore = "requires the verified GGUF files from scripts/fetch-test-models.ps1"]
-    async fn actual_plan_grammar_yields_compact_ten_by_five_json() {
+    async fn actual_stage_grammar_yields_one_compact_stage() {
         let _serial = crate::CPU_TEST_LOCK.lock().await;
         let root =
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/test-models");
@@ -394,23 +394,20 @@ mod tests {
                     content: "Write a Markdown essay about gardening with 3 stages, then a chatgpt action."
                         .into(),
                 }],
-                8192,
-                Some(nw_llm::OutputSchema::PlanV1),
+                1024,
+                Some(nw_llm::OutputSchema::StageV1),
             )
             .unwrap();
-        let plan: serde_json::Value = serde_json::from_str(&text).unwrap();
-        assert_eq!(plan["days_per_stage"], 5);
-        let stages = plan["stages"].as_array().unwrap();
-        assert_eq!(stages.len(), 10);
-        for stage in stages {
-            let actions = stage["actions"].as_array().unwrap();
-            assert_eq!(actions.len(), 5);
-            assert!(
-                actions
-                    .iter()
-                    .all(|a| a["service"] == "google" || a["service"] == "youtube")
-            );
-        }
+        let stage: serde_json::Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(stage.as_object().unwrap().len(), 3);
+        assert!(stage["theme"].is_string() && stage["bridge"].is_string());
+        let actions = stage["actions"].as_array().unwrap();
+        assert_eq!(actions.len(), 5);
+        assert!(
+            actions
+                .iter()
+                .all(|a| a["service"] == "google" || a["service"] == "youtube")
+        );
     }
     #[cfg(feature = "inference")]
     #[tokio::test]

@@ -83,6 +83,27 @@ fn mean_projection(vectors: &[Vector], p: &[f64], a: &[f64]) -> Result<f64, Drif
         .sum::<f64>()
         / vectors.len() as f64)
 }
+/// A stage may move back toward the persona by at most this much.
+pub const BACKSLIDE_TOLERANCE: f64 = 0.05;
+/// Neighbouring stages must be this much more alike than the first and last.
+pub const SMOOTH_MARGIN: f64 = 0.05;
+/// Largest allowed step between neighbouring stages: 2/(n-1).
+pub fn step_limit(stages: usize) -> Result<f64, DriftError> {
+    if stages < 3 {
+        return Err(DriftError::Plan);
+    }
+    Ok(round3(2.0 / (stages - 1) as f64))
+}
+/// Even pace from the persona (0) to the cover (1), as in the lesson:
+/// stage k (1-based) targets (k-1)/(n-1) of the way.
+pub fn stage_targets(stages: usize) -> Result<Vec<f64>, DriftError> {
+    if !(3..=30).contains(&stages) {
+        return Err(DriftError::Plan);
+    }
+    Ok((0..stages)
+        .map(|k| k as f64 / (stages - 1) as f64)
+        .collect())
+}
 fn round3(value: f64) -> f64 {
     (value * 1000.0).round() / 1000.0
 }
@@ -128,9 +149,9 @@ pub fn score(
     )?);
     let min_cos = cos_next.iter().copied().fold(1.0, f64::min);
     let steps: Vec<f64> = positions.windows(2).map(|w| w[1] - w[0]).collect();
-    let backslides = steps.iter().filter(|s| **s < -0.05).count();
+    let backslides = steps.iter().filter(|s| **s < -BACKSLIDE_TOLERANCE).count();
     let max_step = round3(steps.iter().copied().fold(f64::NEG_INFINITY, f64::max));
-    let step_limit = round3(2.0 / (expected - 1) as f64);
+    let step_limit = step_limit(expected)?;
     let mut reached = 0;
     for interest in cover {
         let mut hit = false;
@@ -144,7 +165,7 @@ pub fn score(
     let coverage = round3(reached as f64 / cover.len() as f64);
     let valid = stages.len() == expected
         && backslides == 0
-        && min_cos >= cos_ends + 0.05
+        && min_cos >= cos_ends + SMOOTH_MARGIN
         && max_step <= step_limit
         && coverage >= 0.7;
     Ok(PlanChecks {
@@ -163,6 +184,20 @@ pub fn score(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn stage_targets_are_even_monotone_and_end_at_the_cover() {
+        let targets = stage_targets(10).unwrap();
+        assert_eq!(targets.len(), 10);
+        assert_eq!(targets[0], 0.0);
+        assert_eq!(targets[9], 1.0);
+        assert!(
+            targets
+                .windows(2)
+                .all(|w| w[1] > w[0] && w[1] - w[0] <= step_limit(10).unwrap())
+        );
+        assert_eq!(step_limit(10).unwrap(), 0.222);
+        assert!(stage_targets(2).is_err() && stage_targets(31).is_err());
+    }
     fn angle(a: f64) -> Vector {
         vec![a.cos(), a.sin()]
     }
